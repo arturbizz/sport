@@ -159,7 +159,7 @@
       position: absolute; top: -5px; right: -5px;
       width: 20px; height: 20px; border-radius: 50%;
       background: #f9ca24; animation: pulse 1.5s infinite;
-      display: none;
+      display: none; z-index: 3;
     }
     .help-indicator.show { display: block; }
     @keyframes pulse {
@@ -171,9 +171,11 @@
     /* Ограничение длинного текста */
     .text-collapsed {
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-      overflow: hidden; cursor: pointer;
+      overflow: hidden; cursor: pointer; transition: all 0.3s;
     }
-    .text-expanded { cursor: pointer; }
+    .text-expanded {
+      -webkit-line-clamp: unset; cursor: pointer;
+    }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.5);
@@ -204,7 +206,7 @@
       padding: 0.6rem; border: 1px solid var(--border);
       border-radius: 10px; background: white; cursor: pointer;
       display: flex; align-items: center; justify-content: space-between;
-      min-height: 42px;
+      min-height: 42px; font-size: 0.9rem; color: var(--text);
     }
     .multi-select-dropdown {
       position: absolute; top: 100%; left: 0; right: 0;
@@ -215,14 +217,15 @@
     .multi-select-dropdown.open { display: block; }
     .multi-select-item {
       padding: 0.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;
     }
     .multi-select-item:hover { background: #fff5f5; }
     .multi-select-item input[type="checkbox"] { accent-color: var(--accent); }
 
-    /* Кастомная алерт-модалка */
     .alert-modal .btn { margin-top: 1rem; }
     .alert-modal p { margin: 1rem 0; }
+
+    .radio-group { display: flex; gap: 1rem; margin: 0.5rem 0; align-items: center; }
   </style>
 </head>
 <body>
@@ -261,7 +264,7 @@
       <input type="text" id="taskTitle" placeholder="Название задачи">
       <textarea id="taskDescription" rows="3" placeholder="Описание задачи"></textarea>
 
-      <div class="radio-group" style="display:flex; gap:1rem; margin:0.5rem 0;">
+      <div class="radio-group">
         <label><input type="radio" name="taskType" value="idea" id="typeIdea"> Идея</label>
         <label><input type="radio" name="taskType" value="task" id="typeTask" checked> Задача</label>
       </div>
@@ -275,12 +278,9 @@
         </select>
       </div>
 
-      <!-- Кастомный мультиселект для ответственных -->
       <div class="multi-select" id="multiSelect">
         <div class="multi-select-trigger" id="multiTrigger">Выберите ответственных</div>
-        <div class="multi-select-dropdown" id="multiDropdown">
-          <!-- Заполняется из JS -->
-        </div>
+        <div class="multi-select-dropdown" id="multiDropdown"></div>
       </div>
 
       <input type="date" id="taskDueDate" placeholder="Дата завершения">
@@ -339,7 +339,6 @@
     let tasks = [];
     let currentFilter = 'all';
     let currentEmployeeFilter = '';
-    let selectedAssignees = new Set(); // Для мультиселекта
 
     const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
     const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
@@ -370,6 +369,7 @@
       });
     }
 
+    // Инициализация
     (async () => {
       const { data: { session } } = await _supabase.auth.getSession();
       if (!session) { window.location.href = 'login.html'; return; }
@@ -378,7 +378,6 @@
       await loadTasks();
       renderFilters();
       renderTasks();
-      checkOverdueTasks();
     })();
 
     async function loadEmployees() {
@@ -480,10 +479,6 @@
         const canEdit = isCreator || isAssigned || currentUserEmail === OWNER_EMAIL;
         const canHelp = !isCreator && !isAssigned && task.status !== 'completed';
 
-        // Для обрезания текста
-        const descCollapsed = task.description && task.description.length > 80 ? 'text-collapsed' : '';
-        const commentCollapsed = task.comment && task.comment.length > 80 ? 'text-collapsed' : '';
-
         return `
         <div class="${cardClasses}" data-id="${task.id}">
           <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
@@ -491,14 +486,14 @@
           <div style="font-size:0.8rem; color:var(--text-light);">
             <span class="priority-dot" style="background:${priorityColors[task.priority]}"></span>${priorityLabels[task.priority]}
           </div>
-          ${task.description ? `<div class="${descCollapsed} task-desc" data-full="${task.description.replace(/"/g, '&quot;')}">${task.description}</div>` : ''}
+          ${task.description ? `<div class="text-collapsed task-desc" data-full="${task.description.replace(/"/g, '&quot;')}">${task.description}</div>` : ''}
           <div class="task-meta">
             <span>${assigneeNames}</span>
             <span>${task.due_date || '—'}</span>
           </div>
           <span class="badge ${task.status}">${statusLabels[task.status]}</span>
           ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${task.help_comment}</div>` : ''}
-          ${task.comment ? `<div class="${commentCollapsed} task-comment">${task.comment}</div>` : ''}
+          ${task.comment ? `<div class="text-collapsed task-comment">${task.comment}</div>` : ''}
           <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
             ${canEdit ? `<button class="btn btn-outline edit-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Изменить</button>` : ''}
             ${canHelp ? `<button class="btn btn-outline help-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Предложить помощь</button>` : ''}
@@ -511,15 +506,6 @@
       document.querySelectorAll('.task-desc, .task-comment, .task-help').forEach(el => {
         el.addEventListener('click', function() {
           this.classList.toggle('text-collapsed');
-          if (!this.classList.contains('text-collapsed')) {
-            // Показать полностью
-            if (this.dataset.full) this.innerHTML = this.dataset.full;
-          } else {
-            // Свернуть до первых двух строк
-            const full = this.dataset.full || this.innerText;
-            this.innerHTML = full;
-            // Принудительно ограничиваем высоту через CSS
-          }
         });
       });
 
@@ -551,11 +537,6 @@
       });
     }
 
-    function checkOverdueTasks() {
-      const overdue = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
-      // Визуальные эффекты уже применены через классы
-    }
-
     // Фильтры
     document.getElementById('filters').addEventListener('click', (e) => {
       if (e.target.classList.contains('filter-btn')) {
@@ -576,9 +557,6 @@
     document.getElementById('typeTask').addEventListener('change', () => {
       document.getElementById('prioritySection').style.display = 'block';
     });
-
-    // Мультиселект
-    // Уже настроен в loadEmployees
 
     // Добавление задачи
     document.getElementById('addTaskBtn').addEventListener('click', () => {
@@ -615,7 +593,7 @@
       const taskData = {
         title,
         description: document.getElementById('taskDescription').value.trim(),
-        assigned_to: assignedIds.length > 0 ? assignedIds : null,
+        assigned_to: assignedIds.length > 0 ? assignedIds : [],  // Важно: пустой массив, а не null
         due_date: document.getElementById('taskDueDate').value || null,
         status: document.getElementById('taskStatus').value,
         comment: document.getElementById('taskComment').value.trim(),
@@ -709,7 +687,7 @@
       document.getElementById('helpModal').style.display = 'none';
     });
 
-    // Анимация шарика и конфетти
+    // Анимация
     function showBalloonAndConfetti() {
       const balloon = document.createElement('div');
       balloon.className = 'balloon';
