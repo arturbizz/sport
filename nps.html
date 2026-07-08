@@ -130,10 +130,10 @@
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const EDGE_FUNCTION_URL = 'https://<project>.supabase.co/functions/v1/alfa-proxy'; // ← замените на ваш URL
+    // URL вашей Edge Function
+    const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Проверка авторизации
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -176,7 +176,6 @@
           return;
         }
 
-        // Строим таблицу
         let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
         result.customers.forEach(c => {
           html += `<tr>
