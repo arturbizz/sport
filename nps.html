@@ -6,6 +6,9 @@
   <title>NPS / Клиенты — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --accent: #ff6b6b;
@@ -28,7 +31,7 @@
     }
     .container {
       width: 100%;
-      max-width: 1000px;
+      max-width: 1100px;
       background: var(--surface);
       border-radius: 24px;
       padding: 2rem;
@@ -67,10 +70,7 @@
       color: white;
       box-shadow: 0 8px 15px rgba(255,107,107,0.3);
     }
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
+    .btn:disabled { opacity: 0.5; cursor: default; }
     .error { color: #d63031; margin: 1rem 0; font-size: 0.9rem; white-space: pre-wrap; }
     .info { color: #636e72; margin: 1rem 0; }
     table {
@@ -81,10 +81,24 @@
     }
     th, td {
       text-align: left;
-      padding: 0.8rem;
+      padding: 0.6rem;
       border-bottom: 1px solid var(--border);
     }
     th { background: #f8f9fa; font-weight: 600; }
+    .editable {
+      background: transparent;
+      border: 1px solid transparent;
+      padding: 0.3rem;
+      border-radius: 6px;
+      width: 100%;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    .editable:focus {
+      border-color: var(--accent);
+      outline: none;
+      background: #fff;
+    }
     @media (max-width: 600px) {
       body { padding: 0.8rem; }
       .container { padding: 1.2rem; }
@@ -121,6 +135,8 @@
       <div>
         <button class="btn" id="loadXlsxBtn">Загрузить отчёт (XLSX)</button>
         <button class="btn" id="loadContactsBtn" style="display:none;">Загрузить данные</button>
+        <button class="btn" id="exportBtn" style="display:none;">Выгрузить в Excel</button>
+        <button class="btn" id="saveBtn" style="display:none;">Сохранить изменения</button>
       </div>
     </div>
     <div id="message"></div>
@@ -129,16 +145,15 @@
   </div>
 
   <script>
-    // Уникальные имена, исключаем конфликты
-    const SUPABASE_URL_NPS = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY_NPS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const EDGE_FUNCTION_URL_NPS = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
-    const supabaseNpsClient = window.supabase.createClient(SUPABASE_URL_NPS, SUPABASE_ANON_KEY_NPS);
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let customersFromFile = [];
+    let customersData = []; // { id, name, phone, email }
 
     (async () => {
-      const { data: { session } } = await supabaseNpsClient.auth.getSession();
+      const { data: { session } } = await _supabase.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
         return;
@@ -148,21 +163,22 @@
     const fileInput = document.getElementById('xlsxFileInput');
     const loadXlsxBtn = document.getElementById('loadXlsxBtn');
     const loadContactsBtn = document.getElementById('loadContactsBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const saveBtn = document.getElementById('saveBtn');
     const msg = document.getElementById('message');
     const tableContainer = document.getElementById('tableContainer');
 
-    loadXlsxBtn.addEventListener('click', () => {
-      fileInput.click();
-    });
+    loadXlsxBtn.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
-
       msg.innerHTML = '';
       tableContainer.innerHTML = '';
+      exportBtn.style.display = 'none';
+      saveBtn.style.display = 'none';
       loadContactsBtn.style.display = 'none';
-      customersFromFile = [];
+      customersData = [];
 
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -183,7 +199,6 @@
               break;
             }
           }
-
           if (headerRowIndex === -1) {
             msg.innerHTML = '<div class="error">Не удалось найти строку с заголовками (ID/ФИО).</div>';
             return;
@@ -206,7 +221,7 @@
             const nameVal = String(cols[nameIdx]).trim();
             if (!idVal || isNaN(Number(idVal))) continue;
             if (!nameVal || nameVal === '—') continue;
-            customers.push({ id: idVal, name: nameVal });
+            customers.push({ id: idVal, name: nameVal, phone: '', email: '' });
           }
 
           const unique = [];
@@ -218,10 +233,12 @@
             }
           }
 
-          customersFromFile = unique;
-          renderTable(customersFromFile);
+          customersData = unique;
+          renderTable(customersData);
           loadContactsBtn.style.display = 'inline-block';
-          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить данные», чтобы получить телефоны и email.</div>`;
+          exportBtn.style.display = 'inline-block';
+          saveBtn.style.display = 'inline-block';
+          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить данные», чтобы получить контакты через API.</div>`;
         } catch (err) {
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
@@ -229,20 +246,21 @@
       reader.readAsArrayBuffer(file);
     });
 
+    // Загрузка контактов через Edge Function
     loadContactsBtn.addEventListener('click', async () => {
-      if (customersFromFile.length === 0) return;
+      if (!customersData.length) return;
       loadContactsBtn.disabled = true;
       loadContactsBtn.textContent = 'Загрузка данных...';
       msg.innerHTML = '';
       try {
-        const { data: { session } } = await supabaseNpsClient.auth.getSession();
+        const { data: { session } } = await _supabase.auth.getSession();
         if (!session) {
           msg.innerHTML = '<div class="error">Необходимо войти</div>';
           return;
         }
 
-        const ids = customersFromFile.map(c => c.id);
-        const response = await fetch(EDGE_FUNCTION_URL_NPS, {
+        const ids = customersData.map(c => c.id);
+        const response = await fetch(EDGE_FUNCTION_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -251,33 +269,27 @@
           body: JSON.stringify({ customer_ids: ids })
         });
 
-        const responseText = await response.text();
         if (!response.ok) {
-          throw new Error(`Ошибка ${response.status}: ${responseText}`);
+          const text = await response.text();
+          throw new Error(`Ошибка ${response.status}: ${text}`);
         }
 
-        let result;
-        try {
-          result = JSON.parse(responseText);
-        } catch (e) {
-          throw new Error('Некорректный JSON от сервера: ' + responseText);
-        }
+        const result = await response.json();
+        if (!result.customers) throw new Error('Некорректный ответ сервера');
 
-        if (!result.customers) {
-          throw new Error('Ответ не содержит массив customers: ' + responseText);
-        }
-
-        const merged = customersFromFile.map(cf => {
+        // Объединяем с текущими данными
+        customersData = customersData.map(cf => {
           const apiData = result.customers.find(ac => String(ac.id) === String(cf.id));
           return {
+            id: cf.id,
             name: (apiData && apiData.name && apiData.name !== `ID ${cf.id}`) ? apiData.name : cf.name,
-            phone: apiData ? (apiData.phone || '') : '',
-            email: apiData ? (apiData.email || '') : ''
+            phone: apiData ? (apiData.phone || cf.phone) : cf.phone,
+            email: apiData ? (apiData.email || cf.email) : cf.email,
           };
         });
 
-        renderTable(merged);
-        msg.innerHTML = '<div class="info">Данные загружены.</div>';
+        renderTable(customersData);
+        msg.innerHTML = '<div class="info">Контакты загружены.</div>';
       } catch (err) {
         msg.innerHTML = `<div class="error">${err.message}</div>`;
       } finally {
@@ -286,18 +298,65 @@
       }
     });
 
+    // Сохранение в localStorage
+    saveBtn.addEventListener('click', () => {
+      try {
+        localStorage.setItem('nps_customers', JSON.stringify(customersData));
+        msg.innerHTML = '<div class="info">Данные сохранены локально.</div>';
+      } catch (err) {
+        msg.innerHTML = '<div class="error">Ошибка сохранения: ' + err.message + '</div>';
+      }
+    });
+
+    // Экспорт в Excel
+    exportBtn.addEventListener('click', () => {
+      const ws = XLSX.utils.json_to_sheet(customersData.map(c => ({ 'ФИО': c.name, 'Телефон': c.phone, 'Email': c.email })));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Клиенты");
+      XLSX.writeFile(wb, "клиенты_с_контактами.xlsx");
+      msg.innerHTML = '<div class="info">Файл выгружен.</div>';
+    });
+
     function renderTable(customers) {
       let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
-      customers.forEach(c => {
+      customers.forEach((c, idx) => {
         html += `<tr>
-          <td data-label="ФИО">${c.name || '—'}</td>
-          <td data-label="Телефон">${c.phone || '—'}</td>
-          <td data-label="Email">${c.email || '—'}</td>
+          <td data-label="ФИО">${c.name}</td>
+          <td data-label="Телефон"><input class="editable phone-input" data-index="${idx}" value="${c.phone}" placeholder="Введите телефон"></td>
+          <td data-label="Email"><input class="editable email-input" data-index="${idx}" value="${c.email}" placeholder="Введите email"></td>
         </tr>`;
       });
       html += '</tbody></table>';
       tableContainer.innerHTML = html;
+
+      document.querySelectorAll('.phone-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const idx = e.target.dataset.index;
+          customersData[idx].phone = e.target.value;
+        });
+      });
+      document.querySelectorAll('.email-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const idx = e.target.dataset.index;
+          customersData[idx].email = e.target.value;
+        });
+      });
     }
+
+    // Восстановление из localStorage
+    (function restore() {
+      const saved = localStorage.getItem('nps_customers');
+      if (saved) {
+        try {
+          customersData = JSON.parse(saved);
+          renderTable(customersData);
+          loadContactsBtn.style.display = 'inline-block';
+          exportBtn.style.display = 'inline-block';
+          saveBtn.style.display = 'inline-block';
+          msg.innerHTML = '<div class="info">Загружены ранее сохранённые данные.</div>';
+        } catch (e) {}
+      }
+    })();
   </script>
 </body>
 </html>
