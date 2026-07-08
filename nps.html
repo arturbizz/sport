@@ -12,7 +12,6 @@
   <style>
     :root {
       --accent: #ff6b6b;
-      --accent2: #f9ca24;
       --bg: #fef9f0;
       --surface: #ffffff;
       --text: #2d3436;
@@ -204,6 +203,7 @@
       <div style="display:flex; gap:0.5rem;">
         <button class="btn" id="loadFileBtn">Загрузить файл (XLSX)</button>
         <button class="btn btn-outline" id="helpBtn">?</button>
+        <button class="btn btn-outline" id="resetBtn" style="font-size:0.8rem;">Сбросить данные</button>
       </div>
     </div>
 
@@ -219,7 +219,6 @@
 
     <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
       <button class="btn btn-outline" id="exportBtn">Выгрузить в Excel</button>
-      <button class="btn btn-outline" id="saveBtn">Сохранить изменения</button>
     </div>
 
     <input type="file" id="fileInput" accept=".xlsx" style="display:none">
@@ -257,12 +256,12 @@
     const cutoffDateInput = document.getElementById('cutoffDate');
     const applyFilterBtn = document.getElementById('applyFilterBtn');
     const exportBtn = document.getElementById('exportBtn');
-    const saveBtn = document.getElementById('saveBtn');
+    const resetBtn = document.getElementById('resetBtn');
     const msg = document.getElementById('message');
     const tableContainer = document.getElementById('tableContainer');
     const recordCount = document.getElementById('recordCount');
 
-    // Проверка авторизации
+    // Проверка авторизации и восстановление сохранённых данных
     (async () => {
       const { data: { session } } = await _supabase.auth.getSession();
       if (!session) {
@@ -274,7 +273,11 @@
       if (saved) {
         try {
           allData = JSON.parse(saved);
+          // Восстанавливаем дату фильтра, если она была сохранена
+          const savedDate = localStorage.getItem('nps_cutoffDate');
+          if (savedDate) cutoffDateInput.value = savedDate;
           renderTable();
+          msg.innerHTML = '<div class="info">Загружены ранее сохранённые данные.</div>';
         } catch (e) {}
       }
     })();
@@ -369,10 +372,11 @@
           }
 
           allData = parsed;
-          // Сохраняем в localStorage
+          // Автосохранение в localStorage
           localStorage.setItem('nps_allData', JSON.stringify(allData));
+          localStorage.setItem('nps_cutoffDate', cutoffDateInput.value);
           renderTable();
-          msg.innerHTML = `<div class="info">Загружено ${allData.length} клиентов. Отфильтровано по дате ниже.</div>`;
+          msg.innerHTML = `<div class="info">Загружено ${allData.length} клиентов. Данные сохранены в браузере.</div>`;
         } catch (err) {
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
@@ -408,17 +412,13 @@
       html += '</tbody></table>';
       tableContainer.innerHTML = html;
       recordCount.textContent = `Показано ${filtered.length} из ${allData.length}`;
+      // Сохраняем актуальную дату фильтра при каждой отрисовке
+      localStorage.setItem('nps_cutoffDate', cutoffDateInput.value);
     }
 
     // Обработчики фильтра
     applyFilterBtn.addEventListener('click', renderTable);
     cutoffDateInput.addEventListener('change', renderTable);
-
-    // Сохранение в localStorage (уже происходит при загрузке, но можно и вручную)
-    saveBtn.addEventListener('click', () => {
-      localStorage.setItem('nps_allData', JSON.stringify(allData));
-      msg.innerHTML = '<div class="info">Данные сохранены локально.</div>';
-    });
 
     // Экспорт отфильтрованных данных
     exportBtn.addEventListener('click', () => {
@@ -438,6 +438,17 @@
       XLSX.utils.book_append_sheet(wb, ws, "NPS Клиенты");
       XLSX.writeFile(wb, "клиенты_nps.xlsx");
       msg.innerHTML = '<div class="info">Файл выгружен.</div>';
+    });
+
+    // Сброс сохранённых данных
+    resetBtn.addEventListener('click', () => {
+      if (!confirm('Удалить все сохранённые данные о клиентах?')) return;
+      localStorage.removeItem('nps_allData');
+      localStorage.removeItem('nps_cutoffDate');
+      allData = [];
+      tableContainer.innerHTML = '';
+      recordCount.textContent = '';
+      msg.innerHTML = '<div class="info">Данные сброшены.</div>';
     });
   </script>
 </body>
