@@ -20,21 +20,58 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg);
+      background: linear-gradient(135deg, #ffe0f0 0%, #fefce8 50%, #e0f0ff 100%);
       color: var(--text);
       padding: 1.5rem;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
     }
+    /* Музыкальный фон */
+    .music-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .note {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(255,107,107,0.15);
+      animation: floatNote 10s infinite ease-in-out;
+    }
+    .note::before { content: '♪'; }
+    .note.two::before { content: '♫'; }
+    .note.three::before { content: '♩'; }
+    .clef {
+      position: absolute;
+      font-size: 5rem;
+      color: rgba(249,202,36,0.15);
+      animation: pulse 6s infinite;
+    }
+    .clef::before { content: '𝄞'; }
+    @keyframes floatNote {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+      50% { transform: translateY(-25px) rotate(5deg); opacity: 0.9; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.4; }
+      50% { transform: scale(1.15); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 0.4; }
+    }
+
     .container {
+      position: relative; z-index: 2;
       width: 100%;
       max-width: 1200px;
-      background: var(--surface);
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(10px);
       border-radius: 24px;
       padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      border: 1px solid rgba(255,255,255,0.6);
     }
     .header {
       display: flex;
@@ -50,25 +87,37 @@
       font-weight: 600;
       font-size: 0.9rem;
     }
-    h1 { font-size: 1.8rem; font-weight: 700; }
+    h1 { font-size: 2rem; font-weight: 700; color: #ff4d6d; }
     .btn {
-      border: 2px solid var(--accent);
-      background: white;
-      color: var(--accent);
-      padding: 0.6rem 1.2rem;
-      border-radius: 12px;
+      border: none;
+      padding: 0.6rem 1.3rem;
+      border-radius: 14px;
       font-weight: 600;
       cursor: pointer;
       font-size: 0.9rem;
       transition: all 0.3s;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      color: white;
+      box-shadow: 0 4px 8px rgba(255,107,107,0.2);
     }
     .btn:hover {
+      box-shadow: 0 8px 20px rgba(255,107,107,0.4);
+      transform: translateY(-2px);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+    .btn-outline:hover {
       background: var(--accent);
       color: white;
-      box-shadow: 0 8px 15px rgba(255,107,107,0.3);
     }
     .btn:disabled { opacity: 0.5; cursor: default; }
+
     .filters {
       display: flex;
       gap: 0.5rem;
@@ -90,29 +139,33 @@
       color: white;
       border-color: var(--accent);
     }
+
     .tasks-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
       gap: 1rem;
     }
     .task-card {
       background: white;
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      border: 2px solid #ffe0e0;
+      border-radius: 20px;
       padding: 1.2rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.05);
       transition: all 0.3s;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      position: relative;
     }
     .task-card:hover {
-      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-      transform: translateY(-2px);
+      border-color: #ff6b6b;
+      box-shadow: 0 12px 25px rgba(255,107,107,0.2);
+      transform: translateY(-3px);
     }
     .task-title {
       font-weight: 700;
       font-size: 1.1rem;
+      color: #ff4d6d;
     }
     .task-meta {
       font-size: 0.8rem;
@@ -123,15 +176,17 @@
     }
     .badge {
       display: inline-block;
-      padding: 0.2rem 0.6rem;
+      padding: 0.25rem 0.7rem;
       border-radius: 12px;
       font-size: 0.7rem;
       font-weight: 600;
+      align-self: flex-start;
     }
     .badge.in_progress { background: #d1fae5; color: #065f46; }
     .badge.clarifying { background: #fef3c7; color: #92400e; }
     .badge.need_help { background: #fee2e2; color: #991b1b; }
     .badge.completed { background: #e0e7ff; color: #3730a3; }
+
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.5);
@@ -143,11 +198,16 @@
     }
     .modal {
       background: white;
-      border-radius: 20px;
+      border-radius: 24px;
       padding: 2rem;
       max-width: 500px;
       width: 90%;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+      animation: slideUp 0.2s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     input, textarea, select {
       width: 100%;
@@ -158,17 +218,53 @@
       font-size: 0.9rem;
       font-family: inherit;
     }
-    @media (max-width: 600px) {
-      body { padding: 0.8rem; }
-      .container { padding: 1rem; }
+
+    /* Конфетти */
+    .confetti-piece {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: confettiBurst 0.8s ease-out forwards;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    @keyframes confettiBurst {
+      0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+      100% { transform: translate(var(--x), var(--y)) rotate(720deg); opacity: 0; }
+    }
+    .balloon {
+      position: fixed;
+      bottom: 30%;
+      left: 50%;
+      width: 40px;
+      height: 50px;
+      background: radial-gradient(circle at 30% 30%, #ff9a9e, #fad0c4);
+      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+      box-shadow: 0 0 15px rgba(255,154,158,0.4);
+      animation: balloonRise 1.5s ease-out forwards;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    @keyframes balloonRise {
+      0% { transform: translateX(-50%) scale(1); opacity: 1; }
+      80% { transform: translateX(-50%) translateY(-200px) scale(1.3); opacity: 0.7; }
+      100% { transform: translateX(-50%) translateY(-300px) scale(0.5); opacity: 0; }
     }
   </style>
 </head>
 <body>
+  <div class="music-bg">
+    <div class="note" style="top:10%; left:5%; animation-delay:0s;"></div>
+    <div class="note two" style="top:25%; right:10%; animation-delay:2s;"></div>
+    <div class="note three" style="bottom:20%; left:15%; animation-delay:4s;"></div>
+    <div class="clef" style="top:60%; left:50%; transform:translateX(-50%);"></div>
+  </div>
+
   <div class="container">
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
-      <h1>Планировщик задач</h1>
+      <h1>Планировщик</h1>
       <button class="btn" id="addTaskBtn">+ Новая задача</button>
     </div>
 
@@ -188,20 +284,20 @@
     <div class="modal">
       <h2 id="modalTitle">Новая задача</h2>
       <input type="text" id="taskTitle" placeholder="Название задачи">
-      <textarea id="taskDescription" rows="2" placeholder="Описание"></textarea>
+      <textarea id="taskDescription" rows="3" placeholder="Описание задачи"></textarea>
       <select id="taskAssigned"></select>
-      <input type="date" id="taskDueDate">
+      <input type="date" id="taskDueDate" placeholder="Дата завершения">
       <select id="taskStatus">
         <option value="in_progress">В работе</option>
         <option value="clarifying">Уточняю детали</option>
         <option value="need_help">Нужна помощь</option>
         <option value="completed">Выполнено</option>
       </select>
-      <textarea id="taskComment" rows="2" placeholder="Комментарий"></textarea>
+      <textarea id="taskComment" rows="2" placeholder="Комментарий (необязательно)"></textarea>
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
         <button class="btn" id="saveTaskBtn">Сохранить</button>
-        <button class="btn" id="cancelTaskBtn">Отмена</button>
-        <button class="btn" id="deleteTaskBtn" style="display:none;">Удалить</button>
+        <button class="btn btn-outline" id="cancelTaskBtn">Отмена</button>
+        <button class="btn btn-outline" id="deleteTaskBtn" style="display:none;">Удалить</button>
       </div>
     </div>
   </div>
@@ -217,12 +313,14 @@
     let tasks = [];
     let currentFilter = 'all';
 
-    // Проверка авторизации
+    // Список ролей, которым разрешено создавать задачи и быть ответственными
+    const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
+    const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
+
     (async () => {
       const { data: { session } } = await _supabase.auth.getSession();
       if (!session) { window.location.href = 'login.html'; return; }
       currentUserEmail = session.user.email;
-      document.getElementById('addTaskBtn').style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
       await loadEmployees();
       await loadTasks();
       renderTasks();
@@ -232,12 +330,15 @@
       const { data } = await _supabase.from('employees').select('*');
       employees = data || [];
       const select = document.getElementById('taskAssigned');
-      select.innerHTML = employees.map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join('');
+      // Фильтруем: только Управляющие, Менеджеры, Администраторы и Андрошин Сергей
+      const allowed = employees.filter(e => 
+        ALLOWED_ROLES.includes(e.role) || e.name === SENIOR_TEACHER_NAME
+      );
+      select.innerHTML = allowed.map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join('');
     }
 
     async function loadTasks() {
-      const query = _supabase.from('tasks').select('*').order('created_at', { ascending: false });
-      const { data, error } = await query;
+      const { data, error } = await _supabase.from('tasks').select('*').order('created_at', { ascending: false });
       if (error) { console.error(error); return; }
       tasks = data || [];
     }
@@ -249,9 +350,10 @@
         filtered = tasks.filter(t => t.status === currentFilter);
       }
       if (!filtered.length) {
-        container.innerHTML = '<p style="color:#636e72;">Нет задач</p>';
+        container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет задач</p>';
         return;
       }
+
       container.innerHTML = filtered.map(task => {
         const emp = employees.find(e => e.id === task.assigned_to) || {};
         const statusLabels = {
@@ -260,29 +362,43 @@
           need_help: 'Нужна помощь',
           completed: 'Выполнено'
         };
+        const isOwnerOrCreator = (currentUserEmail === OWNER_EMAIL) || (task.created_by === currentUserEmail);
+        const canEdit = isOwnerOrCreator;
+
         return `
-        <div class="task-card" data-id="${task.id}">
+        <div class="task-card">
           <div class="task-title">${task.title}</div>
-          ${task.description ? `<div style="font-size:0.9rem;">${task.description}</div>` : ''}
+          ${task.description ? `<div style="font-size:0.9rem; color:#444;">${task.description}</div>` : ''}
           <div class="task-meta">
             <span>${emp.name || 'Не назначен'}</span>
             <span>${task.due_date || '—'}</span>
           </div>
           <span class="badge ${task.status}">${statusLabels[task.status]}</span>
-          ${task.comment ? `<div style="font-style:italic; font-size:0.8rem;">${task.comment}</div>` : ''}
+          ${task.comment ? `<div style="font-style:italic; font-size:0.8rem; background:#fef9f0; padding:0.3rem; border-radius:8px;">${task.comment}</div>` : ''}
+          ${canEdit ? `
           <div style="display:flex; gap:0.3rem; margin-top:0.5rem;">
-            ${(currentUserEmail === OWNER_EMAIL || task.assigned_to === employees.find(e=>e.email===currentUserEmail)?.id) ? 
-              `<button class="btn edit-btn" data-id="${task.id}">Изменить</button>` : ''}
-          </div>
+            <button class="btn btn-outline edit-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Изменить</button>
+            ${currentUserEmail === OWNER_EMAIL ? `<button class="btn btn-outline delete-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Удалить</button>` : ''}
+          </div>` : ''}
         </div>`;
       }).join('');
 
-      // Обработчики кнопок редактирования
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           const id = e.target.dataset.id;
           const task = tasks.find(t => t.id == id);
           if (task) openEditModal(task);
+        });
+      });
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.target.dataset.id;
+          if (confirm('Удалить задачу?')) {
+            await _supabase.from('tasks').delete().eq('id', id);
+            showBalloonAndConfetti();
+            await loadTasks();
+            renderTasks();
+          }
         });
       });
     }
@@ -321,8 +437,8 @@
       const taskData = {
         title,
         description: document.getElementById('taskDescription').value.trim(),
-        assigned_to: document.getElementById('taskAssigned').value,
-        due_date: document.getElementById('taskDueDate').value,
+        assigned_to: document.getElementById('taskAssigned').value || null,
+        due_date: document.getElementById('taskDueDate').value || null,
         status: document.getElementById('taskStatus').value,
         comment: document.getElementById('taskComment').value.trim(),
         created_by: currentUserEmail
@@ -331,7 +447,6 @@
       const taskId = document.getElementById('taskModal').dataset.taskId;
       let error;
       if (taskId) {
-        // Редактирование
         const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
         error = updateError;
       } else {
@@ -339,27 +454,30 @@
         error = insertError;
       }
 
-      if (error) { console.error(error); return; }
+      if (error) { alert('Ошибка: ' + error.message); return; }
       document.getElementById('taskModal').style.display = 'none';
+      showBalloonAndConfetti();
       await loadTasks();
       renderTasks();
     });
 
-    // Удаление задачи
+    // Удаление задачи (управляющим)
     document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
       const taskId = document.getElementById('taskModal').dataset.taskId;
       if (!taskId) return;
-      const { error } = await _supabase.from('tasks').delete().eq('id', taskId);
-      if (error) { console.error(error); return; }
-      document.getElementById('taskModal').style.display = 'none';
-      await loadTasks();
-      renderTasks();
+      if (confirm('Удалить задачу?')) {
+        await _supabase.from('tasks').delete().eq('id', taskId);
+        document.getElementById('taskModal').style.display = 'none';
+        showBalloonAndConfetti();
+        await loadTasks();
+        renderTasks();
+      }
     });
 
     function openEditModal(task) {
       document.getElementById('modalTitle').textContent = 'Редактирование задачи';
       document.getElementById('taskTitle').value = task.title;
-      document.getElementById('taskDescription').value = task.description;
+      document.getElementById('taskDescription').value = task.description || '';
       document.getElementById('taskAssigned').value = task.assigned_to || '';
       document.getElementById('taskDueDate').value = task.due_date || '';
       document.getElementById('taskStatus').value = task.status;
@@ -367,6 +485,29 @@
       document.getElementById('deleteTaskBtn').style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
       document.getElementById('taskModal').dataset.taskId = task.id;
       document.getElementById('taskModal').style.display = 'flex';
+    }
+
+    // Анимация успеха: шарик взлетает и лопается с конфетти
+    function showBalloonAndConfetti() {
+      // Запускаем шарик
+      const balloon = document.createElement('div');
+      balloon.className = 'balloon';
+      document.body.appendChild(balloon);
+      setTimeout(() => balloon.remove(), 1500);
+
+      // Конфетти
+      const colors = ['#ff4d6d', '#f9ca24', '#55efc4', '#a29bfe', '#ff9a9e', '#43e97b'];
+      for (let i = 0; i < 40; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.left = '50%';
+        piece.style.top = '30%';
+        piece.style.setProperty('--x', (Math.random() * 300 - 150) + 'px');
+        piece.style.setProperty('--y', (Math.random() * -200 - 50) + 'px');
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 800);
+      }
     }
   </script>
 </body>
