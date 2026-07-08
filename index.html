@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=1.5">
+  <title>График работы — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <style>
+    /* ========== ГЛОБАЛЬНЫЕ СТИЛИ И ПЕРЕМЕННЫЕ ========== */
+    :root {
+      --sun-color: #FFD700;
+      --ocean-shallow: #40E0D0;
+      --ocean-deep: #20B2AA;
+      --beach-sand: #FFE4B5;
+      --beach-dark: #FFDAB9;
+      --sky-top: #87CEEB;
+      --sky-bottom: #FFDAB9;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    input, textarea { user-select: auto; }
+
+    body {
+      font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 60%, var(--beach-sand) 100%);
+      color: #2c3e50;
+      min-height: 100vh;
+      cursor: default;
+      overflow-x: hidden;
+      padding: 15px;
+    }
+
+    /* ========== АНИМИРОВАННЫЙ ФОН ========== */
+    .tropical-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; }
+
+    /* Солнце с лицом (CSS, не эмодзи) */
+    .sun {
+      position: absolute; top: 30px; right: 80px; width: 100px; height: 100px;
+      background: var(--sun-color); border-radius: 50%;
+      box-shadow: 0 0 100px 25px #FFA500, 0 0 180px 60px #FF8C00, 0 0 250px 120px rgba(255,140,0,0.5);
+      animation: sunPulse 4s ease-in-out infinite alternate;
+    }
+    .sun-face {
+      position: absolute; top: 28px; left: 25px;
+    }
+    .eye {
+      width: 12px; height: 16px; background: #1a1a1a; border-radius: 50%;
+      display: inline-block; margin: 0 5px;
+    }
+    .mouth {
+      width: 24px; height: 10px; border-bottom: 4px solid #1a1a1a; border-radius: 0 0 50px 50px;
+      margin: 12px auto 0;
+    }
+    @keyframes sunPulse {
+      0% { transform: scale(1); box-shadow: 0 0 100px 25px #FFA500, 0 0 180px 60px #FF8C00; }
+      100% { transform: scale(1.05); box-shadow: 0 0 130px 35px #FFB347, 0 0 220px 80px #FFA500; }
+    }
+
+    /* Океан */
+    .ocean {
+      position: absolute; bottom: 12%; left: 0; width: 100%; height: 30%;
+      background: linear-gradient(180deg, var(--ocean-shallow) 0%, var(--ocean-deep) 100%);
+      animation: wave 6s ease-in-out infinite;
+    }
+    .ocean-wave {
+      position: absolute; top: -20px; left: -10%; width: 120%; height: 40px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,60 C200,0 400,120 600,60 C800,0 1000,120 1200,60 L1200,120 L0,120 Z' fill='%2340E0D0'/%3E%3C/svg%3E") repeat-x;
+      background-size: 300px 40px;
+      animation: waveMove 4s linear infinite;
+    }
+    @keyframes wave {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes waveMove {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-300px); }
+    }
+
+    /* Пляж и пальмы (CSS, не эмодзи) */
+    .beach {
+      position: absolute; bottom: 0; left: 0; width: 100%; height: 18%;
+      background: linear-gradient(180deg, var(--beach-sand) 0%, var(--beach-dark) 100%);
+      border-radius: 50% 60% 0 0;
+    }
+    .palm-tree {
+      position: absolute; bottom: 30%;
+    }
+    .palm-tree .trunk {
+      width: 12px; height: 70px; background: #8B4513; border-radius: 5px;
+      position: absolute; bottom: 0; left: 30px;
+      transform: rotate(5deg);
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+    }
+    .palm-tree .leaves {
+      position: absolute; bottom: 60px; left: 10px;
+    }
+    .palm-tree .leaf {
+      width: 40px; height: 20px; background: #228B22; border-radius: 50% 0;
+      position: absolute; transform-origin: bottom right;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .leaf:nth-child(1) { transform: rotate(-30deg); bottom: 0; right: 5px; border-radius: 0 50%; }
+    .leaf:nth-child(2) { transform: rotate(20deg); bottom: 10px; right: -10px; border-radius: 50% 0; }
+    .leaf:nth-child(3) { transform: rotate(70deg); bottom: 5px; right: -15px; }
+    .leaf:nth-child(4) { transform: rotate(-80deg); bottom: 15px; right: 5px; border-radius: 50% 0; }
+    .leaf:nth-child(5) { transform: rotate(130deg); bottom: 10px; right: -5px; border-radius: 0 50%; }
+
+    /* Самолет */
+    .airplane {
+      position: absolute; bottom: 45%; right: -100px; width: 60px; height: 20px;
+      background: white; border-radius: 50% 10% 10% 50%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      animation: fly 20s linear infinite;
+    }
+    .airplane::after {
+      content: ''; position: absolute; top: -10px; left: 10px;
+      width: 0; height: 0;
+      border-left: 8px solid transparent; border-right: 8px solid transparent;
+      border-bottom: 15px solid white;
+      transform: rotate(-45deg);
+    }
+    @keyframes fly {
+      0% { right: -100px; bottom: 45%; transform: rotate(-5deg); }
+      25% { bottom: 48%; }
+      50% { right: 110%; bottom: 40%; transform: rotate(5deg); }
+      75% { bottom: 42%; }
+      100% { right: 110%; bottom: 45%; transform: rotate(5deg); }
+    }
+
+    /* ========== ОСНОВНОЙ КОНТЕНТ ========== */
+    .container { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; padding: 15px 20px; }
+
+    .header {
+      display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
+      flex-wrap: wrap; backdrop-filter: blur(10px);
+      background: rgba(255,255,255,0.5); padding: 10px 20px; border-radius: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .logo {
+      font-size: 28px; font-weight: 800;
+      background: linear-gradient(135deg, #FF416C, #FF4B2B);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; letter-spacing: -0.5px; margin-right: 20px;
+    }
+
+    .nav-arrows { display: flex; align-items: center; gap: 10px; }
+    .nav-arrows button, .period-btn, .export-btn, .emp-dropdown-btn, .dropdown-action-btn {
+      background: rgba(255,255,255,0.7); backdrop-filter: blur(15px);
+      border: 1px solid rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 20px;
+      cursor: pointer; font-size: 14px; font-weight: 600; color: #34495e;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px;
+    }
+    .nav-arrows button:hover, .period-btn:hover, .export-btn:hover, .emp-dropdown-btn:hover {
+      background: rgba(255,255,255,0.9); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    .period-btn.active {
+      background: linear-gradient(135deg, #FF9A9E, #FAD0C4); color: white; border-color: transparent;
+    }
+    .month-title {
+      min-width: 140px; text-align: center; font-weight: 700; font-size: 18px;
+      background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 20px;
+    }
+
+    .schedule-container {
+      background: rgba(255,255,255,0.6); backdrop-filter: blur(20px);
+      border-radius: 30px; padding: 20px; overflow-x: auto; max-height: 75vh;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      scrollbar-width: thin; scrollbar-color: #FF8C00 rgba(255,255,255,0.3);
+    }
+    .schedule-container::-webkit-scrollbar { width: 8px; height: 8px; }
+    .schedule-container::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #FFA500, #FF4500); border-radius: 10px; }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0 5px; min-width: 1200px; }
+    th { background: rgba(255,255,255,0.8); padding: 8px 4px; font-size: 13px; position: sticky; top: 0; z-index: 5; border-radius: 10px 10px 0 0; }
+    td { padding: 6px 2px; text-align: center; font-size: 13px; }
+
+    .employee-name {
+      text-align: left; font-weight: 700; padding-left: 15px;
+      cursor: pointer; background: rgba(255,255,255,0.4); border-radius: 15px;
+      transition: all 0.2s;
+    }
+    .employee-name:hover { background: rgba(255,255,255,0.8); transform: scale(1.02); color: #FF4B2B; }
+    .group-header {
+      background: linear-gradient(90deg, rgba(255,180,100,0.4), rgba(255,140,0,0.1));
+      font-weight: 700; text-align: left; padding: 12px 20px; border-radius: 20px;
+      margin-top: 15px; font-size: 16px; letter-spacing: 0.5px;
+    }
+
+    .day-cell {
+      cursor: pointer; background: rgba(255,255,255,0.5); border-radius: 12px;
+      height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin: 2px; font-weight: 600; transition: all 0.2s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+    }
+    .day-cell:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+    .day-cell.working { background: linear-gradient(135deg, #a8e6cf, #3dba7a); color: white; }
+    .day-cell.dayoff { background: rgba(255,120,120,0.2); color: #c0392b; }
+    .day-cell.sick { background: linear-gradient(135deg, #d4c5f9, #8e44ad); color: white; }
+    .day-cell.vacation { background: linear-gradient(135deg, #9dd9f3, #2980b9); color: white; }
+    .day-cell.leave { background: linear-gradient(135deg, #fdf0b0, #f39c12); color: white; }
+    .day-cell.has-comment { border: 2px solid #FFD700; box-shadow: 0 0 12px rgba(255,215,0,0.4); }
+
+    .big-ruble { font-size: 20px; font-weight: bold; color: white; }
+
+    .summary-cell { font-weight: 700; background: rgba(255,255,255,0.7); border-radius: 8px; }
+    .salary-summary {
+      margin-top: 20px; background: rgba(255,255,255,0.5); backdrop-filter: blur(15px);
+      border-radius: 20px; padding: 15px 25px;
+      display: flex; flex-wrap: wrap; gap: 25px; font-weight: 600; font-size: 16px;
+    }
+    .salary-summary .grand-total { margin-left: auto; color: #FF4B2B; font-size: 18px; }
+
+    /* ========== МОДАЛЬНЫЕ ОКНА И УВЕДОМЛЕНИЯ ========== */
+    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal {
+      background: linear-gradient(145deg, #ffffff, #fdfcfb);
+      border-radius: 35px; padding: 30px; max-width: 550px; width: 90%;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+      animation: modalPop 0.3s ease-out;
+    }
+    @keyframes modalPop { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+
+    .btn-save {
+      background: linear-gradient(135deg, #FF9A9E, #FAD0C4); color: white;
+      padding: 12px 30px; border-radius: 30px; border: none;
+      font-weight: 700; cursor: pointer; width: 100%;
+      box-shadow: 0 10px 20px rgba(255,140,0,0.3); margin-top: 20px; transition: 0.3s;
+    }
+    .btn-save:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(255,140,0,0.5); }
+
+    .toast-center { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; pointer-events: none; }
+    .toast-content {
+      display: flex; align-items: center; gap: 15px;
+      background: #2ecc71; color: white;
+      padding: 20px 35px; border-radius: 60px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+      animation: toastIn 0.4s forwards, toastOut 0.4s 1.8s forwards;
+    }
+    @keyframes toastIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.8); } }
+  </style>
+</head>
+<body>
+<div class="tropical-bg">
+  <div class="sun">
+    <div class="sun-face">
+      <div class="eye"></div>
+      <div class="eye"></div>
+      <div class="mouth"></div>
+    </div>
+  </div>
+  <div class="ocean">
+    <div class="ocean-wave"></div>
+  </div>
+  <div class="beach">
+    <div class="palm-tree" style="left: 8%;">
+      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
+      <div class="trunk"></div>
+    </div>
+    <div class="palm-tree" style="left: 25%; transform: scale(0.8);">
+      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
+      <div class="trunk" style="transform: rotate(-4deg);"></div>
+    </div>
+    <div class="palm-tree" style="right: 20%; transform: scale(0.9);">
+      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
+      <div class="trunk"></div>
+    </div>
+    <div class="palm-tree" style="right: 5%; transform: scale(1.1);">
+      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
+      <div class="trunk" style="transform: rotate(2deg);"></div>
+    </div>
+  </div>
+  <div class="airplane"></div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="logo">Music Club Орёл</div>
+    <div class="nav-arrows">
+      <button onclick="changeMonth(-1)">◀</button>
+      <span class="month-title" id="monthTitle"></span>
+      <button onclick="changeMonth(1)">▶</button>
+    </div>
+    <div class="period-btns" id="periodBtns">
+      <button class="period-btn active" data-period="full">Весь месяц</button>
+      <button class="period-btn" data-period="first">1–15</button>
+      <button class="period-btn" data-period="second">16–31</button>
+    </div>
+    <button class="export-btn" onclick="exportToExcel()">📥 Excel</button>
+    <button class="export-btn" onclick="createGoogleCopy()">📋 Копия</button>
+    <div style="flex-grow:1;"></div>
+    <div class="employee-dropdown" id="employeeDropdown">
+      <button class="emp-dropdown-btn" id="empToggle">👥 Сотрудники</button>
+      <div class="emp-dropdown-list" id="empList" style="display:none; position:absolute; right:0; background:white; border-radius:20px; padding:15px; box-shadow:0 20px 40px rgba(0,0,0,0.2); z-index:100;">
+        <div id="empCheckboxes"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="schedule-container" id="scheduleTableContainer">
+    <div style="padding:50px; text-align:center; font-size:20px;">Загрузка графика...</div>
+  </div>
+</div>
+
+<!-- Модалка дня -->
+<div class="modal-overlay" id="dayModal" style="display:none;">
+  <div class="modal">
+    <button style="float:right; background:none; border:none; font-size:24px; cursor:pointer;" onclick="closeModal('dayModal')">✕</button>
+    <h3 id="modalTitle"></h3>
+    <div id="statusOptions" style="margin:20px 0;"></div>
+    <div id="dynamicFields"></div>
+    <textarea id="comment" rows="2" style="width:100%; margin:15px 0; padding:12px; border-radius:15px; border:1px solid #ddd;" placeholder="Примечание"></textarea>
+    <button class="btn-save" onclick="saveDay()">Сохранить</button>
+  </div>
+</div>
+
+<!-- Модалка зарплаты -->
+<div class="modal-overlay" id="salaryModal" style="display:none;">
+  <div class="modal" style="max-width: 600px;">
+    <button style="float:right; background:none; border:none; font-size:24px; cursor:pointer;" onclick="closeModal('salaryModal')">✕</button>
+    <h3 id="salaryModalTitle"></h3>
+    <div id="salaryContent"></div>
+    <button class="btn-save" onclick="saveSalary()">Сохранить параметры</button>
+  </div>
+</div>
+
+<script>
+  // ================== КОНФИГУРАЦИЯ SUPABASE ==================
+  const SUPABASE_URL = 'https://your-project-id.supabase.co'; // ЗАМЕНИ НА СВОЙ Project URL
+  const SUPABASE_ANON_KEY = 'your-anon-key'; // ЗАМЕНИ НА СВОЙ anon public key
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ==================
+  let employees = [];
+  let worklog = {};
+  let salaryParams = {};
+  let currentYear, currentMonth;
+  let selectedEmployeeIds = new Set();
+  let currentPeriod = 'full';
+  let editingEmpId, editingDateStr;
+
+  // ================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==================
+  function showToast(msg, err = false) {
+    const toast = document.createElement('div'); toast.className = 'toast-center';
+    toast.innerHTML = `<div class="toast-content" style="background:${err ? '#e74c3c' : '#2ecc71'}">${msg}</div>`;
+    document.body.appendChild(toast); setTimeout(() => toast.remove(), 2200);
+  }
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+  // ================== ЗАГРУЗКА ДАННЫХ ИЗ SUPABASE ==================
+  async function loadAllData() {
+    try {
+      const [empRes, logRes, salRes] = await Promise.all([
+        supabase.from('employees').select('*'),
+        supabase.from('worklog').select('*').like('date', `${currentYear}-${String(currentMonth).padStart(2,'0')}%`),
+        supabase.from('salary_params').select('*').eq('month', `${currentYear}-${String(currentMonth).padStart(2,'0')}`)
+      ]);
+      
+      if (empRes.error) throw empRes.error;
+      employees = empRes.data;
+      if (selectedEmployeeIds.size === 0) employees.forEach(e => selectedEmployeeIds.add(e.id));
+      
+      worklog = {};
+      (logRes.data || []).forEach(rec => { worklog[`${rec.emp_id}_${rec.date}`] = rec; });
+      
+      salaryParams = {};
+      (salRes.data || []).forEach(rec => { salaryParams[rec.emp_id] = rec; });
+      
+      renderEmployeeCheckboxes();
+      renderTable();
+    } catch (e) {
+      showToast('Ошибка загрузки данных: ' + e.message, true);
+      document.getElementById('scheduleTableContainer').innerHTML = '<p>Ошибка соединения с базой данных</p>';
+    }
+  }
+
+  function renderEmployeeCheckboxes() {
+    let html = '';
+    employees.forEach(emp => {
+      const checked = selectedEmployeeIds.has(emp.id) ? 'checked' : '';
+      html += `<label style="display:block; margin:5px 0; cursor:pointer;">
+        <input type="checkbox" ${checked} onchange="toggleEmployee('${emp.id}', this.checked)"> ${emp.name} <small>(${emp.role})</small>
+      </label>`;
+    });
+    document.getElementById('empCheckboxes').innerHTML = html;
+  }
+  window.toggleEmployee = (id, checked) => {
+    checked ? selectedEmployeeIds.add(id) : selectedEmployeeIds.delete(id);
+    renderTable();
+  };
+
+  // ================== РЕНДЕР ТАБЛИЦЫ ==================
+  function renderTable() {
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    document.getElementById('monthTitle').textContent = 
+      new Date(currentYear, currentMonth-1, 1).toLocaleDateString('ru', { month:'long', year:'numeric' });
+
+    const filtered = employees.filter(e => selectedEmployeeIds.has(e.id));
+    let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
+    for (let d=1; d<=daysInMonth; d++) {
+      html += `<th>${d}<br><small>${new Date(currentYear, currentMonth-1, d).toLocaleDateString('ru', {weekday:'short'})}</small></th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    ['Управляющий', 'Менеджер', 'Администратор', 'Преподаватель'].forEach(role => {
+      const group = filtered.filter(e => e.role === role);
+      if (!group.length) return;
+      html += `<tr><td colspan="${daysIn
