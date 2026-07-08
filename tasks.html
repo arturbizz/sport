@@ -23,14 +23,6 @@
       --idea: #9b59b6;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, .container, .task-card, .modal, .filters, .header {
-      -webkit-user-select: none; -moz-user-select: none; user-select: none;
-      cursor: default;
-    }
-    input, textarea {
-      -webkit-user-select: text; -moz-user-select: text; user-select: text;
-      cursor: text;
-    }
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: linear-gradient(135deg, #ffe0f0 0%, #fefce8 50%, #e0f0ff 100%);
@@ -43,6 +35,7 @@
       position: relative;
       overflow-x: hidden;
     }
+    /* Музыкальный фон */
     .music-bg {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 0;
@@ -176,6 +169,7 @@
       100% { transform: scale(1); }
     }
 
+    /* Сворачивание текста */
     .text-collapsed {
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden; cursor: pointer; transition: all 0.3s;
@@ -202,6 +196,7 @@
       font-size: 0.9rem; font-family: inherit;
     }
 
+    /* Мультиселект */
     .multi-select {
       position: relative; margin: 0.5rem 0;
     }
@@ -334,6 +329,7 @@
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const OWNER_EMAIL = 'arturgalkin.ru@mail.ru';
       let currentUserEmail = null;
+      let currentEmployee = null; // запись из employees
       let employees = [];
       let tasks = [];
       let currentFilter = 'all';
@@ -344,6 +340,7 @@
 
       function getEl(id) { return document.getElementById(id); }
 
+      // Кастомные уведомления
       function customAlert(msg) {
         return new Promise(resolve => {
           const modal = getEl('alertModal');
@@ -353,7 +350,6 @@
           getEl('alertOkBtn').onclick = () => { modal.style.display = 'none'; resolve(); };
         });
       }
-
       function customConfirm(msg) {
         return new Promise(resolve => {
           const modal = getEl('confirmModal');
@@ -365,6 +361,7 @@
         });
       }
 
+      // Мультиселект (один выбор)
       function updateMultiTrigger() {
         const checked = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => {
           const emp = employees.find(e => e.id === cb.value);
@@ -374,23 +371,18 @@
         if (trigger) trigger.textContent = checked.length ? checked[0] : 'Выберите ответственного';
       }
 
-      function normEmail(e) { return (e || '').trim().toLowerCase(); }
-
-      function currentUserRecord() {
-        const target = normEmail(currentUserEmail);
-        return employees.find(e => normEmail(e.email) === target) || null;
-      }
-
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
         employees = data || [];
         const allowed = employees.filter(e => ALLOWED_ROLES.includes(e.role) || e.name === SENIOR_TEACHER_NAME);
 
+        // Заполняем фильтр по сотрудникам
         const empFilter = getEl('employeeFilter');
         if (empFilter) {
           empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
         }
 
+        // Заполняем чекбоксы мультиселекта
         const multiDropdown = getEl('multiDropdown');
         if (multiDropdown) {
           multiDropdown.innerHTML = allowed.map(e => `
@@ -431,6 +423,24 @@
         tasks = data || [];
       }
 
+      function canCreateTask() {
+        if (!currentEmployee) return false;
+        return ALLOWED_ROLES.includes(currentEmployee.role) || currentEmployee.name === SENIOR_TEACHER_NAME;
+      }
+
+      function canEditTask(task) {
+        if (!currentUserEmail) return false;
+        if (currentUserEmail === OWNER_EMAIL) return true;
+        if (task.created_by === currentUserEmail) return true;
+        if (currentEmployee && task.assigned_to === currentEmployee.id) return true;
+        return false;
+      }
+
+      function canCompleteTask(task) {
+        // Закрыть (статус completed) может только создатель, ответственный или управляющий
+        return canEditTask(task);
+      }
+
       function renderFilters() {
         document.querySelectorAll('.filter-btn').forEach(btn => {
           btn.classList.toggle('active', btn.dataset.status === currentFilter);
@@ -445,7 +455,7 @@
 
         let filtered = tasks;
         if (currentFilter !== 'all') filtered = filtered.filter(t => t.status === currentFilter);
-        if (currentEmployeeFilter) filtered = filtered.filter(t => Array.isArray(t.assignee_ids) && t.assignee_ids.includes(currentEmployeeFilter));
+        if (currentEmployeeFilter) filtered = filtered.filter(t => t.assigned_to === currentEmployeeFilter);
 
         if (!filtered.length) {
           container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет задач</p>';
@@ -453,8 +463,7 @@
         }
 
         container.innerHTML = filtered.map(task => {
-          const assignedIds = Array.isArray(task.assignee_ids) ? task.assignee_ids : [];
-          const emp = employees.find(e => assignedIds.includes(e.id)) || {};
+          const emp = employees.find(e => e.id === task.assigned_to) || {};
           const assigneeName = emp.name || 'Не назначен';
           const statusLabels = {
             in_progress: 'В работе',
@@ -480,11 +489,11 @@
           const isCriticalOverdue = isOverdue && task.priority === 'critical';
           const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
 
-          const currentUserEmp = currentUserRecord();
-          const isAssigned = !!currentUserEmp && assignedIds.includes(currentUserEmp.id);
-          const isCreator = normEmail(task.created_by) === normEmail(currentUserEmail);
-          const canEdit = isCreator || isAssigned || normEmail(currentUserEmail) === normEmail(OWNER_EMAIL);
+          const canEdit = canEditTask(task);
+          const isAssigned = currentEmployee && task.assigned_to === currentEmployee.id;
+          const isCreator = task.created_by === currentUserEmail;
           const canHelp = !isCreator && !isAssigned && task.status !== 'completed';
+          const canDelete = currentUserEmail === OWNER_EMAIL;
 
           return `
           <div class="task-card ${cardClasses}" data-id="${task.id}">
@@ -504,39 +513,38 @@
             <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
               ${canEdit ? `<button class="btn btn-outline edit-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>` : ''}
               ${canHelp ? `<button class="btn btn-outline help-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Предложить помощь</button>` : ''}
-              ${normEmail(currentUserEmail) === normEmail(OWNER_EMAIL) ? `<button class="btn btn-outline delete-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>` : ''}
+              ${canDelete ? `<button class="btn btn-outline delete-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>` : ''}
             </div>
           </div>`;
         }).join('');
 
-        document.querySelectorAll('.task-desc, .task-comment, .task-help').forEach(el => {
-          el.addEventListener('click', () => el.classList.toggle('text-collapsed'));
-        });
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = e.target.dataset.id;
+        // Делегирование событий
+        container.addEventListener('click', (e) => {
+          const target = e.target;
+          if (target.classList.contains('task-desc') || target.classList.contains('task-comment') || target.classList.contains('task-help')) {
+            target.classList.toggle('text-collapsed');
+          }
+          if (target.classList.contains('edit-btn')) {
+            const id = target.dataset.id;
             const task = tasks.find(t => t.id == id);
             if (task) openEditModal(task);
-          });
-        });
-        document.querySelectorAll('.help-btn').forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            const id = e.target.dataset.id;
+          }
+          if (target.classList.contains('help-btn')) {
+            const id = target.dataset.id;
             const helpModal = getEl('helpModal');
             if (helpModal) { helpModal.dataset.taskId = id; helpModal.style.display = 'flex'; }
-          });
-        });
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-          btn.addEventListener('click', async (e) => {
-            const id = e.target.dataset.id;
-            const confirmed = await customConfirm('Удалить задачу?');
-            if (confirmed) {
-              await _supabase.from('tasks').delete().eq('id', id);
-              showBalloonAndConfetti();
-              await loadTasks();
-              renderTasks();
-            }
-          });
+          }
+          if (target.classList.contains('delete-btn')) {
+            const id = target.dataset.id;
+            customConfirm('Удалить задачу?').then(async (ok) => {
+              if (ok) {
+                await _supabase.from('tasks').delete().eq('id', id);
+                showBalloonAndConfetti();
+                await loadTasks();
+                renderTasks();
+              }
+            });
+          }
         });
       }
 
@@ -555,19 +563,17 @@
           getEl('prioritySection').style.display = 'block';
           getEl('taskPriority').value = task.priority || 'medium';
         }
-        const assignedIds = Array.isArray(task.assignee_ids) ? task.assignee_ids : [];
         document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
-          cb.checked = assignedIds.includes(cb.value);
+          cb.checked = (task.assigned_to && task.assigned_to === cb.value);
         });
         updateMultiTrigger();
         const deleteBtn = getEl('deleteTaskBtn');
-        if (deleteBtn) deleteBtn.style.display = (normEmail(currentUserEmail) === normEmail(OWNER_EMAIL)) ? 'inline-block' : 'none';
+        if (deleteBtn) deleteBtn.style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
         getEl('taskModal').dataset.taskId = task.id;
         getEl('taskModal').style.display = 'flex';
       }
 
       async function saveTask() {
-        const taskId = getEl('taskModal').dataset.taskId;
         const title = getEl('taskTitle').value.trim();
         if (!title) { await customAlert('Введите название задачи'); return; }
         const isIdea = getEl('typeIdea').checked;
@@ -578,7 +584,7 @@
         const taskData = {
           title,
           description: getEl('taskDescription').value.trim(),
-          assignee_ids: assignedId ? [assignedId] : [],
+          assigned_to: assignedId,
           due_date: getEl('taskDueDate').value || null,
           status: getEl('taskStatus').value,
           comment: getEl('taskComment').value.trim(),
@@ -586,11 +592,28 @@
           created_by: currentUserEmail
         };
 
+        const taskId = getEl('taskModal').dataset.taskId;
         let error;
         if (taskId) {
+          // Редактирование: проверка прав
+          const task = tasks.find(t => t.id == taskId);
+          if (!task || !canEditTask(task)) {
+            await customAlert('Недостаточно прав для редактирования');
+            return;
+          }
+          // Дополнительная проверка на закрытие
+          if (taskData.status === 'completed' && !canCompleteTask(task)) {
+            await customAlert('Вы не можете закрыть эту задачу');
+            return;
+          }
           const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
           error = updateError;
         } else {
+          // Создание: проверка прав
+          if (!canCreateTask()) {
+            await customAlert('У вас нет прав на создание задач');
+            return;
+          }
           const { error: insertError } = await _supabase.from('tasks').insert([taskData]);
           error = insertError;
         }
@@ -602,7 +625,50 @@
         renderTasks();
       }
 
+      // Анимация успеха
+      function showBalloonAndConfetti() {
+        const balloon = document.createElement('div');
+        balloon.className = 'balloon';
+        document.body.appendChild(balloon);
+        balloon.addEventListener('animationend', () => {
+          balloon.remove();
+          createConfetti();
+          createPopParticles();
+        });
+      }
+      function createConfetti() {
+        const colors = ['#ff4d6d','#f9ca24','#55efc4','#a29bfe','#ff9a9e','#43e97b'];
+        for (let i = 0; i < 40; i++) {
+          const piece = document.createElement('div');
+          piece.className = 'confetti-piece';
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.left = '50%';
+          piece.style.top = '30%';
+          piece.style.setProperty('--x', (Math.random()*300-150)+'px');
+          piece.style.setProperty('--y', (Math.random()*-200-50)+'px');
+          document.body.appendChild(piece);
+          setTimeout(() => piece.remove(), 800);
+        }
+      }
+      function createPopParticles() {
+        for (let i=0; i<10; i++) {
+          const p = document.createElement('div');
+          p.className = 'pop-particle';
+          p.style.left = '50%';
+          p.style.top = '30%';
+          p.style.setProperty('--px', (Math.random()*80-40)+'px');
+          p.style.setProperty('--py', (Math.random()*80-40)+'px');
+          document.body.appendChild(p);
+          setTimeout(() => p.remove(), 500);
+        }
+      }
+
+      // Обработчики кнопок
       getEl('addTaskBtn').addEventListener('click', () => {
+        if (!canCreateTask()) {
+          customAlert('У вас нет прав на создание задач');
+          return;
+        }
         getEl('modalTitle').textContent = 'Новая задача';
         getEl('taskTitle').value = '';
         getEl('taskDescription').value = '';
@@ -621,7 +687,6 @@
 
       getEl('cancelTaskBtn').addEventListener('click', () => { getEl('taskModal').style.display = 'none'; });
       getEl('saveTaskBtn').addEventListener('click', saveTask);
-
       getEl('deleteTaskBtn').addEventListener('click', async () => {
         const taskId = getEl('taskModal').dataset.taskId;
         if (!taskId) return;
@@ -650,6 +715,7 @@
 
       getEl('cancelHelpBtn').addEventListener('click', () => { getEl('helpModal').style.display = 'none'; });
 
+      // Фильтры
       getEl('filters').addEventListener('click', (e) => {
         if (e.target.classList.contains('filter-btn')) {
           currentFilter = e.target.dataset.status;
@@ -657,54 +723,23 @@
           renderTasks();
         }
       });
-      getEl('employeeFilter').addEventListener('change', (e) => { currentEmployeeFilter = e.target.value; renderTasks(); });
+      getEl('employeeFilter').addEventListener('change', (e) => {
+        currentEmployeeFilter = e.target.value;
+        renderTasks();
+      });
 
+      // Радио-кнопки
       getEl('typeIdea').addEventListener('change', () => { getEl('prioritySection').style.display = 'none'; });
       getEl('typeTask').addEventListener('change', () => { getEl('prioritySection').style.display = 'block'; });
 
-      function showBalloonAndConfetti() {
-        const balloon = document.createElement('div');
-        balloon.className = 'balloon';
-        document.body.appendChild(balloon);
-        balloon.addEventListener('animationend', () => {
-          balloon.remove();
-          createConfetti();
-          createPopParticles();
-        });
-      }
-
-      function createConfetti() {
-        const colors = ['#ff4d6d','#f9ca24','#55efc4','#a29bfe','#ff9a9e','#43e97b'];
-        for (let i = 0; i < 40; i++) {
-          const piece = document.createElement('div');
-          piece.className = 'confetti-piece';
-          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-          piece.style.left = '50%';
-          piece.style.top = '30%';
-          piece.style.setProperty('--x', (Math.random()*300-150)+'px');
-          piece.style.setProperty('--y', (Math.random()*-200-50)+'px');
-          document.body.appendChild(piece);
-          setTimeout(() => piece.remove(), 800);
-        }
-      }
-
-      function createPopParticles() {
-        for (let i=0; i<10; i++) {
-          const p = document.createElement('div');
-          p.className = 'pop-particle';
-          p.style.left = '50%';
-          p.style.top = '30%';
-          p.style.setProperty('--px', (Math.random()*80-40)+'px');
-          p.style.setProperty('--py', (Math.random()*80-40)+'px');
-          document.body.appendChild(p);
-          setTimeout(() => p.remove(), 500);
-        }
-      }
-
+      // Инициализация
       (async () => {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
+        // Получаем запись текущего сотрудника
+        const { data: empData } = await _supabase.from('employees').select('*').eq('email', currentUserEmail).maybeSingle();
+        currentEmployee = empData;
         await loadEmployees();
         await loadTasks();
         renderFilters();
