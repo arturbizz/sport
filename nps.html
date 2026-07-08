@@ -129,15 +129,16 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
-    const _supabaseNPS = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Уникальные имена, исключаем конфликты
+    const SUPABASE_URL_NPS = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY_NPS = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const EDGE_FUNCTION_URL_NPS = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
+    const supabaseNpsClient = window.supabase.createClient(SUPABASE_URL_NPS, SUPABASE_ANON_KEY_NPS);
 
     let customersFromFile = [];
 
     (async () => {
-      const { data: { session } } = await _supabaseNPS.auth.getSession();
+      const { data: { session } } = await supabaseNpsClient.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
         return;
@@ -234,14 +235,14 @@
       loadContactsBtn.textContent = 'Загрузка данных...';
       msg.innerHTML = '';
       try {
-        const { data: { session } } = await _supabaseNPS.auth.getSession();
+        const { data: { session } } = await supabaseNpsClient.auth.getSession();
         if (!session) {
           msg.innerHTML = '<div class="error">Необходимо войти</div>';
           return;
         }
 
         const ids = customersFromFile.map(c => c.id);
-        const response = await fetch(EDGE_FUNCTION_URL, {
+        const response = await fetch(EDGE_FUNCTION_URL_NPS, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -250,22 +251,28 @@
           body: JSON.stringify({ customer_ids: ids })
         });
 
+        const responseText = await response.text();
         if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Ошибка ${response.status}: ${text}`);
+          throw new Error(`Ошибка ${response.status}: ${responseText}`);
         }
 
-        const result = await response.json();
+        let result;
+        try {
+          result = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error('Некорректный JSON от сервера: ' + responseText);
+        }
+
         if (!result.customers) {
-          throw new Error('Ответ не содержит массив customers');
+          throw new Error('Ответ не содержит массив customers: ' + responseText);
         }
 
         const merged = customersFromFile.map(cf => {
           const apiData = result.customers.find(ac => String(ac.id) === String(cf.id));
           return {
             name: (apiData && apiData.name && apiData.name !== `ID ${cf.id}`) ? apiData.name : cf.name,
-            phone: apiData ? apiData.phone : '',
-            email: apiData ? apiData.email : ''
+            phone: apiData ? (apiData.phone || '') : '',
+            email: apiData ? (apiData.email || '') : ''
           };
         });
 
