@@ -12,10 +12,15 @@
     :root {
       --accent: #ff6b6b;
       --bg: #fef9f0;
-      --surface: #ffffff;
+      --surface: rgba(255,255,255,0.85);
       --text: #2d3436;
       --text-light: #636e72;
       --border: #e0e0e0;
+      --critical: #e74c3c;
+      --high: #e67e22;
+      --medium: #f1c40f;
+      --low: #2ecc71;
+      --idea: #9b59b6;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -30,7 +35,6 @@
       position: relative;
       overflow-x: hidden;
     }
-    /* Музыкальный фон */
     .music-bg {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 0;
@@ -66,7 +70,7 @@
       position: relative; z-index: 2;
       width: 100%;
       max-width: 1200px;
-      background: rgba(255,255,255,0.85);
+      background: var(--surface);
       backdrop-filter: blur(10px);
       border-radius: 24px;
       padding: 2rem;
@@ -123,6 +127,7 @@
       gap: 0.5rem;
       flex-wrap: wrap;
       margin-bottom: 1.5rem;
+      align-items: center;
     }
     .filter-btn {
       padding: 0.4rem 1rem;
@@ -138,6 +143,14 @@
       background: var(--accent);
       color: white;
       border-color: var(--accent);
+    }
+    .employee-filter {
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      font-size: 0.8rem;
+      background: white;
+      margin-left: 0.5rem;
     }
 
     .tasks-grid {
@@ -161,6 +174,21 @@
       border-color: #ff6b6b;
       box-shadow: 0 12px 25px rgba(255,107,107,0.2);
       transform: translateY(-3px);
+    }
+    .task-card.critical-overdue {
+      animation: shake 0.5s infinite, glowRed 1s infinite alternate;
+      border-color: var(--critical);
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-3px); }
+      50% { transform: translateX(3px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
+    }
+    @keyframes glowRed {
+      0% { box-shadow: 0 0 5px red; }
+      100% { box-shadow: 0 0 20px red; }
     }
     .task-title {
       font-weight: 700;
@@ -186,6 +214,27 @@
     .badge.clarifying { background: #fef3c7; color: #92400e; }
     .badge.need_help { background: #fee2e2; color: #991b1b; }
     .badge.completed { background: #e0e7ff; color: #3730a3; }
+    .priority-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 0.3rem;
+    }
+    .help-indicator {
+      position: absolute;
+      top: -5px; right: -5px;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: #f9ca24;
+      animation: pulse 1.5s infinite;
+      display: none;
+    }
+    .help-indicator.show { display: block; }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
 
     .modal-overlay {
       position: fixed; inset: 0;
@@ -218,38 +267,49 @@
       font-size: 0.9rem;
       font-family: inherit;
     }
+    .radio-group {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
 
-    /* Конфетти */
     .confetti-piece {
       position: fixed;
-      width: 10px;
-      height: 10px;
+      width: 10px; height: 10px;
       border-radius: 50%;
       animation: confettiBurst 0.8s ease-out forwards;
-      z-index: 9999;
-      pointer-events: none;
+      z-index: 9999; pointer-events: none;
     }
     @keyframes confettiBurst {
-      0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+      0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
       100% { transform: translate(var(--x), var(--y)) rotate(720deg); opacity: 0; }
     }
     .balloon {
       position: fixed;
-      bottom: 30%;
-      left: 50%;
-      width: 40px;
-      height: 50px;
+      bottom: 30%; left: 50%;
+      width: 40px; height: 50px;
       background: radial-gradient(circle at 30% 30%, #ff9a9e, #fad0c4);
       border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
       box-shadow: 0 0 15px rgba(255,154,158,0.4);
-      animation: balloonRise 1.5s ease-out forwards;
-      z-index: 9999;
-      pointer-events: none;
+      animation: balloonRise 1.2s ease-out forwards;
+      z-index: 9999; pointer-events: none;
     }
     @keyframes balloonRise {
       0% { transform: translateX(-50%) scale(1); opacity: 1; }
-      80% { transform: translateX(-50%) translateY(-200px) scale(1.3); opacity: 0.7; }
-      100% { transform: translateX(-50%) translateY(-300px) scale(0.5); opacity: 0; }
+      100% { transform: translateX(-50%) translateY(-300px) scale(0.8); opacity: 0; }
+    }
+    .pop-particle {
+      position: fixed;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #ff9a9e;
+      z-index: 9999; pointer-events: none;
+      animation: popOut 0.5s ease-out forwards;
+    }
+    @keyframes popOut {
+      0% { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--px), var(--py)) scale(0); opacity: 0; }
     }
   </style>
 </head>
@@ -271,20 +331,38 @@
     <div class="filters" id="filters">
       <button class="filter-btn active" data-status="all">Все</button>
       <button class="filter-btn" data-status="in_progress">В работе</button>
-      <button class="filter-btn" data-status="clarifying">Уточняю детали</button>
+      <button class="filter-btn" data-status="clarifying">Уточняю</button>
       <button class="filter-btn" data-status="need_help">Нужна помощь</button>
       <button class="filter-btn" data-status="completed">Выполнено</button>
+      <select class="employee-filter" id="employeeFilter">
+        <option value="">Все сотрудники</option>
+      </select>
     </div>
 
     <div id="tasksContainer" class="tasks-grid"></div>
   </div>
 
-  <!-- Модальное окно задачи -->
+  <!-- Модалка задачи -->
   <div class="modal-overlay" id="taskModal" style="display:none;">
     <div class="modal">
       <h2 id="modalTitle">Новая задача</h2>
       <input type="text" id="taskTitle" placeholder="Название задачи">
       <textarea id="taskDescription" rows="3" placeholder="Описание задачи"></textarea>
+
+      <div class="radio-group">
+        <label><input type="radio" name="taskType" value="idea" id="typeIdea"> Идея</label>
+        <label><input type="radio" name="taskType" value="task" id="typeTask" checked> Задача</label>
+      </div>
+
+      <div id="prioritySection" style="display:block;">
+        <select id="taskPriority">
+          <option value="low">Низкий (раз в неделю)</option>
+          <option value="medium" selected>Средний (раз в 2 дня)</option>
+          <option value="high">Срочный (каждый день)</option>
+          <option value="critical">Суперсрочный (каждый час)</option>
+        </select>
+      </div>
+
       <select id="taskAssigned"></select>
       <input type="date" id="taskDueDate" placeholder="Дата завершения">
       <select id="taskStatus">
@@ -293,12 +371,22 @@
         <option value="need_help">Нужна помощь</option>
         <option value="completed">Выполнено</option>
       </select>
-      <textarea id="taskComment" rows="2" placeholder="Комментарий (необязательно)"></textarea>
+      <textarea id="taskComment" rows="2" placeholder="Комментарий"></textarea>
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
         <button class="btn" id="saveTaskBtn">Сохранить</button>
         <button class="btn btn-outline" id="cancelTaskBtn">Отмена</button>
         <button class="btn btn-outline" id="deleteTaskBtn" style="display:none;">Удалить</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Модалка предложения помощи -->
+  <div class="modal-overlay" id="helpModal" style="display:none;">
+    <div class="modal">
+      <h2>Предложить помощь</h2>
+      <textarea id="helpComment" rows="3" placeholder="Ваше предложение или решение"></textarea>
+      <button class="btn" id="sendHelpBtn">Отправить</button>
+      <button class="btn btn-outline" id="cancelHelpBtn" style="margin-left:0.5rem;">Отмена</button>
     </div>
   </div>
 
@@ -312,8 +400,8 @@
     let employees = [];
     let tasks = [];
     let currentFilter = 'all';
+    let currentEmployeeFilter = '';
 
-    // Список ролей, которым разрешено создавать задачи и быть ответственными
     const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
     const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
 
@@ -323,18 +411,21 @@
       currentUserEmail = session.user.email;
       await loadEmployees();
       await loadTasks();
+      renderFilters();
       renderTasks();
+      checkOverdueTasks();
     })();
 
     async function loadEmployees() {
       const { data } = await _supabase.from('employees').select('*');
       employees = data || [];
-      const select = document.getElementById('taskAssigned');
-      // Фильтруем: только Управляющие, Менеджеры, Администраторы и Андрошин Сергей
       const allowed = employees.filter(e => 
         ALLOWED_ROLES.includes(e.role) || e.name === SENIOR_TEACHER_NAME
       );
-      select.innerHTML = allowed.map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join('');
+      const assignSelect = document.getElementById('taskAssigned');
+      assignSelect.innerHTML = allowed.map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join('');
+      const empFilter = document.getElementById('employeeFilter');
+      empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
     }
 
     async function loadTasks() {
@@ -343,12 +434,23 @@
       tasks = data || [];
     }
 
+    function renderFilters() {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.status === currentFilter);
+      });
+      document.getElementById('employeeFilter').value = currentEmployeeFilter;
+    }
+
     function renderTasks() {
       const container = document.getElementById('tasksContainer');
       let filtered = tasks;
       if (currentFilter !== 'all') {
-        filtered = tasks.filter(t => t.status === currentFilter);
+        filtered = filtered.filter(t => t.status === currentFilter);
       }
+      if (currentEmployeeFilter) {
+        filtered = filtered.filter(t => t.assigned_to === currentEmployeeFilter);
+      }
+
       if (!filtered.length) {
         container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет задач</p>';
         return;
@@ -362,24 +464,49 @@
           need_help: 'Нужна помощь',
           completed: 'Выполнено'
         };
-        const isOwnerOrCreator = (currentUserEmail === OWNER_EMAIL) || (task.created_by === currentUserEmail);
-        const canEdit = isOwnerOrCreator;
+        const priorityLabels = {
+          idea: 'Идея',
+          low: 'Низкий',
+          medium: 'Средний',
+          high: 'Срочный',
+          critical: 'Суперсрочно'
+        };
+        const priorityColors = {
+          idea: 'var(--idea)',
+          low: 'var(--low)',
+          medium: 'var(--medium)',
+          high: 'var(--high)',
+          critical: 'var(--critical)'
+        };
+        const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+        const isCriticalOverdue = isOverdue && task.priority === 'critical';
+        const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
+
+        const isAssignee = task.assigned_to && employees.find(e => e.id === task.assigned_to)?.email === currentUserEmail;
+        const isCreator = task.created_by === currentUserEmail;
+        const canEdit = isCreator || isAssignee || currentUserEmail === OWNER_EMAIL;
+        const canHelp = !isCreator && !isAssignee && task.status !== 'completed';
 
         return `
-        <div class="task-card">
+        <div class="${cardClasses}" data-id="${task.id}">
+          <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
           <div class="task-title">${task.title}</div>
+          <div style="font-size:0.8rem; color:var(--text-light);">
+            <span class="priority-dot" style="background:${priorityColors[task.priority]}"></span>${priorityLabels[task.priority]}
+          </div>
           ${task.description ? `<div style="font-size:0.9rem; color:#444;">${task.description}</div>` : ''}
           <div class="task-meta">
             <span>${emp.name || 'Не назначен'}</span>
             <span>${task.due_date || '—'}</span>
           </div>
           <span class="badge ${task.status}">${statusLabels[task.status]}</span>
-          ${task.comment ? `<div style="font-style:italic; font-size:0.8rem; background:#fef9f0; padding:0.3rem; border-radius:8px;">${task.comment}</div>` : ''}
-          ${canEdit ? `
-          <div style="display:flex; gap:0.3rem; margin-top:0.5rem;">
-            <button class="btn btn-outline edit-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Изменить</button>
+          ${task.help_offered && task.help_comment ? `<div style="font-style:italic; font-size:0.8rem; background:#fef9f0; padding:0.3rem; border-radius:8px;">Помощь: ${task.help_comment}</div>` : ''}
+          ${task.comment ? `<div style="font-style:italic; font-size:0.8rem; background:#f0f0f0; padding:0.3rem; border-radius:8px;">${task.comment}</div>` : ''}
+          <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
+            ${canEdit ? `<button class="btn btn-outline edit-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Изменить</button>` : ''}
+            ${canHelp ? `<button class="btn btn-outline help-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Предложить помощь</button>` : ''}
             ${currentUserEmail === OWNER_EMAIL ? `<button class="btn btn-outline delete-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Удалить</button>` : ''}
-          </div>` : ''}
+          </div>
         </div>`;
       }).join('');
 
@@ -388,6 +515,13 @@
           const id = e.target.dataset.id;
           const task = tasks.find(t => t.id == id);
           if (task) openEditModal(task);
+        });
+      });
+      document.querySelectorAll('.help-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.target.dataset.id;
+          document.getElementById('helpModal').dataset.taskId = id;
+          document.getElementById('helpModal').style.display = 'flex';
         });
       });
       document.querySelectorAll('.delete-btn').forEach(btn => {
@@ -403,14 +537,32 @@
       });
     }
 
+    function checkOverdueTasks() {
+      const overdue = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
+      if (overdue.length > 0) {
+        // Визуальное оповещение — можно добавить баннер
+      }
+    }
+
     // Фильтры
     document.getElementById('filters').addEventListener('click', (e) => {
       if (e.target.classList.contains('filter-btn')) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
         currentFilter = e.target.dataset.status;
+        renderFilters();
         renderTasks();
       }
+    });
+    document.getElementById('employeeFilter').addEventListener('change', (e) => {
+      currentEmployeeFilter = e.target.value;
+      renderTasks();
+    });
+
+    // Радио-кнопки типа задачи
+    document.getElementById('typeIdea').addEventListener('change', () => {
+      document.getElementById('prioritySection').style.display = 'none';
+    });
+    document.getElementById('typeTask').addEventListener('change', () => {
+      document.getElementById('prioritySection').style.display = 'block';
     });
 
     // Добавление задачи
@@ -421,19 +573,26 @@
       document.getElementById('taskDueDate').value = '';
       document.getElementById('taskComment').value = '';
       document.getElementById('taskStatus').value = 'in_progress';
+      document.getElementById('typeTask').checked = true;
+      document.getElementById('prioritySection').style.display = 'block';
+      document.getElementById('taskPriority').value = 'medium';
       document.getElementById('deleteTaskBtn').style.display = 'none';
       document.getElementById('taskModal').style.display = 'flex';
     });
 
-    // Закрытие модалки
+    // Закрытие модалок
     document.getElementById('cancelTaskBtn').addEventListener('click', () => {
       document.getElementById('taskModal').style.display = 'none';
+    });
+    document.getElementById('cancelHelpBtn').addEventListener('click', () => {
+      document.getElementById('helpModal').style.display = 'none';
     });
 
     // Сохранение задачи
     document.getElementById('saveTaskBtn').addEventListener('click', async () => {
       const title = document.getElementById('taskTitle').value.trim();
       if (!title) return alert('Введите название задачи');
+      const isIdea = document.getElementById('typeIdea').checked;
       const taskData = {
         title,
         description: document.getElementById('taskDescription').value.trim(),
@@ -441,6 +600,7 @@
         due_date: document.getElementById('taskDueDate').value || null,
         status: document.getElementById('taskStatus').value,
         comment: document.getElementById('taskComment').value.trim(),
+        priority: isIdea ? 'idea' : document.getElementById('taskPriority').value,
         created_by: currentUserEmail
       };
 
@@ -461,7 +621,7 @@
       renderTasks();
     });
 
-    // Удаление задачи (управляющим)
+    // Удаление задачи
     document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
       const taskId = document.getElementById('taskModal').dataset.taskId;
       if (!taskId) return;
@@ -482,31 +642,75 @@
       document.getElementById('taskDueDate').value = task.due_date || '';
       document.getElementById('taskStatus').value = task.status;
       document.getElementById('taskComment').value = task.comment || '';
+      if (task.priority === 'idea') {
+        document.getElementById('typeIdea').checked = true;
+        document.getElementById('prioritySection').style.display = 'none';
+      } else {
+        document.getElementById('typeTask').checked = true;
+        document.getElementById('prioritySection').style.display = 'block';
+        document.getElementById('taskPriority').value = task.priority || 'medium';
+      }
       document.getElementById('deleteTaskBtn').style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
       document.getElementById('taskModal').dataset.taskId = task.id;
       document.getElementById('taskModal').style.display = 'flex';
     }
 
-    // Анимация успеха: шарик взлетает и лопается с конфетти
+    // Предложить помощь
+    document.getElementById('sendHelpBtn').addEventListener('click', async () => {
+      const taskId = document.getElementById('helpModal').dataset.taskId;
+      const comment = document.getElementById('helpComment').value.trim();
+      if (!comment) return alert('Введите комментарий');
+      const { error } = await _supabase.from('tasks').update({
+        help_offered: true,
+        help_comment: comment,
+        help_by: currentUserEmail
+      }).eq('id', taskId);
+      if (error) { alert('Ошибка: ' + error.message); return; }
+      document.getElementById('helpModal').style.display = 'none';
+      document.getElementById('helpComment').value = '';
+      showBalloonAndConfetti();
+      await loadTasks();
+      renderTasks();
+    });
+
+    // Анимация шарика и конфетти (исправленная последовательность)
     function showBalloonAndConfetti() {
-      // Запускаем шарик
       const balloon = document.createElement('div');
       balloon.className = 'balloon';
       document.body.appendChild(balloon);
-      setTimeout(() => balloon.remove(), 1500);
 
-      // Конфетти
-      const colors = ['#ff4d6d', '#f9ca24', '#55efc4', '#a29bfe', '#ff9a9e', '#43e97b'];
+      balloon.addEventListener('animationend', () => {
+        balloon.remove();
+        createConfetti();
+        createPopParticles();
+      });
+    }
+
+    function createConfetti() {
+      const colors = ['#ff4d6d','#f9ca24','#55efc4','#a29bfe','#ff9a9e','#43e97b'];
       for (let i = 0; i < 40; i++) {
         const piece = document.createElement('div');
         piece.className = 'confetti-piece';
         piece.style.background = colors[Math.floor(Math.random() * colors.length)];
         piece.style.left = '50%';
         piece.style.top = '30%';
-        piece.style.setProperty('--x', (Math.random() * 300 - 150) + 'px');
-        piece.style.setProperty('--y', (Math.random() * -200 - 50) + 'px');
+        piece.style.setProperty('--x', (Math.random()*300-150)+'px');
+        piece.style.setProperty('--y', (Math.random()*-200-50)+'px');
         document.body.appendChild(piece);
         setTimeout(() => piece.remove(), 800);
+      }
+    }
+
+    function createPopParticles() {
+      for (let i=0; i<10; i++) {
+        const p = document.createElement('div');
+        p.className = 'pop-particle';
+        p.style.left = '50%';
+        p.style.top = '30%';
+        p.style.setProperty('--px', (Math.random()*80-40)+'px');
+        p.style.setProperty('--py', (Math.random()*80-40)+'px');
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 500);
       }
     }
   </script>
