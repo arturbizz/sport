@@ -70,14 +70,11 @@
     <button id="submitBtn">Войти</button>
     <div class="toggle" id="toggleForm">Нет аккаунта? Зарегистрироваться</div>
   </div>
-
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
     let mode = 'login';
-
     document.getElementById('toggleForm').addEventListener('click', () => {
       mode = mode === 'login' ? 'register' : 'login';
       document.getElementById('formTitle').textContent = mode === 'login' ? 'Вход' : 'Регистрация';
@@ -86,7 +83,6 @@
       document.getElementById('error').textContent = '';
       document.getElementById('info').textContent = '';
     });
-
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
@@ -94,31 +90,17 @@
       const infoEl = document.getElementById('info');
       errorEl.textContent = '';
       infoEl.textContent = '';
-
-      if (!email || !password) {
-        errorEl.textContent = 'Заполните все поля';
-        return;
-      }
-
+      if (!email || !password) { errorEl.textContent = 'Заполните все поля'; return; }
       if (mode === 'login') {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          errorEl.textContent = error.message;
-          return;
-        }
+        if (error) { errorEl.textContent = error.message; return; }
         window.location.href = 'index.html';
       } else {
-        // Регистрация
         const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-          errorEl.textContent = error.message;
-          return;
-        }
-        // Если email подтверждение отключено, сессия будет активна сразу
+        if (error) { errorEl.textContent = error.message; return; }
         if (data.session) {
           window.location.href = 'index.html';
         } else {
-          // Подтверждение email требуется
           infoEl.textContent = 'Регистрация успешна. Проверьте почту для подтверждения (если не отключено в настройках Supabase).';
         }
       }
