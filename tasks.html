@@ -168,13 +168,9 @@
       100% { transform: scale(1); }
     }
 
-    /* Ограничение длинного текста */
     .text-collapsed {
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden; cursor: pointer; transition: all 0.3s;
-    }
-    .text-expanded {
-      -webkit-line-clamp: unset; cursor: pointer;
     }
 
     .modal-overlay {
@@ -198,7 +194,6 @@
       font-size: 0.9rem; font-family: inherit;
     }
 
-    /* Кастомный мультиселект */
     .multi-select {
       position: relative; margin: 0.5rem 0;
     }
@@ -243,7 +238,7 @@
       <button class="btn" id="addTaskBtn">+ Новая задача</button>
     </div>
 
-    <div class="filters">
+    <div class="filters" id="filters">
       <button class="filter-btn active" data-status="all">Все</button>
       <button class="filter-btn" data-status="in_progress">В работе</button>
       <button class="filter-btn" data-status="clarifying">Уточняю</button>
@@ -263,13 +258,11 @@
       <h2 id="modalTitle">Новая задача</h2>
       <input type="text" id="taskTitle" placeholder="Название задачи">
       <textarea id="taskDescription" rows="3" placeholder="Описание задачи"></textarea>
-
       <div class="radio-group">
         <label><input type="radio" name="taskType" value="idea" id="typeIdea"> Идея</label>
         <label><input type="radio" name="taskType" value="task" id="typeTask" checked> Задача</label>
       </div>
-
-      <div id="prioritySection" style="display:block;">
+      <div id="prioritySection">
         <select id="taskPriority">
           <option value="low">Низкий (раз в неделю)</option>
           <option value="medium" selected>Средний (раз в 2 дня)</option>
@@ -277,13 +270,11 @@
           <option value="critical">Суперсрочный (каждый час)</option>
         </select>
       </div>
-
       <div class="multi-select" id="multiSelect">
-        <div class="multi-select-trigger" id="multiTrigger">Выберите ответственных</div>
+        <div class="multi-select-trigger" id="multiTrigger">Выберите ответственного</div>
         <div class="multi-select-dropdown" id="multiDropdown"></div>
       </div>
-
-      <input type="date" id="taskDueDate" placeholder="Дата завершения">
+      <input type="date" id="taskDueDate">
       <select id="taskStatus">
         <option value="in_progress">В работе</option>
         <option value="clarifying">Уточняю детали</option>
@@ -299,7 +290,7 @@
     </div>
   </div>
 
-  <!-- Модалка предложения помощи -->
+  <!-- Модалка помощи -->
   <div class="modal-overlay" id="helpModal" style="display:none;">
     <div class="modal">
       <h2>Предложить помощь</h2>
@@ -309,7 +300,7 @@
     </div>
   </div>
 
-  <!-- Кастомная алерт-модалка -->
+  <!-- Кастомный алерт -->
   <div class="modal-overlay" id="alertModal" style="display:none;">
     <div class="modal alert-modal" style="max-width:350px; text-align:center;">
       <p id="alertMessage"></p>
@@ -317,7 +308,7 @@
     </div>
   </div>
 
-  <!-- Кастомная confirm-модалка -->
+  <!-- Кастомный confirm -->
   <div class="modal-overlay" id="confirmModal" style="display:none;">
     <div class="modal alert-modal" style="max-width:350px; text-align:center;">
       <p id="confirmMessage"></p>
@@ -329,400 +320,400 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const OWNER_EMAIL = 'arturgalkin.ru@mail.ru';
+      let currentUserEmail = null;
+      let employees = [];
+      let tasks = [];
+      let currentFilter = 'all';
+      let currentEmployeeFilter = '';
 
-    const OWNER_EMAIL = 'arturgalkin.ru@mail.ru';
-    let currentUserEmail = null;
-    let employees = [];
-    let tasks = [];
-    let currentFilter = 'all';
-    let currentEmployeeFilter = '';
+      const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
+      const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
 
-    const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
-    const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
-
-    // Кастомные алерт и конфирм
-    function customAlert(message) {
-      return new Promise(resolve => {
-        document.getElementById('alertMessage').textContent = message;
-        document.getElementById('alertModal').style.display = 'flex';
-        document.getElementById('alertOkBtn').onclick = () => {
-          document.getElementById('alertModal').style.display = 'none';
-          resolve();
-        };
-      });
-    }
-    function customConfirm(message) {
-      return new Promise(resolve => {
-        document.getElementById('confirmMessage').textContent = message;
-        document.getElementById('confirmModal').style.display = 'flex';
-        document.getElementById('confirmYesBtn').onclick = () => {
-          document.getElementById('confirmModal').style.display = 'none';
-          resolve(true);
-        };
-        document.getElementById('confirmNoBtn').onclick = () => {
-          document.getElementById('confirmModal').style.display = 'none';
-          resolve(false);
-        };
-      });
-    }
-
-    // Инициализация
-    (async () => {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (!session) { window.location.href = 'login.html'; return; }
-      currentUserEmail = session.user.email;
-      await loadEmployees();
-      await loadTasks();
-      renderFilters();
-      renderTasks();
-    })();
-
-    async function loadEmployees() {
-      const { data } = await _supabase.from('employees').select('*');
-      employees = data || [];
-      const allowed = employees.filter(e => 
-        ALLOWED_ROLES.includes(e.role) || e.name === SENIOR_TEACHER_NAME
-      );
-      // Заполняем выпадающий список фильтра
-      const empFilter = document.getElementById('employeeFilter');
-      empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-      // Заполняем чекбоксы мультиселекта
-      const multiDropdown = document.getElementById('multiDropdown');
-      multiDropdown.innerHTML = allowed.map(e => `
-        <label class="multi-select-item">
-          <input type="checkbox" value="${e.id}"> ${e.name} (${e.role})
-        </label>
-      `).join('');
-      // Обработчик клика по триггеру
-      document.getElementById('multiTrigger').addEventListener('click', (e) => {
-        e.stopPropagation();
-        document.getElementById('multiDropdown').classList.toggle('open');
-      });
-      document.addEventListener('click', () => {
-        document.getElementById('multiDropdown').classList.remove('open');
-      });
-      // Обновляем текст триггера при изменении чекбоксов
-      multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', updateMultiTrigger);
-      });
-    }
-
-    function updateMultiTrigger() {
-      const checked = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => {
-        const emp = employees.find(e => e.id === cb.value);
-        return emp ? emp.name : '';
-      }).filter(Boolean);
-      document.getElementById('multiTrigger').textContent = checked.length ? checked.join(', ') : 'Выберите ответственных';
-    }
-
-    async function loadTasks() {
-      const { data, error } = await _supabase.from('tasks').select('*').order('created_at', { ascending: false });
-      if (error) { console.error(error); return; }
-      tasks = data || [];
-    }
-
-    function renderFilters() {
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.status === currentFilter);
-      });
-      document.getElementById('employeeFilter').value = currentEmployeeFilter;
-    }
-
-    function renderTasks() {
-      const container = document.getElementById('tasksContainer');
-      let filtered = tasks;
-      if (currentFilter !== 'all') {
-        filtered = filtered.filter(t => t.status === currentFilter);
-      }
-      if (currentEmployeeFilter) {
-        filtered = filtered.filter(t => t.assigned_to && t.assigned_to.includes(currentEmployeeFilter));
+      // Получение элемента с проверкой
+      function getEl(id) {
+        const el = document.getElementById(id);
+        if (!el) console.error(`Element with id "${id}" not found`);
+        return el;
       }
 
-      if (!filtered.length) {
-        container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет задач</p>';
-        return;
-      }
-
-      container.innerHTML = filtered.map(task => {
-        const assignees = (task.assigned_to || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
-        const assigneeNames = assignees.map(e => e.name).join(', ') || 'Не назначен';
-        const statusLabels = {
-          in_progress: 'В работе',
-          clarifying: 'Уточняю детали',
-          need_help: 'Нужна помощь',
-          completed: 'Выполнено'
-        };
-        const priorityLabels = {
-          idea: 'Идея',
-          low: 'Низкий',
-          medium: 'Средний',
-          high: 'Срочный',
-          critical: 'Суперсрочно'
-        };
-        const priorityColors = {
-          idea: 'var(--idea)',
-          low: 'var(--low)',
-          medium: 'var(--medium)',
-          high: 'var(--high)',
-          critical: 'var(--critical)'
-        };
-        const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
-        const isCriticalOverdue = isOverdue && task.priority === 'critical';
-        const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
-
-        const currentUserEmp = employees.find(e => e.email === currentUserEmail);
-        const isAssigned = currentUserEmp && task.assigned_to && task.assigned_to.includes(currentUserEmp.id);
-        const isCreator = task.created_by === currentUserEmail;
-        const canEdit = isCreator || isAssigned || currentUserEmail === OWNER_EMAIL;
-        const canHelp = !isCreator && !isAssigned && task.status !== 'completed';
-
-        return `
-        <div class="${cardClasses}" data-id="${task.id}">
-          <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
-          <div class="task-title">${task.title}</div>
-          <div style="font-size:0.8rem; color:var(--text-light);">
-            <span class="priority-dot" style="background:${priorityColors[task.priority]}"></span>${priorityLabels[task.priority]}
-          </div>
-          ${task.description ? `<div class="text-collapsed task-desc" data-full="${task.description.replace(/"/g, '&quot;')}">${task.description}</div>` : ''}
-          <div class="task-meta">
-            <span>${assigneeNames}</span>
-            <span>${task.due_date || '—'}</span>
-          </div>
-          <span class="badge ${task.status}">${statusLabels[task.status]}</span>
-          ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${task.help_comment}</div>` : ''}
-          ${task.comment ? `<div class="text-collapsed task-comment">${task.comment}</div>` : ''}
-          <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
-            ${canEdit ? `<button class="btn btn-outline edit-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Изменить</button>` : ''}
-            ${canHelp ? `<button class="btn btn-outline help-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Предложить помощь</button>` : ''}
-            ${currentUserEmail === OWNER_EMAIL ? `<button class="btn btn-outline delete-btn" style="padding:0.3rem 0.8rem; font-size:0.8rem;" data-id="${task.id}">Удалить</button>` : ''}
-          </div>
-        </div>`;
-      }).join('');
-
-      // Обработчики кликов для раскрытия/сворачивания текста
-      document.querySelectorAll('.task-desc, .task-comment, .task-help').forEach(el => {
-        el.addEventListener('click', function() {
-          this.classList.toggle('text-collapsed');
+      function customAlert(msg) {
+        return new Promise(resolve => {
+          const alertM = getEl('alertModal');
+          const msgEl = getEl('alertMessage');
+          if (!alertM || !msgEl) { alert(msg); resolve(); return; }
+          msgEl.textContent = msg;
+          alertM.style.display = 'flex';
+          const okBtn = getEl('alertOkBtn');
+          okBtn.onclick = () => { alertM.style.display = 'none'; resolve(); };
         });
-      });
+      }
 
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = e.target.dataset.id;
-          const task = tasks.find(t => t.id == id);
-          if (task) openEditModal(task);
+      function customConfirm(msg) {
+        return new Promise(resolve => {
+          const confirmM = getEl('confirmModal');
+          const msgEl = getEl('confirmMessage');
+          if (!confirmM || !msgEl) { resolve(confirm(msg)); return; }
+          msgEl.textContent = msg;
+          confirmM.style.display = 'flex';
+          getEl('confirmYesBtn').onclick = () => { confirmM.style.display = 'none'; resolve(true); };
+          getEl('confirmNoBtn').onclick = () => { confirmM.style.display = 'none'; resolve(false); };
         });
-      });
-      document.querySelectorAll('.help-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const id = e.target.dataset.id;
-          document.getElementById('helpModal').dataset.taskId = id;
-          document.getElementById('helpModal').style.display = 'flex';
+      }
+
+      function updateMultiTrigger() {
+        const checked = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => {
+          const emp = employees.find(e => e.id === cb.value);
+          return emp ? emp.name : '';
+        }).filter(Boolean);
+        const trigger = getEl('multiTrigger');
+        if (trigger) trigger.textContent = checked.length ? checked.join(', ') : 'Выберите ответственного';
+      }
+
+      async function loadEmployees() {
+        const { data } = await _supabase.from('employees').select('*');
+        employees = data || [];
+        const allowed = employees.filter(e => ALLOWED_ROLES.includes(e.role) || e.name === SENIOR_TEACHER_NAME);
+
+        const empFilter = getEl('employeeFilter');
+        if (empFilter) {
+          empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+        }
+
+        const multiDropdown = getEl('multiDropdown');
+        if (multiDropdown) {
+          multiDropdown.innerHTML = allowed.map(e => `
+            <label class="multi-select-item">
+              <input type="checkbox" value="${e.id}"> ${e.name} (${e.role})
+            </label>
+          `).join('');
+
+          multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', updateMultiTrigger);
+          });
+        }
+
+        const multiTrigger = getEl('multiTrigger');
+        if (multiTrigger) {
+          multiTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dropdown = getEl('multiDropdown');
+            if (dropdown) dropdown.classList.toggle('open');
+          });
+          document.addEventListener('click', () => {
+            const dropdown = getEl('multiDropdown');
+            if (dropdown) dropdown.classList.remove('open');
+          });
+        }
+      }
+
+      async function loadTasks() {
+        const { data, error } = await _supabase.from('tasks').select('*').order('created_at', { ascending: false });
+        if (error) { console.error(error); return; }
+        tasks = data || [];
+      }
+
+      function renderFilters() {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.status === currentFilter);
         });
-      });
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const id = e.target.dataset.id;
-          const confirmed = await customConfirm('Удалить задачу?');
-          if (confirmed) {
-            await _supabase.from('tasks').delete().eq('id', id);
-            showBalloonAndConfetti();
-            await loadTasks();
-            renderTasks();
-          }
+        const empFilter = getEl('employeeFilter');
+        if (empFilter) empFilter.value = currentEmployeeFilter;
+      }
+
+      function renderTasks() {
+        const container = getEl('tasksContainer');
+        if (!container) return;
+
+        let filtered = tasks;
+        if (currentFilter !== 'all') filtered = filtered.filter(t => t.status === currentFilter);
+        if (currentEmployeeFilter) filtered = filtered.filter(t => t.assigned_to === currentEmployeeFilter);
+
+        if (!filtered.length) {
+          container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет задач</p>';
+          return;
+        }
+
+        container.innerHTML = filtered.map(task => {
+          const emp = employees.find(e => e.id === task.assigned_to) || {};
+          const assigneeName = emp.name || 'Не назначен';
+          const statusLabels = {
+            in_progress: 'В работе',
+            clarifying: 'Уточняю детали',
+            need_help: 'Нужна помощь',
+            completed: 'Выполнено'
+          };
+          const priorityLabels = {
+            idea: 'Идея',
+            low: 'Низкий',
+            medium: 'Средний',
+            high: 'Срочный',
+            critical: 'Суперсрочно'
+          };
+          const priorityColors = {
+            idea: 'var(--idea)',
+            low: 'var(--low)',
+            medium: 'var(--medium)',
+            high: 'var(--high)',
+            critical: 'var(--critical)'
+          };
+          const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
+          const isCriticalOverdue = isOverdue && task.priority === 'critical';
+          const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
+
+          const currentUserEmp = employees.find(e => e.email === currentUserEmail);
+          const isAssigned = currentUserEmp && task.assigned_to === currentUserEmp.id;
+          const isCreator = task.created_by === currentUserEmail;
+          const canEdit = isCreator || isAssigned || currentUserEmail === OWNER_EMAIL;
+          const canHelp = !isCreator && !isAssigned && task.status !== 'completed';
+
+          return `
+          <div class="task-card ${cardClasses}" data-id="${task.id}">
+            <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
+            <div class="task-title">${task.title}</div>
+            <div style="font-size:0.8rem; color:var(--text-light);">
+              <span class="priority-dot" style="background:${priorityColors[task.priority]}"></span>${priorityLabels[task.priority]}
+            </div>
+            ${task.description ? `<div class="text-collapsed task-desc">${task.description}</div>` : ''}
+            <div class="task-meta">
+              <span>${assigneeName}</span>
+              <span>${task.due_date || '—'}</span>
+            </div>
+            <span class="badge ${task.status}">${statusLabels[task.status]}</span>
+            ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${task.help_comment}</div>` : ''}
+            ${task.comment ? `<div class="text-collapsed task-comment">${task.comment}</div>` : ''}
+            <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
+              ${canEdit ? `<button class="btn btn-outline edit-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>` : ''}
+              ${canHelp ? `<button class="btn btn-outline help-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Предложить помощь</button>` : ''}
+              ${currentUserEmail === OWNER_EMAIL ? `<button class="btn btn-outline delete-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>` : ''}
+            </div>
+          </div>`;
+        }).join('');
+
+        document.querySelectorAll('.task-desc, .task-comment, .task-help').forEach(el => {
+          el.addEventListener('click', () => el.classList.toggle('text-collapsed'));
         });
-      });
-    }
-
-    // Фильтры
-    document.getElementById('filters').addEventListener('click', (e) => {
-      if (e.target.classList.contains('filter-btn')) {
-        currentFilter = e.target.dataset.status;
-        renderFilters();
-        renderTasks();
-      }
-    });
-    document.getElementById('employeeFilter').addEventListener('change', (e) => {
-      currentEmployeeFilter = e.target.value;
-      renderTasks();
-    });
-
-    // Радио-кнопки типа задачи
-    document.getElementById('typeIdea').addEventListener('change', () => {
-      document.getElementById('prioritySection').style.display = 'none';
-    });
-    document.getElementById('typeTask').addEventListener('change', () => {
-      document.getElementById('prioritySection').style.display = 'block';
-    });
-
-    // Добавление задачи
-    document.getElementById('addTaskBtn').addEventListener('click', () => {
-      document.getElementById('modalTitle').textContent = 'Новая задача';
-      document.getElementById('taskTitle').value = '';
-      document.getElementById('taskDescription').value = '';
-      document.getElementById('taskDueDate').value = '';
-      document.getElementById('taskComment').value = '';
-      document.getElementById('taskStatus').value = 'in_progress';
-      document.getElementById('typeTask').checked = true;
-      document.getElementById('prioritySection').style.display = 'block';
-      document.getElementById('taskPriority').value = 'medium';
-      document.getElementById('deleteTaskBtn').style.display = 'none';
-      // Очищаем мультиселект
-      document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
-      updateMultiTrigger();
-      document.getElementById('taskModal').style.display = 'flex';
-    });
-
-    document.getElementById('cancelTaskBtn').addEventListener('click', () => {
-      document.getElementById('taskModal').style.display = 'none';
-    });
-
-    // Сохранение задачи
-    document.getElementById('saveTaskBtn').addEventListener('click', async () => {
-      const title = document.getElementById('taskTitle').value.trim();
-      if (!title) {
-        await customAlert('Введите название задачи');
-        return;
-      }
-      const isIdea = document.getElementById('typeIdea').checked;
-      const priority = isIdea ? 'idea' : document.getElementById('taskPriority').value;
-      const assignedIds = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => cb.value);
-      const taskData = {
-        title,
-        description: document.getElementById('taskDescription').value.trim(),
-        assigned_to: assignedIds.length > 0 ? assignedIds : [],
-        due_date: document.getElementById('taskDueDate').value || null,
-        status: document.getElementById('taskStatus').value,
-        comment: document.getElementById('taskComment').value.trim(),
-        priority: priority,
-        created_by: currentUserEmail
-      };
-
-      const taskId = document.getElementById('taskModal').dataset.taskId;
-      let error;
-      if (taskId) {
-        const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
-        error = updateError;
-      } else {
-        const { error: insertError } = await _supabase.from('tasks').insert([taskData]);
-        error = insertError;
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            const task = tasks.find(t => t.id == id);
+            if (task) openEditModal(task);
+          });
+        });
+        document.querySelectorAll('.help-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            const helpModal = getEl('helpModal');
+            if (helpModal) { helpModal.dataset.taskId = id; helpModal.style.display = 'flex'; }
+          });
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = e.target.dataset.id;
+            const confirmed = await customConfirm('Удалить задачу?');
+            if (confirmed) {
+              await _supabase.from('tasks').delete().eq('id', id);
+              showBalloonAndConfetti();
+              await loadTasks();
+              renderTasks();
+            }
+          });
+        });
       }
 
-      if (error) {
-        await customAlert('Ошибка: ' + error.message);
-        return;
+      function openEditModal(task) {
+        getEl('modalTitle').textContent = 'Редактирование задачи';
+        getEl('taskTitle').value = task.title;
+        getEl('taskDescription').value = task.description || '';
+        getEl('taskDueDate').value = task.due_date || '';
+        getEl('taskStatus').value = task.status;
+        getEl('taskComment').value = task.comment || '';
+        if (task.priority === 'idea') {
+          getEl('typeIdea').checked = true;
+          getEl('prioritySection').style.display = 'none';
+        } else {
+          getEl('typeTask').checked = true;
+          getEl('prioritySection').style.display = 'block';
+          getEl('taskPriority').value = task.priority || 'medium';
+        }
+        document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
+          cb.checked = (task.assigned_to && task.assigned_to === cb.value);
+        });
+        updateMultiTrigger();
+        const deleteBtn = getEl('deleteTaskBtn');
+        if (deleteBtn) deleteBtn.style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
+        getEl('taskModal').dataset.taskId = task.id;
+        getEl('taskModal').style.display = 'flex';
       }
-      document.getElementById('taskModal').style.display = 'none';
-      showBalloonAndConfetti();
-      await loadTasks();
-      renderTasks();
-    });
 
-    document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
-      const taskId = document.getElementById('taskModal').dataset.taskId;
-      if (!taskId) return;
-      const confirmed = await customConfirm('Удалить задачу?');
-      if (confirmed) {
-        await _supabase.from('tasks').delete().eq('id', taskId);
-        document.getElementById('taskModal').style.display = 'none';
+      async function saveTask() {
+        const title = getEl('taskTitle').value.trim();
+        if (!title) { await customAlert('Введите название задачи'); return; }
+        const isIdea = getEl('typeIdea').checked;
+        const priority = isIdea ? 'idea' : getEl('taskPriority').value;
+        const assignedIds = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => cb.value);
+        const taskData = {
+          title,
+          description: getEl('taskDescription').value.trim(),
+          assigned_to: assignedIds.length > 0 ? assignedIds[0] : null,   // сохраняем только одного
+          due_date: getEl('taskDueDate').value || null,
+          status: getEl('taskStatus').value,
+          comment: getEl('taskComment').value.trim(),
+          priority,
+          created_by: currentUserEmail
+        };
+
+        const taskId = getEl('taskModal').dataset.taskId;
+        let error;
+        if (taskId) {
+          const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
+          error = updateError;
+        } else {
+          const { error: insertError } = await _supabase.from('tasks').insert([taskData]);
+          error = insertError;
+        }
+
+        if (error) { await customAlert('Ошибка: ' + error.message); return; }
+        getEl('taskModal').style.display = 'none';
         showBalloonAndConfetti();
         await loadTasks();
         renderTasks();
       }
-    });
 
-    function openEditModal(task) {
-      document.getElementById('modalTitle').textContent = 'Редактирование задачи';
-      document.getElementById('taskTitle').value = task.title;
-      document.getElementById('taskDescription').value = task.description || '';
-      document.getElementById('taskDueDate').value = task.due_date || '';
-      document.getElementById('taskStatus').value = task.status;
-      document.getElementById('taskComment').value = task.comment || '';
-      if (task.priority === 'idea') {
-        document.getElementById('typeIdea').checked = true;
-        document.getElementById('prioritySection').style.display = 'none';
-      } else {
-        document.getElementById('typeTask').checked = true;
-        document.getElementById('prioritySection').style.display = 'block';
-        document.getElementById('taskPriority').value = task.priority || 'medium';
-      }
-      document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
-        cb.checked = task.assigned_to && task.assigned_to.includes(cb.value);
+      // Обработчики событий
+      getEl('addTaskBtn')?.addEventListener('click', () => {
+        getEl('modalTitle').textContent = 'Новая задача';
+        getEl('taskTitle').value = '';
+        getEl('taskDescription').value = '';
+        getEl('taskDueDate').value = '';
+        getEl('taskComment').value = '';
+        getEl('taskStatus').value = 'in_progress';
+        getEl('typeTask').checked = true;
+        getEl('prioritySection').style.display = 'block';
+        getEl('taskPriority').value = 'medium';
+        const deleteBtn = getEl('deleteTaskBtn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+        updateMultiTrigger();
+        getEl('taskModal').style.display = 'flex';
       });
-      updateMultiTrigger();
-      document.getElementById('deleteTaskBtn').style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
-      document.getElementById('taskModal').dataset.taskId = task.id;
-      document.getElementById('taskModal').style.display = 'flex';
-    }
 
-    // Помощь
-    document.getElementById('sendHelpBtn').addEventListener('click', async () => {
-      const taskId = document.getElementById('helpModal').dataset.taskId;
-      const comment = document.getElementById('helpComment').value.trim();
-      if (!comment) {
-        await customAlert('Введите комментарий');
-        return;
-      }
-      const { error } = await _supabase.from('tasks').update({
-        help_offered: true,
-        help_comment: comment,
-        help_by: currentUserEmail
-      }).eq('id', taskId);
-      if (error) {
-        await customAlert('Ошибка: ' + error.message);
-        return;
-      }
-      document.getElementById('helpModal').style.display = 'none';
-      document.getElementById('helpComment').value = '';
-      showBalloonAndConfetti();
-      await loadTasks();
-      renderTasks();
-    });
-
-    document.getElementById('cancelHelpBtn').addEventListener('click', () => {
-      document.getElementById('helpModal').style.display = 'none';
-    });
-
-    // Анимация
-    function showBalloonAndConfetti() {
-      const balloon = document.createElement('div');
-      balloon.className = 'balloon';
-      document.body.appendChild(balloon);
-      balloon.addEventListener('animationend', () => {
-        balloon.remove();
-        createConfetti();
-        createPopParticles();
+      getEl('cancelTaskBtn')?.addEventListener('click', () => {
+        getEl('taskModal').style.display = 'none';
       });
-    }
-    function createConfetti() {
-      const colors = ['#ff4d6d','#f9ca24','#55efc4','#a29bfe','#ff9a9e','#43e97b'];
-      for (let i = 0; i < 40; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.left = '50%';
-        piece.style.top = '30%';
-        piece.style.setProperty('--x', (Math.random()*300-150)+'px');
-        piece.style.setProperty('--y', (Math.random()*-200-50)+'px');
-        document.body.appendChild(piece);
-        setTimeout(() => piece.remove(), 800);
+
+      getEl('saveTaskBtn')?.addEventListener('click', saveTask);
+
+      getEl('deleteTaskBtn')?.addEventListener('click', async () => {
+        const taskId = getEl('taskModal').dataset.taskId;
+        if (!taskId) return;
+        const confirmed = await customConfirm('Удалить задачу?');
+        if (confirmed) {
+          await _supabase.from('tasks').delete().eq('id', taskId);
+          getEl('taskModal').style.display = 'none';
+          showBalloonAndConfetti();
+          await loadTasks();
+          renderTasks();
+        }
+      });
+
+      getEl('sendHelpBtn')?.addEventListener('click', async () => {
+        const taskId = getEl('helpModal').dataset.taskId;
+        const comment = getEl('helpComment').value.trim();
+        if (!comment) { await customAlert('Введите комментарий'); return; }
+        const { error } = await _supabase.from('tasks').update({
+          help_offered: true,
+          help_comment: comment,
+          help_by: currentUserEmail
+        }).eq('id', taskId);
+        if (error) { await customAlert('Ошибка: ' + error.message); return; }
+        getEl('helpModal').style.display = 'none';
+        getEl('helpComment').value = '';
+        showBalloonAndConfetti();
+        await loadTasks();
+        renderTasks();
+      });
+
+      getEl('cancelHelpBtn')?.addEventListener('click', () => {
+        getEl('helpModal').style.display = 'none';
+      });
+
+      // Фильтры
+      getEl('filters')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('filter-btn')) {
+          currentFilter = e.target.dataset.status;
+          renderFilters();
+          renderTasks();
+        }
+      });
+      getEl('employeeFilter')?.addEventListener('change', (e) => {
+        currentEmployeeFilter = e.target.value;
+        renderTasks();
+      });
+
+      // Радио-кнопки
+      getEl('typeIdea')?.addEventListener('change', () => {
+        getEl('prioritySection').style.display = 'none';
+      });
+      getEl('typeTask')?.addEventListener('change', () => {
+        getEl('prioritySection').style.display = 'block';
+      });
+
+      // Анимация
+      function showBalloonAndConfetti() {
+        const balloon = document.createElement('div');
+        balloon.className = 'balloon';
+        document.body.appendChild(balloon);
+        balloon.addEventListener('animationend', () => {
+          balloon.remove();
+          createConfetti();
+          createPopParticles();
+        });
       }
-    }
-    function createPopParticles() {
-      for (let i=0; i<10; i++) {
-        const p = document.createElement('div');
-        p.className = 'pop-particle';
-        p.style.left = '50%';
-        p.style.top = '30%';
-        p.style.setProperty('--px', (Math.random()*80-40)+'px');
-        p.style.setProperty('--py', (Math.random()*80-40)+'px');
-        document.body.appendChild(p);
-        setTimeout(() => p.remove(), 500);
+
+      function createConfetti() {
+        const colors = ['#ff4d6d','#f9ca24','#55efc4','#a29bfe','#ff9a9e','#43e97b'];
+        for (let i = 0; i < 40; i++) {
+          const piece = document.createElement('div');
+          piece.className = 'confetti-piece';
+          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+          piece.style.left = '50%';
+          piece.style.top = '30%';
+          piece.style.setProperty('--x', (Math.random()*300-150)+'px');
+          piece.style.setProperty('--y', (Math.random()*-200-50)+'px');
+          document.body.appendChild(piece);
+          setTimeout(() => piece.remove(), 800);
+        }
       }
-    }
+
+      function createPopParticles() {
+        for (let i=0; i<10; i++) {
+          const p = document.createElement('div');
+          p.className = 'pop-particle';
+          p.style.left = '50%';
+          p.style.top = '30%';
+          p.style.setProperty('--px', (Math.random()*80-40)+'px');
+          p.style.setProperty('--py', (Math.random()*80-40)+'px');
+          document.body.appendChild(p);
+          setTimeout(() => p.remove(), 500);
+        }
+      }
+
+      // Инициализация
+      (async () => {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        await loadEmployees();
+        await loadTasks();
+        renderFilters();
+        renderTasks();
+      })();
+    })();
   </script>
 </body>
 </html>
