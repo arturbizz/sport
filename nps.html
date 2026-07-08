@@ -133,21 +133,21 @@
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Клиенты с успешными визитами</h1>
       <div>
-        <button class="btn" id="loadXlsxBtn">Загрузить отчёт (XLSX)</button>
-        <button class="btn" id="loadContactsBtn" style="display:none;">Загрузить данные</button>
+        <button class="btn" id="loadReportBtn">Загрузить отчёт (XLSX)</button>
+        <button class="btn" id="loadContactsBtn" style="display:none;">Загрузить справочник клиентов</button>
         <button class="btn" id="exportBtn" style="display:none;">Выгрузить в Excel</button>
         <button class="btn" id="saveBtn" style="display:none;">Сохранить изменения</button>
       </div>
     </div>
     <div id="message"></div>
     <div id="tableContainer"></div>
-    <input type="file" id="xlsxFileInput" accept=".xlsx" style="display:none">
+    <input type="file" id="reportFileInput" accept=".xlsx" style="display:none">
+    <input type="file" id="contactsFileInput" accept=".xlsx" style="display:none">
   </div>
 
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let customersData = []; // { id, name, phone, email }
@@ -160,17 +160,20 @@
       }
     })();
 
-    const fileInput = document.getElementById('xlsxFileInput');
-    const loadXlsxBtn = document.getElementById('loadXlsxBtn');
+    const reportFileInput = document.getElementById('reportFileInput');
+    const contactsFileInput = document.getElementById('contactsFileInput');
+    const loadReportBtn = document.getElementById('loadReportBtn');
     const loadContactsBtn = document.getElementById('loadContactsBtn');
     const exportBtn = document.getElementById('exportBtn');
     const saveBtn = document.getElementById('saveBtn');
     const msg = document.getElementById('message');
     const tableContainer = document.getElementById('tableContainer');
 
-    loadXlsxBtn.addEventListener('click', () => fileInput.click());
+    loadReportBtn.addEventListener('click', () => reportFileInput.click());
+    loadContactsBtn.addEventListener('click', () => contactsFileInput.click());
 
-    fileInput.addEventListener('change', (e) => {
+    // Загрузка отчёта о посещениях
+    reportFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
       msg.innerHTML = '';
@@ -238,7 +241,7 @@
           loadContactsBtn.style.display = 'inline-block';
           exportBtn.style.display = 'inline-block';
           saveBtn.style.display = 'inline-block';
-          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить данные», чтобы получить контакты через API.</div>`;
+          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить справочник клиентов», чтобы подставить контакты.</div>`;
         } catch (err) {
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
@@ -246,75 +249,75 @@
       reader.readAsArrayBuffer(file);
     });
 
-    // Загрузка контактов через Edge Function
-    loadContactsBtn.addEventListener('click', async () => {
-      if (!customersData.length) return;
-      loadContactsBtn.disabled = true;
-      loadContactsBtn.textContent = 'Загрузка данных...';
+    // Загрузка справочника клиентов (ID, телефон, email)
+    contactsFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file || !customersData.length) return;
       msg.innerHTML = '';
-      try {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) {
-          msg.innerHTML = '<div class="error">Необходимо войти</div>';
-          return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = new Uint8Array(ev.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[firstSheet];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+          let headerRowIndex = -1;
+          for (let i = 0; i < Math.min(rows.length, 20); i++) {
+            const row = rows[i];
+            if (!row) continue;
+            const rowStr = row.map(c => String(c).trim().toLowerCase()).join(' ');
+            if (rowStr.includes('id') || rowStr.includes('фио')) {
+              headerRowIndex = i;
+              break;
+            }
+          }
+          if (headerRowIndex === -1) {
+            msg.innerHTML = '<div class="error">В справочнике не найдена строка заголовков (ID/ФИО).</div>';
+            return;
+          }
+
+          const headers = rows[headerRowIndex].map(h => String(h).trim().toLowerCase());
+          const idIdx = headers.findIndex(h => h === 'id');
+          const phoneIdx = headers.findIndex(h => h.includes('телефон') || h.includes('phone'));
+          const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('почта'));
+
+          if (idIdx === -1 || (phoneIdx === -1 && emailIdx === -1)) {
+            msg.innerHTML = '<div class="error">В справочнике не найдены столбцы ID и/или телефон/email.</div>';
+            return;
+          }
+
+          // Строим словарь контактов по ID
+          const contactsMap = new Map();
+          for (let i = headerRowIndex + 1; i < rows.length; i++) {
+            const cols = rows[i];
+            if (!cols) continue;
+            const idVal = String(cols[idIdx] || '').trim();
+            if (!idVal || isNaN(Number(idVal))) continue;
+            contactsMap.set(idVal, {
+              phone: phoneIdx >= 0 ? String(cols[phoneIdx] || '').trim() : '',
+              email: emailIdx >= 0 ? String(cols[emailIdx] || '').trim() : ''
+            });
+          }
+
+          // Заполняем пропущенные контакты
+          let filledCount = 0;
+          customersData.forEach(c => {
+            const contacts = contactsMap.get(c.id);
+            if (contacts) {
+              if (!c.phone && contacts.phone) { c.phone = contacts.phone; filledCount++; }
+              if (!c.email && contacts.email) { c.email = contacts.email; filledCount++; }
+            }
+          });
+
+          renderTable(customersData);
+          msg.innerHTML = `<div class="info">Контакты загружены. Заполнено ${filledCount} полей.</div>`;
+        } catch (err) {
+          msg.innerHTML = `<div class="error">Ошибка обработки справочника: ${err.message}</div>`;
         }
-
-        const ids = customersData.map(c => c.id);
-        const response = await fetch(EDGE_FUNCTION_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({ customer_ids: ids })
-        });
-
-        if (!response.ok) {
-          const text = await response.text();
-          throw new Error(`Ошибка ${response.status}: ${text}`);
-        }
-
-        const result = await response.json();
-        if (!result.customers) throw new Error('Некорректный ответ сервера');
-
-        // Объединяем с текущими данными
-        customersData = customersData.map(cf => {
-          const apiData = result.customers.find(ac => String(ac.id) === String(cf.id));
-          return {
-            id: cf.id,
-            name: (apiData && apiData.name && apiData.name !== `ID ${cf.id}`) ? apiData.name : cf.name,
-            phone: apiData ? (apiData.phone || cf.phone) : cf.phone,
-            email: apiData ? (apiData.email || cf.email) : cf.email,
-          };
-        });
-
-        renderTable(customersData);
-        msg.innerHTML = '<div class="info">Контакты загружены.</div>';
-      } catch (err) {
-        msg.innerHTML = `<div class="error">${err.message}</div>`;
-      } finally {
-        loadContactsBtn.disabled = false;
-        loadContactsBtn.textContent = 'Загрузить данные';
-      }
-    });
-
-    // Сохранение в localStorage
-    saveBtn.addEventListener('click', () => {
-      try {
-        localStorage.setItem('nps_customers', JSON.stringify(customersData));
-        msg.innerHTML = '<div class="info">Данные сохранены локально.</div>';
-      } catch (err) {
-        msg.innerHTML = '<div class="error">Ошибка сохранения: ' + err.message + '</div>';
-      }
-    });
-
-    // Экспорт в Excel
-    exportBtn.addEventListener('click', () => {
-      const ws = XLSX.utils.json_to_sheet(customersData.map(c => ({ 'ФИО': c.name, 'Телефон': c.phone, 'Email': c.email })));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Клиенты");
-      XLSX.writeFile(wb, "клиенты_с_контактами.xlsx");
-      msg.innerHTML = '<div class="info">Файл выгружен.</div>';
+      };
+      reader.readAsArrayBuffer(file);
     });
 
     function renderTable(customers) {
@@ -343,7 +346,24 @@
       });
     }
 
-    // Восстановление из localStorage
+    saveBtn.addEventListener('click', () => {
+      try {
+        localStorage.setItem('nps_customers', JSON.stringify(customersData));
+        msg.innerHTML = '<div class="info">Данные сохранены локально.</div>';
+      } catch (err) {
+        msg.innerHTML = '<div class="error">Ошибка сохранения: ' + err.message + '</div>';
+      }
+    });
+
+    exportBtn.addEventListener('click', () => {
+      const ws = XLSX.utils.json_to_sheet(customersData.map(c => ({ 'ФИО': c.name, 'Телефон': c.phone, 'Email': c.email })));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Клиенты");
+      XLSX.writeFile(wb, "клиенты_с_контактами.xlsx");
+      msg.innerHTML = '<div class="info">Файл выгружен.</div>';
+    });
+
+    // Восстановление данных из localStorage
     (function restore() {
       const saved = localStorage.getItem('nps_customers');
       if (saved) {
