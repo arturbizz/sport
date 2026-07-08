@@ -227,16 +227,11 @@
   </div>
 
   <script>
-    // Всё обёрнуто в немедленно вызываемую функцию, чтобы избежать конфликтов имён
     (function() {
-      // Конфигурация Supabase (твои ключи)
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-      
-      // Создаём клиент Supabase ОДИН раз
       const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // Глобальные переменные приложения
       let employees = [], worklog = {}, salaryParams = {};
       let currentYear, currentMonth, currentPeriod = 'full';
       let selectedIds = new Set();
@@ -245,7 +240,6 @@
       const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
       const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
 
-      // Функции уведомлений и модалок
       function showToast(msg, err=false) {
         const t = document.createElement('div'); t.className = 'toast-center';
         t.innerHTML = `<div class="toast-content" style="background:${err?'#ef4444':'#0f172a'}">${msg}</div>`;
@@ -253,15 +247,19 @@
       }
       function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-      // Загрузка данных из Supabase
       async function loadData() {
         document.getElementById('errorContainer').innerHTML = '';
         try {
-          const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+          // Определяем диапазон дат для месяца
+          const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+          const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+          const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+          const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
+
           const [empRes, logRes, salRes] = await Promise.all([
             db.from('employees').select('*'),
-            db.from('worklog').select('*').like('date', `${monthStr}%`),
-            db.from('salary_params').select('*').eq('month', monthStr)
+            db.from('worklog').select('*').gte('date', startDate).lt('date', endDate),
+            db.from('salary_params').select('*').eq('month', `${currentYear}-${String(currentMonth).padStart(2,'0')}`)
           ]);
           if (empRes.error) throw new Error('Ошибка загрузки сотрудников: ' + empRes.error.message);
           if (logRes.error) throw new Error('Ошибка загрузки журнала: ' + logRes.error.message);
@@ -279,7 +277,6 @@
         }
       }
 
-      // Чекбоксы сотрудников
       function renderCheckboxes() {
         document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
           <label style="display:block; margin:0.3rem 0; cursor:pointer; font-weight:500;">
@@ -295,7 +292,6 @@
         });
       }
 
-      // Вспомогательные функции расчёта
       function getManagerNormDays(y, m) {
         const days = new Date(y, m, 0).getDate();
         let cnt = 0;
@@ -352,7 +348,6 @@
         return 0;
       }
 
-      // Отрисовка таблицы
       function renderTable() {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1).toLocaleDateString('ru',{month:'long',year:'numeric'});
@@ -401,7 +396,6 @@
         html += '</tbody></table>';
         document.getElementById('scheduleTableContainer').innerHTML = html;
 
-        // Навешиваем обработчики
         document.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', function() {
             const empId = this.dataset.empid;
@@ -417,7 +411,6 @@
         });
       }
 
-      // Переключение месяцев
       window.changeMonth = function(delta) {
         currentMonth += delta;
         if (currentMonth < 1) { currentMonth=12; currentYear--; }
@@ -425,7 +418,6 @@
         loadData();
       };
 
-      // Модалка дня
       function openDayModal(empId, dateStr) {
         const emp = employees.find(e=>e.id===empId);
         if (!emp) return;
@@ -466,7 +458,6 @@
         loadData();
       }
 
-      // Модалка зарплаты
       function openSalaryModal(empId) {
         const emp = employees.find(e=>e.id===empId);
         if (!emp) return;
@@ -507,7 +498,6 @@
         showToast('Excel скачан');
       }
 
-      // Привязка событий к кнопкам
       document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
       document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
       document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
@@ -538,7 +528,6 @@
         }
       });
 
-      // Старт
       const now = new Date();
       currentYear = now.getFullYear();
       currentMonth = now.getMonth() + 1;
