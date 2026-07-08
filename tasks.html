@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Планировщик — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #ff6b6b;
+      --bg: #fef9f0;
+      --surface: #ffffff;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    h1 { font-size: 1.8rem; font-weight: 700; }
+    .btn {
+      border: 2px solid var(--accent);
+      background: white;
+      color: var(--accent);
+      padding: 0.6rem 1.2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .btn:hover {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 8px 15px rgba(255,107,107,0.3);
+    }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+    .filters {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .tasks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .task-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.2rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .task-card:hover {
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .task-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .task-meta {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .badge.in_progress { background: #d1fae5; color: #065f46; }
+    .badge.clarifying { background: #fef3c7; color: #92400e; }
+    .badge.need_help { background: #fee2e2; color: #991b1b; }
+    .badge.completed { background: #e0e7ff; color: #3730a3; }
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 0.5rem 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    @media (max-width: 600px) {
+      body { padding: 0.8rem; }
+      .container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>Планировщик задач</h1>
+      <button class="btn" id="addTaskBtn">+ Новая задача</button>
+    </div>
+
+    <div class="filters" id="filters">
+      <button class="filter-btn active" data-status="all">Все</button>
+      <button class="filter-btn" data-status="in_progress">В работе</button>
+      <button class="filter-btn" data-status="clarifying">Уточняю детали</button>
+      <button class="filter-btn" data-status="need_help">Нужна помощь</button>
+      <button class="filter-btn" data-status="completed">Выполнено</button>
+    </div>
+
+    <div id="tasksContainer" class="tasks-grid"></div>
+  </div>
+
+  <!-- Модальное окно задачи -->
+  <div class="modal-overlay" id="taskModal" style="display:none;">
+    <div class="modal">
+      <h2 id="modalTitle">Новая задача</h2>
+      <input type="text" id="taskTitle" placeholder="Название задачи">
+      <textarea id="taskDescription" rows="2" placeholder="Описание"></textarea>
+      <select id="taskAssigned"></select>
+      <input type="date" id="taskDueDate">
+      <select id="taskStatus">
+        <option value="in_progress">В работе</option>
+        <option value="clarifying">Уточняю детали</option>
+        <option value="need_help">Нужна помощь</option>
+        <option value="completed">Выполнено</option>
+      </select>
+      <textarea id="taskComment" rows="2" placeholder="Комментарий"></textarea>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="saveTaskBtn">Сохранить</button>
+        <button class="btn" id="cancelTaskBtn">Отмена</button>
+        <button class="btn" id="deleteTaskBtn" style="display:none;">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const OWNER_EMAIL = 'arturgalkin.ru@mail.ru';
+    let currentUserEmail = null;
+    let employees = [];
+    let tasks = [];
+    let currentFilter = 'all';
+
+    // Проверка авторизации
+    (async () => {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) { window.location.href = 'login.html'; return; }
+      currentUserEmail = session.user.email;
+      document.getElementById('addTaskBtn').style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
+      await loadEmployees();
+      await loadTasks();
+      renderTasks();
+    })();
+
+    async function loadEmployees() {
+      const { data } = await _supabase.from('employees').select('*');
+      employees = data || [];
+      const select = document.getElementById('taskAssigned');
+      select.innerHTML = employees.map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join('');
+    }
+
+    async function loadTasks() {
+      const query = _supabase.from('tasks').select('*').order('created_at', { ascending: false });
+      const { data, error } = await query;
+      if (error) { console.error(error); return; }
+      tasks = data || [];
+    }
+
+    function renderTasks() {
+      const container = document.getElementById('tasksContainer');
+      let filtered = tasks;
+      if (currentFilter !== 'all') {
+        filtered = tasks.filter(t => t.status === currentFilter);
+      }
+      if (!filtered.length) {
+        container.innerHTML = '<p style="color:#636e72;">Нет задач</p>';
+        return;
+      }
+      container.innerHTML = filtered.map(task => {
+        const emp = employees.find(e => e.id === task.assigned_to) || {};
+        const statusLabels = {
+          in_progress: 'В работе',
+          clarifying: 'Уточняю детали',
+          need_help: 'Нужна помощь',
+          completed: 'Выполнено'
+        };
+        return `
+        <div class="task-card" data-id="${task.id}">
+          <div class="task-title">${task.title}</div>
+          ${task.description ? `<div style="font-size:0.9rem;">${task.description}</div>` : ''}
+          <div class="task-meta">
+            <span>${emp.name || 'Не назначен'}</span>
+            <span>${task.due_date || '—'}</span>
+          </div>
+          <span class="badge ${task.status}">${statusLabels[task.status]}</span>
+          ${task.comment ? `<div style="font-style:italic; font-size:0.8rem;">${task.comment}</div>` : ''}
+          <div style="display:flex; gap:0.3rem; margin-top:0.5rem;">
+            ${(currentUserEmail === OWNER_EMAIL || task.assigned_to === employees.find(e=>e.email===currentUserEmail)?.id) ? 
+              `<button class="btn edit-btn" data-id="${task.id}">Изменить</button>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+
+      // Обработчики кнопок редактирования
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.target.dataset.id;
+          const task = tasks.find(t => t.id == id);
+          if (task) openEditModal(task);
+        });
+      });
+    }
+
+    // Фильтры
+    document.getElementById('filters').addEventListener('click', (e) => {
+      if (e.target.classList.contains('filter-btn')) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.status;
+        renderTasks();
+      }
+    });
+
+    // Добавление задачи
+    document.getElementById('addTaskBtn').addEventListener('click', () => {
+      document.getElementById('modalTitle').textContent = 'Новая задача';
+      document.getElementById('taskTitle').value = '';
+      document.getElementById('taskDescription').value = '';
+      document.getElementById('taskDueDate').value = '';
+      document.getElementById('taskComment').value = '';
+      document.getElementById('taskStatus').value = 'in_progress';
+      document.getElementById('deleteTaskBtn').style.display = 'none';
+      document.getElementById('taskModal').style.display = 'flex';
+    });
+
+    // Закрытие модалки
+    document.getElementById('cancelTaskBtn').addEventListener('click', () => {
+      document.getElementById('taskModal').style.display = 'none';
+    });
+
+    // Сохранение задачи
+    document.getElementById('saveTaskBtn').addEventListener('click', async () => {
+      const title = document.getElementById('taskTitle').value.trim();
+      if (!title) return alert('Введите название задачи');
+      const taskData = {
+        title,
+        description: document.getElementById('taskDescription').value.trim(),
+        assigned_to: document.getElementById('taskAssigned').value,
+        due_date: document.getElementById('taskDueDate').value,
+        status: document.getElementById('taskStatus').value,
+        comment: document.getElementById('taskComment').value.trim(),
+        created_by: currentUserEmail
+      };
+
+      const taskId = document.getElementById('taskModal').dataset.taskId;
+      let error;
+      if (taskId) {
+        // Редактирование
+        const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
+        error = updateError;
+      } else {
+        const { error: insertError } = await _supabase.from('tasks').insert([taskData]);
+        error = insertError;
+      }
+
+      if (error) { console.error(error); return; }
+      document.getElementById('taskModal').style.display = 'none';
+      await loadTasks();
+      renderTasks();
+    });
+
+    // Удаление задачи
+    document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
+      const taskId = document.getElementById('taskModal').dataset.taskId;
+      if (!taskId) return;
+      const { error } = await _supabase.from('tasks').delete().eq('id', taskId);
+      if (error) { console.error(error); return; }
+      document.getElementById('taskModal').style.display = 'none';
+      await loadTasks();
+      renderTasks();
+    });
+
+    function openEditModal(task) {
+      document.getElementById('modalTitle').textContent = 'Редактирование задачи';
+      document.getElementById('taskTitle').value = task.title;
+      document.getElementById('taskDescription').value = task.description;
+      document.getElementById('taskAssigned').value = task.assigned_to || '';
+      document.getElementById('taskDueDate').value = task.due_date || '';
+      document.getElementById('taskStatus').value = task.status;
+      document.getElementById('taskComment').value = task.comment || '';
+      document.getElementById('deleteTaskBtn').style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
+      document.getElementById('taskModal').dataset.taskId = task.id;
+      document.getElementById('taskModal').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
