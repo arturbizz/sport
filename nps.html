@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>NPS / Клиенты — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --accent: #ff6b6b;
@@ -110,12 +111,12 @@
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Клиенты с успешными визитами</h1>
       <div>
-        <button class="btn" id="loadCsvBtn">📂 Загрузить из CSV</button>
+        <button class="btn" id="loadXlsxBtn">📂 Загрузить XLSX-отчёт</button>
       </div>
     </div>
     <div id="message"></div>
     <div id="tableContainer"></div>
-    <input type="file" id="csvFileInput" accept=".csv" style="display:none">
+    <input type="file" id="xlsxFileInput" accept=".xlsx" style="display:none">
   </div>
 
   <script>
@@ -123,6 +124,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabaseNPS = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Проверка авторизации
     (async () => {
       const { data: { session } } = await _supabaseNPS.auth.getSession();
       if (!session) {
@@ -131,12 +133,12 @@
       }
     })();
 
-    const fileInput = document.getElementById('csvFileInput');
-    const loadCsvBtn = document.getElementById('loadCsvBtn');
+    const fileInput = document.getElementById('xlsxFileInput');
+    const loadBtn = document.getElementById('loadXlsxBtn');
     const msg = document.getElementById('message');
     const tableContainer = document.getElementById('tableContainer');
 
-    loadCsvBtn.addEventListener('click', () => {
+    loadBtn.addEventListener('click', () => {
       fileInput.click();
     });
 
@@ -150,41 +152,40 @@
       const reader = new FileReader();
       reader.onload = (ev) => {
         try {
-          const text = ev.target.result;
-          const rows = text.split('\n').filter(r => r.trim());
+          const data = new Uint8Array(ev.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[firstSheet];
+          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }); // двумерный массив
+
           if (rows.length < 2) {
             msg.innerHTML = '<div class="error">Файл пуст или содержит только заголовки</div>';
             return;
           }
 
-          // Определяем индексы столбцов по первой строке
-          const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
+          // Ищем заголовки
+          const headers = rows[0].map(h => String(h).trim().toLowerCase());
           const nameIdx = headers.findIndex(h => h.includes('имя') || h.includes('фио') || h.includes('name') || h.includes('клиент'));
           const phoneIdx = headers.findIndex(h => h.includes('телефон') || h.includes('phone'));
           const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('почта'));
 
           if (nameIdx === -1) {
-            msg.innerHTML = '<div class="error">Не найден столбец с именем/ФИО. Проверьте заголовки CSV.</div>';
+            msg.innerHTML = '<div class="error">Не найден столбец с именем/ФИО. Проверьте заголовки файла.</div>';
             return;
           }
 
           const customers = [];
           for (let i = 1; i < rows.length; i++) {
-            const cols = rows[i].split(',').map(c => c.trim());
-            if (cols.length <= nameIdx) continue;
+            const cols = rows[i];
+            if (!cols || cols.length <= nameIdx) continue;
             customers.push({
-              name: cols[nameIdx] || '—',
-              phone: phoneIdx >= 0 ? cols[phoneIdx] : '—',
-              email: emailIdx >= 0 ? cols[emailIdx] : '—'
+              name: String(cols[nameIdx] || '—'),
+              phone: phoneIdx >= 0 ? String(cols[phoneIdx] || '—') : '—',
+              email: emailIdx >= 0 ? String(cols[emailIdx] || '—') : '—'
             });
           }
 
-          if (customers.length === 0) {
-            msg.innerHTML = '<div class="info">Нет данных для отображения</div>';
-            return;
-          }
-
-          // Удаляем дубликаты по имени (опционально)
+          // Убираем дубликаты по имени
           const unique = [];
           const seen = new Set();
           for (const c of customers) {
@@ -192,6 +193,11 @@
               seen.add(c.name);
               unique.push(c);
             }
+          }
+
+          if (unique.length === 0) {
+            msg.innerHTML = '<div class="info">Нет данных для отображения</div>';
+            return;
           }
 
           let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
@@ -209,7 +215,7 @@
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
       };
-      reader.readAsText(file);
+      reader.readAsArrayBuffer(file);
     });
   </script>
 </body>
