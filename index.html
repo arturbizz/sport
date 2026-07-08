@@ -48,7 +48,7 @@
       overflow-x: hidden;
     }
 
-    /* Праздничные плавающие элементы */
+    /* Праздничные плавающие элементы (шары, цветы) */
     .decorations {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 0;
@@ -103,17 +103,17 @@
     .logo span { color: var(--accent); }
 
     .nav-arrows { display: flex; gap: 0.5rem; }
-    .nav-arrows button, .period-btn, .export-btn, .emp-btn, .fill-btn {
+    .nav-arrows button, .period-btn, .export-btn, .emp-btn, .role-filter-btn {
       background: var(--surface); border: 1px solid var(--border);
       padding: 0.5rem 1rem; border-radius: 12px;
       font-weight: 500; font-size: 0.85rem; cursor: pointer;
       transition: all 0.15s ease; display: flex; align-items: center; gap: 0.4rem;
       color: var(--text-secondary);
     }
-    .nav-arrows button:hover, .period-btn:hover, .export-btn:hover, .emp-btn:hover, .fill-btn:hover {
+    .nav-arrows button:hover, .period-btn:hover, .export-btn:hover, .emp-btn:hover, .role-filter-btn:hover {
       background: var(--surface-hover); border-color: #cbd5e1;
     }
-    .period-btn.active {
+    .period-btn.active, .role-filter-btn.active {
       background: var(--accent-light); color: var(--accent); border-color: var(--accent);
       font-weight: 600;
     }
@@ -122,6 +122,7 @@
       background: var(--surface); padding: 0.4rem 1rem; border-radius: 12px;
       border: 1px solid var(--border);
     }
+    .role-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
 
     .schedule-container {
       background: var(--surface); border-radius: 20px;
@@ -129,9 +130,18 @@
       box-shadow: 0 8px 30px rgba(0,0,0,0.08); border: 1px solid var(--border);
       scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
     }
-    table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 1200px; }
-    th { background: var(--surface-hover); padding: 0.6rem 0.3rem; font-size: 0.8rem; position: sticky; top: 0; z-index: 5; border-radius: 10px 10px 0 0; color: var(--text-secondary); font-weight: 600; border-bottom: 2px solid var(--border); }
-    td { padding: 0.4rem 0.3rem; text-align: center; font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+    th, td {
+      padding: 0.5rem 0.3rem; text-align: center; font-size: 0.85rem;
+      border-right: 1px solid #f1f5f9;
+    }
+    th:last-child, td:last-child { border-right: none; }
+    th {
+      background: var(--surface-hover); position: sticky; top: 0; z-index: 5;
+      color: var(--text-secondary); font-weight: 600; border-bottom: 2px solid var(--border);
+    }
+    th.weekend { background-color: #fff5f5; }
+    th.weekday { background-color: #f8fafc; }
 
     .employee-name {
       text-align: left; font-weight: 600; padding-left: 1rem;
@@ -172,7 +182,8 @@
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal {
       background: var(--surface); border-radius: 24px; padding: 2rem;
-      max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+      max-width: 500px; width: 90%;
+      box-shadow: 0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(139,92,246,0.4);
       animation: slideUp 0.2s ease-out;
     }
     @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -223,7 +234,13 @@
         <button class="period-btn" data-period="first">1–15</button>
         <button class="period-btn" data-period="second">16–31</button>
       </div>
-      <button class="fill-btn" id="fillPeriodBtn">📅 Заполнить период</button>
+      <div class="role-filters" id="roleFilters">
+        <button class="role-filter-btn active" data-role="all">Все</button>
+        <button class="role-filter-btn" data-role="Управляющий">Управляющие</button>
+        <button class="role-filter-btn" data-role="Менеджер">Менеджеры</button>
+        <button class="role-filter-btn" data-role="Администратор">Администраторы</button>
+        <button class="role-filter-btn" data-role="Преподаватель">Преподаватели</button>
+      </div>
       <button class="export-btn" id="exportExcelBtn">Excel</button>
       <button class="export-btn" id="refreshBtn">Обновить</button>
       <div style="position:relative;">
@@ -252,33 +269,6 @@
     </div>
   </div>
 
-  <!-- Модалка массового заполнения -->
-  <div class="modal-overlay" id="fillModal" style="display:none;">
-    <div class="modal">
-      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" id="closeFillModalBtn">✕</button>
-      <h3>Заполнить период</h3>
-      <div style="margin:1rem 0;">
-        <label>Статус:</label>
-        <select id="fillStatus" style="margin-left:0.5rem; padding:0.4rem; border-radius:8px; border:1px solid var(--border);">
-          <option value="working">Рабочий</option>
-          <option value="dayoff">Выходной</option>
-          <option value="sick">Больничный</option>
-          <option value="vacation">Отпуск</option>
-          <option value="leave">Отпросился</option>
-        </select>
-      </div>
-      <div style="margin:1rem 0;">
-        <label>С даты:</label>
-        <input type="date" id="fillStartDate" style="margin-left:0.5rem; padding:0.4rem; border-radius:8px; border:1px solid var(--border);">
-      </div>
-      <div style="margin:1rem 0;">
-        <label>По дату:</label>
-        <input type="date" id="fillEndDate" style="margin-left:0.5rem; padding:0.4rem; border-radius:8px; border:1px solid var(--border);">
-      </div>
-      <button class="btn-save" id="applyFillBtn">Применить</button>
-    </div>
-  </div>
-
   <!-- Модалка зарплаты -->
   <div class="modal-overlay" id="salaryModal" style="display:none;">
     <div class="modal" style="max-width:600px;">
@@ -298,6 +288,7 @@
       let employees = [], worklog = {}, salaryParams = {};
       let currentYear, currentMonth, currentPeriod = 'full';
       let selectedIds = new Set();
+      let currentRoleFilter = 'all';
 
       const STATUSES = ['working', 'dayoff', 'sick', 'vacation', 'leave'];
       const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
@@ -329,7 +320,7 @@
           if (empRes.error) throw new Error('Сотрудники: ' + empRes.error.message);
           if (logRes.error) throw new Error('Журнал: ' + logRes.error.message);
           employees = empRes.data;
-          if (selectedIds.size === 0) employees.forEach(e => selectedIds.add(e.id));
+          if (selectedIds.size === 0) applyRoleFilter('all');
           worklog = {};
           (logRes.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
           salaryParams = {};
@@ -342,6 +333,24 @@
         }
       }
 
+      function applyRoleFilter(role) {
+        currentRoleFilter = role;
+        if (role === 'all') {
+          selectedIds.clear();
+          employees.forEach(e => selectedIds.add(e.id));
+        } else {
+          selectedIds.clear();
+          employees.filter(e => e.role === role).forEach(e => selectedIds.add(e.id));
+        }
+        // Обновить чекбоксы визуально и перерисовать таблицу
+        renderCheckboxes();
+        renderTable();
+        // Обновить активную кнопку фильтра
+        document.querySelectorAll('.role-filter-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.role === role);
+        });
+      }
+
       function renderCheckboxes() {
         document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
           <label style="display:block; margin:0.3rem 0; cursor:pointer; font-weight:500;">
@@ -351,6 +360,9 @@
           cb.addEventListener('change', function() {
             const id = this.dataset.empid;
             this.checked ? selectedIds.add(id) : selectedIds.delete(id);
+            // Сбросить активный ролевой фильтр, если выбор вручную изменился
+            currentRoleFilter = null;
+            document.querySelectorAll('.role-filter-btn').forEach(b => b.classList.remove('active'));
             renderTable();
           });
         });
@@ -376,7 +388,7 @@
 
       function getSalary(emp) {
         const days = new Date(currentYear, currentMonth, 0).getDate();
-        let worked = 0, trial = 0, indiv = 0, group = 0;
+        let worked = 0, indiv = 0, group = 0;
         let fullSales = 0;
         for (let d=1; d<=days; d++) {
           const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -386,7 +398,6 @@
           if (currentPeriod === 'full' || (currentPeriod === 'first' && d<=15) || (currentPeriod === 'second' && d>=16)) {
             worked++;
             if (emp.role === 'Преподаватель') {
-              trial += rec.trial_lessons || 0;
               indiv += rec.indiv || 0;
               group += rec.group_total || 0;
             }
@@ -394,10 +405,9 @@
         }
         const params = salaryParams[emp.id] || {};
         if (emp.role === 'Преподаватель') {
-          const tRate = params.trial_rate || 300;
           const iRate = params.indiv_rate || 400;
           const gRate = params.group_rate || 500;
-          return trial * tRate + indiv * iRate + group * gRate;
+          return indiv * iRate + group * gRate;
         }
         const norm = emp.role === 'Менеджер' ? getManagerNormDays(currentYear, currentMonth) : (params.norm_days || 22);
         const rates = { 'Менеджер':20000, 'Администратор':35000, 'Управляющий':50000 };
@@ -428,19 +438,25 @@
         document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1).toLocaleDateString('ru',{month:'long',year:'numeric'});
         const filtered = employees.filter(e => selectedIds.has(e.id));
         if (filtered.length === 0) {
-          document.getElementById('scheduleTableContainer').innerHTML = '<div class="empty-message">Нет сотрудников для отображения. Добавьте их в базе данных.</div>';
+          document.getElementById('scheduleTableContainer').innerHTML = '<div class="empty-message">Нет сотрудников для отображения. Выберите роль или сотрудников.</div>';
           return;
         }
         let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
-        for (let d=1; d<=daysInMonth; d++) html += `<th>${d}<br><small>${new Date(currentYear,currentMonth-1,d).toLocaleDateString('ru',{weekday:'short'})}</small></th>`;
+        for (let d=1; d<=daysInMonth; d++) {
+          const date = new Date(currentYear, currentMonth-1, d);
+          const dayOfWeek = date.getDay();
+          const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+          const thClass = isWeekend ? 'weekend' : 'weekday';
+          html += `<th class="${thClass}">${d}<br><small>${date.toLocaleDateString('ru',{weekday:'short'})}</small></th>`;
+        }
         html += '</tr></thead><tbody>';
+        const roleNames = { 'Управляющий':'Управляющие', 'Менеджер':'Менеджеры', 'Администратор':'Администраторы', 'Преподаватель':'Преподаватели' };
         ['Управляющий','Менеджер','Администратор','Преподаватель'].forEach(role => {
           const group = filtered.filter(e => e.role === role);
           if (!group.length) return;
-          const roleNames = { 'Управляющий':'Управляющие', 'Менеджер':'Менеджеры', 'Администратор':'Администраторы', 'Преподаватель':'Преподаватели' };
           html += `<tr><td colspan="${daysInMonth+3}" class="group-header">${roleNames[role]}</td></tr>`;
           group.forEach(emp => {
-            let worked = 0, trial = 0, indiv = 0, group = 0;
+            let worked = 0, indiv = 0, group = 0;
             let cells = '';
             for (let d=1; d<=daysInMonth; d++) {
               const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
@@ -449,7 +465,6 @@
               if (status === 'working' && (currentPeriod==='full' || (currentPeriod==='first' && d<=15) || (currentPeriod==='second' && d>=16))) {
                 worked++;
                 if (emp.role === 'Преподаватель') {
-                  trial += rec.trial_lessons || 0;
                   indiv += rec.indiv || 0;
                   group += rec.group_total || 0;
                 }
@@ -463,11 +478,10 @@
                 content = rec.daily_sales > 0 ? '<span class="big-ruble">₽</span>' : 'Д';
                 if (rec.daily_sales) tooltip = `Выручка: ${rec.daily_sales} ₽`;
               } else if (emp.role === 'Преподаватель' && status === 'working') {
-                const t = rec.trial_lessons || 0;
                 const i = rec.indiv || 0;
                 const g = rec.group_total || 0;
-                content = `Д<br><small>${t}/${i}/${g}</small>`;
-                tooltip = `Пробные: ${t}, Инд.: ${i}, Групп.: ${g}`;
+                content = `Д<br><small>${i}/${g}</small>`;
+                tooltip = `Инд.: ${i}, Групп.: ${g}`;
               }
               if (rec.comment) tooltip += (tooltip?' ':'') + rec.comment;
               cells += `<td><div class="${cls}" data-empid="${emp.id}" data-date="${dateStr}" title="${tooltip}">${content}</div></td>`;
@@ -517,7 +531,6 @@
           dyn = `<label>Выручка: <input type="number" id="dailySales" value="${rec.daily_sales||''}" style="width:120px; margin-left:0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
         } else if (emp.role === 'Преподаватель') {
           dyn = `<div style="display:flex; gap:0.8rem; flex-wrap:wrap;">
-            <label>Пробные: <input type="number" id="trialLessons" value="${rec.trial_lessons||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>
             <label>Инд.: <input type="number" id="indivLessons" value="${rec.indiv||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>
             <label>Групп.: <input type="number" id="groupStudents" value="${rec.group_total||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>
           </div>`;
@@ -533,10 +546,9 @@
         if (!status) return showToast('Выберите статус', true);
         const comment = document.getElementById('comment').value.trim();
         const emp = employees.find(e=>e.id===window._editEmpId);
-        let dailySales=0, trial=0, indiv=0, groupTotal=0;
+        let dailySales=0, indiv=0, groupTotal=0;
         if (emp.role==='Менеджер') dailySales = parseFloat(document.getElementById('dailySales')?.value)||0;
         if (emp.role==='Преподаватель') {
-          trial = parseInt(document.getElementById('trialLessons')?.value)||0;
           indiv = parseInt(document.getElementById('indivLessons')?.value)||0;
           groupTotal = parseInt(document.getElementById('groupStudents')?.value)||0;
         }
@@ -544,51 +556,13 @@
           emp_id: window._editEmpId,
           date: window._editDate,
           status, comment, daily_sales: dailySales,
-          trial_lessons: trial, indiv, group_total: groupTotal
+          trial_lessons: 0, indiv, group_total: groupTotal
         }, {onConflict: 'emp_id, date'});
         if (error) return showToast('Ошибка: '+error.message, true);
         showToast('Сохранено', true);
         closeModal('dayModal');
         loadData();
       }
-
-      // Массовое заполнение
-      document.getElementById('fillPeriodBtn').addEventListener('click', () => {
-        document.getElementById('fillModal').style.display = 'flex';
-      });
-      document.getElementById('closeFillModalBtn').addEventListener('click', () => closeModal('fillModal'));
-      document.getElementById('applyFillBtn').addEventListener('click', async () => {
-        const status = document.getElementById('fillStatus').value;
-        const startDate = document.getElementById('fillStartDate').value;
-        const endDate = document.getElementById('fillEndDate').value;
-        if (!startDate || !endDate) return showToast('Выберите даты', true);
-        const start = new Date(startDate); const end = new Date(endDate);
-        if (start > end) return showToast('Начальная дата позже конечной', true);
-
-        const targetEmployees = employees.filter(e => selectedIds.has(e.id));
-        const promises = [];
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().slice(0,10);
-          targetEmployees.forEach(emp => {
-            promises.push(
-              db.from('worklog').upsert({
-                emp_id: emp.id,
-                date: dateStr,
-                status: status,
-                trial_lessons: 0,
-                indiv: 0,
-                group_total: 0,
-                daily_sales: 0,
-                comment: ''
-              }, {onConflict: 'emp_id, date'})
-            );
-          });
-        }
-        await Promise.all(promises);
-        showToast('Период заполнен', true);
-        closeModal('fillModal');
-        loadData();
-      });
 
       function openSalaryModal(empId) {
         const emp = employees.find(e=>e.id===empId);
@@ -603,7 +577,6 @@
         } else if (emp.role === 'Администратор') {
           html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
         } else if (emp.role === 'Преподаватель') {
-          html += `<label>Ставка пробный: <input type="number" id="trialRate" value="${params.trial_rate||300}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><br>`;
           html += `<label>Ставка индив.: <input type="number" id="indivRate" value="${params.indiv_rate||400}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><br>`;
           html += `<label>Ставка групп.: <input type="number" id="groupRate" value="${params.group_rate||500}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
         }
@@ -616,7 +589,7 @@
       async function saveSalary() {
         const emp = employees.find(e=>e.id===window._salaryEmpId);
         const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
-        let normDays=null, planAmount=null, trialRate=null, indivRate=null, groupRate=null;
+        let normDays=null, planAmount=null, indivRate=null, groupRate=null;
         if (emp.role === 'Менеджер') {
           planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
         } else if (emp.role === 'Управляющий') {
@@ -625,7 +598,6 @@
         } else if (emp.role === 'Администратор') {
           normDays = parseInt(document.getElementById('normDays')?.value)||22;
         } else if (emp.role === 'Преподаватель') {
-          trialRate = parseFloat(document.getElementById('trialRate')?.value)||300;
           indivRate = parseFloat(document.getElementById('indivRate')?.value)||400;
           groupRate = parseFloat(document.getElementById('groupRate')?.value)||500;
         }
@@ -634,7 +606,6 @@
           month: monthStr,
           norm_days: normDays,
           plan_amount: planAmount,
-          trial_rate: trialRate,
           indiv_rate: indivRate,
           group_rate: groupRate
         };
@@ -653,6 +624,7 @@
         showToast('Excel скачан', true);
       }
 
+      // Привязка событий
       document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
       document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
       document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
@@ -661,6 +633,14 @@
       document.getElementById('saveDayBtn').addEventListener('click', saveDay);
       document.getElementById('closeSalaryModalBtn').addEventListener('click', () => closeModal('salaryModal'));
       document.getElementById('saveSalaryBtn').addEventListener('click', saveSalary);
+
+      // Фильтры ролей
+      document.getElementById('roleFilters').addEventListener('click', (e) => {
+        if (e.target.classList.contains('role-filter-btn')) {
+          const role = e.target.dataset.role;
+          applyRoleFilter(role);
+        }
+      });
 
       document.getElementById('periodBtns').addEventListener('click', (e) => {
         if (e.target.classList.contains('period-btn')) {
