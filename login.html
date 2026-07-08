@@ -1,194 +1,152 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Вход — Music Club Орёл</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 50%, #fab1a0 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 0;
-    }
-    .card {
-      background: white;
-      border-radius: 24px;
-      padding: 2.5rem;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    h2 { margin-bottom: 1.5rem; color: #2d3436; }
-    input {
-      width: 100%;
-      padding: 0.8rem;
-      margin-bottom: 1rem;
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 1rem;
-    }
-    button {
-      width: 100%;
-      padding: 0.8rem;
-      background: #ff6b6b;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 1rem;
-      margin-top: 0.5rem;
-      transition: background 0.2s;
-    }
-    button:hover { background: #ee5a24; }
-    button:disabled { opacity: 0.6; cursor: default; }
-    .toggle {
-      margin-top: 1rem;
-      color: #d63031;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .error { color: #d63031; margin-bottom: 0.5rem; font-size: 0.9rem; }
-    .info { color: #636e72; margin-bottom: 0.5rem; font-size: 0.9rem; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход — Music Club Орёл</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e, #fab1a0);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            width: 300px;
+        }
+        input, button {
+            width: 100%;
+            padding: 0.7rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        button {
+            background: #ff6b6b;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .error { color: red; }
+        .info { color: gray; }
+        .toggle { color: #d63031; cursor: pointer; margin-top: 0.5rem; }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h2 id="formTitle">Вход</h2>
-    <div id="error" class="error"></div>
-    <div id="info" class="info"></div>
-    <input type="email" id="email" placeholder="Email" autocomplete="email">
-    <input type="password" id="password" placeholder="Пароль" autocomplete="current-password">
-    <button id="submitBtn">Войти</button>
-    <div class="toggle" id="toggleForm">Нет аккаунта? Зарегистрироваться</div>
-  </div>
+    <div class="card">
+        <h2 id="formTitle">Вход</h2>
+        <div id="error" class="error"></div>
+        <div id="info" class="info"></div>
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Пароль">
+        <button id="submitBtn">Войти</button>
+        <div id="toggleForm" class="toggle">Нет аккаунта? Зарегистрироваться</div>
+    </div>
 
-  <script>
-    // ==================== КОНФИГУРАЦИЯ ====================
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    // ВАЖНО: замените <логин> и <репозиторий> на свои значения GitHub Pages
-    const SITE_URL = 'https://<логин>.github.io/<репозиторий>';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <script>
+        // ==================== НАСТРОЙКИ ====================
+        const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+        const SITE_URL = 'https://arturbizz.github.io/sport';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ==================== ЭЛЕМЕНТЫ ====================
-    let mode = 'login';
-    const formTitle = document.getElementById('formTitle');
-    const submitBtn = document.getElementById('submitBtn');
-    const toggleForm = document.getElementById('toggleForm');
-    const errorEl = document.getElementById('error');
-    const infoEl = document.getElementById('info');
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
+        // ==================== СОСТОЯНИЕ ====================
+        let mode = 'login';
 
-    // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-    function translateError(message) {
-      if (message.includes('Invalid login credentials')) return 'Неверный email или пароль';
-      if (message.includes('Email not confirmed')) return 'Email не подтверждён. Проверьте почту.';
-      return message;
-    }
+        const formTitle = document.getElementById('formTitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleForm = document.getElementById('toggleForm');
+        const errorEl = document.getElementById('error');
+        const infoEl = document.getElementById('info');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
 
-    // ==================== ПРОВЕРКА СЕССИИ ПРИ ЗАГРУЗКЕ ====================
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        window.location.href = 'index.html';
-      }
-    })();
+        // ==================== АВТО-РЕДИРЕКТ, ЕСЛИ УЖЕ ЗАЛОГИНЕН ====================
+        (async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) window.location.href = 'index.html';
+        })();
 
-    // ==================== ПЕРЕКЛЮЧЕНИЕ ВХОД / РЕГИСТРАЦИЯ ====================
-    toggleForm.addEventListener('click', () => {
-      mode = mode === 'login' ? 'register' : 'login';
-      formTitle.textContent = mode === 'login' ? 'Вход' : 'Регистрация';
-      submitBtn.textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
-      toggleForm.textContent = mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
-      errorEl.textContent = '';
-      infoEl.textContent = '';
-    });
+        // ==================== ПЕРЕКЛЮЧЕНИЕ ВХОД / РЕГИСТРАЦИЯ ====================
+        toggleForm.addEventListener('click', () => {
+            mode = mode === 'login' ? 'register' : 'login';
+            formTitle.textContent = mode === 'login' ? 'Вход' : 'Регистрация';
+            submitBtn.textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
+            toggleForm.textContent = mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
+            errorEl.textContent = '';
+            infoEl.textContent = '';
+        });
 
-    // ==================== ОТПРАВКА ФОРМЫ ====================
-    submitBtn.addEventListener('click', async () => {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      errorEl.textContent = '';
-      infoEl.textContent = '';
+        // ==================== ОТПРАВКА ФОРМЫ ====================
+        submitBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            errorEl.textContent = '';
+            infoEl.textContent = '';
 
-      // Валидация
-      if (!email || !password) {
-        errorEl.textContent = 'Заполните все поля';
-        return;
-      }
-      if (password.length < 6) {
-        errorEl.textContent = 'Пароль должен содержать минимум 6 символов';
-        return;
-      }
-
-      submitBtn.disabled = true;
-      try {
-        if (mode === 'login') {
-          // ВХОД
-          const { error } = await supabase.auth.signInWithPassword({ email, password });
-          if (error) {
-            errorEl.textContent = translateError(error.message);
-            return;
-          }
-          window.location.href = 'index.html';
-        } else {
-          // РЕГИСТРАЦИЯ
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo: `${SITE_URL}/login.html`
+            if (!email || !password) {
+                errorEl.textContent = 'Заполните все поля';
+                return;
             }
-          });
+            if (password.length < 6) {
+                errorEl.textContent = 'Пароль минимум 6 символов';
+                return;
+            }
 
-          if (error) {
-            errorEl.textContent = translateError(error.message);
-            return;
-          }
+            submitBtn.disabled = true;
+            try {
+                if (mode === 'login') {
+                    const { error } = await supabase.auth.signInWithPassword({ email, password });
+                    if (error) {
+                        errorEl.textContent = error.message === 'Invalid login credentials' ? 'Неверный email или пароль' : error.message;
+                        return;
+                    }
+                    window.location.href = 'index.html';
+                } else {
+                    const { data, error } = await supabase.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            emailRedirectTo: `${SITE_URL}/login.html`
+                        }
+                    });
+                    if (error) {
+                        errorEl.textContent = error.message;
+                        return;
+                    }
+                    if (data.user && data.user.identities && data.user.identities.length === 0) {
+                        errorEl.textContent = 'Этот email уже зарегистрирован. Попробуйте войти или восстановить пароль.';
+                        return;
+                    }
+                    if (data.session) {
+                        window.location.href = 'index.html';
+                    } else {
+                        infoEl.textContent = 'Регистрация успешна! Проверьте почту для подтверждения.';
+                        mode = 'login';
+                        formTitle.textContent = 'Вход';
+                        submitBtn.textContent = 'Войти';
+                        toggleForm.textContent = 'Нет аккаунта? Зарегистрироваться';
+                    }
+                }
+            } catch (err) {
+                errorEl.textContent = 'Ошибка соединения. Проверьте интернет.';
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
 
-          // Проверяем, не существует ли уже такой пользователь
-          if (data.user && data.user.identities && data.user.identities.length === 0) {
-            errorEl.textContent = 'Этот email уже зарегистрирован. Попробуйте войти или восстановить пароль.';
-            return;
-          }
-
-          // Если сессия создана сразу (подтверждение не требуется)
-          if (data.session) {
-            window.location.href = 'index.html';
-          } else {
-            // Требуется подтверждение email
-            infoEl.textContent = 'Регистрация успешна! Проверьте почту для подтверждения.';
-            // Переключаемся обратно на вход
-            mode = 'login';
-            formTitle.textContent = 'Вход';
-            submitBtn.textContent = 'Войти';
-            toggleForm.textContent = 'Нет аккаунта? Зарегистрироваться';
-          }
-        }
-      } catch (err) {
-        errorEl.textContent = 'Ошибка соединения. Проверьте интернет.';
-      } finally {
-        submitBtn.disabled = false;
-      }
-    });
-
-    // ==================== ENTER В ПАРОЛЕ ====================
-    passwordInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        submitBtn.click();
-      }
-    });
-  </script>
+        // ==================== ENTER В ПАРОЛЕ ====================
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitBtn.click();
+        });
+    </script>
 </body>
 </html>
