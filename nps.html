@@ -50,19 +50,27 @@
     }
     h1 { font-size: 1.8rem; font-weight: 700; }
     .btn {
-      background: var(--accent);
-      color: white;
-      border: none;
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      color: var(--accent);
       padding: 0.7rem 1.5rem;
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
       font-size: 0.9rem;
-      transition: 0.2s;
+      transition: all 0.3s;
       margin-left: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
-    .btn:hover { background: #ee5a24; }
-    .btn:disabled { opacity: 0.6; cursor: default; }
+    .btn:hover {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 8px 15px rgba(255,107,107,0.3);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
     .error { color: #d63031; margin: 1rem 0; font-size: 0.9rem; }
     .info { color: #636e72; margin: 1rem 0; }
     table {
@@ -111,8 +119,8 @@
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Клиенты с успешными визитами</h1>
       <div>
-        <button class="btn" id="loadXlsxBtn">📂 Загрузить XLSX-отчёт</button>
-        <button class="btn" id="loadContactsBtn" style="display:none;">📞 Загрузить контакты через API</button>
+        <button class="btn" id="loadXlsxBtn">Загрузить отчёт (XLSX)</button>
+        <button class="btn" id="loadContactsBtn" style="display:none;">Загрузить данные</button>
       </div>
     </div>
     <div id="message"></div>
@@ -182,7 +190,7 @@
           }
 
           const headers = rows[headerRowIndex].map(h => String(h).trim().toLowerCase());
-          const idIdx = headers.findIndex(h => h === 'id' || h === '#');
+          const idIdx = headers.findIndex(h => h === 'id');   // <-- исправлено: только ID
           const nameIdx = headers.findIndex(h => h.includes('фио') || h.includes('имя') || h.includes('клиент'));
 
           if (idIdx === -1 || nameIdx === -1) {
@@ -214,7 +222,7 @@
           customersFromFile = unique;
           renderTable(customersFromFile);
           loadContactsBtn.style.display = 'inline-block';
-          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить контакты», чтобы получить телефоны и email.</div>`;
+          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить данные», чтобы получить телефоны и email.</div>`;
         } catch (err) {
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
@@ -225,7 +233,7 @@
     loadContactsBtn.addEventListener('click', async () => {
       if (customersFromFile.length === 0) return;
       loadContactsBtn.disabled = true;
-      loadContactsBtn.textContent = 'Загрузка контактов...';
+      loadContactsBtn.textContent = 'Загрузка данных...';
       msg.innerHTML = '';
       try {
         const { data: { session } } = await _supabaseNPS.auth.getSession();
@@ -249,23 +257,23 @@
           throw new Error(result.error || 'Ошибка сервера');
         }
 
-        // Объединяем с исходными именами (на случай, если API вернул пустое имя)
+        // Объединяем с исходными именами
         const merged = customersFromFile.map(cf => {
           const apiData = result.customers.find(ac => String(ac.id) === String(cf.id));
           return {
-            name: (apiData && apiData.name && apiData.name !== '') ? apiData.name : cf.name,
+            name: (apiData && apiData.name && apiData.name !== `ID ${cf.id}`) ? apiData.name : cf.name,
             phone: apiData ? apiData.phone : '',
             email: apiData ? apiData.email : ''
           };
         });
 
         renderTable(merged);
-        msg.innerHTML = '<div class="info">Контакты загружены.</div>';
+        msg.innerHTML = '<div class="info">Данные загружены.</div>';
       } catch (err) {
         msg.innerHTML = `<div class="error">${err.message}</div>`;
       } finally {
         loadContactsBtn.disabled = false;
-        loadContactsBtn.textContent = '📞 Загрузить контакты через API';
+        loadContactsBtn.textContent = 'Загрузить данные';
       }
     });
 
