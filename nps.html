@@ -2,62 +2,199 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NPS / Отзывы — Music Club Орёл</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>NPS / Клиенты — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
+      --accent: #ff6b6b;
+      --bg: #fef9f0;
       --surface: #ffffff;
-      --text: #0f172a;
-      --text-secondary: #64748b;
-      --accent: #3b82f6;
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
     }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 50%, #f0f9ff 100%);
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 1.5rem;
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
-      margin: 0;
+      align-items: flex-start;
     }
     .container {
+      width: 100%;
+      max-width: 900px;
       background: var(--surface);
       border-radius: 24px;
-      padding: 3rem;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-      max-width: 500px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
     }
-    h1 { font-weight: 700; color: var(--text); }
-    p { color: var(--text-secondary); margin: 1rem 0 2rem; }
-    a {
-      background: var(--accent); color: white;
-      padding: 0.7rem 2rem; border-radius: 14px;
-      text-decoration: none; font-weight: 600;
-      transition: background 0.2s;
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
-    a:hover { background: #2563eb; }
+    .back-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    .btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.2s;
+    }
+    .btn:hover { background: #ee5a24; }
+    .btn:disabled { opacity: 0.6; cursor: default; }
+    .error {
+      color: #d63031;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+    .info {
+      color: #636e72;
+      margin: 1rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+    }
+    @media (max-width: 600px) {
+      body { padding: 0.8rem; }
+      .container { padding: 1.2rem; }
+      table, thead, tbody, th, td, tr { display: block; }
+      thead tr { display: none; }
+      tbody tr {
+        margin-bottom: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 0.8rem;
+        background: #fafafa;
+      }
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.4rem 0;
+        border: none;
+      }
+      td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-light);
+        margin-right: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>NPS / Отзывы</h1>
-    <p>Сбор и анализ удовлетворённости учеников. Модуль на подходе.</p>
-    <a href="index.html">← На главную</a>
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>Клиенты с успешными визитами</h1>
+      <button class="btn" id="loadBtn">Загрузить клиентов</button>
+    </div>
+    <div id="message"></div>
+    <div id="tableContainer"></div>
   </div>
 
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const EDGE_FUNCTION_URL = 'https://<project>.supabase.co/functions/v1/alfa-proxy'; // ← замените на ваш URL
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Проверка авторизации
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) window.location.href = 'login.html';
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
     })();
+
+    document.getElementById('loadBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('loadBtn');
+      const msg = document.getElementById('message');
+      const tableContainer = document.getElementById('tableContainer');
+      msg.innerHTML = '';
+      tableContainer.innerHTML = '';
+      btn.disabled = true;
+      btn.textContent = 'Загрузка...';
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          msg.innerHTML = '<div class="error">Необходимо войти</div>';
+          return;
+        }
+
+        const response = await fetch(EDGE_FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Ошибка сервера');
+        }
+
+        if (!result.customers || result.customers.length === 0) {
+          msg.innerHTML = '<div class="info">Нет клиентов с успешными визитами с 1 июня.</div>';
+          return;
+        }
+
+        // Строим таблицу
+        let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
+        result.customers.forEach(c => {
+          html += `<tr>
+            <td data-label="ФИО">${c.name || '—'}</td>
+            <td data-label="Телефон">${c.phone || '—'}</td>
+            <td data-label="Email">${c.email || '—'}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        tableContainer.innerHTML = html;
+        msg.innerHTML = `<div class="info">Загружено ${result.customers.length} клиентов.</div>`;
+      } catch (err) {
+        msg.innerHTML = `<div class="error">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Загрузить клиентов';
+      }
+    });
   </script>
 </body>
 </html>
