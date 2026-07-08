@@ -239,7 +239,7 @@
   <div class="container">
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
-      <h1>Планировщик</h1>
+      <h1>Управление задачами</h1>
       <button class="btn" id="addTaskBtn">+ Новая задача</button>
     </div>
 
@@ -593,7 +593,7 @@
       const taskData = {
         title,
         description: document.getElementById('taskDescription').value.trim(),
-        assigned_to: assignedIds.length > 0 ? assignedIds : [],  // Важно: пустой массив, а не null
+        assigned_to: assignedIds.length > 0 ? assignedIds : [],
         due_date: document.getElementById('taskDueDate').value || null,
         status: document.getElementById('taskStatus').value,
         comment: document.getElementById('taskComment').value.trim(),
@@ -649,7 +649,6 @@
         document.getElementById('prioritySection').style.display = 'block';
         document.getElementById('taskPriority').value = task.priority || 'medium';
       }
-      // Установить чекбоксы
       document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
         cb.checked = task.assigned_to && task.assigned_to.includes(cb.value);
       });
