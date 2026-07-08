@@ -128,13 +128,12 @@
   </div>
 
   <script>
-    // Используем уникальное имя, чтобы избежать конфликтов
+    // Уникальное имя
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
     const _supabaseNPS = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Проверка авторизации при загрузке
     (async () => {
       const { data: { session } } = await _supabaseNPS.auth.getSession();
       if (!session) {
