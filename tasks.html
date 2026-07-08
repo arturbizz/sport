@@ -334,46 +334,49 @@
       const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
       const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
 
-      // Получение элемента с проверкой
+      // Безопасное получение элементов
       function getEl(id) {
         const el = document.getElementById(id);
-        if (!el) console.error(`Element with id "${id}" not found`);
+        if (!el) console.error(`Element #${id} not found`);
         return el;
       }
 
+      // Кастомный алерт
       function customAlert(msg) {
         return new Promise(resolve => {
-          const alertM = getEl('alertModal');
+          const modal = getEl('alertModal');
           const msgEl = getEl('alertMessage');
-          if (!alertM || !msgEl) { alert(msg); resolve(); return; }
+          if (!modal || !msgEl) { alert(msg); resolve(); return; }
           msgEl.textContent = msg;
-          alertM.style.display = 'flex';
-          const okBtn = getEl('alertOkBtn');
-          okBtn.onclick = () => { alertM.style.display = 'none'; resolve(); };
+          modal.style.display = 'flex';
+          getEl('alertOkBtn').onclick = () => { modal.style.display = 'none'; resolve(); };
         });
       }
 
+      // Кастомный confirm
       function customConfirm(msg) {
         return new Promise(resolve => {
-          const confirmM = getEl('confirmModal');
+          const modal = getEl('confirmModal');
           const msgEl = getEl('confirmMessage');
-          if (!confirmM || !msgEl) { resolve(confirm(msg)); return; }
+          if (!modal || !msgEl) { resolve(confirm(msg)); return; }
           msgEl.textContent = msg;
-          confirmM.style.display = 'flex';
-          getEl('confirmYesBtn').onclick = () => { confirmM.style.display = 'none'; resolve(true); };
-          getEl('confirmNoBtn').onclick = () => { confirmM.style.display = 'none'; resolve(false); };
+          modal.style.display = 'flex';
+          getEl('confirmYesBtn').onclick = () => { modal.style.display = 'none'; resolve(true); };
+          getEl('confirmNoBtn').onclick = () => { modal.style.display = 'none'; resolve(false); };
         });
       }
 
+      // Обновление текста мультиселекта (выбирается только один)
       function updateMultiTrigger() {
         const checked = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => {
           const emp = employees.find(e => e.id === cb.value);
           return emp ? emp.name : '';
         }).filter(Boolean);
         const trigger = getEl('multiTrigger');
-        if (trigger) trigger.textContent = checked.length ? checked.join(', ') : 'Выберите ответственного';
+        if (trigger) trigger.textContent = checked.length ? checked[0] : 'Выберите ответственного';
       }
 
+      // Загрузка сотрудников
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
         employees = data || [];
@@ -393,7 +396,15 @@
           `).join('');
 
           multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', updateMultiTrigger);
+            cb.addEventListener('change', () => {
+              // Снимаем все остальные, оставляем только этот
+              if (cb.checked) {
+                multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(other => {
+                  if (other !== cb) other.checked = false;
+                });
+              }
+              updateMultiTrigger();
+            });
           });
         }
 
@@ -411,12 +422,14 @@
         }
       }
 
+      // Загрузка задач
       async function loadTasks() {
         const { data, error } = await _supabase.from('tasks').select('*').order('created_at', { ascending: false });
         if (error) { console.error(error); return; }
         tasks = data || [];
       }
 
+      // Рендер фильтров
       function renderFilters() {
         document.querySelectorAll('.filter-btn').forEach(btn => {
           btn.classList.toggle('active', btn.dataset.status === currentFilter);
@@ -425,6 +438,7 @@
         if (empFilter) empFilter.value = currentEmployeeFilter;
       }
 
+      // Рендер задач
       function renderTasks() {
         const container = getEl('tasksContainer');
         if (!container) return;
@@ -494,6 +508,7 @@
           </div>`;
         }).join('');
 
+        // Обработчики кликов
         document.querySelectorAll('.task-desc, .task-comment, .task-help').forEach(el => {
           el.addEventListener('click', () => el.classList.toggle('text-collapsed'));
         });
@@ -555,11 +570,13 @@
         if (!title) { await customAlert('Введите название задачи'); return; }
         const isIdea = getEl('typeIdea').checked;
         const priority = isIdea ? 'idea' : getEl('taskPriority').value;
-        const assignedIds = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => cb.value);
+        const checkedBoxes = [...document.querySelectorAll('#multiDropdown input:checked')];
+        const assignedId = checkedBoxes.length > 0 ? checkedBoxes[0].value : null;
+
         const taskData = {
           title,
           description: getEl('taskDescription').value.trim(),
-          assigned_to: assignedIds.length > 0 ? assignedIds[0] : null,   // сохраняем только одного
+          assigned_to: assignedId,
           due_date: getEl('taskDueDate').value || null,
           status: getEl('taskStatus').value,
           comment: getEl('taskComment').value.trim(),
@@ -703,7 +720,7 @@
         }
       }
 
-      // Инициализация
+      // Старт
       (async () => {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
