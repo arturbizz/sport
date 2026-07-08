@@ -65,43 +65,73 @@
     <h2 id="formTitle">Вход</h2>
     <div id="error" class="error"></div>
     <div id="info" class="info"></div>
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Пароль">
+    <input type="email" id="email" placeholder="Email" autocomplete="email">
+    <input type="password" id="password" placeholder="Пароль" autocomplete="current-password">
     <button id="submitBtn">Войти</button>
     <div class="toggle" id="toggleForm">Нет аккаунта? Зарегистрироваться</div>
   </div>
+
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let mode = 'login';
-    document.getElementById('toggleForm').addEventListener('click', () => {
+
+    const formTitle = document.getElementById('formTitle');
+    const submitBtn = document.getElementById('submitBtn');
+    const toggleForm = document.getElementById('toggleForm');
+    const errorEl = document.getElementById('error');
+    const infoEl = document.getElementById('info');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    toggleForm.addEventListener('click', () => {
       mode = mode === 'login' ? 'register' : 'login';
-      document.getElementById('formTitle').textContent = mode === 'login' ? 'Вход' : 'Регистрация';
-      document.getElementById('submitBtn').textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
-      document.getElementById('toggleForm').textContent = mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
-      document.getElementById('error').textContent = '';
-      document.getElementById('info').textContent = '';
-    });
-    document.getElementById('submitBtn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('error');
-      const infoEl = document.getElementById('info');
+      formTitle.textContent = mode === 'login' ? 'Вход' : 'Регистрация';
+      submitBtn.textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
+      toggleForm.textContent = mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
       errorEl.textContent = '';
       infoEl.textContent = '';
-      if (!email || !password) { errorEl.textContent = 'Заполните все поля'; return; }
+    });
+
+    submitBtn.addEventListener('click', async () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      errorEl.textContent = '';
+      infoEl.textContent = '';
+
+      if (!email || !password) {
+        errorEl.textContent = 'Заполните все поля';
+        return;
+      }
+
       if (mode === 'login') {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) { errorEl.textContent = error.message; return; }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          errorEl.textContent = error.message;
+          return;
+        }
+        // Успешный вход
         window.location.href = 'index.html';
       } else {
+        // Регистрация
         const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) { errorEl.textContent = error.message; return; }
+        if (error) {
+          errorEl.textContent = error.message;
+          return;
+        }
         if (data.session) {
+          // Сессия создана сразу (подтверждение не требуется)
           window.location.href = 'index.html';
         } else {
-          infoEl.textContent = 'Регистрация успешна. Проверьте почту для подтверждения (если не отключено в настройках Supabase).';
+          // Требуется подтверждение email
+          infoEl.textContent = 'Регистрация прошла успешно! Проверьте почту и перейдите по ссылке для подтверждения. После этого вы сможете войти.';
+          // Переключаемся на форму входа, чтобы пользователь мог войти после подтверждения
+          mode = 'login';
+          formTitle.textContent = 'Вход';
+          submitBtn.textContent = 'Войти';
+          toggleForm.textContent = 'Нет аккаунта? Зарегистрироваться';
         }
       }
     });
