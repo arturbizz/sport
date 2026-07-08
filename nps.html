@@ -12,6 +12,7 @@
   <style>
     :root {
       --accent: #ff6b6b;
+      --accent2: #f9ca24;
       --bg: #fef9f0;
       --surface: #ffffff;
       --text: #2d3436;
@@ -21,21 +22,44 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg);
+      background: linear-gradient(135deg, #fff5f5 0%, #fefce8 50%, #f0f9ff 100%);
       color: var(--text);
       padding: 1.5rem;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
     }
+    /* Музыкальные ноты на фоне (без эмодзи) */
+    .music-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .note {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(255,107,107,0.12);
+      animation: floatNote 10s infinite ease-in-out;
+    }
+    .note::before { content: '♪'; }
+    .note.two::before { content: '♫'; }
+    .note.three::before { content: '♩'; }
+    @keyframes floatNote {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+      50% { transform: translateY(-20px) rotate(5deg); opacity: 0.8; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+    }
+
     .container {
+      position: relative; z-index: 2;
       width: 100%;
       max-width: 1100px;
       background: var(--surface);
       border-radius: 24px;
       padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     }
     .header {
       display: flex;
@@ -53,26 +77,79 @@
     }
     h1 { font-size: 1.8rem; font-weight: 700; }
     .btn {
-      background: var(--surface);
-      border: 2px solid var(--accent);
-      color: var(--accent);
+      border: none;
       padding: 0.7rem 1.5rem;
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
       font-size: 0.9rem;
       transition: all 0.3s;
-      margin-left: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      color: white;
       box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     .btn:hover {
+      box-shadow: 0 8px 15px rgba(255,107,107,0.3);
+      transform: translateY(-2px);
+    }
+    .btn-outline {
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      color: var(--accent);
+    }
+    .btn-outline:hover {
       background: var(--accent);
       color: white;
-      box-shadow: 0 8px 15px rgba(255,107,107,0.3);
     }
     .btn:disabled { opacity: 0.5; cursor: default; }
-    .error { color: #d63031; margin: 1rem 0; font-size: 0.9rem; white-space: pre-wrap; }
+    .error { color: #d63031; margin: 1rem 0; font-size: 0.9rem; }
     .info { color: #636e72; margin: 1rem 0; }
+
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      background: #fef9f0;
+      padding: 0.8rem 1.2rem;
+      border-radius: 16px;
+      border: 1px solid #ffe0e0;
+    }
+    .filter-bar label {
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .filter-bar input[type="date"] {
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -85,20 +162,6 @@
       border-bottom: 1px solid var(--border);
     }
     th { background: #f8f9fa; font-weight: 600; }
-    .editable {
-      background: transparent;
-      border: 1px solid transparent;
-      padding: 0.3rem;
-      border-radius: 6px;
-      width: 100%;
-      font-size: 0.9rem;
-      color: var(--text);
-    }
-    .editable:focus {
-      border-color: var(--accent);
-      outline: none;
-      background: #fff;
-    }
     @media (max-width: 600px) {
       body { padding: 0.8rem; }
       .container { padding: 1.2rem; }
@@ -128,21 +191,53 @@
   </style>
 </head>
 <body>
+  <div class="music-bg">
+    <div class="note" style="top:8%; left:5%; animation-delay:0s;"></div>
+    <div class="note two" style="top:20%; right:10%; animation-delay:2s;"></div>
+    <div class="note three" style="bottom:15%; left:15%; animation-delay:4s;"></div>
+  </div>
+
   <div class="container">
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
-      <h1>Клиенты с успешными визитами</h1>
-      <div>
-        <button class="btn" id="loadReportBtn">Загрузить отчёт (XLSX)</button>
-        <button class="btn" id="loadContactsBtn" style="display:none;">Загрузить справочник клиентов</button>
-        <button class="btn" id="exportBtn" style="display:none;">Выгрузить в Excel</button>
-        <button class="btn" id="saveBtn" style="display:none;">Сохранить изменения</button>
+      <h1>Клиенты для NPS</h1>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" id="loadFileBtn">Загрузить файл (XLSX)</button>
+        <button class="btn btn-outline" id="helpBtn">?</button>
       </div>
     </div>
+
+    <div class="filter-bar">
+      <label>Показывать с даты:</label>
+      <input type="date" id="cutoffDate" value="2026-06-01">
+      <button class="btn" id="applyFilterBtn" style="padding:0.4rem 1rem;">Обновить</button>
+      <span style="margin-left:auto; color:var(--text-light);" id="recordCount"></span>
+    </div>
+
     <div id="message"></div>
     <div id="tableContainer"></div>
-    <input type="file" id="reportFileInput" accept=".xlsx" style="display:none">
-    <input type="file" id="contactsFileInput" accept=".xlsx" style="display:none">
+
+    <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1rem;">
+      <button class="btn btn-outline" id="exportBtn">Выгрузить в Excel</button>
+      <button class="btn btn-outline" id="saveBtn">Сохранить изменения</button>
+    </div>
+
+    <input type="file" id="fileInput" accept=".xlsx" style="display:none">
+  </div>
+
+  <!-- Модальное окно инструкции -->
+  <div class="modal-overlay" id="helpModal" style="display:none;">
+    <div class="modal">
+      <h2>Как обновить данные</h2>
+      <p style="margin:1rem 0; text-align:left;">
+        1. Зайдите в CRM → раздел «Клиенты» (или «Отчёты»).<br>
+        2. Постройте отчёт с полями: <b>ID, ФИО, Общий остаток (деньги), Общий остаток (уроки), Дата посл. посещения, Телефон, E-mail</b>.<br>
+        3. Экспортируйте в Excel (XLSX).<br>
+        4. Загрузите файл сюда.
+      </p>
+      <button class="btn" id="loadFromHelpBtn">Загрузить файл</button>
+      <button class="btn btn-outline" id="closeHelpBtn" style="margin-left:0.5rem;">Закрыть</button>
+    </div>
   </div>
 
   <script>
@@ -150,38 +245,66 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let customersData = []; // { id, name, phone, email }
+    // Хранилище всех клиентов из последнего загруженного файла
+    let allData = []; // [{name, phone, email, date}]
 
+    const fileInput = document.getElementById('fileInput');
+    const loadFileBtn = document.getElementById('loadFileBtn');
+    const loadFromHelpBtn = document.getElementById('loadFromHelpBtn');
+    const helpBtn = document.getElementById('helpBtn');
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const cutoffDateInput = document.getElementById('cutoffDate');
+    const applyFilterBtn = document.getElementById('applyFilterBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const msg = document.getElementById('message');
+    const tableContainer = document.getElementById('tableContainer');
+    const recordCount = document.getElementById('recordCount');
+
+    // Проверка авторизации
     (async () => {
       const { data: { session } } = await _supabase.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
         return;
       }
+      // Восстанавливаем данные из localStorage
+      const saved = localStorage.getItem('nps_allData');
+      if (saved) {
+        try {
+          allData = JSON.parse(saved);
+          renderTable();
+        } catch (e) {}
+      }
     })();
 
-    const reportFileInput = document.getElementById('reportFileInput');
-    const contactsFileInput = document.getElementById('contactsFileInput');
-    const loadReportBtn = document.getElementById('loadReportBtn');
-    const loadContactsBtn = document.getElementById('loadContactsBtn');
-    const exportBtn = document.getElementById('exportBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const msg = document.getElementById('message');
-    const tableContainer = document.getElementById('tableContainer');
+    // Открытие окна выбора файла
+    function triggerFileInput() {
+      fileInput.click();
+    }
 
-    loadReportBtn.addEventListener('click', () => reportFileInput.click());
-    loadContactsBtn.addEventListener('click', () => contactsFileInput.click());
+    loadFileBtn.addEventListener('click', triggerFileInput);
+    loadFromHelpBtn.addEventListener('click', () => {
+      helpModal.style.display = 'none';
+      triggerFileInput();
+    });
 
-    // Загрузка отчёта о посещениях
-    reportFileInput.addEventListener('change', (e) => {
+    helpBtn.addEventListener('click', () => {
+      helpModal.style.display = 'flex';
+    });
+
+    closeHelpBtn.addEventListener('click', () => {
+      helpModal.style.display = 'none';
+    });
+
+    // Обработка загруженного файла
+    fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
+
       msg.innerHTML = '';
       tableContainer.innerHTML = '';
-      exportBtn.style.display = 'none';
-      saveBtn.style.display = 'none';
-      loadContactsBtn.style.display = 'none';
-      customersData = [];
 
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -192,56 +315,64 @@
           const sheet = workbook.Sheets[firstSheet];
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
+          // Поиск заголовков (строка с ID и ФИО)
           let headerRowIndex = -1;
-          for (let i = 0; i < Math.min(rows.length, 20); i++) {
+          for (let i = 0; i < Math.min(rows.length, 10); i++) {
             const row = rows[i];
             if (!row) continue;
             const rowStr = row.map(c => String(c).trim().toLowerCase()).join(' ');
-            if (rowStr.includes('id') || rowStr.includes('фио')) {
+            if (rowStr.includes('id') && rowStr.includes('фио')) {
               headerRowIndex = i;
               break;
             }
           }
           if (headerRowIndex === -1) {
-            msg.innerHTML = '<div class="error">Не удалось найти строку с заголовками (ID/ФИО).</div>';
+            msg.innerHTML = '<div class="error">Не найдена строка заголовков (ID, ФИО).</div>';
             return;
           }
 
           const headers = rows[headerRowIndex].map(h => String(h).trim().toLowerCase());
-          const idIdx = headers.findIndex(h => h === 'id');
           const nameIdx = headers.findIndex(h => h.includes('фио') || h.includes('имя') || h.includes('клиент'));
+          const phoneIdx = headers.findIndex(h => h.includes('телефон') || h.includes('phone'));
+          const emailIdx = headers.findIndex(h => h.includes('e-mail') || h.includes('email') || h.includes('почта'));
+          const dateIdx = headers.findIndex(h => h.includes('дата') && h.includes('посл'));
 
-          if (idIdx === -1 || nameIdx === -1) {
-            msg.innerHTML = '<div class="error">Не найдены столбцы ID и/или ФИО.</div>';
+          if (nameIdx === -1 || dateIdx === -1) {
+            msg.innerHTML = '<div class="error">Не найдены столбцы ФИО и/или Дата посл. посещения.</div>';
             return;
           }
 
-          const customers = [];
+          const parsed = [];
           for (let i = headerRowIndex + 1; i < rows.length; i++) {
             const cols = rows[i];
-            if (!cols || cols.length <= idIdx || cols.length <= nameIdx) continue;
-            const idVal = String(cols[idIdx]).trim();
-            const nameVal = String(cols[nameIdx]).trim();
-            if (!idVal || isNaN(Number(idVal))) continue;
-            if (!nameVal || nameVal === '—') continue;
-            customers.push({ id: idVal, name: nameVal, phone: '', email: '' });
+            if (!cols) continue;
+            const dateStr = String(cols[dateIdx] || '').trim();
+            if (!dateStr) continue;
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) continue;
+            const [year, month, day] = parts.map(Number);
+            if (!year || !month || !day) continue;
+            const visitDate = new Date(year, month - 1, day);
+            const name = String(cols[nameIdx] || '').trim();
+            if (!name) continue;
+            parsed.push({
+              name,
+              phone: phoneIdx >= 0 ? String(cols[phoneIdx] || '').trim() : '',
+              email: emailIdx >= 0 ? String(cols[emailIdx] || '').trim() : '',
+              date: visitDate
+            });
           }
 
-          const unique = [];
-          const seen = new Set();
-          for (const c of customers) {
-            if (!seen.has(c.id)) {
-              seen.add(c.id);
-              unique.push(c);
-            }
+          if (parsed.length === 0) {
+            msg.innerHTML = '<div class="info">Нет клиентов в файле.</div>';
+            return;
           }
 
-          customersData = unique;
-          renderTable(customersData);
-          loadContactsBtn.style.display = 'inline-block';
-          exportBtn.style.display = 'inline-block';
-          saveBtn.style.display = 'inline-block';
-          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить справочник клиентов», чтобы подставить контакты.</div>`;
+          allData = parsed;
+          // Сохраняем в localStorage
+          localStorage.setItem('nps_allData', JSON.stringify(allData));
+          renderTable();
+          msg.innerHTML = `<div class="info">Загружено ${allData.length} клиентов. Отфильтровано по дате ниже.</div>`;
         } catch (err) {
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
@@ -249,134 +380,65 @@
       reader.readAsArrayBuffer(file);
     });
 
-    // Загрузка справочника клиентов (ID, телефон, email)
-    contactsFileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file || !customersData.length) return;
-      msg.innerHTML = '';
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        try {
-          const data = new Uint8Array(ev.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheet = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[firstSheet];
-          const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    // Отобразить таблицу, отфильтрованную по выбранной дате
+    function renderTable() {
+      const cutoff = new Date(cutoffDateInput.value);
+      if (isNaN(cutoff)) {
+        tableContainer.innerHTML = '<p class="info">Некорректная дата</p>';
+        return;
+      }
 
-          let headerRowIndex = -1;
-          for (let i = 0; i < Math.min(rows.length, 20); i++) {
-            const row = rows[i];
-            if (!row) continue;
-            const rowStr = row.map(c => String(c).trim().toLowerCase()).join(' ');
-            if (rowStr.includes('id') || rowStr.includes('фио')) {
-              headerRowIndex = i;
-              break;
-            }
-          }
-          if (headerRowIndex === -1) {
-            msg.innerHTML = '<div class="error">В справочнике не найдена строка заголовков (ID/ФИО).</div>';
-            return;
-          }
+      const filtered = allData.filter(c => c.date >= cutoff);
+      if (filtered.length === 0) {
+        tableContainer.innerHTML = '<p class="info">Нет клиентов с указанной даты.</p>';
+        recordCount.textContent = '';
+        return;
+      }
 
-          const headers = rows[headerRowIndex].map(h => String(h).trim().toLowerCase());
-          const idIdx = headers.findIndex(h => h === 'id');
-          const phoneIdx = headers.findIndex(h => h.includes('телефон') || h.includes('phone'));
-          const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('почта'));
-
-          if (idIdx === -1 || (phoneIdx === -1 && emailIdx === -1)) {
-            msg.innerHTML = '<div class="error">В справочнике не найдены столбцы ID и/или телефон/email.</div>';
-            return;
-          }
-
-          // Строим словарь контактов по ID
-          const contactsMap = new Map();
-          for (let i = headerRowIndex + 1; i < rows.length; i++) {
-            const cols = rows[i];
-            if (!cols) continue;
-            const idVal = String(cols[idIdx] || '').trim();
-            if (!idVal || isNaN(Number(idVal))) continue;
-            contactsMap.set(idVal, {
-              phone: phoneIdx >= 0 ? String(cols[phoneIdx] || '').trim() : '',
-              email: emailIdx >= 0 ? String(cols[emailIdx] || '').trim() : ''
-            });
-          }
-
-          // Заполняем пропущенные контакты
-          let filledCount = 0;
-          customersData.forEach(c => {
-            const contacts = contactsMap.get(c.id);
-            if (contacts) {
-              if (!c.phone && contacts.phone) { c.phone = contacts.phone; filledCount++; }
-              if (!c.email && contacts.email) { c.email = contacts.email; filledCount++; }
-            }
-          });
-
-          renderTable(customersData);
-          msg.innerHTML = `<div class="info">Контакты загружены. Заполнено ${filledCount} полей.</div>`;
-        } catch (err) {
-          msg.innerHTML = `<div class="error">Ошибка обработки справочника: ${err.message}</div>`;
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    function renderTable(customers) {
-      let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
-      customers.forEach((c, idx) => {
+      let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th><th>Дата посл. посещения</th></tr></thead><tbody>';
+      filtered.forEach(c => {
+        const dateStr = c.date.toISOString().slice(0, 10);
         html += `<tr>
           <td data-label="ФИО">${c.name}</td>
-          <td data-label="Телефон"><input class="editable phone-input" data-index="${idx}" value="${c.phone}" placeholder="Введите телефон"></td>
-          <td data-label="Email"><input class="editable email-input" data-index="${idx}" value="${c.email}" placeholder="Введите email"></td>
+          <td data-label="Телефон">${c.phone || '—'}</td>
+          <td data-label="Email">${c.email || '—'}</td>
+          <td data-label="Дата посл. посещения">${dateStr}</td>
         </tr>`;
       });
       html += '</tbody></table>';
       tableContainer.innerHTML = html;
-
-      document.querySelectorAll('.phone-input').forEach(input => {
-        input.addEventListener('input', (e) => {
-          const idx = e.target.dataset.index;
-          customersData[idx].phone = e.target.value;
-        });
-      });
-      document.querySelectorAll('.email-input').forEach(input => {
-        input.addEventListener('input', (e) => {
-          const idx = e.target.dataset.index;
-          customersData[idx].email = e.target.value;
-        });
-      });
+      recordCount.textContent = `Показано ${filtered.length} из ${allData.length}`;
     }
 
+    // Обработчики фильтра
+    applyFilterBtn.addEventListener('click', renderTable);
+    cutoffDateInput.addEventListener('change', renderTable);
+
+    // Сохранение в localStorage (уже происходит при загрузке, но можно и вручную)
     saveBtn.addEventListener('click', () => {
-      try {
-        localStorage.setItem('nps_customers', JSON.stringify(customersData));
-        msg.innerHTML = '<div class="info">Данные сохранены локально.</div>';
-      } catch (err) {
-        msg.innerHTML = '<div class="error">Ошибка сохранения: ' + err.message + '</div>';
-      }
+      localStorage.setItem('nps_allData', JSON.stringify(allData));
+      msg.innerHTML = '<div class="info">Данные сохранены локально.</div>';
     });
 
+    // Экспорт отфильтрованных данных
     exportBtn.addEventListener('click', () => {
-      const ws = XLSX.utils.json_to_sheet(customersData.map(c => ({ 'ФИО': c.name, 'Телефон': c.phone, 'Email': c.email })));
+      const cutoff = new Date(cutoffDateInput.value);
+      const filtered = allData.filter(c => c.date >= cutoff);
+      if (!filtered.length) {
+        msg.innerHTML = '<div class="info">Нет данных для экспорта.</div>';
+        return;
+      }
+      const ws = XLSX.utils.json_to_sheet(filtered.map(c => ({
+        'ФИО': c.name,
+        'Телефон': c.phone,
+        'Email': c.email,
+        'Дата посл. посещения': c.date.toISOString().slice(0,10)
+      })));
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Клиенты");
-      XLSX.writeFile(wb, "клиенты_с_контактами.xlsx");
+      XLSX.utils.book_append_sheet(wb, ws, "NPS Клиенты");
+      XLSX.writeFile(wb, "клиенты_nps.xlsx");
       msg.innerHTML = '<div class="info">Файл выгружен.</div>';
     });
-
-    // Восстановление данных из localStorage
-    (function restore() {
-      const saved = localStorage.getItem('nps_customers');
-      if (saved) {
-        try {
-          customersData = JSON.parse(saved);
-          renderTable(customersData);
-          loadContactsBtn.style.display = 'inline-block';
-          exportBtn.style.display = 'inline-block';
-          saveBtn.style.display = 'inline-block';
-          msg.innerHTML = '<div class="info">Загружены ранее сохранённые данные.</div>';
-        } catch (e) {}
-      }
-    })();
   </script>
 </body>
 </html>
