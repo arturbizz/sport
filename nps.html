@@ -128,14 +128,15 @@
   </div>
 
   <script>
+    // Используем уникальное имя, чтобы избежать конфликтов
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    // URL вашей Edge Function
     const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const _supabaseNPS = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Проверка авторизации при загрузке
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await _supabaseNPS.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
         return;
@@ -152,7 +153,7 @@
       btn.textContent = 'Загрузка...';
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await _supabaseNPS.auth.getSession();
         if (!session) {
           msg.innerHTML = '<div class="error">Необходимо войти</div>';
           return;
