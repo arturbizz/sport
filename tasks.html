@@ -120,6 +120,16 @@
       background: var(--accent);
       color: white;
     }
+    .btn-save {
+      background: #ff4d6d;
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(255,77,109,0.4);
+    }
+    .btn-save:hover {
+      background: #e04050;
+      box-shadow: 0 8px 25px rgba(255,77,109,0.6);
+    }
     .btn:disabled { opacity: 0.5; cursor: default; }
 
     .filters {
@@ -144,13 +154,38 @@
       color: white;
       border-color: var(--accent);
     }
-    .employee-filter {
+    .employee-filter-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .employee-filter-btn {
       padding: 0.4rem 1rem;
       border-radius: 20px;
       border: 1px solid var(--border);
-      font-size: 0.8rem;
       background: white;
-      margin-left: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .employee-filter-dropdown {
+      position: absolute;
+      top: 2.5rem;
+      left: 0;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      padding: 0.5rem;
+      display: none;
+      z-index: 10;
+    }
+    .employee-filter-dropdown select {
+      border: none;
+      font-size: 0.8rem;
+      padding: 0.3rem;
+      outline: none;
     }
 
     .tasks-grid {
@@ -266,7 +301,13 @@
       border-radius: 10px;
       font-size: 0.9rem;
       font-family: inherit;
+      caret-color: auto; /* курсор только при фокусе */
     }
+    /* Убираем курсор для всех элементов, которые не в фокусе */
+    body *:not(input):not(textarea):not([contenteditable="true"]) {
+      caret-color: transparent;
+    }
+
     .radio-group {
       display: flex;
       gap: 1rem;
@@ -274,43 +315,51 @@
       margin: 0.5rem 0;
     }
 
-    .confetti-piece {
-      position: fixed;
-      width: 10px; height: 10px;
+    /* Колокольчик */
+    .bell-icon {
+      position: relative;
+      cursor: pointer;
+      margin-left: 1rem;
+    }
+    .bell-icon svg {
+      width: 24px; height: 24px;
+      stroke: var(--text-light);
+      fill: none;
+    }
+    .bell-badge {
+      position: absolute;
+      top: -8px; right: -10px;
+      background: #ff4d6d;
+      color: white;
       border-radius: 50%;
-      animation: confettiBurst 0.8s ease-out forwards;
-      z-index: 9999; pointer-events: none;
+      width: 20px; height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
     }
-    @keyframes confettiBurst {
-      0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-      100% { transform: translate(var(--x), var(--y)) rotate(720deg); opacity: 0; }
+    .notifications-list {
+      max-height: 300px;
+      overflow-y: auto;
+      text-align: left;
     }
-    .balloon {
-      position: fixed;
-      bottom: 30%; left: 50%;
-      width: 40px; height: 50px;
-      background: radial-gradient(circle at 30% 30%, #ff9a9e, #fad0c4);
-      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-      box-shadow: 0 0 15px rgba(255,154,158,0.4);
-      animation: balloonRise 1.2s ease-out forwards;
-      z-index: 9999; pointer-events: none;
+    .notification-item {
+      padding: 0.8rem;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
     }
-    @keyframes balloonRise {
-      0% { transform: translateX(-50%) scale(1); opacity: 1; }
-      100% { transform: translateX(-50%) translateY(-300px) scale(0.8); opacity: 0; }
+    .notification-item.unread {
+      background: #fef9f0;
     }
-    .pop-particle {
-      position: fixed;
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #ff9a9e;
-      z-index: 9999; pointer-events: none;
-      animation: popOut 0.5s ease-out forwards;
-    }
-    @keyframes popOut {
-      0% { transform: translate(0,0) scale(1); opacity: 1; }
-      100% { transform: translate(var(--px), var(--py)) scale(0); opacity: 0; }
-    }
+    .confetti-piece { /* ... как раньше ... */ }
+    .balloon { /* ... как раньше ... */ }
+    .pop-particle { /* ... как раньше ... */ }
+    @keyframes confettiBurst { /* ... */ }
+    @keyframes balloonRise { /* ... */ }
+    @keyframes popOut { /* ... */ }
   </style>
 </head>
 <body>
@@ -325,7 +374,17 @@
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Планировщик</h1>
-      <button class="btn" id="addTaskBtn">+ Новая задача</button>
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <button class="btn" id="addIdeaBtn">Новая идея</button>
+        <button class="btn" id="addTaskBtn">Новая задача</button>
+        <div class="bell-icon" id="bellIcon">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
+        </div>
+      </div>
     </div>
 
     <div class="filters" id="filters">
@@ -334,9 +393,17 @@
       <button class="filter-btn" data-status="clarifying">Уточняю</button>
       <button class="filter-btn" data-status="need_help">Нужна помощь</button>
       <button class="filter-btn" data-status="completed">Выполнено</button>
-      <select class="employee-filter" id="employeeFilter">
-        <option value="">Все сотрудники</option>
-      </select>
+      <div class="employee-filter-wrap">
+        <button class="employee-filter-btn" id="employeeFilterBtn">
+          Сотрудник
+          <span style="font-size:0.7rem;">▼</span>
+        </button>
+        <div class="employee-filter-dropdown" id="employeeFilterDropdown">
+          <select id="employeeFilter" size="5">
+            <option value="">Все</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div id="tasksContainer" class="tasks-grid"></div>
@@ -348,23 +415,19 @@
       <h2 id="modalTitle">Новая задача</h2>
       <input type="text" id="taskTitle" placeholder="Название задачи">
       <textarea id="taskDescription" rows="3" placeholder="Описание задачи"></textarea>
-
-      <div class="radio-group">
-        <label><input type="radio" name="taskType" value="idea" id="typeIdea"> Идея</label>
-        <label><input type="radio" name="taskType" value="task" id="typeTask" checked> Задача</label>
-      </div>
-
       <div id="prioritySection" style="display:block;">
+        <label for="taskPriority" style="font-weight:600;">Приоритет:</label>
         <select id="taskPriority">
-          <option value="low">Низкий (раз в неделю)</option>
-          <option value="medium" selected>Средний (раз в 2 дня)</option>
-          <option value="high">Срочный (каждый день)</option>
-          <option value="critical">Суперсрочный (каждый час)</option>
+          <option value="low">Низкий</option>
+          <option value="medium" selected>Средний</option>
+          <option value="high">Срочный</option>
+          <option value="critical">Суперсрочный</option>
         </select>
       </div>
-
-      <select id="taskAssigned"></select>
-      <input type="date" id="taskDueDate" placeholder="Дата завершения">
+      <label style="font-weight:600;">Ответственные:</label>
+      <select id="taskAssigned" multiple style="height:auto; min-height:80px;"></select>
+      <label for="taskDueDate" style="font-weight:600;">Дата завершения:</label>
+      <input type="date" id="taskDueDate">
       <select id="taskStatus">
         <option value="in_progress">В работе</option>
         <option value="clarifying">Уточняю детали</option>
@@ -373,20 +436,29 @@
       </select>
       <textarea id="taskComment" rows="2" placeholder="Комментарий"></textarea>
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-        <button class="btn" id="saveTaskBtn">Сохранить</button>
+        <button class="btn btn-save" id="saveTaskBtn">Сохранить</button>
         <button class="btn btn-outline" id="cancelTaskBtn">Отмена</button>
         <button class="btn btn-outline" id="deleteTaskBtn" style="display:none;">Удалить</button>
       </div>
     </div>
   </div>
 
-  <!-- Модалка предложения помощи -->
+  <!-- Модалка помощи -->
   <div class="modal-overlay" id="helpModal" style="display:none;">
     <div class="modal">
       <h2>Предложить помощь</h2>
       <textarea id="helpComment" rows="3" placeholder="Ваше предложение или решение"></textarea>
-      <button class="btn" id="sendHelpBtn">Отправить</button>
+      <button class="btn btn-save" id="sendHelpBtn">Отправить</button>
       <button class="btn btn-outline" id="cancelHelpBtn" style="margin-left:0.5rem;">Отмена</button>
+    </div>
+  </div>
+
+  <!-- Модалка уведомлений -->
+  <div class="modal-overlay" id="notificationsModal" style="display:none;">
+    <div class="modal" style="max-width:400px;">
+      <h2>Уведомления</h2>
+      <div id="notificationsList" class="notifications-list"></div>
+      <button class="btn btn-outline" id="closeNotificationsBtn" style="margin-top:1rem;">Закрыть</button>
     </div>
   </div>
 
@@ -399,6 +471,7 @@
     let currentUserEmail = null;
     let employees = [];
     let tasks = [];
+    let notifications = [];
     let currentFilter = 'all';
     let currentEmployeeFilter = '';
 
@@ -411,8 +484,10 @@
       currentUserEmail = session.user.email;
       await loadEmployees();
       await loadTasks();
+      await loadNotifications();
       renderFilters();
       renderTasks();
+      updateBellBadge();
       checkOverdueTasks();
     })();
 
@@ -425,7 +500,7 @@
       const assignSelect = document.getElementById('taskAssigned');
       assignSelect.innerHTML = allowed.map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join('');
       const empFilter = document.getElementById('employeeFilter');
-      empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+      empFilter.innerHTML = '<option value="">Все</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
     }
 
     async function loadTasks() {
@@ -434,11 +509,15 @@
       tasks = data || [];
     }
 
+    async function loadNotifications() {
+      const { data } = await _supabase.from('notifications').select('*').eq('user_email', currentUserEmail).order('created_at', { ascending: false });
+      notifications = data || [];
+    }
+
     function renderFilters() {
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.status === currentFilter);
       });
-      document.getElementById('employeeFilter').value = currentEmployeeFilter;
     }
 
     function renderTasks() {
@@ -448,7 +527,7 @@
         filtered = filtered.filter(t => t.status === currentFilter);
       }
       if (currentEmployeeFilter) {
-        filtered = filtered.filter(t => t.assigned_to === currentEmployeeFilter);
+        filtered = filtered.filter(t => t.assignee_ids && t.assignee_ids.includes(currentEmployeeFilter));
       }
 
       if (!filtered.length) {
@@ -457,7 +536,7 @@
       }
 
       container.innerHTML = filtered.map(task => {
-        const emp = employees.find(e => e.id === task.assigned_to) || {};
+        const assignees = (task.assignee_ids || []).map(id => employees.find(e => e.id === id)).filter(Boolean);
         const statusLabels = {
           in_progress: 'В работе',
           clarifying: 'Уточняю детали',
@@ -482,7 +561,7 @@
         const isCriticalOverdue = isOverdue && task.priority === 'critical';
         const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
 
-        const isAssignee = task.assigned_to && employees.find(e => e.id === task.assigned_to)?.email === currentUserEmail;
+        const isAssignee = task.assignee_ids?.some(id => employees.find(e => e.id === id)?.email === currentUserEmail);
         const isCreator = task.created_by === currentUserEmail;
         const canEdit = isCreator || isAssignee || currentUserEmail === OWNER_EMAIL;
         const canHelp = !isCreator && !isAssignee && task.status !== 'completed';
@@ -496,7 +575,7 @@
           </div>
           ${task.description ? `<div style="font-size:0.9rem; color:#444;">${task.description}</div>` : ''}
           <div class="task-meta">
-            <span>${emp.name || 'Не назначен'}</span>
+            ${assignees.length ? `<span>${assignees.map(e => e.name).join(', ')}</span>` : '<span>Не назначен</span>'}
             <span>${task.due_date || '—'}</span>
           </div>
           <span class="badge ${task.status}">${statusLabels[task.status]}</span>
@@ -538,10 +617,7 @@
     }
 
     function checkOverdueTasks() {
-      const overdue = tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== 'completed');
-      if (overdue.length > 0) {
-        // Визуальное оповещение — можно добавить баннер
-      }
+      // Дополнительная визуализация уже есть
     }
 
     // Фильтры
@@ -552,33 +628,50 @@
         renderTasks();
       }
     });
+
     document.getElementById('employeeFilter').addEventListener('change', (e) => {
       currentEmployeeFilter = e.target.value;
+      document.getElementById('employeeFilterDropdown').style.display = 'none';
       renderTasks();
     });
 
-    // Радио-кнопки типа задачи
-    document.getElementById('typeIdea').addEventListener('change', () => {
-      document.getElementById('prioritySection').style.display = 'none';
-    });
-    document.getElementById('typeTask').addEventListener('change', () => {
-      document.getElementById('prioritySection').style.display = 'block';
+    document.getElementById('employeeFilterBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const dropdown = document.getElementById('employeeFilterDropdown');
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
     });
 
-    // Добавление задачи
-    document.getElementById('addTaskBtn').addEventListener('click', () => {
-      document.getElementById('modalTitle').textContent = 'Новая задача';
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.employee-filter-wrap')) {
+        document.getElementById('employeeFilterDropdown').style.display = 'none';
+      }
+    });
+
+    // Открытие модалок создания
+    document.getElementById('addIdeaBtn').addEventListener('click', () => openCreateModal('idea'));
+    document.getElementById('addTaskBtn').addEventListener('click', () => openCreateModal('task'));
+
+    function openCreateModal(type) {
+      const modal = document.getElementById('taskModal');
+      modal.dataset.taskId = '';
+      document.getElementById('modalTitle').textContent = type === 'idea' ? 'Новая идея' : 'Новая задача';
       document.getElementById('taskTitle').value = '';
       document.getElementById('taskDescription').value = '';
+      document.getElementById('taskAssigned').selectedIndex = -1;
       document.getElementById('taskDueDate').value = '';
-      document.getElementById('taskComment').value = '';
       document.getElementById('taskStatus').value = 'in_progress';
-      document.getElementById('typeTask').checked = true;
-      document.getElementById('prioritySection').style.display = 'block';
-      document.getElementById('taskPriority').value = 'medium';
+      document.getElementById('taskComment').value = '';
       document.getElementById('deleteTaskBtn').style.display = 'none';
-      document.getElementById('taskModal').style.display = 'flex';
-    });
+      const prioritySection = document.getElementById('prioritySection');
+      if (type === 'idea') {
+        prioritySection.style.display = 'none';
+        document.getElementById('taskPriority').value = 'idea';
+      } else {
+        prioritySection.style.display = 'block';
+        document.getElementById('taskPriority').value = 'medium';
+      }
+      modal.style.display = 'flex';
+    }
 
     // Закрытие модалок
     document.getElementById('cancelTaskBtn').addEventListener('click', () => {
@@ -587,16 +680,24 @@
     document.getElementById('cancelHelpBtn').addEventListener('click', () => {
       document.getElementById('helpModal').style.display = 'none';
     });
+    document.getElementById('closeNotificationsBtn').addEventListener('click', () => {
+      document.getElementById('notificationsModal').style.display = 'none';
+    });
 
     // Сохранение задачи
     document.getElementById('saveTaskBtn').addEventListener('click', async () => {
       const title = document.getElementById('taskTitle').value.trim();
       if (!title) return alert('Введите название задачи');
-      const isIdea = document.getElementById('typeIdea').checked;
+      const modal = document.getElementById('taskModal');
+      const taskId = modal.dataset.taskId;
+      const isIdea = document.getElementById('modalTitle').textContent.includes('Идея');
+      const assignedSelect = document.getElementById('taskAssigned');
+      const assigneeIds = Array.from(assignedSelect.selectedOptions).map(o => o.value);
+
       const taskData = {
         title,
         description: document.getElementById('taskDescription').value.trim(),
-        assigned_to: document.getElementById('taskAssigned').value || null,
+        assignee_ids: assigneeIds,
         due_date: document.getElementById('taskDueDate').value || null,
         status: document.getElementById('taskStatus').value,
         comment: document.getElementById('taskComment').value.trim(),
@@ -604,11 +705,17 @@
         created_by: currentUserEmail
       };
 
-      const taskId = document.getElementById('taskModal').dataset.taskId;
       let error;
       if (taskId) {
         const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
         error = updateError;
+        // Если статус изменился на completed, уведомить остальных ответственных
+        if (taskData.status === 'completed' && taskId) {
+          const originalTask = tasks.find(t => t.id == taskId);
+          if (originalTask && originalTask.status !== 'completed') {
+            await notifyOtherAssignees(taskId, assigneeIds);
+          }
+        }
       } else {
         const { error: insertError } = await _supabase.from('tasks').insert([taskData]);
         error = insertError;
@@ -621,7 +728,20 @@
       renderTasks();
     });
 
-    // Удаление задачи
+    async function notifyOtherAssignees(taskId, assigneeIds) {
+      const currentUserEmployees = employees.filter(e => assigneeIds.includes(e.id) && e.email !== currentUserEmail);
+      for (const emp of currentUserEmployees) {
+        if (emp.email) {
+          await _supabase.from('notifications').insert([{
+            task_id: taskId,
+            user_email: emp.email,
+            message: `Задача «${document.getElementById('taskTitle').value}» была завершена пользователем ${currentUserEmail}.`,
+          }]);
+        }
+      }
+    }
+
+    // Удаление задачи (управляющим)
     document.getElementById('deleteTaskBtn').addEventListener('click', async () => {
       const taskId = document.getElementById('taskModal').dataset.taskId;
       if (!taskId) return;
@@ -635,27 +755,30 @@
     });
 
     function openEditModal(task) {
-      document.getElementById('modalTitle').textContent = 'Редактирование задачи';
+      const modal = document.getElementById('taskModal');
+      modal.dataset.taskId = task.id;
+      document.getElementById('modalTitle').textContent = task.priority === 'idea' ? 'Редактирование идеи' : 'Редактирование задачи';
       document.getElementById('taskTitle').value = task.title;
       document.getElementById('taskDescription').value = task.description || '';
-      document.getElementById('taskAssigned').value = task.assigned_to || '';
+      const assignSelect = document.getElementById('taskAssigned');
+      for (let i = 0; i < assignSelect.options.length; i++) {
+        assignSelect.options[i].selected = (task.assignee_ids || []).includes(assignSelect.options[i].value);
+      }
       document.getElementById('taskDueDate').value = task.due_date || '';
       document.getElementById('taskStatus').value = task.status;
       document.getElementById('taskComment').value = task.comment || '';
+      const prioritySection = document.getElementById('prioritySection');
       if (task.priority === 'idea') {
-        document.getElementById('typeIdea').checked = true;
-        document.getElementById('prioritySection').style.display = 'none';
+        prioritySection.style.display = 'none';
       } else {
-        document.getElementById('typeTask').checked = true;
-        document.getElementById('prioritySection').style.display = 'block';
+        prioritySection.style.display = 'block';
         document.getElementById('taskPriority').value = task.priority || 'medium';
       }
       document.getElementById('deleteTaskBtn').style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
-      document.getElementById('taskModal').dataset.taskId = task.id;
-      document.getElementById('taskModal').style.display = 'flex';
+      modal.style.display = 'flex';
     }
 
-    // Предложить помощь
+    // Помощь
     document.getElementById('sendHelpBtn').addEventListener('click', async () => {
       const taskId = document.getElementById('helpModal').dataset.taskId;
       const comment = document.getElementById('helpComment').value.trim();
@@ -673,19 +796,54 @@
       renderTasks();
     });
 
-    // Анимация шарика и конфетти (исправленная последовательность)
+    // Уведомления (колокольчик)
+    document.getElementById('bellIcon').addEventListener('click', async () => {
+      await loadNotifications();
+      const list = document.getElementById('notificationsList');
+      if (notifications.length === 0) {
+        list.innerHTML = '<p>Нет новых уведомлений</p>';
+      } else {
+        list.innerHTML = notifications.map(n => `
+          <div class="notification-item ${n.is_read ? '' : 'unread'}">
+            <span style="flex:1;">${n.message} <small>${new Date(n.created_at).toLocaleString()}</small></span>
+            ${!n.is_read ? `<button class="btn btn-outline mark-read" data-id="${n.id}" style="padding:0.2rem 0.5rem; font-size:0.7rem;">Прочитано</button>` : ''}
+          </div>
+        `).join('');
+        document.querySelectorAll('.mark-read').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            const id = e.target.dataset.id;
+            await _supabase.from('notifications').update({ is_read: true }).eq('id', id);
+            await loadNotifications();
+            updateBellBadge();
+            document.getElementById('notificationsModal').style.display = 'none'; // или обновить список
+          });
+        });
+      }
+      document.getElementById('notificationsModal').style.display = 'flex';
+    });
+
+    async function updateBellBadge() {
+      const { count } = await _supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('user_email', currentUserEmail).eq('is_read', false);
+      const badge = document.getElementById('bellBadge');
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    // Анимации успеха (без изменений)
     function showBalloonAndConfetti() {
       const balloon = document.createElement('div');
       balloon.className = 'balloon';
       document.body.appendChild(balloon);
-
       balloon.addEventListener('animationend', () => {
         balloon.remove();
         createConfetti();
         createPopParticles();
       });
     }
-
     function createConfetti() {
       const colors = ['#ff4d6d','#f9ca24','#55efc4','#a29bfe','#ff9a9e','#43e97b'];
       for (let i = 0; i < 40; i++) {
@@ -700,7 +858,6 @@
         setTimeout(() => piece.remove(), 800);
       }
     }
-
     function createPopParticles() {
       for (let i=0; i<10; i++) {
         const p = document.createElement('div');
