@@ -2,10 +2,8 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=1.5">
-  <title>График работы — Music Club Орёл</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Club Орёл — Платформа управления</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -13,661 +11,147 @@
     :root {
       --bg: #f8fafc;
       --surface: #ffffff;
-      --surface-hover: #f1f5f9;
       --text: #0f172a;
       --text-secondary: #64748b;
       --border: #e2e8f0;
       --accent: #3b82f6;
       --accent-light: #eff6ff;
-      --success: #10b981;
-      --success-bg: #d1fae5;
-      --danger: #ef4444;
-      --danger-bg: #fee2e2;
-      --warning: #f59e0b;
-      --warning-bg: #fef3c7;
-      --info: #8b5cf6;
-      --info-bg: #ede9fe;
-      --vacation: #0ea5e9;
-      --vacation-bg: #e0f2fe;
-      --leave: #f97316;
-      --leave-bg: #ffedd5;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #fff5f5 0%, #fefce8 50%, #f0f9ff 100%);
+      background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 50%, #f0f9ff 100%);
       color: var(--text);
       min-height: 100vh;
-      padding: 1.5rem;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
+      align-items: center;
+      padding: 2rem;
       -webkit-font-smoothing: antialiased;
-      position: relative;
-      overflow-x: hidden;
     }
-
-    /* Праздничные плавающие элементы (шары, цветы) */
-    .decorations {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 0;
+    .container {
+      width: 100%;
+      max-width: 900px;
     }
-    .balloon {
-      position: absolute;
-      width: 40px; height: 50px;
-      background: radial-gradient(circle at 30% 30%, #ff9a9e, #fad0c4);
-      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-      box-shadow: 0 0 15px rgba(255,154,158,0.4);
-      animation: float 8s ease-in-out infinite;
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .balloon:nth-child(2) { background: radial-gradient(circle, #a1c4fd, #c2e9fb); left: 15%; top: 70%; animation-delay: -2s; width: 50px; height: 60px; }
-    .balloon:nth-child(3) { background: radial-gradient(circle, #fbc2eb, #a6c1ee); right: 10%; top: 30%; animation-delay: -5s; width: 45px; height: 55px; }
-    .balloon:nth-child(4) { background: radial-gradient(circle, #ffecd2, #fcb69f); right: 25%; top: 60%; animation-delay: -1s; width: 35px; height: 45px; }
-    .flower {
-      position: absolute;
-      width: 30px; height: 30px;
-      background: radial-gradient(circle, #ffeaa7, #fdcb6e);
-      border-radius: 50%;
-      box-shadow: 0 0 10px rgba(253,203,110,0.5);
-      animation: float 7s ease-in-out infinite reverse;
-    }
-    .flower::before, .flower::after {
-      content: ''; position: absolute;
-      width: 30px; height: 30px;
-      background: inherit; border-radius: 50%;
-      top: -10px; left: -5px;
-    }
-    .flower::after { top: 5px; left: 10px; }
-    .flower:nth-child(5) { left: 5%; top: 20%; animation-delay: -3s; }
-    .flower:nth-child(6) { right: 15%; top: 80%; animation-delay: -4s; background: radial-gradient(circle, #fd79a8, #e84393); }
-    @keyframes float {
-      0%, 100% { transform: translateY(0) rotate(0deg); }
-      25% { transform: translateY(-20px) rotate(2deg); }
-      75% { transform: translateY(-10px) rotate(-1deg); }
-    }
-
-    .container { position: relative; z-index: 10; width: 100%; max-width: 1440px; }
-
-    .header {
-      display: flex; align-items: center; gap: 1rem;
-      flex-wrap: wrap; background: var(--surface);
-      padding: 0.75rem 1.5rem; border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-      margin-bottom: 1.5rem; border: 1px solid var(--border);
-    }
-    .logo {
-      font-size: 1.5rem; font-weight: 700; color: var(--text);
-      letter-spacing: -0.5px; margin-right: auto;
-    }
-    .logo span { color: var(--accent); }
-
-    .nav-arrows { display: flex; gap: 0.5rem; }
-    .nav-arrows button, .period-btn, .export-btn, .emp-btn, .role-filter-btn {
-      background: var(--surface); border: 1px solid var(--border);
-      padding: 0.5rem 1rem; border-radius: 12px;
-      font-weight: 500; font-size: 0.85rem; cursor: pointer;
-      transition: all 0.15s ease; display: flex; align-items: center; gap: 0.4rem;
+    .subtitle {
+      text-align: center;
       color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 3rem;
     }
-    .nav-arrows button:hover, .period-btn:hover, .export-btn:hover, .emp-btn:hover, .role-filter-btn:hover {
-      background: var(--surface-hover); border-color: #cbd5e1;
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
     }
-    .period-btn.active, .role-filter-btn.active {
-      background: var(--accent-light); color: var(--accent); border-color: var(--accent);
-      font-weight: 600;
-    }
-    .month-title {
-      min-width: 140px; text-align: center; font-weight: 600; font-size: 1rem;
-      background: var(--surface); padding: 0.4rem 1rem; border-radius: 12px;
+    .card {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 2rem;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
       border: 1px solid var(--border);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
     }
-    .role-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-
-    .schedule-container {
-      background: var(--surface); border-radius: 20px;
-      padding: 1.5rem; overflow-x: auto; max-height: 75vh;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.08); border: 1px solid var(--border);
-      scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      border-color: var(--accent);
     }
-    table { width: 100%; border-collapse: collapse; min-width: 1200px; }
-    th, td {
-      padding: 0.5rem 0.3rem; text-align: center; font-size: 0.85rem;
-      border-right: 1px solid #f1f5f9;
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -20px; right: -20px;
+      width: 80px; height: 80px;
+      background: var(--accent-light);
+      border-radius: 50%;
+      opacity: 0.5;
+      transition: all 0.3s ease;
     }
-    th:last-child, td:last-child { border-right: none; }
-    th {
-      background: var(--surface-hover); position: sticky; top: 0; z-index: 5;
-      color: var(--text-secondary); font-weight: 600; border-bottom: 2px solid var(--border);
+    .card:hover::before {
+      width: 120px; height: 120px;
+      opacity: 0.8;
     }
-    th.weekend { background-color: #fff5f5; }
-    th.weekday { background-color: #f8fafc; }
-
-    .employee-name {
-      text-align: left; font-weight: 600; padding-left: 1rem;
-      background: var(--surface); border-radius: 10px; cursor: pointer;
-      transition: background 0.15s; border: 1px solid transparent;
+    .card-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
     }
-    .employee-name:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
-    .employee-name small { color: var(--text-secondary); font-weight: 400; }
-    .group-header {
-      background: var(--surface-hover); font-weight: 600; padding: 0.7rem 1.2rem;
-      border-radius: 12px; margin-top: 0.6rem; font-size: 0.9rem; color: var(--text-secondary);
-      letter-spacing: 0.5px; text-transform: uppercase;
+    .card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 1;
     }
-
-    .day-cell {
-      cursor: pointer; background: var(--surface); border-radius: 8px;
-      height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      margin: 1px; font-weight: 500; transition: all 0.15s; border: 1px solid var(--border);
+    .card p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      position: relative;
+      z-index: 1;
     }
-    .day-cell:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(59,130,246,0.15); }
-    .day-cell.working { background: var(--success-bg); color: #065f46; border-color: #86efac; }
-    .day-cell.dayoff { background: #fff5f5; color: #991b1b; border-color: #fecaca; }
-    .day-cell.sick { background: var(--info-bg); color: #5b21b6; border-color: #c4b5fd; }
-    .day-cell.vacation { background: var(--vacation-bg); color: #0c4a6e; border-color: #7dd3fc; }
-    .day-cell.leave { background: var(--leave-bg); color: #9a3412; border-color: #fdba74; }
-    .day-cell.has-comment { box-shadow: 0 0 0 2px #fbbf24; }
-
-    .big-ruble { font-size: 1.3rem; font-weight: 700; color: #065f46; }
-    .summary-cell { font-weight: 600; background: var(--surface-hover); border-radius: 10px; color: var(--text); border: 1px solid var(--border); }
-
-    .salary-summary {
-      margin-top: 1rem; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 0.8rem 1.5rem;
-      display: flex; flex-wrap: wrap; gap: 1.5rem; font-weight: 500;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.02);
+    .coming-soon {
+      opacity: 0.6;
+      pointer-events: none;
     }
-
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-    .modal {
-      background: var(--surface); border-radius: 24px; padding: 2rem;
-      max-width: 500px; width: 90%;
-      box-shadow: 0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(139,92,246,0.4);
-      animation: slideUp 0.2s ease-out;
+    .coming-soon .card-icon {
+      filter: grayscale(0.5);
     }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    .btn-save {
-      background: var(--accent); color: white; padding: 0.7rem 2rem; border-radius: 14px;
-      border: none; font-weight: 600; cursor: pointer; width: 100%; margin-top: 1rem;
-      transition: background 0.2s; font-size: 0.9rem;
-    }
-    .btn-save:hover { background: #2563eb; }
-
-    .toast-center { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; pointer-events: none; }
-    .toast-content {
-      display: flex; align-items: center; gap: 0.75rem;
-      background: var(--text); color: white; padding: 0.8rem 1.5rem; border-radius: 14px;
-      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-      animation: toastIn 0.25s forwards, toastOut 0.25s 1.5s forwards;
-    }
-    .toast-content svg { width: 24px; height: 24px; }
-    .toast-content.success { background: #10b981; }
-    @keyframes toastIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.95); } }
-
-    .error-banner { background: #fee2e2; color: #991b1b; padding: 0.7rem 1.2rem; border-radius: 14px; margin-bottom: 1rem; }
-    .empty-message { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 1rem; }
   </style>
 </head>
 <body>
-  <div class="decorations">
-    <div class="balloon" style="left:8%; top:15%;"></div>
-    <div class="balloon" style="left:20%; top:65%;"></div>
-    <div class="balloon" style="right:12%; top:25%;"></div>
-    <div class="balloon" style="right:20%; top:70%;"></div>
-    <div class="flower" style="left:5%; top:40%;"></div>
-    <div class="flower" style="right:10%; top:80%;"></div>
-  </div>
-
   <div class="container">
-    <div class="header">
-      <div class="logo">Music Club <span>Орёл</span></div>
-      <div class="nav-arrows">
-        <button id="prevMonthBtn">◀</button>
-        <span class="month-title" id="monthTitle"></span>
-        <button id="nextMonthBtn">▶</button>
-      </div>
-      <div id="periodBtns" style="display:flex; gap:0.5rem;">
-        <button class="period-btn active" data-period="full">Весь месяц</button>
-        <button class="period-btn" data-period="first">1–15</button>
-        <button class="period-btn" data-period="second">16–31</button>
-      </div>
-      <div class="role-filters" id="roleFilters">
-        <button class="role-filter-btn active" data-role="all">Все</button>
-        <button class="role-filter-btn" data-role="Управляющий">Управляющие</button>
-        <button class="role-filter-btn" data-role="Менеджер">Менеджеры</button>
-        <button class="role-filter-btn" data-role="Администратор">Администраторы</button>
-        <button class="role-filter-btn" data-role="Преподаватель">Преподаватели</button>
-      </div>
-      <button class="export-btn" id="exportExcelBtn">Excel</button>
-      <button class="export-btn" id="refreshBtn">Обновить</button>
-      <div style="position:relative;">
-        <button class="emp-btn" id="empToggle">Сотрудники</button>
-        <div id="empList" style="display:none; position:absolute; right:0; top:2.8rem; background:white; border-radius:16px; padding:1rem; box-shadow:0 20px 40px rgba(0,0,0,0.1); z-index:200; min-width:260px; border:1px solid var(--border);">
-          <div id="empCheckboxes"></div>
+    <h1>Music Club Орёл</h1>
+    <p class="subtitle">Платформа управления музыкальной школой</p>
+    <div class="cards">
+      <a href="schedule.html" class="card">
+        <div class="card-icon">
+          <!-- SVG иконка календаря (без эмодзи) -->
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#3b82f6">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
         </div>
-      </div>
-    </div>
+        <h2>График работы</h2>
+        <p>Управляйте расписанием сотрудников, отмечайте явки, считайте зарплату</p>
+      </a>
 
-    <div id="errorContainer"></div>
-    <div class="schedule-container" id="scheduleTableContainer">
-      <div class="empty-message">Загрузка графика...</div>
-    </div>
-  </div>
+      <a href="contests.html" class="card coming-soon">
+        <div class="card-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#f59e0b">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+          </svg>
+        </div>
+        <h2>Конкурсы</h2>
+        <p>Скоро открытие — разработка заданий и отслеживание прогресса учеников</p>
+      </a>
 
-  <!-- Модалка дня -->
-  <div class="modal-overlay" id="dayModal" style="display:none;">
-    <div class="modal">
-      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" id="closeDayModalBtn">✕</button>
-      <h3 id="modalTitle"></h3>
-      <div id="statusOptions" style="margin:1rem 0;"></div>
-      <div id="dynamicFields"></div>
-      <textarea id="comment" rows="2" style="width:100%; margin:1rem 0; padding:0.8rem; border-radius:12px; border:1px solid var(--border); font-family:inherit;" placeholder="Примечание"></textarea>
-      <button class="btn-save" id="saveDayBtn">Сохранить</button>
-    </div>
-  </div>
-
-  <!-- Модалка зарплаты -->
-  <div class="modal-overlay" id="salaryModal" style="display:none;">
-    <div class="modal" style="max-width:600px;">
-      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" id="closeSalaryModalBtn">✕</button>
-      <h3 id="salaryModalTitle" style="margin-bottom:1rem;"></h3>
-      <div id="salaryContent"></div>
-      <button class="btn-save" id="saveSalaryBtn">Сохранить параметры</button>
+      <a href="nps.html" class="card coming-soon">
+        <div class="card-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#10b981">
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14Z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+          </svg>
+        </div>
+        <h2>NPS / Отзывы</h2>
+        <p>Сбор и анализ удовлетворённости учеников</p>
+      </a>
     </div>
   </div>
-
-  <script>
-    (function() {
-      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-      const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      let employees = [], worklog = {}, salaryParams = {};
-      let currentYear, currentMonth, currentPeriod = 'full';
-      let selectedIds = new Set();
-      let currentRoleFilter = 'all';
-
-      const STATUSES = ['working', 'dayoff', 'sick', 'vacation', 'leave'];
-      const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
-      const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
-
-      function showToast(msg, success=false) {
-        const t = document.createElement('div'); t.className = 'toast-center';
-        t.innerHTML = `<div class="toast-content ${success?'success':''}">
-          ${success ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>' : ''}
-          ${msg}
-        </div>`;
-        document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
-      }
-      function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-      async function loadData() {
-        document.getElementById('errorContainer').innerHTML = '';
-        try {
-          const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
-          const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
-          const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
-          const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
-
-          const [empRes, logRes, salRes] = await Promise.all([
-            db.from('employees').select('*'),
-            db.from('worklog').select('*').gte('date', startDate).lt('date', endDate),
-            db.from('salary_params').select('*').eq('month', `${currentYear}-${String(currentMonth).padStart(2,'0')}`)
-          ]);
-          if (empRes.error) throw new Error('Сотрудники: ' + empRes.error.message);
-          if (logRes.error) throw new Error('Журнал: ' + logRes.error.message);
-          employees = empRes.data;
-          if (selectedIds.size === 0) applyRoleFilter('all');
-          worklog = {};
-          (logRes.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
-          salaryParams = {};
-          (salRes.data || []).forEach(r => { salaryParams[r.emp_id] = r; });
-          renderCheckboxes();
-          renderTable();
-        } catch (e) {
-          document.getElementById('errorContainer').innerHTML = `<div class="error-banner">❌ ${e.message}</div>`;
-          document.getElementById('scheduleTableContainer').innerHTML = '<div class="empty-message">Не удалось загрузить данные</div>';
-        }
-      }
-
-      function applyRoleFilter(role) {
-        currentRoleFilter = role;
-        if (role === 'all') {
-          selectedIds.clear();
-          employees.forEach(e => selectedIds.add(e.id));
-        } else {
-          selectedIds.clear();
-          employees.filter(e => e.role === role).forEach(e => selectedIds.add(e.id));
-        }
-        // Обновить чекбоксы визуально и перерисовать таблицу
-        renderCheckboxes();
-        renderTable();
-        // Обновить активную кнопку фильтра
-        document.querySelectorAll('.role-filter-btn').forEach(b => {
-          b.classList.toggle('active', b.dataset.role === role);
-        });
-      }
-
-      function renderCheckboxes() {
-        document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
-          <label style="display:block; margin:0.3rem 0; cursor:pointer; font-weight:500;">
-            <input type="checkbox" ${selectedIds.has(e.id)?'checked':''} data-empid="${e.id}"> ${e.name} <small>${e.role}</small>
-          </label>`).join('');
-        document.querySelectorAll('#empCheckboxes input[type="checkbox"]').forEach(cb => {
-          cb.addEventListener('change', function() {
-            const id = this.dataset.empid;
-            this.checked ? selectedIds.add(id) : selectedIds.delete(id);
-            // Сбросить активный ролевой фильтр, если выбор вручную изменился
-            currentRoleFilter = null;
-            document.querySelectorAll('.role-filter-btn').forEach(b => b.classList.remove('active'));
-            renderTable();
-          });
-        });
-      }
-
-      function getManagerNormDays(y, m) {
-        const days = new Date(y, m, 0).getDate();
-        let cnt = 0;
-        for (let d=1; d<=days; d++) if ((d-1)%6 < 3) cnt++;
-        return cnt;
-      }
-
-      function getFullMonthSales(emp) {
-        let total = 0;
-        const days = new Date(currentYear, currentMonth, 0).getDate();
-        for (let d=1; d<=days; d++) {
-          const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const dta = worklog[key];
-          if (dta && dta.status === 'working') total += dta.daily_sales || 0;
-        }
-        return total;
-      }
-
-      function getSalary(emp) {
-        const days = new Date(currentYear, currentMonth, 0).getDate();
-        let worked = 0, indiv = 0, group = 0;
-        let fullSales = 0;
-        for (let d=1; d<=days; d++) {
-          const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const rec = worklog[key];
-          if (!rec || rec.status !== 'working') continue;
-          if (emp.role === 'Менеджер') fullSales += rec.daily_sales || 0;
-          if (currentPeriod === 'full' || (currentPeriod === 'first' && d<=15) || (currentPeriod === 'second' && d>=16)) {
-            worked++;
-            if (emp.role === 'Преподаватель') {
-              indiv += rec.indiv || 0;
-              group += rec.group_total || 0;
-            }
-          }
-        }
-        const params = salaryParams[emp.id] || {};
-        if (emp.role === 'Преподаватель') {
-          const iRate = params.indiv_rate || 400;
-          const gRate = params.group_rate || 500;
-          return indiv * iRate + group * gRate;
-        }
-        const norm = emp.role === 'Менеджер' ? getManagerNormDays(currentYear, currentMonth) : (params.norm_days || 22);
-        const rates = { 'Менеджер':20000, 'Администратор':35000, 'Управляющий':50000 };
-        const base = (rates[emp.role] || 0) / norm * worked;
-        if (emp.role === 'Менеджер') {
-          const plan = params.plan_amount || 0;
-          const bonusPct = (plan>0 && fullSales>=plan) ? 7 : 5;
-          const bonus = currentPeriod==='first' ? 0 : fullSales * bonusPct/100;
-          return base + bonus;
-        }
-        if (emp.role === 'Администратор') {
-          const mgrs = employees.filter(e=>e.role==='Менеджер');
-          let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
-          return base + (currentPeriod!=='first' ? totalMgrs*0.01 : 0);
-        }
-        if (emp.role === 'Управляющий') {
-          const mgrs = employees.filter(e=>e.role==='Менеджер');
-          let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
-          const plan = params.plan_amount || 0;
-          const fulfilled = plan>0 && totalMgrs>=plan;
-          return base + (fulfilled && currentPeriod!=='first' ? totalMgrs*0.01 : 0);
-        }
-        return 0;
-      }
-
-      function renderTable() {
-        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-        document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1).toLocaleDateString('ru',{month:'long',year:'numeric'});
-        const filtered = employees.filter(e => selectedIds.has(e.id));
-        if (filtered.length === 0) {
-          document.getElementById('scheduleTableContainer').innerHTML = '<div class="empty-message">Нет сотрудников для отображения. Выберите роль или сотрудников.</div>';
-          return;
-        }
-        let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
-        for (let d=1; d<=daysInMonth; d++) {
-          const date = new Date(currentYear, currentMonth-1, d);
-          const dayOfWeek = date.getDay();
-          const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-          const thClass = isWeekend ? 'weekend' : 'weekday';
-          html += `<th class="${thClass}">${d}<br><small>${date.toLocaleDateString('ru',{weekday:'short'})}</small></th>`;
-        }
-        html += '</tr></thead><tbody>';
-        const roleNames = { 'Управляющий':'Управляющие', 'Менеджер':'Менеджеры', 'Администратор':'Администраторы', 'Преподаватель':'Преподаватели' };
-        ['Управляющий','Менеджер','Администратор','Преподаватель'].forEach(role => {
-          const group = filtered.filter(e => e.role === role);
-          if (!group.length) return;
-          html += `<tr><td colspan="${daysInMonth+3}" class="group-header">${roleNames[role]}</td></tr>`;
-          group.forEach(emp => {
-            let worked = 0, indiv = 0, group = 0;
-            let cells = '';
-            for (let d=1; d<=daysInMonth; d++) {
-              const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-              const rec = worklog[`${emp.id}_${dateStr}`] || {};
-              const status = rec.status;
-              if (status === 'working' && (currentPeriod==='full' || (currentPeriod==='first' && d<=15) || (currentPeriod==='second' && d>=16))) {
-                worked++;
-                if (emp.role === 'Преподаватель') {
-                  indiv += rec.indiv || 0;
-                  group += rec.group_total || 0;
-                }
-              }
-              let cls = 'day-cell';
-              if (status) cls += ' ' + (STATUS_CLASSES[status]||'');
-              if (rec.comment) cls += ' has-comment';
-              let content = status ? (STATUS_LABELS[status]||status) : '';
-              let tooltip = '';
-              if (emp.role === 'Менеджер' && status === 'working') {
-                content = rec.daily_sales > 0 ? '<span class="big-ruble">₽</span>' : 'Д';
-                if (rec.daily_sales) tooltip = `Выручка: ${rec.daily_sales} ₽`;
-              } else if (emp.role === 'Преподаватель' && status === 'working') {
-                const i = rec.indiv || 0;
-                const g = rec.group_total || 0;
-                content = `Д<br><small>${i}/${g}</small>`;
-                tooltip = `Инд.: ${i}, Групп.: ${g}`;
-              }
-              if (rec.comment) tooltip += (tooltip?' ':'') + rec.comment;
-              cells += `<td><div class="${cls}" data-empid="${emp.id}" data-date="${dateStr}" title="${tooltip}">${content}</div></td>`;
-            }
-            const salary = getSalary(emp);
-            const spec = emp.role === 'Преподаватель' && emp.specialization ? ` <small>(${emp.specialization})</small>` : '';
-            html += `<tr><td class="employee-name" data-empid="${emp.id}">${emp.name}${spec}</td>`;
-            html += `<td class="summary-cell">${worked}</td><td class="summary-cell">${salary.toFixed(0)} ₽</td>${cells}</tr>`;
-          });
-        });
-        html += '</tbody></table>';
-        document.getElementById('scheduleTableContainer').innerHTML = html;
-
-        document.querySelectorAll('.day-cell').forEach(cell => {
-          cell.addEventListener('click', function() {
-            const empId = this.dataset.empid;
-            const dateStr = this.dataset.date;
-            openDayModal(empId, dateStr);
-          });
-        });
-        document.querySelectorAll('.employee-name').forEach(nameEl => {
-          nameEl.addEventListener('click', function() {
-            const empId = this.dataset.empid;
-            openSalaryModal(empId);
-          });
-        });
-      }
-
-      window.changeMonth = function(delta) {
-        currentMonth += delta;
-        if (currentMonth < 1) { currentMonth=12; currentYear--; }
-        else if (currentMonth > 12) { currentMonth=1; currentYear++; }
-        loadData();
-      };
-
-      function openDayModal(empId, dateStr) {
-        const emp = employees.find(e=>e.id===empId);
-        if (!emp) return;
-        const rec = worklog[`${empId}_${dateStr}`] || {};
-        document.getElementById('modalTitle').textContent = `${emp.name} — ${dateStr}`;
-        document.getElementById('comment').value = rec.comment || '';
-        document.getElementById('statusOptions').innerHTML = STATUSES.map(s =>
-          `<label style="margin-right:1.2rem; font-weight:500; cursor:pointer;"><input type="radio" name="dayStatus" value="${s}" ${rec.status===s?'checked':''}> ${STATUS_LABELS[s]}</label>`
-        ).join('');
-        let dyn = '';
-        if (emp.role === 'Менеджер') {
-          dyn = `<label>Выручка: <input type="number" id="dailySales" value="${rec.daily_sales||''}" style="width:120px; margin-left:0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
-        } else if (emp.role === 'Преподаватель') {
-          dyn = `<div style="display:flex; gap:0.8rem; flex-wrap:wrap;">
-            <label>Инд.: <input type="number" id="indivLessons" value="${rec.indiv||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>
-            <label>Групп.: <input type="number" id="groupStudents" value="${rec.group_total||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>
-          </div>`;
-        }
-        document.getElementById('dynamicFields').innerHTML = dyn;
-        document.getElementById('dayModal').style.display = 'flex';
-        window._editEmpId = empId;
-        window._editDate = dateStr;
-      }
-
-      async function saveDay() {
-        const status = document.querySelector('input[name="dayStatus"]:checked')?.value;
-        if (!status) return showToast('Выберите статус', true);
-        const comment = document.getElementById('comment').value.trim();
-        const emp = employees.find(e=>e.id===window._editEmpId);
-        let dailySales=0, indiv=0, groupTotal=0;
-        if (emp.role==='Менеджер') dailySales = parseFloat(document.getElementById('dailySales')?.value)||0;
-        if (emp.role==='Преподаватель') {
-          indiv = parseInt(document.getElementById('indivLessons')?.value)||0;
-          groupTotal = parseInt(document.getElementById('groupStudents')?.value)||0;
-        }
-        const {error} = await db.from('worklog').upsert({
-          emp_id: window._editEmpId,
-          date: window._editDate,
-          status, comment, daily_sales: dailySales,
-          trial_lessons: 0, indiv, group_total: groupTotal
-        }, {onConflict: 'emp_id, date'});
-        if (error) return showToast('Ошибка: '+error.message, true);
-        showToast('Сохранено', true);
-        closeModal('dayModal');
-        loadData();
-      }
-
-      function openSalaryModal(empId) {
-        const emp = employees.find(e=>e.id===empId);
-        if (!emp) return;
-        const params = salaryParams[empId] || {};
-        let html = `<p style="font-weight:600; margin-bottom:0.5rem;">${emp.name}</p>`;
-        if (emp.role === 'Менеджер') {
-          html += `<label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
-        } else if (emp.role === 'Управляющий') {
-          html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><br>`;
-          html += `<label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
-        } else if (emp.role === 'Администратор') {
-          html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
-        } else if (emp.role === 'Преподаватель') {
-          html += `<label>Ставка индив.: <input type="number" id="indivRate" value="${params.indiv_rate||400}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><br>`;
-          html += `<label>Ставка групп.: <input type="number" id="groupRate" value="${params.group_rate||500}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
-        }
-        document.getElementById('salaryModalTitle').textContent = 'Параметры зарплаты';
-        document.getElementById('salaryContent').innerHTML = html;
-        document.getElementById('salaryModal').style.display = 'flex';
-        window._salaryEmpId = empId;
-      }
-
-      async function saveSalary() {
-        const emp = employees.find(e=>e.id===window._salaryEmpId);
-        const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
-        let normDays=null, planAmount=null, indivRate=null, groupRate=null;
-        if (emp.role === 'Менеджер') {
-          planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
-        } else if (emp.role === 'Управляющий') {
-          normDays = parseInt(document.getElementById('normDays')?.value)||22;
-          planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
-        } else if (emp.role === 'Администратор') {
-          normDays = parseInt(document.getElementById('normDays')?.value)||22;
-        } else if (emp.role === 'Преподаватель') {
-          indivRate = parseFloat(document.getElementById('indivRate')?.value)||400;
-          groupRate = parseFloat(document.getElementById('groupRate')?.value)||500;
-        }
-        const payload = {
-          emp_id: window._salaryEmpId,
-          month: monthStr,
-          norm_days: normDays,
-          plan_amount: planAmount,
-          indiv_rate: indivRate,
-          group_rate: groupRate
-        };
-        const {error} = await db.from('salary_params').upsert(payload, {onConflict: 'emp_id, month'});
-        if (error) return showToast('Ошибка: '+error.message, true);
-        showToast('Параметры сохранены', true);
-        closeModal('salaryModal');
-        loadData();
-      }
-
-      function exportToExcel() {
-        const table = document.querySelector('.schedule-container table');
-        if (!table) return showToast('Нет данных', true);
-        const wb = XLSX.utils.table_to_book(table, {sheet:'График'});
-        XLSX.writeFile(wb, `График_${currentYear}-${String(currentMonth).padStart(2,'0')}.xlsx`);
-        showToast('Excel скачан', true);
-      }
-
-      // Привязка событий
-      document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
-      document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
-      document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
-      document.getElementById('refreshBtn').addEventListener('click', () => loadData());
-      document.getElementById('closeDayModalBtn').addEventListener('click', () => closeModal('dayModal'));
-      document.getElementById('saveDayBtn').addEventListener('click', saveDay);
-      document.getElementById('closeSalaryModalBtn').addEventListener('click', () => closeModal('salaryModal'));
-      document.getElementById('saveSalaryBtn').addEventListener('click', saveSalary);
-
-      // Фильтры ролей
-      document.getElementById('roleFilters').addEventListener('click', (e) => {
-        if (e.target.classList.contains('role-filter-btn')) {
-          const role = e.target.dataset.role;
-          applyRoleFilter(role);
-        }
-      });
-
-      document.getElementById('periodBtns').addEventListener('click', (e) => {
-        if (e.target.classList.contains('period-btn')) {
-          document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-          e.target.classList.add('active');
-          currentPeriod = e.target.dataset.period;
-          renderTable();
-        }
-      });
-
-      const empToggle = document.getElementById('empToggle');
-      const empList = document.getElementById('empList');
-      empToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        empList.style.display = empList.style.display === 'none' ? 'block' : 'none';
-      });
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('#empToggle') && !e.target.closest('#empList')) {
-          empList.style.display = 'none';
-        }
-      });
-
-      const now = new Date();
-      currentYear = now.getFullYear();
-      currentMonth = now.getMonth() + 1;
-      loadData();
-    })();
-  </script>
 </body>
 </html>
