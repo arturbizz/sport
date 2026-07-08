@@ -334,39 +334,29 @@
       const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
       const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
 
-      // Безопасное получение элементов
-      function getEl(id) {
-        const el = document.getElementById(id);
-        if (!el) console.error(`Element #${id} not found`);
-        return el;
-      }
+      function getEl(id) { return document.getElementById(id); }
 
-      // Кастомный алерт
       function customAlert(msg) {
         return new Promise(resolve => {
           const modal = getEl('alertModal');
-          const msgEl = getEl('alertMessage');
-          if (!modal || !msgEl) { alert(msg); resolve(); return; }
-          msgEl.textContent = msg;
+          if (!modal) { alert(msg); resolve(); return; }
+          getEl('alertMessage').textContent = msg;
           modal.style.display = 'flex';
           getEl('alertOkBtn').onclick = () => { modal.style.display = 'none'; resolve(); };
         });
       }
 
-      // Кастомный confirm
       function customConfirm(msg) {
         return new Promise(resolve => {
           const modal = getEl('confirmModal');
-          const msgEl = getEl('confirmMessage');
-          if (!modal || !msgEl) { resolve(confirm(msg)); return; }
-          msgEl.textContent = msg;
+          if (!modal) { resolve(confirm(msg)); return; }
+          getEl('confirmMessage').textContent = msg;
           modal.style.display = 'flex';
           getEl('confirmYesBtn').onclick = () => { modal.style.display = 'none'; resolve(true); };
           getEl('confirmNoBtn').onclick = () => { modal.style.display = 'none'; resolve(false); };
         });
       }
 
-      // Обновление текста мультиселекта (выбирается только один)
       function updateMultiTrigger() {
         const checked = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => {
           const emp = employees.find(e => e.id === cb.value);
@@ -376,7 +366,6 @@
         if (trigger) trigger.textContent = checked.length ? checked[0] : 'Выберите ответственного';
       }
 
-      // Загрузка сотрудников
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
         employees = data || [];
@@ -397,7 +386,6 @@
 
           multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', () => {
-              // Снимаем все остальные, оставляем только этот
               if (cb.checked) {
                 multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(other => {
                   if (other !== cb) other.checked = false;
@@ -422,14 +410,12 @@
         }
       }
 
-      // Загрузка задач
       async function loadTasks() {
         const { data, error } = await _supabase.from('tasks').select('*').order('created_at', { ascending: false });
         if (error) { console.error(error); return; }
         tasks = data || [];
       }
 
-      // Рендер фильтров
       function renderFilters() {
         document.querySelectorAll('.filter-btn').forEach(btn => {
           btn.classList.toggle('active', btn.dataset.status === currentFilter);
@@ -438,7 +424,6 @@
         if (empFilter) empFilter.value = currentEmployeeFilter;
       }
 
-      // Рендер задач
       function renderTasks() {
         const container = getEl('tasksContainer');
         if (!container) return;
@@ -508,7 +493,6 @@
           </div>`;
         }).join('');
 
-        // Обработчики кликов
         document.querySelectorAll('.task-desc, .task-comment, .task-help').forEach(el => {
           el.addEventListener('click', () => el.classList.toggle('text-collapsed'));
         });
@@ -601,8 +585,7 @@
         renderTasks();
       }
 
-      // Обработчики событий
-      getEl('addTaskBtn')?.addEventListener('click', () => {
+      getEl('addTaskBtn').addEventListener('click', () => {
         getEl('modalTitle').textContent = 'Новая задача';
         getEl('taskTitle').value = '';
         getEl('taskDescription').value = '';
@@ -619,13 +602,10 @@
         getEl('taskModal').style.display = 'flex';
       });
 
-      getEl('cancelTaskBtn')?.addEventListener('click', () => {
-        getEl('taskModal').style.display = 'none';
-      });
+      getEl('cancelTaskBtn').addEventListener('click', () => { getEl('taskModal').style.display = 'none'; });
+      getEl('saveTaskBtn').addEventListener('click', saveTask);
 
-      getEl('saveTaskBtn')?.addEventListener('click', saveTask);
-
-      getEl('deleteTaskBtn')?.addEventListener('click', async () => {
+      getEl('deleteTaskBtn').addEventListener('click', async () => {
         const taskId = getEl('taskModal').dataset.taskId;
         if (!taskId) return;
         const confirmed = await customConfirm('Удалить задачу?');
@@ -638,15 +618,11 @@
         }
       });
 
-      getEl('sendHelpBtn')?.addEventListener('click', async () => {
+      getEl('sendHelpBtn').addEventListener('click', async () => {
         const taskId = getEl('helpModal').dataset.taskId;
         const comment = getEl('helpComment').value.trim();
         if (!comment) { await customAlert('Введите комментарий'); return; }
-        const { error } = await _supabase.from('tasks').update({
-          help_offered: true,
-          help_comment: comment,
-          help_by: currentUserEmail
-        }).eq('id', taskId);
+        const { error } = await _supabase.from('tasks').update({ help_offered: true, help_comment: comment, help_by: currentUserEmail }).eq('id', taskId);
         if (error) { await customAlert('Ошибка: ' + error.message); return; }
         getEl('helpModal').style.display = 'none';
         getEl('helpComment').value = '';
@@ -655,32 +631,20 @@
         renderTasks();
       });
 
-      getEl('cancelHelpBtn')?.addEventListener('click', () => {
-        getEl('helpModal').style.display = 'none';
-      });
+      getEl('cancelHelpBtn').addEventListener('click', () => { getEl('helpModal').style.display = 'none'; });
 
-      // Фильтры
-      getEl('filters')?.addEventListener('click', (e) => {
+      getEl('filters').addEventListener('click', (e) => {
         if (e.target.classList.contains('filter-btn')) {
           currentFilter = e.target.dataset.status;
           renderFilters();
           renderTasks();
         }
       });
-      getEl('employeeFilter')?.addEventListener('change', (e) => {
-        currentEmployeeFilter = e.target.value;
-        renderTasks();
-      });
+      getEl('employeeFilter').addEventListener('change', (e) => { currentEmployeeFilter = e.target.value; renderTasks(); });
 
-      // Радио-кнопки
-      getEl('typeIdea')?.addEventListener('change', () => {
-        getEl('prioritySection').style.display = 'none';
-      });
-      getEl('typeTask')?.addEventListener('change', () => {
-        getEl('prioritySection').style.display = 'block';
-      });
+      getEl('typeIdea').addEventListener('change', () => { getEl('prioritySection').style.display = 'none'; });
+      getEl('typeTask').addEventListener('change', () => { getEl('prioritySection').style.display = 'block'; });
 
-      // Анимация
       function showBalloonAndConfetti() {
         const balloon = document.createElement('div');
         balloon.className = 'balloon';
@@ -720,7 +684,6 @@
         }
       }
 
-      // Старт
       (async () => {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
