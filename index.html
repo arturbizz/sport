@@ -46,7 +46,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Фоновые размытые шары для легкого дыхания */
     .bg-decoration {
       position: fixed; top: -100px; right: -100px;
       width: 400px; height: 400px;
@@ -60,7 +59,6 @@
 
     .container { position: relative; z-index: 10; width: 100%; max-width: 1440px; }
 
-    /* Шапка */
     .header {
       display: flex; align-items: center; gap: 1rem;
       flex-wrap: wrap; background: var(--surface);
@@ -95,7 +93,6 @@
       border: 1px solid var(--border);
     }
 
-    /* Контейнер таблицы */
     .schedule-container {
       background: var(--surface); border-radius: 20px;
       padding: 1.5rem; overflow-x: auto; max-height: 75vh;
@@ -137,7 +134,6 @@
     .big-ruble { font-size: 1.3rem; font-weight: 700; color: #065f46; }
     .summary-cell { font-weight: 600; background: var(--surface-hover); border-radius: 10px; color: var(--text); }
 
-    /* Итоговая строка зарплат */
     .salary-summary {
       margin-top: 1rem; background: var(--surface); border: 1px solid var(--border);
       border-radius: 16px; padding: 0.8rem 1.5rem;
@@ -145,7 +141,6 @@
       box-shadow: 0 2px 12px rgba(0,0,0,0.02);
     }
 
-    /* Модалки */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal {
       background: var(--surface); border-radius: 24px; padding: 2rem;
@@ -161,7 +156,6 @@
     }
     .btn-save:hover { background: #2563eb; }
 
-    /* Уведомления */
     .toast-center { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; pointer-events: none; }
     .toast-content {
       display: flex; align-items: center; gap: 0.75rem;
@@ -173,6 +167,7 @@
     @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.95); } }
 
     .error-banner { background: #fee2e2; color: #991b1b; padding: 0.7rem 1.2rem; border-radius: 14px; margin-bottom: 1rem; }
+    .empty-message { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 1rem; }
   </style>
 </head>
 <body>
@@ -183,17 +178,17 @@
     <div class="header">
       <div class="logo">Music Club <span>Орёл</span></div>
       <div class="nav-arrows">
-        <button onclick="changeMonth(-1)">◀</button>
+        <button id="prevMonthBtn">◀</button>
         <span class="month-title" id="monthTitle"></span>
-        <button onclick="changeMonth(1)">▶</button>
+        <button id="nextMonthBtn">▶</button>
       </div>
       <div id="periodBtns" style="display:flex; gap:0.5rem;">
         <button class="period-btn active" data-period="full">Весь месяц</button>
         <button class="period-btn" data-period="first">1–15</button>
         <button class="period-btn" data-period="second">16–31</button>
       </div>
-      <button class="export-btn" onclick="exportToExcel()">Excel</button>
-      <button class="export-btn" onclick="location.reload()">Обновить</button>
+      <button class="export-btn" id="exportExcelBtn">Excel</button>
+      <button class="export-btn" id="refreshBtn">Обновить</button>
       <div style="position:relative;">
         <button class="emp-btn" id="empToggle">Сотрудники</button>
         <div id="empList" style="display:none; position:absolute; right:0; top:2.8rem; background:white; border-radius:16px; padding:1rem; box-shadow:0 20px 40px rgba(0,0,0,0.1); z-index:200; min-width:260px; border:1px solid var(--border);">
@@ -205,296 +200,338 @@
     <div id="errorContainer"></div>
 
     <div class="schedule-container" id="scheduleTableContainer">
-      <div style="padding:3rem; text-align:center; color:var(--text-secondary);">Загрузка графика...</div>
+      <div class="empty-message">Загрузка графика...</div>
     </div>
   </div>
 
   <!-- Модалка дня -->
   <div class="modal-overlay" id="dayModal" style="display:none;">
     <div class="modal">
-      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" onclick="closeModal('dayModal')">✕</button>
+      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" id="closeDayModalBtn">✕</button>
       <h3 id="modalTitle" style="margin-bottom:1.5rem;"></h3>
       <div id="statusOptions" style="margin-bottom:1rem;"></div>
       <div id="dynamicFields"></div>
       <textarea id="comment" rows="2" style="width:100%; margin:1rem 0; padding:0.8rem; border-radius:12px; border:1px solid var(--border); font-family:inherit;" placeholder="Примечание"></textarea>
-      <button class="btn-save" onclick="saveDay()">Сохранить</button>
+      <button class="btn-save" id="saveDayBtn">Сохранить</button>
     </div>
   </div>
 
   <!-- Модалка зарплаты -->
   <div class="modal-overlay" id="salaryModal" style="display:none;">
     <div class="modal" style="max-width:600px;">
-      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" onclick="closeModal('salaryModal')">✕</button>
+      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" id="closeSalaryModalBtn">✕</button>
       <h3 id="salaryModalTitle" style="margin-bottom:1rem;"></h3>
       <div id="salaryContent"></div>
-      <button class="btn-save" onclick="saveSalary()">Сохранить параметры</button>
+      <button class="btn-save" id="saveSalaryBtn">Сохранить параметры</button>
     </div>
   </div>
 
   <script>
-    // Конфигурация Supabase (без изменений)
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    (function() {
+      // Конфигурация Supabase
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let employees = [], worklog = {}, salaryParams = {};
-    let currentYear, currentMonth, currentPeriod = 'full', selectedIds = new Set();
+      let employees = [], worklog = {}, salaryParams = {};
+      let currentYear, currentMonth, currentPeriod = 'full';
+      let selectedIds = new Set();
 
-    const STATUSES = ['working', 'dayoff', 'sick', 'vacation', 'leave'];
-    const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
-    const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
+      const STATUSES = ['working', 'dayoff', 'sick', 'vacation', 'leave'];
+      const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
+      const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
 
-    function showToast(msg, err=false) {
-      const t = document.createElement('div'); t.className = 'toast-center';
-      t.innerHTML = `<div class="toast-content" style="background:${err?'#ef4444':'#0f172a'}">${msg}</div>`;
-      document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
-    }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-    async function loadData() {
-      document.getElementById('errorContainer').innerHTML = '';
-      try {
-        const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
-        const [empRes, logRes, salRes] = await Promise.all([
-          supabase.from('employees').select('*'),
-          supabase.from('worklog').select('*').like('date', `${monthStr}%`),
-          supabase.from('salary_params').select('*').eq('month', monthStr)
-        ]);
-        if (empRes.error) throw new Error('Ошибка загрузки сотрудников: ' + empRes.error.message);
-        if (logRes.error) throw new Error('Ошибка загрузки журнала: ' + logRes.error.message);
-        employees = empRes.data;
-        if (selectedIds.size === 0) employees.forEach(e => selectedIds.add(e.id));
-        worklog = {};
-        (logRes.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
-        salaryParams = {};
-        (salRes.data || []).forEach(r => { salaryParams[r.emp_id] = r; });
-        renderCheckboxes();
-        renderTable();
-      } catch (e) {
-        document.getElementById('errorContainer').innerHTML = `<div class="error-banner">❌ ${e.message}</div>`;
+      function showToast(msg, err=false) {
+        const t = document.createElement('div'); t.className = 'toast-center';
+        t.innerHTML = `<div class="toast-content" style="background:${err?'#ef4444':'#0f172a'}">${msg}</div>`;
+        document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
       }
-    }
+      function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    function renderCheckboxes() {
-      document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
-        <label style="display:block; margin:0.3rem 0; cursor:pointer; font-weight:500;">
-          <input type="checkbox" ${selectedIds.has(e.id)?'checked':''} onchange="toggleEmployee('${e.id}', this.checked)"> ${e.name} <small style="color:var(--text-secondary);">${e.role}</small>
-        </label>`).join('');
-    }
-    window.toggleEmployee = (id, checked) => {
-      checked ? selectedIds.add(id) : selectedIds.delete(id);
-      renderTable();
-    };
-
-    function getManagerNormDays(y, m) {
-      const days = new Date(y, m, 0).getDate();
-      let cnt = 0;
-      for (let d=1; d<=days; d++) if ((d-1)%6 < 3) cnt++;
-      return cnt;
-    }
-    function getFullMonthSales(emp) {
-      let total = 0;
-      const days = new Date(currentYear, currentMonth, 0).getDate();
-      for (let d=1; d<=days; d++) {
-        const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const dta = worklog[key];
-        if (dta && dta.status === 'working') total += dta.daily_sales || 0;
-      }
-      return total;
-    }
-    function getSalary(emp) {
-      const days = new Date(currentYear, currentMonth, 0).getDate();
-      let worked = 0, indiv = 0, group = 0;
-      let fullSales = 0;
-      for (let d=1; d<=days; d++) {
-        const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-        const rec = worklog[key];
-        if (!rec || rec.status !== 'working') continue;
-        if (emp.role === 'Менеджер') fullSales += rec.daily_sales || 0;
-        if ((currentPeriod === 'full') || (currentPeriod === 'first' && d<=15) || (currentPeriod === 'second' && d>=16)) {
-          worked++;
-          if (emp.role === 'Преподаватель') { indiv += rec.indiv||0; group += rec.group_total||0; }
+      async function loadData() {
+        document.getElementById('errorContainer').innerHTML = '';
+        try {
+          const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+          const [empRes, logRes, salRes] = await Promise.all([
+            supabaseClient.from('employees').select('*'),
+            supabaseClient.from('worklog').select('*').like('date', `${monthStr}%`),
+            supabaseClient.from('salary_params').select('*').eq('month', monthStr)
+          ]);
+          if (empRes.error) throw new Error('Ошибка загрузки сотрудников: ' + empRes.error.message);
+          if (logRes.error) throw new Error('Ошибка загрузки журнала: ' + logRes.error.message);
+          employees = empRes.data;
+          if (selectedIds.size === 0) employees.forEach(e => selectedIds.add(e.id));
+          worklog = {};
+          (logRes.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
+          salaryParams = {};
+          (salRes.data || []).forEach(r => { salaryParams[r.emp_id] = r; });
+          renderCheckboxes();
+          renderTable();
+        } catch (e) {
+          document.getElementById('errorContainer').innerHTML = `<div class="error-banner">❌ ${e.message}</div>`;
+          document.getElementById('scheduleTableContainer').innerHTML = '<div class="empty-message">Не удалось загрузить данные</div>';
         }
       }
-      const params = salaryParams[emp.id] || {};
-      const norm = emp.role === 'Менеджер' ? getManagerNormDays(currentYear, currentMonth) : (params.norm_days || 22);
-      const rates = { 'Менеджер':20000, 'Администратор':35000, 'Управляющий':50000 };
-      const base = (rates[emp.role] || 0) / norm * worked;
-      if (emp.role === 'Преподаватель') return indiv*400 + group*500;
-      if (emp.role === 'Менеджер') {
-        const plan = params.plan_amount || 0;
-        const bonusPct = (plan>0 && fullSales>=plan) ? 7 : 5;
-        const bonus = currentPeriod==='first' ? 0 : fullSales * bonusPct/100;
-        return base + bonus;
-      }
-      if (emp.role === 'Администратор') {
-        const mgrs = employees.filter(e=>e.role==='Менеджер');
-        let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
-        return base + (currentPeriod!=='first' ? totalMgrs*0.01 : 0);
-      }
-      if (emp.role === 'Управляющий') {
-        const mgrs = employees.filter(e=>e.role==='Менеджер');
-        let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
-        const plan = params.plan_amount || 0;
-        const fulfilled = plan>0 && totalMgrs>=plan;
-        return base + (fulfilled && currentPeriod!=='first' ? totalMgrs*0.01 : 0);
-      }
-      return 0;
-    }
 
-    function renderTable() {
-      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-      document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1).toLocaleDateString('ru',{month:'long',year:'numeric'});
-      const filtered = employees.filter(e => selectedIds.has(e.id));
-      let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
-      for (let d=1; d<=daysInMonth; d++) html += `<th>${d}<br><small>${new Date(currentYear,currentMonth-1,d).toLocaleDateString('ru',{weekday:'short'})}</small></th>`;
-      html += '</tr></thead><tbody>';
-      ['Управляющий','Менеджер','Администратор','Преподаватель'].forEach(role => {
-        const group = filtered.filter(e => e.role === role);
-        if (!group.length) return;
-        html += `<tr><td colspan="${daysInMonth+3}" class="group-header">${role}ы</td></tr>`;
-        group.forEach(emp => {
-          let worked = 0, indiv = 0, group = 0;
-          let cells = '';
-          for (let d=1; d<=daysInMonth; d++) {
-            const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const rec = worklog[`${emp.id}_${dateStr}`] || {};
-            const status = rec.status;
-            if (status === 'working' && (currentPeriod==='full' || (currentPeriod==='first' && d<=15) || (currentPeriod==='second' && d>=16))) {
-              worked++;
-              if (emp.role === 'Преподаватель') { indiv += rec.indiv||0; group += rec.group_total||0; }
-            }
-            let cls = 'day-cell';
-            if (status) cls += ' ' + (STATUS_CLASSES[status]||'');
-            if (rec.comment) cls += ' has-comment';
-            let content = status ? (STATUS_LABELS[status]||status) : '';
-            let tooltip = '';
-            if (emp.role === 'Менеджер' && status === 'working') {
-              content = rec.daily_sales > 0 ? '<span class="big-ruble">₽</span>' : 'Д';
-              if (rec.daily_sales) tooltip = `Выручка: ${rec.daily_sales} ₽`;
-            } else if (emp.role === 'Преподаватель' && status === 'working') {
-              content = `Д<br><small>${rec.indiv||0}/${rec.group_total||0}</small>`;
-            }
-            if (rec.comment) tooltip += (tooltip?' ':'') + rec.comment;
-            cells += `<td onclick="openDayModal('${emp.id}','${dateStr}')" ${tooltip?`title="${tooltip}"`:''}><div class="${cls}">${content}</div></td>`;
-          }
-          const salary = getSalary(emp);
-          html += `<tr><td class="employee-name" onclick="openSalaryModal('${emp.id}')">${emp.name}</td>`;
-          html += `<td class="summary-cell">${worked}</td><td class="summary-cell">${salary.toFixed(0)} ₽</td>${cells}</tr>`;
+      function renderCheckboxes() {
+        document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
+          <label style="display:block; margin:0.3rem 0; cursor:pointer; font-weight:500;">
+            <input type="checkbox" ${selectedIds.has(e.id)?'checked':''} data-empid="${e.id}"> ${e.name} <small style="color:var(--text-secondary);">${e.role}</small>
+          </label>`).join('');
+        
+        document.querySelectorAll('#empCheckboxes input[type="checkbox"]').forEach(cb => {
+          cb.addEventListener('change', function() {
+            const id = this.dataset.empid;
+            this.checked ? selectedIds.add(id) : selectedIds.delete(id);
+            renderTable();
+          });
         });
+      }
+
+      function getManagerNormDays(y, m) {
+        const days = new Date(y, m, 0).getDate();
+        let cnt = 0;
+        for (let d=1; d<=days; d++) if ((d-1)%6 < 3) cnt++;
+        return cnt;
+      }
+      function getFullMonthSales(emp) {
+        let total = 0;
+        const days = new Date(currentYear, currentMonth, 0).getDate();
+        for (let d=1; d<=days; d++) {
+          const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const dta = worklog[key];
+          if (dta && dta.status === 'working') total += dta.daily_sales || 0;
+        }
+        return total;
+      }
+      function getSalary(emp) {
+        const days = new Date(currentYear, currentMonth, 0).getDate();
+        let worked = 0, indiv = 0, group = 0;
+        let fullSales = 0;
+        for (let d=1; d<=days; d++) {
+          const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[key];
+          if (!rec || rec.status !== 'working') continue;
+          if (emp.role === 'Менеджер') fullSales += rec.daily_sales || 0;
+          if ((currentPeriod === 'full') || (currentPeriod === 'first' && d<=15) || (currentPeriod === 'second' && d>=16)) {
+            worked++;
+            if (emp.role === 'Преподаватель') { indiv += rec.indiv||0; group += rec.group_total||0; }
+          }
+        }
+        const params = salaryParams[emp.id] || {};
+        const norm = emp.role === 'Менеджер' ? getManagerNormDays(currentYear, currentMonth) : (params.norm_days || 22);
+        const rates = { 'Менеджер':20000, 'Администратор':35000, 'Управляющий':50000 };
+        const base = (rates[emp.role] || 0) / norm * worked;
+        if (emp.role === 'Преподаватель') return indiv*400 + group*500;
+        if (emp.role === 'Менеджер') {
+          const plan = params.plan_amount || 0;
+          const bonusPct = (plan>0 && fullSales>=plan) ? 7 : 5;
+          const bonus = currentPeriod==='first' ? 0 : fullSales * bonusPct/100;
+          return base + bonus;
+        }
+        if (emp.role === 'Администратор') {
+          const mgrs = employees.filter(e=>e.role==='Менеджер');
+          let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
+          return base + (currentPeriod!=='first' ? totalMgrs*0.01 : 0);
+        }
+        if (emp.role === 'Управляющий') {
+          const mgrs = employees.filter(e=>e.role==='Менеджер');
+          let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
+          const plan = params.plan_amount || 0;
+          const fulfilled = plan>0 && totalMgrs>=plan;
+          return base + (fulfilled && currentPeriod!=='first' ? totalMgrs*0.01 : 0);
+        }
+        return 0;
+      }
+
+      function renderTable() {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1).toLocaleDateString('ru',{month:'long',year:'numeric'});
+        const filtered = employees.filter(e => selectedIds.has(e.id));
+        if (filtered.length === 0) {
+          document.getElementById('scheduleTableContainer').innerHTML = '<div class="empty-message">Нет сотрудников для отображения. Добавьте их в базе данных.</div>';
+          return;
+        }
+        let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
+        for (let d=1; d<=daysInMonth; d++) html += `<th>${d}<br><small>${new Date(currentYear,currentMonth-1,d).toLocaleDateString('ru',{weekday:'short'})}</small></th>`;
+        html += '</tr></thead><tbody>';
+        ['Управляющий','Менеджер','Администратор','Преподаватель'].forEach(role => {
+          const group = filtered.filter(e => e.role === role);
+          if (!group.length) return;
+          html += `<tr><td colspan="${daysInMonth+3}" class="group-header">${role}ы</td></tr>`;
+          group.forEach(emp => {
+            let worked = 0, indiv = 0, group = 0;
+            let cells = '';
+            for (let d=1; d<=daysInMonth; d++) {
+              const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+              const rec = worklog[`${emp.id}_${dateStr}`] || {};
+              const status = rec.status;
+              if (status === 'working' && (currentPeriod==='full' || (currentPeriod==='first' && d<=15) || (currentPeriod==='second' && d>=16))) {
+                worked++;
+                if (emp.role === 'Преподаватель') { indiv += rec.indiv||0; group += rec.group_total||0; }
+              }
+              let cls = 'day-cell';
+              if (status) cls += ' ' + (STATUS_CLASSES[status]||'');
+              if (rec.comment) cls += ' has-comment';
+              let content = status ? (STATUS_LABELS[status]||status) : '';
+              let tooltip = '';
+              if (emp.role === 'Менеджер' && status === 'working') {
+                content = rec.daily_sales > 0 ? '<span class="big-ruble">₽</span>' : 'Д';
+                if (rec.daily_sales) tooltip = `Выручка: ${rec.daily_sales} ₽`;
+              } else if (emp.role === 'Преподаватель' && status === 'working') {
+                content = `Д<br><small>${rec.indiv||0}/${rec.group_total||0}</small>`;
+              }
+              if (rec.comment) tooltip += (tooltip?' ':'') + rec.comment;
+              cells += `<td><div class="${cls}" data-empid="${emp.id}" data-date="${dateStr}" title="${tooltip}">${content}</div></td>`;
+            }
+            const salary = getSalary(emp);
+            html += `<tr><td class="employee-name" data-empid="${emp.id}" style="cursor:pointer;">${emp.name}</td>`;
+            html += `<td class="summary-cell">${worked}</td><td class="summary-cell">${salary.toFixed(0)} ₽</td>${cells}</tr>`;
+          });
+        });
+        html += '</tbody></table>';
+        document.getElementById('scheduleTableContainer').innerHTML = html;
+
+        // Навешиваем обработчики кликов на ячейки и имена
+        document.querySelectorAll('.day-cell').forEach(cell => {
+          cell.addEventListener('click', function() {
+            const empId = this.dataset.empid;
+            const dateStr = this.dataset.date;
+            openDayModal(empId, dateStr);
+          });
+        });
+        document.querySelectorAll('.employee-name').forEach(nameEl => {
+          nameEl.addEventListener('click', function() {
+            const empId = this.dataset.empid;
+            openSalaryModal(empId);
+          });
+        });
+      }
+
+      window.changeMonth = function(delta) {
+        currentMonth += delta;
+        if (currentMonth < 1) { currentMonth=12; currentYear--; }
+        else if (currentMonth > 12) { currentMonth=1; currentYear++; }
+        loadData();
+      };
+
+      function openDayModal(empId, dateStr) {
+        const emp = employees.find(e=>e.id===empId);
+        if (!emp) return;
+        const rec = worklog[`${empId}_${dateStr}`] || {};
+        document.getElementById('modalTitle').textContent = `${emp.name} — ${dateStr}`;
+        document.getElementById('comment').value = rec.comment || '';
+        document.getElementById('statusOptions').innerHTML = STATUSES.map(s =>
+          `<label style="margin-right:1.2rem; font-weight:500; cursor:pointer;"><input type="radio" name="dayStatus" value="${s}" ${rec.status===s?'checked':''} style="accent-color:var(--accent);"> ${STATUS_LABELS[s]}</label>`
+        ).join('');
+        let dyn = '';
+        if (emp.role === 'Менеджер') dyn = `<label style="font-weight:500;">Выручка: <input type="number" id="dailySales" value="${rec.daily_sales||''}" style="width:120px; margin-left:0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
+        else if (emp.role === 'Преподаватель') dyn = `<label style="font-weight:500;">Инд.: <input type="number" id="indiv" value="${rec.indiv||''}" style="width:70px; margin:0 0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><label style="font-weight:500;">Групп.: <input type="number" id="groupTotal" value="${rec.group_total||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
+        document.getElementById('dynamicFields').innerHTML = dyn;
+        document.getElementById('dayModal').style.display = 'flex';
+        window._editEmpId = empId;
+        window._editDate = dateStr;
+      }
+
+      async function saveDay() {
+        const status = document.querySelector('input[name="dayStatus"]:checked')?.value;
+        if (!status) return showToast('Выберите статус', true);
+        const comment = document.getElementById('comment').value.trim();
+        const emp = employees.find(e=>e.id===window._editEmpId);
+        let dailySales=0, indiv=0, groupTotal=0;
+        if (emp.role==='Менеджер') dailySales = parseFloat(document.getElementById('dailySales')?.value)||0;
+        if (emp.role==='Преподаватель') {
+          indiv = parseInt(document.getElementById('indiv')?.value)||0;
+          groupTotal = parseInt(document.getElementById('groupTotal')?.value)||0;
+        }
+        const {error} = await supabaseClient.from('worklog').upsert({
+          emp_id: window._editEmpId,
+          date: window._editDate,
+          status, comment, daily_sales: dailySales, indiv, group_total: groupTotal
+        }, {onConflict: 'emp_id, date'});
+        if (error) return showToast('Ошибка: '+error.message, true);
+        showToast('Сохранено');
+        closeModal('dayModal');
+        loadData();
+      }
+
+      function openSalaryModal(empId) {
+        const emp = employees.find(e=>e.id===empId);
+        if (!emp) return;
+        const params = salaryParams[empId] || {};
+        let html = `<p style="font-weight:600; margin-bottom:0.5rem;">${emp.name}</p>`;
+        if (emp.role==='Менеджер') html += `<label style="font-weight:500;">План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
+        else if (emp.role==='Управляющий') html += `<label style="font-weight:500;">Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><br><label style="font-weight:500;">План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
+        else if (emp.role==='Администратор') html += `<label style="font-weight:500;">Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
+        document.getElementById('salaryModalTitle').textContent = 'Параметры зарплаты';
+        document.getElementById('salaryContent').innerHTML = html;
+        document.getElementById('salaryModal').style.display = 'flex';
+        window._salaryEmpId = empId;
+      }
+
+      async function saveSalary() {
+        const emp = employees.find(e=>e.id===window._salaryEmpId);
+        const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+        let normDays=null, planAmount=null;
+        if (emp.role==='Менеджер') planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
+        else if (emp.role==='Управляющий') {
+          normDays = parseInt(document.getElementById('normDays')?.value)||22;
+          planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
+        } else if (emp.role==='Администратор') normDays = parseInt(document.getElementById('normDays')?.value)||22;
+        const {error} = await supabaseClient.from('salary_params').upsert({
+          emp_id: window._salaryEmpId, month: monthStr, norm_days: normDays, plan_amount: planAmount
+        }, {onConflict: 'emp_id, month'});
+        if (error) return showToast('Ошибка: '+error.message, true);
+        showToast('Параметры сохранены');
+        closeModal('salaryModal');
+        loadData();
+      }
+
+      function exportToExcel() {
+        const table = document.querySelector('.schedule-container table');
+        if (!table) return showToast('Нет данных', true);
+        const wb = XLSX.utils.table_to_book(table, {sheet:'График'});
+        XLSX.writeFile(wb, `График_${currentYear}-${String(currentMonth).padStart(2,'0')}.xlsx`);
+        showToast('Excel скачан');
+      }
+
+      // Привязка событий
+      document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
+      document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+      document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
+      document.getElementById('refreshBtn').addEventListener('click', () => loadData());
+      document.getElementById('closeDayModalBtn').addEventListener('click', () => closeModal('dayModal'));
+      document.getElementById('saveDayBtn').addEventListener('click', saveDay);
+      document.getElementById('closeSalaryModalBtn').addEventListener('click', () => closeModal('salaryModal'));
+      document.getElementById('saveSalaryBtn').addEventListener('click', saveSalary);
+
+      document.getElementById('periodBtns').addEventListener('click', (e) => {
+        if (e.target.classList.contains('period-btn')) {
+          document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+          e.target.classList.add('active');
+          currentPeriod = e.target.dataset.period;
+          renderTable();
+        }
       });
-      html += '</tbody></table>';
-      document.getElementById('scheduleTableContainer').innerHTML = html;
-    }
 
-    window.changeMonth = (delta) => {
-      currentMonth += delta;
-      if (currentMonth < 1) { currentMonth=12; currentYear--; }
-      else if (currentMonth > 12) { currentMonth=1; currentYear++; }
+      const empToggle = document.getElementById('empToggle');
+      const empList = document.getElementById('empList');
+      empToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        empList.style.display = empList.style.display === 'none' ? 'block' : 'none';
+      });
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#empToggle') && !e.target.closest('#empList')) {
+          empList.style.display = 'none';
+        }
+      });
+
+      // Инициализация
+      const now = new Date();
+      currentYear = now.getFullYear();
+      currentMonth = now.getMonth() + 1;
       loadData();
-    };
-
-    window.openDayModal = (empId, dateStr) => {
-      const emp = employees.find(e=>e.id===empId);
-      const rec = worklog[`${empId}_${dateStr}`] || {};
-      document.getElementById('modalTitle').textContent = `${emp.name} — ${dateStr}`;
-      document.getElementById('comment').value = rec.comment || '';
-      document.getElementById('statusOptions').innerHTML = STATUSES.map(s =>
-        `<label style="margin-right:1.2rem; font-weight:500; cursor:pointer;"><input type="radio" name="dayStatus" value="${s}" ${rec.status===s?'checked':''} style="accent-color:var(--accent);"> ${STATUS_LABELS[s]}</label>`
-      ).join('');
-      let dyn = '';
-      if (emp.role === 'Менеджер') dyn = `<label style="font-weight:500;">Выручка: <input type="number" id="dailySales" value="${rec.daily_sales||''}" style="width:120px; margin-left:0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
-      else if (emp.role === 'Преподаватель') dyn = `<label style="font-weight:500;">Инд.: <input type="number" id="indiv" value="${rec.indiv||''}" style="width:70px; margin:0 0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><label style="font-weight:500;">Групп.: <input type="number" id="groupTotal" value="${rec.group_total||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
-      document.getElementById('dynamicFields').innerHTML = dyn;
-      document.getElementById('dayModal').style.display = 'flex';
-      window._editEmpId = empId;
-      window._editDate = dateStr;
-    };
-
-    window.saveDay = async () => {
-      const status = document.querySelector('input[name="dayStatus"]:checked')?.value;
-      if (!status) return showToast('Выберите статус', true);
-      const comment = document.getElementById('comment').value.trim();
-      const emp = employees.find(e=>e.id===window._editEmpId);
-      let dailySales=0, indiv=0, groupTotal=0;
-      if (emp.role==='Менеджер') dailySales = parseFloat(document.getElementById('dailySales')?.value)||0;
-      if (emp.role==='Преподаватель') {
-        indiv = parseInt(document.getElementById('indiv')?.value)||0;
-        groupTotal = parseInt(document.getElementById('groupTotal')?.value)||0;
-      }
-      const {error} = await supabase.from('worklog').upsert({
-        emp_id: window._editEmpId,
-        date: window._editDate,
-        status, comment, daily_sales: dailySales, indiv, group_total: groupTotal
-      }, {onConflict: 'emp_id, date'});
-      if (error) return showToast('Ошибка: '+error.message, true);
-      showToast('Сохранено');
-      closeModal('dayModal');
-      loadData();
-    };
-
-    window.openSalaryModal = (empId) => {
-      const emp = employees.find(e=>e.id===empId);
-      const params = salaryParams[empId] || {};
-      let html = `<p style="font-weight:600; margin-bottom:0.5rem;">${emp.name}</p>`;
-      if (emp.role==='Менеджер') html += `<label style="font-weight:500;">План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
-      else if (emp.role==='Управляющий') html += `<label style="font-weight:500;">Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><br><label style="font-weight:500;">План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
-      else if (emp.role==='Администратор') html += `<label style="font-weight:500;">Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
-      document.getElementById('salaryModalTitle').textContent = 'Параметры зарплаты';
-      document.getElementById('salaryContent').innerHTML = html;
-      document.getElementById('salaryModal').style.display = 'flex';
-      window._salaryEmpId = empId;
-    };
-
-    window.saveSalary = async () => {
-      const emp = employees.find(e=>e.id===window._salaryEmpId);
-      const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
-      let normDays=null, planAmount=null;
-      if (emp.role==='Менеджер') planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
-      else if (emp.role==='Управляющий') {
-        normDays = parseInt(document.getElementById('normDays')?.value)||22;
-        planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
-      } else if (emp.role==='Администратор') normDays = parseInt(document.getElementById('normDays')?.value)||22;
-      const {error} = await supabase.from('salary_params').upsert({
-        emp_id: window._salaryEmpId, month: monthStr, norm_days: normDays, plan_amount: planAmount
-      }, {onConflict: 'emp_id, month'});
-      if (error) return showToast('Ошибка: '+error.message, true);
-      showToast('Параметры сохранены');
-      closeModal('salaryModal');
-      loadData();
-    };
-
-    window.exportToExcel = () => {
-      const table = document.querySelector('.schedule-container table');
-      if (!table) return showToast('Нет данных', true);
-      const wb = XLSX.utils.table_to_book(table, {sheet:'График'});
-      XLSX.writeFile(wb, `График_${currentYear}-${String(currentMonth).padStart(2,'0')}.xlsx`);
-      showToast('Excel скачан');
-    };
-
-    document.getElementById('periodBtns').addEventListener('click', (e) => {
-      if (e.target.classList.contains('period-btn')) {
-        document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
-        e.target.classList.add('active');
-        currentPeriod = e.target.dataset.period;
-        renderTable();
-      }
-    });
-    document.getElementById('empToggle').addEventListener('click', (e) => {
-      e.stopPropagation();
-      const list = document.getElementById('empList');
-      list.style.display = list.style.display === 'none' ? 'block' : 'none';
-    });
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('#empToggle') && !e.target.closest('#empList')) {
-        document.getElementById('empList').style.display = 'none';
-      }
-    });
-
-    const now = new Date();
-    currentYear = now.getFullYear();
-    currentMonth = now.getMonth() + 1;
-    loadData();
+    })();
   </script>
 </body>
 </html>
