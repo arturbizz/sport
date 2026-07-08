@@ -6,175 +6,182 @@
   <title>График работы — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-light: #f0f4f8;
-      --primary: #2b6cb0;
-      --accent: #f6ad55;
-      --text: #2d3748;
-      --glass: rgba(255,255,255,0.7);
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-hover: #f1f5f9;
+      --text: #0f172a;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --accent: #3b82f6;
+      --accent-light: #eff6ff;
+      --success: #10b981;
+      --success-bg: #d1fae5;
+      --danger: #ef4444;
+      --danger-bg: #fee2e2;
+      --warning: #f59e0b;
+      --warning-bg: #fef3c7;
+      --info: #8b5cf6;
+      --info-bg: #ede9fe;
+      --vacation: #0ea5e9;
+      --vacation-bg: #e0f2fe;
+      --leave: #f97316;
+      --leave-bg: #ffedd5;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #e0f2fe 0%, #fef9c3 50%, #fde68a 100%);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
+      background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 50%, #f0f9ff 100%);
       color: var(--text);
       min-height: 100vh;
       padding: 1.5rem;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-    }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Легкие облака */
-    .cloud {
-      position: fixed; top: 10%; left: -150px;
-      width: 200px; height: 60px;
-      background: white; border-radius: 100px;
-      opacity: 0.5; filter: blur(8px);
-      animation: floatCloud 30s linear infinite;
+    /* Фоновые размытые шары для легкого дыхания */
+    .bg-decoration {
+      position: fixed; top: -100px; right: -100px;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+      border-radius: 50%; z-index: 0; pointer-events: none;
     }
-    .cloud:nth-child(2) { top: 30%; left: 60%; width: 250px; height: 70px; animation-duration: 25s; opacity: 0.4; }
-    .cloud:nth-child(3) { top: 70%; left: 20%; width: 180px; height: 50px; animation-duration: 35s; opacity: 0.3; }
-    @keyframes floatCloud {
-      from { transform: translateX(0); }
-      to { transform: translateX(calc(100vw + 300px)); }
+    .bg-decoration:nth-child(2) {
+      top: auto; bottom: -100px; left: -100px; right: auto;
+      background: radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%);
     }
 
-    /* Солнце без лица */
-    .sun {
-      position: fixed; top: 30px; right: 80px;
-      width: 80px; height: 80px;
-      background: #FFD700; border-radius: 50%;
-      box-shadow: 0 0 50px 15px #FFA500, 0 0 100px 30px #FF8C00;
-      animation: sunGlow 3s ease-in-out infinite alternate;
-    }
-    @keyframes sunGlow {
-      from { box-shadow: 0 0 50px 15px #FFA500, 0 0 100px 30px #FF8C00; }
-      to { box-shadow: 0 0 60px 20px #FFB347, 0 0 120px 40px #FFA500; }
-    }
+    .container { position: relative; z-index: 10; width: 100%; max-width: 1440px; }
 
-    .container { position: relative; z-index: 10; width: 100%; max-width: 1400px; }
-
+    /* Шапка */
     .header {
       display: flex; align-items: center; gap: 1rem;
-      flex-wrap: wrap; background: var(--glass);
-      backdrop-filter: blur(12px); padding: 0.8rem 1.5rem;
-      border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-      margin-bottom: 1.5rem;
+      flex-wrap: wrap; background: var(--surface);
+      padding: 0.75rem 1.5rem; border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      margin-bottom: 1.5rem; border: 1px solid var(--border);
     }
     .logo {
-      font-size: 1.8rem; font-weight: 800;
-      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; margin-right: auto;
+      font-size: 1.5rem; font-weight: 700; color: var(--text);
+      letter-spacing: -0.5px; margin-right: auto;
     }
+    .logo span { color: var(--accent); }
+
     .nav-arrows { display: flex; gap: 0.5rem; }
     .nav-arrows button, .period-btn, .export-btn, .emp-btn {
-      background: rgba(255,255,255,0.8); border: none;
-      padding: 0.5rem 1.2rem; border-radius: 2rem;
-      font-weight: 600; font-size: 0.9rem; cursor: pointer;
-      transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-      display: flex; align-items: center; gap: 0.4rem;
+      background: var(--surface); border: 1px solid var(--border);
+      padding: 0.5rem 1rem; border-radius: 12px;
+      font-weight: 500; font-size: 0.85rem; cursor: pointer;
+      transition: all 0.15s ease; display: flex; align-items: center; gap: 0.4rem;
+      color: var(--text-secondary);
     }
     .nav-arrows button:hover, .period-btn:hover, .export-btn:hover, .emp-btn:hover {
-      background: white; transform: translateY(-1px); box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+      background: var(--surface-hover); border-color: #cbd5e1;
     }
-    .period-btn.active { background: #fbbf24; color: #1e293b; }
+    .period-btn.active {
+      background: var(--accent-light); color: var(--accent); border-color: var(--accent);
+      font-weight: 600;
+    }
     .month-title {
-      min-width: 140px; text-align: center; font-weight: 700; font-size: 1.2rem;
-      background: rgba(255,255,255,0.9); padding: 0.4rem 1.2rem; border-radius: 2rem;
+      min-width: 140px; text-align: center; font-weight: 600; font-size: 1rem;
+      background: var(--surface); padding: 0.4rem 1rem; border-radius: 12px;
+      border: 1px solid var(--border);
     }
 
+    /* Контейнер таблицы */
     .schedule-container {
-      background: var(--glass); backdrop-filter: blur(15px);
-      border-radius: 2rem; padding: 1.2rem; overflow-x: auto;
-      max-height: 75vh; box-shadow: 0 15px 35px rgba(0,0,0,0.08);
-      scrollbar-width: thin; scrollbar-color: #a0c4ff rgba(255,255,255,0.2);
+      background: var(--surface); border-radius: 20px;
+      padding: 1.5rem; overflow-x: auto; max-height: 75vh;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.04); border: 1px solid var(--border);
+      scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;
     }
-    table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 1200px; }
-    th { background: rgba(255,255,255,0.85); padding: 0.6rem 0.3rem; font-size: 0.85rem; position: sticky; top: 0; z-index: 5; border-radius: 12px 12px 0 0; }
-    td { padding: 0.4rem 0.2rem; text-align: center; font-size: 0.9rem; }
+    .schedule-container::-webkit-scrollbar { height: 6px; }
+    .schedule-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 1200px; }
+    th { background: var(--surface-hover); padding: 0.6rem 0.3rem; font-size: 0.8rem; position: sticky; top: 0; z-index: 5; border-radius: 10px 10px 0 0; color: var(--text-secondary); font-weight: 600; }
+    td { padding: 0.5rem 0.3rem; text-align: center; font-size: 0.85rem; }
 
     .employee-name {
-      text-align: left; font-weight: 700; padding-left: 1rem;
-      background: rgba(255,255,255,0.5); border-radius: 12px; cursor: pointer;
-      transition: 0.2s;
+      text-align: left; font-weight: 600; padding-left: 1rem;
+      background: var(--surface); border-radius: 10px; cursor: pointer;
+      transition: background 0.15s;
     }
-    .employee-name:hover { background: rgba(255,255,255,0.9); color: #2563eb; }
+    .employee-name:hover { background: var(--accent-light); color: var(--accent); }
     .group-header {
-      background: rgba(251,191,36,0.25); font-weight: 700; padding: 0.7rem 1.2rem;
-      border-radius: 16px; margin-top: 0.8rem; font-size: 1rem;
+      background: var(--surface-hover); font-weight: 600; padding: 0.7rem 1.2rem;
+      border-radius: 12px; margin-top: 0.6rem; font-size: 0.9rem; color: var(--text-secondary);
+      letter-spacing: 0.3px;
     }
 
     .day-cell {
-      cursor: pointer; background: rgba(255,255,255,0.6); border-radius: 12px;
+      cursor: pointer; background: var(--surface); border-radius: 10px;
       height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      margin: 1px; font-weight: 600; transition: 0.15s;
+      margin: 1px; font-weight: 500; transition: all 0.15s; border: 1px solid transparent;
     }
-    .day-cell:hover { background: white; transform: scale(1.02); box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
-    .day-cell.working { background: #86efac; color: #14532d; }
-    .day-cell.dayoff { background: #fecaca; color: #991b1b; }
-    .day-cell.sick { background: #c4b5fd; color: #4c1d95; }
-    .day-cell.vacation { background: #7dd3fc; color: #0c4a6e; }
-    .day-cell.leave { background: #fde68a; color: #78350f; }
-    .day-cell.has-comment { border: 2px solid #fbbf24; }
+    .day-cell:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(59,130,246,0.1); }
+    .day-cell.working { background: var(--success-bg); color: #065f46; border-color: #a7f3d0; }
+    .day-cell.dayoff { background: var(--danger-bg); color: #991b1b; border-color: #fecaca; }
+    .day-cell.sick { background: var(--info-bg); color: #5b21b6; border-color: #ddd6fe; }
+    .day-cell.vacation { background: var(--vacation-bg); color: #0c4a6e; border-color: #bae6fd; }
+    .day-cell.leave { background: var(--leave-bg); color: #9a3412; border-color: #fed7aa; }
+    .day-cell.has-comment { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251,191,36,0.2); }
 
-    .big-ruble { font-size: 1.3rem; font-weight: bold; }
-    .summary-cell { font-weight: 700; background: rgba(255,255,255,0.7); border-radius: 10px; }
+    .big-ruble { font-size: 1.3rem; font-weight: 700; color: #065f46; }
+    .summary-cell { font-weight: 600; background: var(--surface-hover); border-radius: 10px; color: var(--text); }
 
+    /* Итоговая строка зарплат */
     .salary-summary {
-      margin-top: 1rem; background: rgba(255,255,255,0.6); backdrop-filter: blur(12px);
-      border-radius: 1.5rem; padding: 0.8rem 1.5rem;
-      display: flex; flex-wrap: wrap; gap: 1.5rem; font-weight: 600;
+      margin-top: 1rem; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 0.8rem 1.5rem;
+      display: flex; flex-wrap: wrap; gap: 1.5rem; font-weight: 500;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.02);
     }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    /* Модалки */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal {
-      background: white; border-radius: 2rem; padding: 2rem;
-      max-width: 500px; width: 90%; box-shadow: 0 30px 50px rgba(0,0,0,0.3);
-      animation: modalPop 0.25s ease-out;
+      background: var(--surface); border-radius: 24px; padding: 2rem;
+      max-width: 500px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+      animation: slideUp 0.2s ease-out;
     }
-    @keyframes modalPop { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     .btn-save {
-      background: #2563eb; color: white; padding: 0.8rem 2rem; border-radius: 2rem;
-      border: none; font-weight: 700; cursor: pointer; width: 100%; margin-top: 1rem;
-      transition: 0.2s;
+      background: var(--accent); color: white; padding: 0.7rem 2rem; border-radius: 14px;
+      border: none; font-weight: 600; cursor: pointer; width: 100%; margin-top: 1rem;
+      transition: background 0.2s; font-size: 0.9rem;
     }
-    .btn-save:hover { background: #1d4ed8; }
+    .btn-save:hover { background: #2563eb; }
 
+    /* Уведомления */
     .toast-center { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; pointer-events: none; }
     .toast-content {
-      display: flex; align-items: center; gap: 1rem;
-      background: #059669; color: white; padding: 1rem 2rem; border-radius: 3rem;
-      box-shadow: 0 20px 35px rgba(0,0,0,0.3);
-      animation: toastIn 0.3s forwards, toastOut 0.3s 1.5s forwards;
+      display: flex; align-items: center; gap: 0.75rem;
+      background: var(--text); color: white; padding: 0.8rem 1.5rem; border-radius: 14px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+      animation: toastIn 0.25s forwards, toastOut 0.25s 1.5s forwards;
     }
-    @keyframes toastIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.9); } }
+    @keyframes toastIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.95); } }
 
-    .error-banner { background: #fee2e2; color: #991b1b; padding: 0.8rem 1.5rem; border-radius: 1.5rem; margin-bottom: 1rem; }
+    .error-banner { background: #fee2e2; color: #991b1b; padding: 0.7rem 1.2rem; border-radius: 14px; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-  <!-- Легкие облака -->
-  <div class="cloud"></div>
-  <div class="cloud"></div>
-  <div class="cloud"></div>
-  <div class="sun"></div>
+  <div class="bg-decoration"></div>
+  <div class="bg-decoration"></div>
 
   <div class="container">
     <div class="header">
-      <div class="logo">Music Club Орёл</div>
+      <div class="logo">Music Club <span>Орёл</span></div>
       <div class="nav-arrows">
         <button onclick="changeMonth(-1)">◀</button>
         <span class="month-title" id="monthTitle"></span>
@@ -185,11 +192,11 @@
         <button class="period-btn" data-period="first">1–15</button>
         <button class="period-btn" data-period="second">16–31</button>
       </div>
-      <button class="export-btn" onclick="exportToExcel()">📥 Excel</button>
-      <button class="export-btn" onclick="location.reload()">🔄 Обновить</button>
+      <button class="export-btn" onclick="exportToExcel()">Excel</button>
+      <button class="export-btn" onclick="location.reload()">Обновить</button>
       <div style="position:relative;">
-        <button class="emp-btn" id="empToggle">👥 Сотрудники</button>
-        <div id="empList" style="display:none; position:absolute; right:0; top:2.5rem; background:white; border-radius:1.5rem; padding:1rem; box-shadow:0 20px 35px rgba(0,0,0,0.2); z-index:200; min-width:240px;">
+        <button class="emp-btn" id="empToggle">Сотрудники</button>
+        <div id="empList" style="display:none; position:absolute; right:0; top:2.8rem; background:white; border-radius:16px; padding:1rem; box-shadow:0 20px 40px rgba(0,0,0,0.1); z-index:200; min-width:260px; border:1px solid var(--border);">
           <div id="empCheckboxes"></div>
         </div>
       </div>
@@ -198,18 +205,18 @@
     <div id="errorContainer"></div>
 
     <div class="schedule-container" id="scheduleTableContainer">
-      <div style="padding:3rem; text-align:center; font-size:1.2rem;">Загрузка...</div>
+      <div style="padding:3rem; text-align:center; color:var(--text-secondary);">Загрузка графика...</div>
     </div>
   </div>
 
   <!-- Модалка дня -->
   <div class="modal-overlay" id="dayModal" style="display:none;">
     <div class="modal">
-      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer;" onclick="closeModal('dayModal')">✕</button>
-      <h3 id="modalTitle"></h3>
-      <div id="statusOptions" style="margin:1.5rem 0;"></div>
+      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" onclick="closeModal('dayModal')">✕</button>
+      <h3 id="modalTitle" style="margin-bottom:1.5rem;"></h3>
+      <div id="statusOptions" style="margin-bottom:1rem;"></div>
       <div id="dynamicFields"></div>
-      <textarea id="comment" rows="2" style="width:100%; margin:1rem 0; padding:0.8rem; border-radius:1rem; border:1px solid #ddd;" placeholder="Примечание"></textarea>
+      <textarea id="comment" rows="2" style="width:100%; margin:1rem 0; padding:0.8rem; border-radius:12px; border:1px solid var(--border); font-family:inherit;" placeholder="Примечание"></textarea>
       <button class="btn-save" onclick="saveDay()">Сохранить</button>
     </div>
   </div>
@@ -217,15 +224,15 @@
   <!-- Модалка зарплаты -->
   <div class="modal-overlay" id="salaryModal" style="display:none;">
     <div class="modal" style="max-width:600px;">
-      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer;" onclick="closeModal('salaryModal')">✕</button>
-      <h3 id="salaryModalTitle"></h3>
+      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text-secondary);" onclick="closeModal('salaryModal')">✕</button>
+      <h3 id="salaryModalTitle" style="margin-bottom:1rem;"></h3>
       <div id="salaryContent"></div>
       <button class="btn-save" onclick="saveSalary()">Сохранить параметры</button>
     </div>
   </div>
 
   <script>
-    // Конфигурация Supabase (уже твоя)
+    // Конфигурация Supabase (без изменений)
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -237,15 +244,13 @@
     const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
     const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
 
-    // Вспомогательные
     function showToast(msg, err=false) {
       const t = document.createElement('div'); t.className = 'toast-center';
-      t.innerHTML = `<div class="toast-content" style="background:${err?'#dc2626':'#059669'}">${msg}</div>`;
+      t.innerHTML = `<div class="toast-content" style="background:${err?'#ef4444':'#0f172a'}">${msg}</div>`;
       document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
     }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // Загрузка данных
     async function loadData() {
       document.getElementById('errorContainer').innerHTML = '';
       try {
@@ -272,8 +277,8 @@
 
     function renderCheckboxes() {
       document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
-        <label style="display:block; margin:0.3rem 0; cursor:pointer;">
-          <input type="checkbox" ${selectedIds.has(e.id)?'checked':''} onchange="toggleEmployee('${e.id}', this.checked)"> ${e.name} <small style="color:#666;">${e.role}</small>
+        <label style="display:block; margin:0.3rem 0; cursor:pointer; font-weight:500;">
+          <input type="checkbox" ${selectedIds.has(e.id)?'checked':''} onchange="toggleEmployee('${e.id}', this.checked)"> ${e.name} <small style="color:var(--text-secondary);">${e.role}</small>
         </label>`).join('');
     }
     window.toggleEmployee = (id, checked) => {
@@ -281,7 +286,6 @@
       renderTable();
     };
 
-    // Расчет зарплаты (как раньше, без изменений)
     function getManagerNormDays(y, m) {
       const days = new Date(y, m, 0).getDate();
       let cnt = 0;
@@ -396,11 +400,11 @@
       document.getElementById('modalTitle').textContent = `${emp.name} — ${dateStr}`;
       document.getElementById('comment').value = rec.comment || '';
       document.getElementById('statusOptions').innerHTML = STATUSES.map(s =>
-        `<label style="margin-right:1rem;"><input type="radio" name="dayStatus" value="${s}" ${rec.status===s?'checked':''}> ${STATUS_LABELS[s]}</label>`
+        `<label style="margin-right:1.2rem; font-weight:500; cursor:pointer;"><input type="radio" name="dayStatus" value="${s}" ${rec.status===s?'checked':''} style="accent-color:var(--accent);"> ${STATUS_LABELS[s]}</label>`
       ).join('');
       let dyn = '';
-      if (emp.role === 'Менеджер') dyn = `<label>Выручка: <input type="number" id="dailySales" value="${rec.daily_sales||''}" style="width:120px; margin-left:0.5rem;"></label>`;
-      else if (emp.role === 'Преподаватель') dyn = `<label>Инд.: <input type="number" id="indiv" value="${rec.indiv||''}" style="width:70px; margin:0 0.5rem;"></label><label>Групп.: <input type="number" id="groupTotal" value="${rec.group_total||''}" style="width:70px;"></label>`;
+      if (emp.role === 'Менеджер') dyn = `<label style="font-weight:500;">Выручка: <input type="number" id="dailySales" value="${rec.daily_sales||''}" style="width:120px; margin-left:0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
+      else if (emp.role === 'Преподаватель') dyn = `<label style="font-weight:500;">Инд.: <input type="number" id="indiv" value="${rec.indiv||''}" style="width:70px; margin:0 0.5rem; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><label style="font-weight:500;">Групп.: <input type="number" id="groupTotal" value="${rec.group_total||''}" style="width:70px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
       document.getElementById('dynamicFields').innerHTML = dyn;
       document.getElementById('dayModal').style.display = 'flex';
       window._editEmpId = empId;
@@ -432,10 +436,10 @@
     window.openSalaryModal = (empId) => {
       const emp = employees.find(e=>e.id===empId);
       const params = salaryParams[empId] || {};
-      let html = `<p><b>${emp.name}</b></p>`;
-      if (emp.role==='Менеджер') html += `<label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px;"></label>`;
-      else if (emp.role==='Управляющий') html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label><br><label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px;"></label>`;
-      else if (emp.role==='Администратор') html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label>`;
+      let html = `<p style="font-weight:600; margin-bottom:0.5rem;">${emp.name}</p>`;
+      if (emp.role==='Менеджер') html += `<label style="font-weight:500;">План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
+      else if (emp.role==='Управляющий') html += `<label style="font-weight:500;">Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label><br><label style="font-weight:500;">План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px; border:1px solid var(--border); border-radius:8px; padding:0.4rem; margin-left:0.5rem;"></label>`;
+      else if (emp.role==='Администратор') html += `<label style="font-weight:500;">Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px; border:1px solid var(--border); border-radius:8px; padding:0.4rem;"></label>`;
       document.getElementById('salaryModalTitle').textContent = 'Параметры зарплаты';
       document.getElementById('salaryContent').innerHTML = html;
       document.getElementById('salaryModal').style.display = 'flex';
@@ -468,7 +472,6 @@
       showToast('Excel скачан');
     };
 
-    // Переключение периода
     document.getElementById('periodBtns').addEventListener('click', (e) => {
       if (e.target.classList.contains('period-btn')) {
         document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
@@ -477,7 +480,6 @@
         renderTable();
       }
     });
-    // Выпадающий список сотрудников
     document.getElementById('empToggle').addEventListener('click', (e) => {
       e.stopPropagation();
       const list = document.getElementById('empList');
@@ -489,7 +491,6 @@
       }
     });
 
-    // Старт
     const now = new Date();
     currentYear = now.getFullYear();
     currentMonth = now.getMonth() + 1;
