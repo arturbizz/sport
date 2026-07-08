@@ -235,7 +235,7 @@
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Управление задачами</h1>
-      <button class="btn" id="addTaskBtn">+ Новая задача</button>
+      <button class="btn" id="addTaskBtn" style="display:none;">+ Новая задача</button>
     </div>
 
     <div class="filters" id="filters">
@@ -366,6 +366,20 @@
         if (trigger) trigger.textContent = checked.length ? checked[0] : 'Выберите ответственного';
       }
 
+      function currentUserRecord() {
+        return employees.find(e => e.email === currentUserEmail) || null;
+      }
+
+      function canCreateTasks() {
+        const emp = currentUserRecord();
+        return !!emp && (ALLOWED_ROLES.includes(emp.role) || emp.name === SENIOR_TEACHER_NAME);
+      }
+
+      function updateCreatePermission() {
+        const addBtn = getEl('addTaskBtn');
+        if (addBtn) addBtn.style.display = canCreateTasks() ? 'inline-flex' : 'none';
+      }
+
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
         employees = data || [];
@@ -430,7 +444,7 @@
 
         let filtered = tasks;
         if (currentFilter !== 'all') filtered = filtered.filter(t => t.status === currentFilter);
-        if (currentEmployeeFilter) filtered = filtered.filter(t => t.assigned_to === currentEmployeeFilter);
+        if (currentEmployeeFilter) filtered = filtered.filter(t => Array.isArray(t.assignee_ids) && t.assignee_ids.includes(currentEmployeeFilter));
 
         if (!filtered.length) {
           container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет задач</p>';
@@ -438,7 +452,8 @@
         }
 
         container.innerHTML = filtered.map(task => {
-          const emp = employees.find(e => e.id === task.assigned_to) || {};
+          const assignedIds = Array.isArray(task.assignee_ids) ? task.assignee_ids : [];
+          const emp = employees.find(e => assignedIds.includes(e.id)) || {};
           const assigneeName = emp.name || 'Не назначен';
           const statusLabels = {
             in_progress: 'В работе',
@@ -465,7 +480,7 @@
           const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
 
           const currentUserEmp = employees.find(e => e.email === currentUserEmail);
-          const isAssigned = currentUserEmp && task.assigned_to === currentUserEmp.id;
+          const isAssigned = !!currentUserEmp && assignedIds.includes(currentUserEmp.id);
           const isCreator = task.created_by === currentUserEmail;
           const canEdit = isCreator || isAssigned || currentUserEmail === OWNER_EMAIL;
           const canHelp = !isCreator && !isAssigned && task.status !== 'completed';
@@ -539,8 +554,9 @@
           getEl('prioritySection').style.display = 'block';
           getEl('taskPriority').value = task.priority || 'medium';
         }
+        const assignedIds = Array.isArray(task.assignee_ids) ? task.assignee_ids : [];
         document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
-          cb.checked = (task.assigned_to && task.assigned_to === cb.value);
+          cb.checked = assignedIds.includes(cb.value);
         });
         updateMultiTrigger();
         const deleteBtn = getEl('deleteTaskBtn');
@@ -550,6 +566,11 @@
       }
 
       async function saveTask() {
+        const taskId = getEl('taskModal').dataset.taskId;
+        if (!taskId && !canCreateTasks()) {
+          await customAlert('У вас нет прав на создание задач');
+          return;
+        }
         const title = getEl('taskTitle').value.trim();
         if (!title) { await customAlert('Введите название задачи'); return; }
         const isIdea = getEl('typeIdea').checked;
@@ -560,7 +581,7 @@
         const taskData = {
           title,
           description: getEl('taskDescription').value.trim(),
-          assigned_to: assignedId,
+          assignee_ids: assignedId ? [assignedId] : [],
           due_date: getEl('taskDueDate').value || null,
           status: getEl('taskStatus').value,
           comment: getEl('taskComment').value.trim(),
@@ -568,7 +589,6 @@
           created_by: currentUserEmail
         };
 
-        const taskId = getEl('taskModal').dataset.taskId;
         let error;
         if (taskId) {
           const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
@@ -585,7 +605,8 @@
         renderTasks();
       }
 
-      getEl('addTaskBtn').addEventListener('click', () => {
+      getEl('addTaskBtn').addEventListener('click', async () => {
+        if (!canCreateTasks()) { await customAlert('У вас нет прав на создание задач'); return; }
         getEl('modalTitle').textContent = 'Новая задача';
         getEl('taskTitle').value = '';
         getEl('taskDescription').value = '';
@@ -689,6 +710,7 @@
         if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
         await loadEmployees();
+        updateCreatePermission();
         await loadTasks();
         renderFilters();
         renderTasks();
