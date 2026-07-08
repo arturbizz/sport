@@ -112,6 +112,7 @@
       <h1>Клиенты с успешными визитами</h1>
       <div>
         <button class="btn" id="loadXlsxBtn">📂 Загрузить XLSX-отчёт</button>
+        <button class="btn" id="loadContactsBtn" style="display:none;">📞 Загрузить контакты через API</button>
       </div>
     </div>
     <div id="message"></div>
@@ -122,7 +123,10 @@
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
     const _supabaseNPS = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let customersFromFile = []; // { id, name }
 
     (async () => {
       const { data: { session } } = await _supabaseNPS.auth.getSession();
@@ -133,11 +137,12 @@
     })();
 
     const fileInput = document.getElementById('xlsxFileInput');
-    const loadBtn = document.getElementById('loadXlsxBtn');
+    const loadXlsxBtn = document.getElementById('loadXlsxBtn');
+    const loadContactsBtn = document.getElementById('loadContactsBtn');
     const msg = document.getElementById('message');
     const tableContainer = document.getElementById('tableContainer');
 
-    loadBtn.addEventListener('click', () => {
+    loadXlsxBtn.addEventListener('click', () => {
       fileInput.click();
     });
 
@@ -147,6 +152,8 @@
 
       msg.innerHTML = '';
       tableContainer.innerHTML = '';
+      loadContactsBtn.style.display = 'none';
+      customersFromFile = [];
 
       const reader = new FileReader();
       reader.onload = (ev) => {
@@ -157,7 +164,7 @@
           const sheet = workbook.Sheets[firstSheet];
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-          // Ищем строку с заголовками (содержит "ID" или "ФИО")
+          // Ищем строку заголовка
           let headerRowIndex = -1;
           for (let i = 0; i < Math.min(rows.length, 20); i++) {
             const row = rows[i];
@@ -175,62 +182,105 @@
           }
 
           const headers = rows[headerRowIndex].map(h => String(h).trim().toLowerCase());
+          const idIdx = headers.findIndex(h => h === 'id' || h === '#');
           const nameIdx = headers.findIndex(h => h.includes('фио') || h.includes('имя') || h.includes('клиент'));
-          const phoneIdx = headers.findIndex(h => h.includes('телефон') || h.includes('phone'));
-          const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('почта'));
 
-          if (nameIdx === -1) {
-            msg.innerHTML = '<div class="error">Не найден столбец с ФИО клиента.</div>';
+          if (idIdx === -1 || nameIdx === -1) {
+            msg.innerHTML = '<div class="error">Не найдены столбцы ID и/или ФИО.</div>';
             return;
           }
 
           const customers = [];
           for (let i = headerRowIndex + 1; i < rows.length; i++) {
             const cols = rows[i];
-            if (!cols || cols.length <= nameIdx) continue;
-            const name = String(cols[nameIdx] || '').trim();
-            if (!name || name === '' || name === '—') continue;
-            // Отсеиваем строки, где первый столбец не является числом (признак строки с данными)
-            if (cols[0] && isNaN(Number(cols[0]))) continue; // пропускаем подзаголовки
-            customers.push({
-              name: name,
-              phone: phoneIdx >= 0 ? String(cols[phoneIdx] || '—') : '—',
-              email: emailIdx >= 0 ? String(cols[emailIdx] || '—') : '—'
-            });
+            if (!cols || cols.length <= idIdx || cols.length <= nameIdx) continue;
+            const idVal = String(cols[idIdx]).trim();
+            const nameVal = String(cols[nameIdx]).trim();
+            if (!idVal || isNaN(Number(idVal))) continue;
+            if (!nameVal || nameVal === '—') continue;
+            customers.push({ id: idVal, name: nameVal });
           }
 
-          // Убираем дубликаты по имени
+          // Убираем дубликаты по ID
           const unique = [];
           const seen = new Set();
           for (const c of customers) {
-            if (!seen.has(c.name)) {
-              seen.add(c.name);
+            if (!seen.has(c.id)) {
+              seen.add(c.id);
               unique.push(c);
             }
           }
 
-          if (unique.length === 0) {
-            msg.innerHTML = '<div class="info">Нет клиентов для отображения.</div>';
-            return;
-          }
-
-          let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
-          unique.forEach(c => {
-            html += `<tr>
-              <td data-label="ФИО">${c.name}</td>
-              <td data-label="Телефон">${c.phone}</td>
-              <td data-label="Email">${c.email}</td>
-            </tr>`;
-          });
-          html += '</tbody></table>';
-          tableContainer.innerHTML = html;
-          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов (посещали занятия с 1 июня).</div>`;
+          customersFromFile = unique;
+          renderTable(customersFromFile);
+          loadContactsBtn.style.display = 'inline-block';
+          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов. Нажмите «Загрузить контакты», чтобы получить телефоны и email.</div>`;
         } catch (err) {
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
       };
       reader.readAsArrayBuffer(file);
     });
+
+    loadContactsBtn.addEventListener('click', async () => {
+      if (customersFromFile.length === 0) return;
+      loadContactsBtn.disabled = true;
+      loadContactsBtn.textContent = 'Загрузка контактов...';
+      msg.innerHTML = '';
+      try {
+        const { data: { session } } = await _supabaseNPS.auth.getSession();
+        if (!session) {
+          msg.innerHTML = '<div class="error">Необходимо войти</div>';
+          return;
+        }
+
+        const ids = customersFromFile.map(c => c.id);
+        const response = await fetch(EDGE_FUNCTION_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ customer_ids: ids })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Ошибка сервера');
+        }
+
+        // Объединяем с исходными именами (на случай, если API вернул пустое имя)
+        const merged = customersFromFile.map(cf => {
+          const apiData = result.customers.find(ac => String(ac.id) === String(cf.id));
+          return {
+            name: (apiData && apiData.name && apiData.name !== '') ? apiData.name : cf.name,
+            phone: apiData ? apiData.phone : '',
+            email: apiData ? apiData.email : ''
+          };
+        });
+
+        renderTable(merged);
+        msg.innerHTML = '<div class="info">Контакты загружены.</div>';
+      } catch (err) {
+        msg.innerHTML = `<div class="error">${err.message}</div>`;
+      } finally {
+        loadContactsBtn.disabled = false;
+        loadContactsBtn.textContent = '📞 Загрузить контакты через API';
+      }
+    });
+
+    function renderTable(customers) {
+      let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
+      customers.forEach(c => {
+        html += `<tr>
+          <td data-label="ФИО">${c.name || '—'}</td>
+          <td data-label="Телефон">${c.phone || '—'}</td>
+          <td data-label="Email">${c.email || '—'}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      tableContainer.innerHTML = html;
+    }
   </script>
 </body>
 </html>
