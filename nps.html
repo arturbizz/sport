@@ -268,12 +268,12 @@
         window.location.href = 'login.html';
         return;
       }
-      // Восстанавливаем данные из localStorage
+      // Восстанавливаем данные из localStorage при загрузке страницы
       const saved = localStorage.getItem('nps_allData');
       if (saved) {
         try {
           allData = JSON.parse(saved);
-          // Восстанавливаем дату фильтра, если она была сохранена
+          // Восстанавливаем дату фильтра
           const savedDate = localStorage.getItem('nps_cutoffDate');
           if (savedDate) cutoffDateInput.value = savedDate;
           renderTable();
