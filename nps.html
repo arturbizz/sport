@@ -47,10 +47,7 @@
       font-weight: 600;
       font-size: 0.9rem;
     }
-    h1 {
-      font-size: 1.8rem;
-      font-weight: 700;
-    }
+    h1 { font-size: 1.8rem; font-weight: 700; }
     .btn {
       background: var(--accent);
       color: white;
@@ -61,18 +58,12 @@
       cursor: pointer;
       font-size: 0.9rem;
       transition: 0.2s;
+      margin-left: 0.5rem;
     }
     .btn:hover { background: #ee5a24; }
     .btn:disabled { opacity: 0.6; cursor: default; }
-    .error {
-      color: #d63031;
-      margin: 1rem 0;
-      font-size: 0.9rem;
-    }
-    .info {
-      color: #636e72;
-      margin: 1rem 0;
-    }
+    .error { color: #d63031; margin: 1rem 0; font-size: 0.9rem; }
+    .info { color: #636e72; margin: 1rem 0; }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -84,10 +75,7 @@
       padding: 0.8rem;
       border-bottom: 1px solid var(--border);
     }
-    th {
-      background: #f8f9fa;
-      font-weight: 600;
-    }
+    th { background: #f8f9fa; font-weight: 600; }
     @media (max-width: 600px) {
       body { padding: 0.8rem; }
       .container { padding: 1.2rem; }
@@ -121,17 +109,18 @@
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Клиенты с успешными визитами</h1>
-      <button class="btn" id="loadBtn">Загрузить клиентов</button>
+      <div>
+        <button class="btn" id="loadCsvBtn">📂 Загрузить из CSV</button>
+      </div>
     </div>
     <div id="message"></div>
     <div id="tableContainer"></div>
+    <input type="file" id="csvFileInput" accept=".csv" style="display:none">
   </div>
 
   <script>
-    // Уникальное имя
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
     const _supabaseNPS = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     (async () => {
@@ -142,57 +131,85 @@
       }
     })();
 
-    document.getElementById('loadBtn').addEventListener('click', async () => {
-      const btn = document.getElementById('loadBtn');
-      const msg = document.getElementById('message');
-      const tableContainer = document.getElementById('tableContainer');
+    const fileInput = document.getElementById('csvFileInput');
+    const loadCsvBtn = document.getElementById('loadCsvBtn');
+    const msg = document.getElementById('message');
+    const tableContainer = document.getElementById('tableContainer');
+
+    loadCsvBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
       msg.innerHTML = '';
       tableContainer.innerHTML = '';
-      btn.disabled = true;
-      btn.textContent = 'Загрузка...';
 
-      try {
-        const { data: { session } } = await _supabaseNPS.auth.getSession();
-        if (!session) {
-          msg.innerHTML = '<div class="error">Необходимо войти</div>';
-          return;
-        }
-
-        const response = await fetch(EDGE_FUNCTION_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const text = ev.target.result;
+          const rows = text.split('\n').filter(r => r.trim());
+          if (rows.length < 2) {
+            msg.innerHTML = '<div class="error">Файл пуст или содержит только заголовки</div>';
+            return;
           }
-        });
 
-        const result = await response.json();
-        if (!response.ok) {
-          throw new Error(result.error || 'Ошибка сервера');
+          // Определяем индексы столбцов по первой строке
+          const headers = rows[0].split(',').map(h => h.trim().toLowerCase());
+          const nameIdx = headers.findIndex(h => h.includes('имя') || h.includes('фио') || h.includes('name') || h.includes('клиент'));
+          const phoneIdx = headers.findIndex(h => h.includes('телефон') || h.includes('phone'));
+          const emailIdx = headers.findIndex(h => h.includes('email') || h.includes('почта'));
+
+          if (nameIdx === -1) {
+            msg.innerHTML = '<div class="error">Не найден столбец с именем/ФИО. Проверьте заголовки CSV.</div>';
+            return;
+          }
+
+          const customers = [];
+          for (let i = 1; i < rows.length; i++) {
+            const cols = rows[i].split(',').map(c => c.trim());
+            if (cols.length <= nameIdx) continue;
+            customers.push({
+              name: cols[nameIdx] || '—',
+              phone: phoneIdx >= 0 ? cols[phoneIdx] : '—',
+              email: emailIdx >= 0 ? cols[emailIdx] : '—'
+            });
+          }
+
+          if (customers.length === 0) {
+            msg.innerHTML = '<div class="info">Нет данных для отображения</div>';
+            return;
+          }
+
+          // Удаляем дубликаты по имени (опционально)
+          const unique = [];
+          const seen = new Set();
+          for (const c of customers) {
+            if (!seen.has(c.name)) {
+              seen.add(c.name);
+              unique.push(c);
+            }
+          }
+
+          let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
+          unique.forEach(c => {
+            html += `<tr>
+              <td data-label="ФИО">${c.name}</td>
+              <td data-label="Телефон">${c.phone}</td>
+              <td data-label="Email">${c.email}</td>
+            </tr>`;
+          });
+          html += '</tbody></table>';
+          tableContainer.innerHTML = html;
+          msg.innerHTML = `<div class="info">Загружено ${unique.length} клиентов.</div>`;
+        } catch (err) {
+          msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
-
-        if (!result.customers || result.customers.length === 0) {
-          msg.innerHTML = '<div class="info">Нет клиентов с успешными визитами с 1 июня.</div>';
-          return;
-        }
-
-        let html = '<table><thead><tr><th>ФИО</th><th>Телефон</th><th>Email</th></tr></thead><tbody>';
-        result.customers.forEach(c => {
-          html += `<tr>
-            <td data-label="ФИО">${c.name || '—'}</td>
-            <td data-label="Телефон">${c.phone || '—'}</td>
-            <td data-label="Email">${c.email || '—'}</td>
-          </tr>`;
-        });
-        html += '</tbody></table>';
-        tableContainer.innerHTML = html;
-        msg.innerHTML = `<div class="info">Загружено ${result.customers.length} клиентов.</div>`;
-      } catch (err) {
-        msg.innerHTML = `<div class="error">${err.message}</div>`;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Загрузить клиентов';
-      }
+      };
+      reader.readAsText(file);
     });
   </script>
 </body>
