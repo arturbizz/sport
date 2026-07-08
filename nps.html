@@ -31,7 +31,6 @@
       position: relative;
       overflow-x: hidden;
     }
-    /* Музыкальные ноты на фоне (без эмодзи) */
     .music-bg {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 0;
@@ -224,7 +223,6 @@
     <input type="file" id="fileInput" accept=".xlsx" style="display:none">
   </div>
 
-  <!-- Модальное окно инструкции -->
   <div class="modal-overlay" id="helpModal" style="display:none;">
     <div class="modal">
       <h2>Как обновить данные</h2>
@@ -244,7 +242,6 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Хранилище всех клиентов из последнего загруженного файла
     let allData = []; // [{name, phone, email, date}]
 
     const fileInput = document.getElementById('fileInput');
@@ -261,28 +258,44 @@
     const tableContainer = document.getElementById('tableContainer');
     const recordCount = document.getElementById('recordCount');
 
-    // Проверка авторизации и восстановление сохранённых данных
+    // Проверка авторизации и загрузка данных из Supabase
     (async () => {
       const { data: { session } } = await _supabase.auth.getSession();
       if (!session) {
         window.location.href = 'login.html';
         return;
       }
-      // Восстанавливаем данные из localStorage при загрузке страницы
-      const saved = localStorage.getItem('nps_allData');
-      if (saved) {
-        try {
-          allData = JSON.parse(saved);
-          // Восстанавливаем дату фильтра
-          const savedDate = localStorage.getItem('nps_cutoffDate');
-          if (savedDate) cutoffDateInput.value = savedDate;
-          renderTable();
-          msg.innerHTML = '<div class="info">Загружены ранее сохранённые данные.</div>';
-        } catch (e) {}
-      }
+      await loadFromSupabase();
     })();
 
-    // Открытие окна выбора файла
+    async function loadFromSupabase() {
+      const { data, error } = await _supabase
+        .from('nps_customers')
+        .select('*')
+        .order('last_visit_date', { ascending: false });
+
+      if (error) {
+        console.error('Ошибка загрузки из Supabase:', error);
+        return;
+      }
+
+      allData = data.map(r => ({
+        name: r.name,
+        phone: r.phone,
+        email: r.email,
+        date: new Date(r.last_visit_date)
+      }));
+
+      // Восстанавливаем дату фильтра, если была сохранена
+      const savedDate = localStorage.getItem('nps_cutoffDate');
+      if (savedDate) cutoffDateInput.value = savedDate;
+
+      renderTable();
+      if (allData.length > 0) {
+        msg.innerHTML = '<div class="info">Данные загружены из Supabase.</div>';
+      }
+    }
+
     function triggerFileInput() {
       fileInput.click();
     }
@@ -301,8 +314,7 @@
       helpModal.style.display = 'none';
     });
 
-    // Обработка загруженного файла
-    fileInput.addEventListener('change', (e) => {
+    fileInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -310,7 +322,7 @@
       tableContainer.innerHTML = '';
 
       const reader = new FileReader();
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         try {
           const data = new Uint8Array(ev.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
@@ -318,7 +330,6 @@
           const sheet = workbook.Sheets[firstSheet];
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-          // Поиск заголовков (строка с ID и ФИО)
           let headerRowIndex = -1;
           for (let i = 0; i < Math.min(rows.length, 10); i++) {
             const row = rows[i];
@@ -371,12 +382,28 @@
             return;
           }
 
-          allData = parsed;
-          // Автосохранение в localStorage
-          localStorage.setItem('nps_allData', JSON.stringify(allData));
-          localStorage.setItem('nps_cutoffDate', cutoffDateInput.value);
-          renderTable();
-          msg.innerHTML = `<div class="info">Загружено ${allData.length} клиентов. Данные сохранены в браузере.</div>`;
+          // Удаляем старые записи (только для управляющего) и вставляем новые
+          const { error: deleteError } = await _supabase.from('nps_customers').delete().neq('id', 0);
+          if (deleteError) {
+            msg.innerHTML = `<div class="error">Ошибка очистки старых данных: ${deleteError.message}</div>`;
+            return;
+          }
+
+          const rowsToInsert = parsed.map(p => ({
+            name: p.name,
+            phone: p.phone,
+            email: p.email,
+            last_visit_date: p.date.toISOString().slice(0, 10)
+          }));
+
+          const { error: insertError } = await _supabase.from('nps_customers').insert(rowsToInsert);
+          if (insertError) {
+            msg.innerHTML = `<div class="error">Ошибка сохранения в Supabase: ${insertError.message}</div>`;
+            return;
+          }
+
+          await loadFromSupabase();
+          msg.innerHTML = `<div class="info">Загружено и сохранено ${parsed.length} клиентов.</div>`;
         } catch (err) {
           msg.innerHTML = `<div class="error">Ошибка обработки файла: ${err.message}</div>`;
         }
@@ -384,7 +411,6 @@
       reader.readAsArrayBuffer(file);
     });
 
-    // Отобразить таблицу, отфильтрованную по выбранной дате
     function renderTable() {
       const cutoff = new Date(cutoffDateInput.value);
       if (isNaN(cutoff)) {
@@ -412,15 +438,13 @@
       html += '</tbody></table>';
       tableContainer.innerHTML = html;
       recordCount.textContent = `Показано ${filtered.length} из ${allData.length}`;
-      // Сохраняем актуальную дату фильтра при каждой отрисовке
+      // Сохраняем дату фильтра в localStorage для удобства
       localStorage.setItem('nps_cutoffDate', cutoffDateInput.value);
     }
 
-    // Обработчики фильтра
     applyFilterBtn.addEventListener('click', renderTable);
     cutoffDateInput.addEventListener('change', renderTable);
 
-    // Экспорт отфильтрованных данных
     exportBtn.addEventListener('click', () => {
       const cutoff = new Date(cutoffDateInput.value);
       const filtered = allData.filter(c => c.date >= cutoff);
@@ -440,15 +464,17 @@
       msg.innerHTML = '<div class="info">Файл выгружен.</div>';
     });
 
-    // Сброс сохранённых данных
-    resetBtn.addEventListener('click', () => {
-      if (!confirm('Удалить все сохранённые данные о клиентах?')) return;
-      localStorage.removeItem('nps_allData');
-      localStorage.removeItem('nps_cutoffDate');
+    resetBtn.addEventListener('click', async () => {
+      if (!confirm('Удалить все данные из Supabase?')) return;
+      const { error } = await _supabase.from('nps_customers').delete().neq('id', 0);
+      if (error) {
+        msg.innerHTML = `<div class="error">Ошибка удаления: ${error.message}</div>`;
+        return;
+      }
       allData = [];
       tableContainer.innerHTML = '';
       recordCount.textContent = '';
-      msg.innerHTML = '<div class="info">Данные сброшены.</div>';
+      msg.innerHTML = '<div class="info">Данные удалены из Supabase.</div>';
     });
   </script>
 </body>
