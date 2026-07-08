@@ -23,6 +23,14 @@
       --idea: #9b59b6;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .task-card, .modal, .filters, .header {
+      -webkit-user-select: none; -moz-user-select: none; user-select: none;
+      cursor: default;
+    }
+    input, textarea {
+      -webkit-user-select: text; -moz-user-select: text; user-select: text;
+      cursor: text;
+    }
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: linear-gradient(135deg, #ffe0f0 0%, #fefce8 50%, #e0f0ff 100%);
@@ -235,7 +243,7 @@
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Управление задачами</h1>
-      <button class="btn" id="addTaskBtn" style="display:none;">+ Новая задача</button>
+      <button class="btn" id="addTaskBtn">+ Новая задача</button>
     </div>
 
     <div class="filters" id="filters">
@@ -366,18 +374,11 @@
         if (trigger) trigger.textContent = checked.length ? checked[0] : 'Выберите ответственного';
       }
 
+      function normEmail(e) { return (e || '').trim().toLowerCase(); }
+
       function currentUserRecord() {
-        return employees.find(e => e.email === currentUserEmail) || null;
-      }
-
-      function canCreateTasks() {
-        const emp = currentUserRecord();
-        return !!emp && (ALLOWED_ROLES.includes(emp.role) || emp.name === SENIOR_TEACHER_NAME);
-      }
-
-      function updateCreatePermission() {
-        const addBtn = getEl('addTaskBtn');
-        if (addBtn) addBtn.style.display = canCreateTasks() ? 'inline-flex' : 'none';
+        const target = normEmail(currentUserEmail);
+        return employees.find(e => normEmail(e.email) === target) || null;
       }
 
       async function loadEmployees() {
@@ -479,10 +480,10 @@
           const isCriticalOverdue = isOverdue && task.priority === 'critical';
           const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
 
-          const currentUserEmp = employees.find(e => e.email === currentUserEmail);
+          const currentUserEmp = currentUserRecord();
           const isAssigned = !!currentUserEmp && assignedIds.includes(currentUserEmp.id);
-          const isCreator = task.created_by === currentUserEmail;
-          const canEdit = isCreator || isAssigned || currentUserEmail === OWNER_EMAIL;
+          const isCreator = normEmail(task.created_by) === normEmail(currentUserEmail);
+          const canEdit = isCreator || isAssigned || normEmail(currentUserEmail) === normEmail(OWNER_EMAIL);
           const canHelp = !isCreator && !isAssigned && task.status !== 'completed';
 
           return `
@@ -503,7 +504,7 @@
             <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
               ${canEdit ? `<button class="btn btn-outline edit-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>` : ''}
               ${canHelp ? `<button class="btn btn-outline help-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Предложить помощь</button>` : ''}
-              ${currentUserEmail === OWNER_EMAIL ? `<button class="btn btn-outline delete-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>` : ''}
+              ${normEmail(currentUserEmail) === normEmail(OWNER_EMAIL) ? `<button class="btn btn-outline delete-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>` : ''}
             </div>
           </div>`;
         }).join('');
@@ -560,17 +561,13 @@
         });
         updateMultiTrigger();
         const deleteBtn = getEl('deleteTaskBtn');
-        if (deleteBtn) deleteBtn.style.display = (currentUserEmail === OWNER_EMAIL) ? 'inline-block' : 'none';
+        if (deleteBtn) deleteBtn.style.display = (normEmail(currentUserEmail) === normEmail(OWNER_EMAIL)) ? 'inline-block' : 'none';
         getEl('taskModal').dataset.taskId = task.id;
         getEl('taskModal').style.display = 'flex';
       }
 
       async function saveTask() {
         const taskId = getEl('taskModal').dataset.taskId;
-        if (!taskId && !canCreateTasks()) {
-          await customAlert('У вас нет прав на создание задач');
-          return;
-        }
         const title = getEl('taskTitle').value.trim();
         if (!title) { await customAlert('Введите название задачи'); return; }
         const isIdea = getEl('typeIdea').checked;
@@ -605,8 +602,7 @@
         renderTasks();
       }
 
-      getEl('addTaskBtn').addEventListener('click', async () => {
-        if (!canCreateTasks()) { await customAlert('У вас нет прав на создание задач'); return; }
+      getEl('addTaskBtn').addEventListener('click', () => {
         getEl('modalTitle').textContent = 'Новая задача';
         getEl('taskTitle').value = '';
         getEl('taskDescription').value = '';
@@ -710,7 +706,6 @@
         if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
         await loadEmployees();
-        updateCreatePermission();
         await loadTasks();
         renderFilters();
         renderTasks();
