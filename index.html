@@ -8,640 +8,492 @@
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
-      --sun-color: #FFD700;
-      --ocean-shallow: #40E0D0;
-      --ocean-deep: #20B2AA;
-      --beach-sand: #FFE4B5;
-      --beach-dark: #FFDAB9;
-      --sky-top: #87CEEB;
-      --sky-bottom: #FFDAB9;
+      --bg-light: #f0f4f8;
+      --primary: #2b6cb0;
+      --accent: #f6ad55;
+      --text: #2d3748;
+      --glass: rgba(255,255,255,0.7);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    input, textarea { user-select: auto; }
-
     body {
-      font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
-      background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 60%, var(--beach-sand) 100%);
-      color: #2c3e50;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #e0f2fe 0%, #fef9c3 50%, #fde68a 100%);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--text);
       min-height: 100vh;
-      cursor: default;
-      overflow-x: hidden;
-      padding: 15px;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
-    .tropical-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; }
+    /* Легкие облака */
+    .cloud {
+      position: fixed; top: 10%; left: -150px;
+      width: 200px; height: 60px;
+      background: white; border-radius: 100px;
+      opacity: 0.5; filter: blur(8px);
+      animation: floatCloud 30s linear infinite;
+    }
+    .cloud:nth-child(2) { top: 30%; left: 60%; width: 250px; height: 70px; animation-duration: 25s; opacity: 0.4; }
+    .cloud:nth-child(3) { top: 70%; left: 20%; width: 180px; height: 50px; animation-duration: 35s; opacity: 0.3; }
+    @keyframes floatCloud {
+      from { transform: translateX(0); }
+      to { transform: translateX(calc(100vw + 300px)); }
+    }
 
+    /* Солнце без лица */
     .sun {
-      position: absolute; top: 30px; right: 80px; width: 100px; height: 100px;
-      background: var(--sun-color); border-radius: 50%;
-      box-shadow: 0 0 100px 25px #FFA500, 0 0 180px 60px #FF8C00, 0 0 250px 120px rgba(255,140,0,0.5);
-      animation: sunPulse 4s ease-in-out infinite alternate;
+      position: fixed; top: 30px; right: 80px;
+      width: 80px; height: 80px;
+      background: #FFD700; border-radius: 50%;
+      box-shadow: 0 0 50px 15px #FFA500, 0 0 100px 30px #FF8C00;
+      animation: sunGlow 3s ease-in-out infinite alternate;
     }
-    .sun-face {
-      position: absolute; top: 28px; left: 25px;
-    }
-    .eye {
-      width: 12px; height: 16px; background: #1a1a1a; border-radius: 50%;
-      display: inline-block; margin: 0 5px;
-    }
-    .mouth {
-      width: 24px; height: 10px; border-bottom: 4px solid #1a1a1a; border-radius: 0 0 50px 50px;
-      margin: 12px auto 0;
-    }
-    @keyframes sunPulse {
-      0% { transform: scale(1); box-shadow: 0 0 100px 25px #FFA500, 0 0 180px 60px #FF8C00; }
-      100% { transform: scale(1.05); box-shadow: 0 0 130px 35px #FFB347, 0 0 220px 80px #FFA500; }
+    @keyframes sunGlow {
+      from { box-shadow: 0 0 50px 15px #FFA500, 0 0 100px 30px #FF8C00; }
+      to { box-shadow: 0 0 60px 20px #FFB347, 0 0 120px 40px #FFA500; }
     }
 
-    .ocean {
-      position: absolute; bottom: 12%; left: 0; width: 100%; height: 30%;
-      background: linear-gradient(180deg, var(--ocean-shallow) 0%, var(--ocean-deep) 100%);
-      animation: wave 6s ease-in-out infinite;
-    }
-    .ocean-wave {
-      position: absolute; top: -20px; left: -10%; width: 120%; height: 40px;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120'%3E%3Cpath d='M0,60 C200,0 400,120 600,60 C800,0 1000,120 1200,60 L1200,120 L0,120 Z' fill='%2340E0D0'/%3E%3C/svg%3E") repeat-x;
-      background-size: 300px 40px;
-      animation: waveMove 4s linear infinite;
-    }
-    @keyframes wave {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-    @keyframes waveMove {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-300px); }
-    }
-
-    .beach {
-      position: absolute; bottom: 0; left: 0; width: 100%; height: 18%;
-      background: linear-gradient(180deg, var(--beach-sand) 0%, var(--beach-dark) 100%);
-      border-radius: 50% 60% 0 0;
-    }
-    .palm-tree {
-      position: absolute; bottom: 30%;
-    }
-    .palm-tree .trunk {
-      width: 12px; height: 70px; background: #8B4513; border-radius: 5px;
-      position: absolute; bottom: 0; left: 30px;
-      transform: rotate(5deg);
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
-    }
-    .palm-tree .leaves {
-      position: absolute; bottom: 60px; left: 10px;
-    }
-    .palm-tree .leaf {
-      width: 40px; height: 20px; background: #228B22; border-radius: 50% 0;
-      position: absolute; transform-origin: bottom right;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .leaf:nth-child(1) { transform: rotate(-30deg); bottom: 0; right: 5px; border-radius: 0 50%; }
-    .leaf:nth-child(2) { transform: rotate(20deg); bottom: 10px; right: -10px; border-radius: 50% 0; }
-    .leaf:nth-child(3) { transform: rotate(70deg); bottom: 5px; right: -15px; }
-    .leaf:nth-child(4) { transform: rotate(-80deg); bottom: 15px; right: 5px; border-radius: 50% 0; }
-    .leaf:nth-child(5) { transform: rotate(130deg); bottom: 10px; right: -5px; border-radius: 0 50%; }
-
-    .airplane {
-      position: absolute; bottom: 45%; right: -100px; width: 60px; height: 20px;
-      background: white; border-radius: 50% 10% 10% 50%;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      animation: fly 20s linear infinite;
-    }
-    .airplane::after {
-      content: ''; position: absolute; top: -10px; left: 10px;
-      width: 0; height: 0;
-      border-left: 8px solid transparent; border-right: 8px solid transparent;
-      border-bottom: 15px solid white;
-      transform: rotate(-45deg);
-    }
-    @keyframes fly {
-      0% { right: -100px; bottom: 45%; transform: rotate(-5deg); }
-      25% { bottom: 48%; }
-      50% { right: 110%; bottom: 40%; transform: rotate(5deg); }
-      75% { bottom: 42%; }
-      100% { right: 110%; bottom: 45%; transform: rotate(5deg); }
-    }
-
-    .container { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; padding: 15px 20px; }
+    .container { position: relative; z-index: 10; width: 100%; max-width: 1400px; }
 
     .header {
-      display: flex; align-items: center; gap: 15px; margin-bottom: 20px;
-      flex-wrap: wrap; backdrop-filter: blur(10px);
-      background: rgba(255,255,255,0.5); padding: 10px 20px; border-radius: 30px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      display: flex; align-items: center; gap: 1rem;
+      flex-wrap: wrap; background: var(--glass);
+      backdrop-filter: blur(12px); padding: 0.8rem 1.5rem;
+      border-radius: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
     }
     .logo {
-      font-size: 28px; font-weight: 800;
-      background: linear-gradient(135deg, #FF416C, #FF4B2B);
+      font-size: 1.8rem; font-weight: 800;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text; letter-spacing: -0.5px; margin-right: 20px;
+      background-clip: text; margin-right: auto;
     }
-
-    .nav-arrows { display: flex; align-items: center; gap: 10px; }
-    .nav-arrows button, .period-btn, .export-btn, .emp-dropdown-btn, .dropdown-action-btn {
-      background: rgba(255,255,255,0.7); backdrop-filter: blur(15px);
-      border: 1px solid rgba(255,255,255,0.9); padding: 8px 16px; border-radius: 20px;
-      cursor: pointer; font-size: 14px; font-weight: 600; color: #34495e;
-      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 6px;
+    .nav-arrows { display: flex; gap: 0.5rem; }
+    .nav-arrows button, .period-btn, .export-btn, .emp-btn {
+      background: rgba(255,255,255,0.8); border: none;
+      padding: 0.5rem 1.2rem; border-radius: 2rem;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer;
+      transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+      display: flex; align-items: center; gap: 0.4rem;
     }
-    .nav-arrows button:hover, .period-btn:hover, .export-btn:hover, .emp-dropdown-btn:hover {
-      background: rgba(255,255,255,0.9); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    .nav-arrows button:hover, .period-btn:hover, .export-btn:hover, .emp-btn:hover {
+      background: white; transform: translateY(-1px); box-shadow: 0 6px 15px rgba(0,0,0,0.08);
     }
-    .period-btn.active {
-      background: linear-gradient(135deg, #FF9A9E, #FAD0C4); color: white; border-color: transparent;
-    }
+    .period-btn.active { background: #fbbf24; color: #1e293b; }
     .month-title {
-      min-width: 140px; text-align: center; font-weight: 700; font-size: 18px;
-      background: rgba(255,255,255,0.8); padding: 5px 15px; border-radius: 20px;
+      min-width: 140px; text-align: center; font-weight: 700; font-size: 1.2rem;
+      background: rgba(255,255,255,0.9); padding: 0.4rem 1.2rem; border-radius: 2rem;
     }
 
     .schedule-container {
-      background: rgba(255,255,255,0.6); backdrop-filter: blur(20px);
-      border-radius: 30px; padding: 20px; overflow-x: auto; max-height: 75vh;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-      scrollbar-width: thin; scrollbar-color: #FF8C00 rgba(255,255,255,0.3);
+      background: var(--glass); backdrop-filter: blur(15px);
+      border-radius: 2rem; padding: 1.2rem; overflow-x: auto;
+      max-height: 75vh; box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+      scrollbar-width: thin; scrollbar-color: #a0c4ff rgba(255,255,255,0.2);
     }
-    .schedule-container::-webkit-scrollbar { width: 8px; height: 8px; }
-    .schedule-container::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #FFA500, #FF4500); border-radius: 10px; }
-
-    table { width: 100%; border-collapse: separate; border-spacing: 0 5px; min-width: 1200px; }
-    th { background: rgba(255,255,255,0.8); padding: 8px 4px; font-size: 13px; position: sticky; top: 0; z-index: 5; border-radius: 10px 10px 0 0; }
-    td { padding: 6px 2px; text-align: center; font-size: 13px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 1200px; }
+    th { background: rgba(255,255,255,0.85); padding: 0.6rem 0.3rem; font-size: 0.85rem; position: sticky; top: 0; z-index: 5; border-radius: 12px 12px 0 0; }
+    td { padding: 0.4rem 0.2rem; text-align: center; font-size: 0.9rem; }
 
     .employee-name {
-      text-align: left; font-weight: 700; padding-left: 15px;
-      cursor: pointer; background: rgba(255,255,255,0.4); border-radius: 15px;
-      transition: all 0.2s;
+      text-align: left; font-weight: 700; padding-left: 1rem;
+      background: rgba(255,255,255,0.5); border-radius: 12px; cursor: pointer;
+      transition: 0.2s;
     }
-    .employee-name:hover { background: rgba(255,255,255,0.8); transform: scale(1.02); color: #FF4B2B; }
+    .employee-name:hover { background: rgba(255,255,255,0.9); color: #2563eb; }
     .group-header {
-      background: linear-gradient(90deg, rgba(255,180,100,0.4), rgba(255,140,0,0.1));
-      font-weight: 700; text-align: left; padding: 12px 20px; border-radius: 20px;
-      margin-top: 15px; font-size: 16px; letter-spacing: 0.5px;
+      background: rgba(251,191,36,0.25); font-weight: 700; padding: 0.7rem 1.2rem;
+      border-radius: 16px; margin-top: 0.8rem; font-size: 1rem;
     }
 
     .day-cell {
-      cursor: pointer; background: rgba(255,255,255,0.5); border-radius: 12px;
-      height: 44px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      margin: 2px; font-weight: 600; transition: all 0.2s;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+      cursor: pointer; background: rgba(255,255,255,0.6); border-radius: 12px;
+      height: 42px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      margin: 1px; font-weight: 600; transition: 0.15s;
     }
-    .day-cell:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
-    .day-cell.working { background: linear-gradient(135deg, #a8e6cf, #3dba7a); color: white; }
-    .day-cell.dayoff { background: rgba(255,120,120,0.2); color: #c0392b; }
-    .day-cell.sick { background: linear-gradient(135deg, #d4c5f9, #8e44ad); color: white; }
-    .day-cell.vacation { background: linear-gradient(135deg, #9dd9f3, #2980b9); color: white; }
-    .day-cell.leave { background: linear-gradient(135deg, #fdf0b0, #f39c12); color: white; }
-    .day-cell.has-comment { border: 2px solid #FFD700; box-shadow: 0 0 12px rgba(255,215,0,0.4); }
+    .day-cell:hover { background: white; transform: scale(1.02); box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
+    .day-cell.working { background: #86efac; color: #14532d; }
+    .day-cell.dayoff { background: #fecaca; color: #991b1b; }
+    .day-cell.sick { background: #c4b5fd; color: #4c1d95; }
+    .day-cell.vacation { background: #7dd3fc; color: #0c4a6e; }
+    .day-cell.leave { background: #fde68a; color: #78350f; }
+    .day-cell.has-comment { border: 2px solid #fbbf24; }
 
-    .big-ruble { font-size: 20px; font-weight: bold; color: white; }
+    .big-ruble { font-size: 1.3rem; font-weight: bold; }
+    .summary-cell { font-weight: 700; background: rgba(255,255,255,0.7); border-radius: 10px; }
 
-    .summary-cell { font-weight: 700; background: rgba(255,255,255,0.7); border-radius: 8px; }
     .salary-summary {
-      margin-top: 20px; background: rgba(255,255,255,0.5); backdrop-filter: blur(15px);
-      border-radius: 20px; padding: 15px 25px;
-      display: flex; flex-wrap: wrap; gap: 25px; font-weight: 600; font-size: 16px;
+      margin-top: 1rem; background: rgba(255,255,255,0.6); backdrop-filter: blur(12px);
+      border-radius: 1.5rem; padding: 0.8rem 1.5rem;
+      display: flex; flex-wrap: wrap; gap: 1.5rem; font-weight: 600;
     }
-    .salary-summary .grand-total { margin-left: auto; color: #FF4B2B; font-size: 18px; }
 
-    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal {
-      background: linear-gradient(145deg, #ffffff, #fdfcfb);
-      border-radius: 35px; padding: 30px; max-width: 550px; width: 90%;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.3);
-      animation: modalPop 0.3s ease-out;
+      background: white; border-radius: 2rem; padding: 2rem;
+      max-width: 500px; width: 90%; box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+      animation: modalPop 0.25s ease-out;
     }
-    @keyframes modalPop { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+    @keyframes modalPop { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
     .btn-save {
-      background: linear-gradient(135deg, #FF9A9E, #FAD0C4); color: white;
-      padding: 12px 30px; border-radius: 30px; border: none;
-      font-weight: 700; cursor: pointer; width: 100%;
-      box-shadow: 0 10px 20px rgba(255,140,0,0.3); margin-top: 20px; transition: 0.3s;
+      background: #2563eb; color: white; padding: 0.8rem 2rem; border-radius: 2rem;
+      border: none; font-weight: 700; cursor: pointer; width: 100%; margin-top: 1rem;
+      transition: 0.2s;
     }
-    .btn-save:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(255,140,0,0.5); }
+    .btn-save:hover { background: #1d4ed8; }
 
     .toast-center { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; pointer-events: none; }
     .toast-content {
-      display: flex; align-items: center; gap: 15px;
-      background: #2ecc71; color: white;
-      padding: 20px 35px; border-radius: 60px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
-      animation: toastIn 0.4s forwards, toastOut 0.4s 1.8s forwards;
+      display: flex; align-items: center; gap: 1rem;
+      background: #059669; color: white; padding: 1rem 2rem; border-radius: 3rem;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+      animation: toastIn 0.3s forwards, toastOut 0.3s 1.5s forwards;
     }
-    @keyframes toastIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
-    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.8); } }
+    @keyframes toastIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: scale(0.9); } }
+
+    .error-banner { background: #fee2e2; color: #991b1b; padding: 0.8rem 1.5rem; border-radius: 1.5rem; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-<div class="tropical-bg">
-  <div class="sun">
-    <div class="sun-face">
-      <div class="eye"></div>
-      <div class="eye"></div>
-      <div class="mouth"></div>
-    </div>
-  </div>
-  <div class="ocean">
-    <div class="ocean-wave"></div>
-  </div>
-  <div class="beach">
-    <div class="palm-tree" style="left: 8%;">
-      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
-      <div class="trunk"></div>
-    </div>
-    <div class="palm-tree" style="left: 25%; transform: scale(0.8);">
-      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
-      <div class="trunk" style="transform: rotate(-4deg);"></div>
-    </div>
-    <div class="palm-tree" style="right: 20%; transform: scale(0.9);">
-      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
-      <div class="trunk"></div>
-    </div>
-    <div class="palm-tree" style="right: 5%; transform: scale(1.1);">
-      <div class="leaves"><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div><div class="leaf"></div></div>
-      <div class="trunk" style="transform: rotate(2deg);"></div>
-    </div>
-  </div>
-  <div class="airplane"></div>
-</div>
+  <!-- Легкие облака -->
+  <div class="cloud"></div>
+  <div class="cloud"></div>
+  <div class="cloud"></div>
+  <div class="sun"></div>
 
-<div class="container">
-  <div class="header">
-    <div class="logo">Music Club Орёл</div>
-    <div class="nav-arrows">
-      <button onclick="changeMonth(-1)">◀</button>
-      <span class="month-title" id="monthTitle"></span>
-      <button onclick="changeMonth(1)">▶</button>
-    </div>
-    <div class="period-btns" id="periodBtns">
-      <button class="period-btn active" data-period="full">Весь месяц</button>
-      <button class="period-btn" data-period="first">1–15</button>
-      <button class="period-btn" data-period="second">16–31</button>
-    </div>
-    <button class="export-btn" onclick="exportToExcel()">📥 Excel</button>
-    <button class="export-btn" onclick="copyToGoogleSheet()">📋 Копия</button>
-    <div style="flex-grow:1;"></div>
-    <div class="employee-dropdown" id="employeeDropdown">
-      <button class="emp-dropdown-btn" id="empToggle">👥 Сотрудники</button>
-      <div class="emp-dropdown-list" id="empList" style="display:none; position:absolute; right:0; background:white; border-radius:20px; padding:15px; box-shadow:0 20px 40px rgba(0,0,0,0.2); z-index:100;">
-        <div id="empCheckboxes"></div>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Music Club Орёл</div>
+      <div class="nav-arrows">
+        <button onclick="changeMonth(-1)">◀</button>
+        <span class="month-title" id="monthTitle"></span>
+        <button onclick="changeMonth(1)">▶</button>
+      </div>
+      <div id="periodBtns" style="display:flex; gap:0.5rem;">
+        <button class="period-btn active" data-period="full">Весь месяц</button>
+        <button class="period-btn" data-period="first">1–15</button>
+        <button class="period-btn" data-period="second">16–31</button>
+      </div>
+      <button class="export-btn" onclick="exportToExcel()">📥 Excel</button>
+      <button class="export-btn" onclick="location.reload()">🔄 Обновить</button>
+      <div style="position:relative;">
+        <button class="emp-btn" id="empToggle">👥 Сотрудники</button>
+        <div id="empList" style="display:none; position:absolute; right:0; top:2.5rem; background:white; border-radius:1.5rem; padding:1rem; box-shadow:0 20px 35px rgba(0,0,0,0.2); z-index:200; min-width:240px;">
+          <div id="empCheckboxes"></div>
+        </div>
       </div>
     </div>
+
+    <div id="errorContainer"></div>
+
+    <div class="schedule-container" id="scheduleTableContainer">
+      <div style="padding:3rem; text-align:center; font-size:1.2rem;">Загрузка...</div>
+    </div>
   </div>
 
-  <div class="schedule-container" id="scheduleTableContainer">
-    <div style="padding:50px; text-align:center; font-size:20px;">Загрузка графика...</div>
+  <!-- Модалка дня -->
+  <div class="modal-overlay" id="dayModal" style="display:none;">
+    <div class="modal">
+      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer;" onclick="closeModal('dayModal')">✕</button>
+      <h3 id="modalTitle"></h3>
+      <div id="statusOptions" style="margin:1.5rem 0;"></div>
+      <div id="dynamicFields"></div>
+      <textarea id="comment" rows="2" style="width:100%; margin:1rem 0; padding:0.8rem; border-radius:1rem; border:1px solid #ddd;" placeholder="Примечание"></textarea>
+      <button class="btn-save" onclick="saveDay()">Сохранить</button>
+    </div>
   </div>
-</div>
 
-<!-- Модалка дня -->
-<div class="modal-overlay" id="dayModal" style="display:none;">
-  <div class="modal">
-    <button style="float:right; background:none; border:none; font-size:24px; cursor:pointer;" onclick="closeModal('dayModal')">✕</button>
-    <h3 id="modalTitle"></h3>
-    <div id="statusOptions" style="margin:20px 0;"></div>
-    <div id="dynamicFields"></div>
-    <textarea id="comment" rows="2" style="width:100%; margin:15px 0; padding:12px; border-radius:15px; border:1px solid #ddd;" placeholder="Примечание"></textarea>
-    <button class="btn-save" onclick="saveDay()">Сохранить</button>
+  <!-- Модалка зарплаты -->
+  <div class="modal-overlay" id="salaryModal" style="display:none;">
+    <div class="modal" style="max-width:600px;">
+      <button style="float:right; background:none; border:none; font-size:1.5rem; cursor:pointer;" onclick="closeModal('salaryModal')">✕</button>
+      <h3 id="salaryModalTitle"></h3>
+      <div id="salaryContent"></div>
+      <button class="btn-save" onclick="saveSalary()">Сохранить параметры</button>
+    </div>
   </div>
-</div>
 
-<!-- Модалка зарплаты -->
-<div class="modal-overlay" id="salaryModal" style="display:none;">
-  <div class="modal" style="max-width: 600px;">
-    <button style="float:right; background:none; border:none; font-size:24px; cursor:pointer;" onclick="closeModal('salaryModal')">✕</button>
-    <h3 id="salaryModalTitle"></h3>
-    <div id="salaryContent"></div>
-    <button class="btn-save" onclick="saveSalary()">Сохранить параметры</button>
-  </div>
-</div>
+  <script>
+    // Конфигурация Supabase (уже твоя)
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-<script>
-  // ================== КОНФИГУРАЦИЯ SUPABASE ==================
-  const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let employees = [], worklog = {}, salaryParams = {};
+    let currentYear, currentMonth, currentPeriod = 'full', selectedIds = new Set();
 
-  // ================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ==================
-  let employees = [];
-  let worklog = {};
-  let salaryParams = {};
-  let currentYear, currentMonth;
-  let selectedEmployeeIds = new Set();
-  let currentPeriod = 'full';
-  let editingEmpId, editingDateStr;
+    const STATUSES = ['working', 'dayoff', 'sick', 'vacation', 'leave'];
+    const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
+    const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
 
-  const STATUSES = ['working', 'dayoff', 'sick', 'vacation', 'leave'];
-  const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
-  const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
-
-  // ================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==================
-  function showToast(msg, err = false) {
-    const toast = document.createElement('div'); toast.className = 'toast-center';
-    toast.innerHTML = `<div class="toast-content" style="background:${err ? '#e74c3c' : '#2ecc71'}">${msg}</div>`;
-    document.body.appendChild(toast); setTimeout(() => toast.remove(), 2200);
-  }
-  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-  // ================== ЗАГРУЗКА ДАННЫХ ==================
-  async function loadAllData() {
-    try {
-      const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
-      const [empRes, logRes, salRes] = await Promise.all([
-        supabase.from('employees').select('*'),
-        supabase.from('worklog').select('*').like('date', `${monthStr}%`),
-        supabase.from('salary_params').select('*').eq('month', monthStr)
-      ]);
-      if (empRes.error) throw empRes.error;
-      employees = empRes.data;
-      if (selectedEmployeeIds.size === 0) employees.forEach(e => selectedEmployeeIds.add(e.id));
-      worklog = {};
-      (logRes.data || []).forEach(rec => { worklog[`${rec.emp_id}_${rec.date}`] = rec; });
-      salaryParams = {};
-      (salRes.data || []).forEach(rec => { salaryParams[rec.emp_id] = rec; });
-      renderEmployeeCheckboxes();
-      renderTable();
-    } catch (e) {
-      showToast('Ошибка загрузки: ' + e.message, true);
-      document.getElementById('scheduleTableContainer').innerHTML = '<p>Ошибка соединения с базой</p>';
+    // Вспомогательные
+    function showToast(msg, err=false) {
+      const t = document.createElement('div'); t.className = 'toast-center';
+      t.innerHTML = `<div class="toast-content" style="background:${err?'#dc2626':'#059669'}">${msg}</div>`;
+      document.body.appendChild(t); setTimeout(() => t.remove(), 1800);
     }
-  }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-  function renderEmployeeCheckboxes() {
-    let html = '';
-    employees.forEach(emp => {
-      const checked = selectedEmployeeIds.has(emp.id) ? 'checked' : '';
-      html += `<label style="display:block; margin:5px 0; cursor:pointer;">
-        <input type="checkbox" ${checked} onchange="toggleEmployee('${emp.id}', this.checked)"> ${emp.name} <small>(${emp.role})</small>
-      </label>`;
-    });
-    document.getElementById('empCheckboxes').innerHTML = html;
-  }
-  window.toggleEmployee = (id, checked) => {
-    checked ? selectedEmployeeIds.add(id) : selectedEmployeeIds.delete(id);
-    renderTable();
-  };
-
-  // ================== РАСЧЁТ ЗАРПЛАТЫ ==================
-  function getManagerNormDays(year, month) {
-    const days = new Date(year, month, 0).getDate();
-    let count = 0;
-    for (let d = 1; d <= days; d++) {
-      if ((d - 1) % 6 < 3) count++;
-    }
-    return count;
-  }
-
-  function getFullMonthSales(emp) {
-    const days = new Date(currentYear, currentMonth, 0).getDate();
-    let total = 0;
-    for (let d = 1; d <= days; d++) {
-      const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const key = `${emp.id}_${dateStr}`;
-      const data = worklog[key];
-      if (data && data.status === 'working') total += data.daily_sales || 0;
-    }
-    return total;
-  }
-
-  function getEmployeeSalary(emp) {
-    const days = new Date(currentYear, currentMonth, 0).getDate();
-    let workedDays = 0, totalIndiv = 0, totalGroup = 0;
-    let fullMonthSales = 0;
-    for (let d = 1; d <= days; d++) {
-      const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const key = `${emp.id}_${dateStr}`;
-      const data = worklog[key];
-      if (!data || data.status !== 'working') continue;
-      if (emp.role === 'Менеджер') fullMonthSales += data.daily_sales || 0;
-      if ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16)) {
-        workedDays++;
-        if (emp.role === 'Преподаватель') {
-          totalIndiv += data.indiv || 0;
-          totalGroup += data.group_total || 0;
-        }
+    // Загрузка данных
+    async function loadData() {
+      document.getElementById('errorContainer').innerHTML = '';
+      try {
+        const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+        const [empRes, logRes, salRes] = await Promise.all([
+          supabase.from('employees').select('*'),
+          supabase.from('worklog').select('*').like('date', `${monthStr}%`),
+          supabase.from('salary_params').select('*').eq('month', monthStr)
+        ]);
+        if (empRes.error) throw new Error('Ошибка загрузки сотрудников: ' + empRes.error.message);
+        if (logRes.error) throw new Error('Ошибка загрузки журнала: ' + logRes.error.message);
+        employees = empRes.data;
+        if (selectedIds.size === 0) employees.forEach(e => selectedIds.add(e.id));
+        worklog = {};
+        (logRes.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
+        salaryParams = {};
+        (salRes.data || []).forEach(r => { salaryParams[r.emp_id] = r; });
+        renderCheckboxes();
+        renderTable();
+      } catch (e) {
+        document.getElementById('errorContainer').innerHTML = `<div class="error-banner">❌ ${e.message}</div>`;
       }
     }
-    const params = salaryParams[emp.id] || {};
-    const normDays = (emp.role === 'Менеджер') ? getManagerNormDays(currentYear, currentMonth) : (params.norm_days || 22);
-    const dailyRate = {
-      'Менеджер': 20000, 'Администратор': 35000, 'Управляющий': 50000
-    }[emp.role] || 0;
-    const base = (dailyRate / normDays) * workedDays;
 
-    if (emp.role === 'Преподаватель') return totalIndiv * 400 + totalGroup * 500;
-    if (emp.role === 'Менеджер') {
-      const plan = params.plan_amount || 0;
-      const bonusPercent = (plan > 0 && fullMonthSales >= plan) ? 7 : 5;
-      const bonus = (currentPeriod === 'first') ? 0 : (fullMonthSales * bonusPercent / 100);
-      return base + bonus;
+    function renderCheckboxes() {
+      document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
+        <label style="display:block; margin:0.3rem 0; cursor:pointer;">
+          <input type="checkbox" ${selectedIds.has(e.id)?'checked':''} onchange="toggleEmployee('${e.id}', this.checked)"> ${e.name} <small style="color:#666;">${e.role}</small>
+        </label>`).join('');
     }
-    if (emp.role === 'Администратор') {
-      const managers = employees.filter(e => e.role === 'Менеджер');
-      let totalSales = 0;
-      managers.forEach(m => totalSales += getFullMonthSales(m));
-      const bonus = currentPeriod !== 'first' ? totalSales * 0.01 : 0;
-      return base + bonus;
-    }
-    if (emp.role === 'Управляющий') {
-      const managers = employees.filter(e => e.role === 'Менеджер');
-      let totalSales = 0;
-      managers.forEach(m => totalSales += getFullMonthSales(m));
-      const plan = params.plan_amount || 0;
-      const fulfilled = plan > 0 && totalSales >= plan;
-      const bonus = fulfilled && currentPeriod !== 'first' ? totalSales * 0.01 : 0;
-      return base + bonus;
-    }
-    return 0;
-  }
-
-  // ================== РЕНДЕР ТАБЛИЦЫ ==================
-  function renderTable() {
-    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-    document.getElementById('monthTitle').textContent =
-      new Date(currentYear, currentMonth-1, 1).toLocaleDateString('ru', { month:'long', year:'numeric' });
-
-    const filtered = employees.filter(e => selectedEmployeeIds.has(e.id));
-    let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
-    for (let d = 1; d <= daysInMonth; d++) {
-      html += `<th>${d}<br><small>${new Date(currentYear, currentMonth-1, d).toLocaleDateString('ru', {weekday:'short'})}</small></th>`;
-    }
-    html += '</tr></thead><tbody>';
-
-    ['Управляющий', 'Менеджер', 'Администратор', 'Преподаватель'].forEach(role => {
-      const group = filtered.filter(e => e.role === role);
-      if (!group.length) return;
-      html += `<tr><td colspan="${daysInMonth+3}" class="group-header">${role}ы</td></tr>`;
-      group.forEach(emp => {
-        let totalWorking = 0, totalIndiv = 0, totalGroup = 0;
-        let cells = '';
-        for (let d = 1; d <= daysInMonth; d++) {
-          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const data = worklog[`${emp.id}_${dateStr}`] || {};
-          const status = data.status;
-          const inPeriod = (currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16);
-          if (status === 'working' && inPeriod) {
-            totalWorking++;
-            if (emp.role === 'Преподаватель') { totalIndiv += data.indiv||0; totalGroup += data.group_total||0; }
-          }
-          let cls = 'day-cell';
-          if (status) cls += ' ' + (STATUS_CLASSES[status] || '');
-          if (data.comment) cls += ' has-comment';
-          let content = status ? STATUS_LABELS[status] || status : '';
-          let tooltip = '';
-          if (emp.role === 'Менеджер' && status === 'working') {
-            content = data.daily_sales > 0 ? '<span class="big-ruble">₽</span>' : 'Д';
-            if (data.daily_sales) tooltip = `Выручка: ${data.daily_sales} ₽`;
-          } else if (emp.role === 'Преподаватель' && status === 'working') {
-            content = `Д<br><small>${data.indiv||0}/${data.group_total||0}</small>`;
-          }
-          if (data.comment) tooltip += (tooltip?' ':'') + data.comment;
-          cells += `<td onclick="openDayModal('${emp.id}', '${dateStr}')" ${tooltip ? `title="${tooltip}"` : ''}><div class="${cls}">${content}</div></td>`;
-        }
-        const salary = getEmployeeSalary(emp);
-        html += `<tr><td class="employee-name" onclick="openSalaryModal('${emp.id}')">${emp.name}</td>`;
-        html += `<td class="summary-cell">${totalWorking}</td>`;
-        html += `<td class="summary-cell">${salary.toFixed(0)} ₽</td>`;
-        html += cells + '</tr>';
-      });
-    });
-    html += '</tbody></table>';
-    document.getElementById('scheduleTableContainer').innerHTML = html;
-  }
-
-  window.changeMonth = function(delta) {
-    currentMonth += delta;
-    if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-    else if (currentMonth > 12) { currentMonth = 1; currentYear++; }
-    loadAllData();
-  };
-
-  // ================== МОДАЛКА ДНЯ ==================
-  window.openDayModal = function(empId, dateStr) {
-    editingEmpId = empId;
-    editingDateStr = dateStr;
-    const emp = employees.find(e => e.id === empId);
-    const data = worklog[`${empId}_${dateStr}`] || {};
-    document.getElementById('modalTitle').textContent = `${emp.name} — ${dateStr}`;
-    document.getElementById('comment').value = data.comment || '';
-
-    let statusHtml = '';
-    STATUSES.forEach(s => {
-      statusHtml += `<label style="margin-right:15px;"><input type="radio" name="dayStatus" value="${s}" ${data.status === s ? 'checked' : ''}> ${STATUS_LABELS[s]}</label>`;
-    });
-    document.getElementById('statusOptions').innerHTML = statusHtml;
-
-    let dynamicHtml = '';
-    if (emp.role === 'Менеджер') {
-      dynamicHtml = `<label>Выручка за смену: <input type="number" id="dailySales" value="${data.daily_sales||''}" style="width:150px; margin-left:10px;"></label>`;
-    } else if (emp.role === 'Преподаватель') {
-      dynamicHtml = `<label>Инд. уроки: <input type="number" id="indiv" value="${data.indiv||''}" style="width:80px; margin:0 10px;"></label>
-                     <label>Группы: <input type="number" id="groupTotal" value="${data.group_total||''}" style="width:80px;"></label>`;
-    }
-    document.getElementById('dynamicFields').innerHTML = dynamicHtml;
-    document.getElementById('dayModal').style.display = 'flex';
-  };
-
-  window.saveDay = async function() {
-    const status = document.querySelector('input[name="dayStatus"]:checked')?.value;
-    if (!status) return showToast('Выберите статус', true);
-    const comment = document.getElementById('comment').value.trim();
-    const emp = employees.find(e => e.id === editingEmpId);
-    let dailySales = 0, indiv = 0, groupTotal = 0;
-    if (emp.role === 'Менеджер') dailySales = parseFloat(document.getElementById('dailySales')?.value) || 0;
-    if (emp.role === 'Преподаватель') {
-      indiv = parseInt(document.getElementById('indiv')?.value) || 0;
-      groupTotal = parseInt(document.getElementById('groupTotal')?.value) || 0;
-    }
-    const { error } = await supabase.from('worklog').upsert({
-      emp_id: editingEmpId,
-      date: editingDateStr,
-      status, comment, daily_sales: dailySales, indiv, group_total: groupTotal
-    }, { onConflict: 'emp_id, date' });
-    if (error) return showToast('Ошибка сохранения: ' + error.message, true);
-    showToast('Сохранено');
-    closeModal('dayModal');
-    loadAllData();
-  };
-
-  // ================== МОДАЛКА ЗАРПЛАТЫ ==================
-  window.openSalaryModal = function(empId) {
-    const emp = employees.find(e => e.id === empId);
-    const params = salaryParams[empId] || {};
-    let html = `<p>Сотрудник: <b>${emp.name}</b></p>`;
-    if (emp.role === 'Менеджер') {
-      html += `<label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:150px;"></label>`;
-    } else if (emp.role === 'Управляющий') {
-      html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label><br>
-               <label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:150px;"></label>`;
-    } else if (emp.role === 'Администратор') {
-      html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label>`;
-    }
-    document.getElementById('salaryModalTitle').textContent = `Параметры зарплаты`;
-    document.getElementById('salaryContent').innerHTML = html;
-    document.getElementById('salaryModal').style.display = 'flex';
-    window.salaryEmpId = empId;
-  };
-
-  window.saveSalary = async function() {
-    const empId = window.salaryEmpId;
-    const emp = employees.find(e => e.id === empId);
-    const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
-    let normDays = null, planAmount = null;
-    if (emp.role === 'Менеджер') {
-      planAmount = parseFloat(document.getElementById('planAmount')?.value) || 0;
-    } else if (emp.role === 'Управляющий') {
-      normDays = parseInt(document.getElementById('normDays')?.value) || 22;
-      planAmount = parseFloat(document.getElementById('planAmount')?.value) || 0;
-    } else if (emp.role === 'Администратор') {
-      normDays = parseInt(document.getElementById('normDays')?.value) || 22;
-    }
-    const { error } = await supabase.from('salary_params').upsert({
-      emp_id: empId, month: monthStr, norm_days: normDays, plan_amount: planAmount
-    }, { onConflict: 'emp_id, month' });
-    if (error) return showToast('Ошибка: ' + error.message, true);
-    showToast('Параметры сохранены');
-    closeModal('salaryModal');
-    loadAllData();
-  };
-
-  // ================== ЭКСПОРТ ==================
-  window.exportToExcel = function() {
-    const table = document.querySelector('.schedule-container table');
-    if (!table) return showToast('Нет данных', true);
-    const wb = XLSX.utils.table_to_book(table, { sheet: 'График' });
-    XLSX.writeFile(wb, `График_${currentYear}-${String(currentMonth).padStart(2,'0')}.xlsx`);
-    showToast('Excel скачан');
-  };
-
-  window.copyToGoogleSheet = function() {
-    showToast('Функция в разработке');
-  };
-
-  // ================== ИНИЦИАЛИЗАЦИЯ ==================
-  document.getElementById('periodBtns').addEventListener('click', (e) => {
-    if (e.target.classList.contains('period-btn')) {
-      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-      e.target.classList.add('active');
-      currentPeriod = e.target.dataset.period;
+    window.toggleEmployee = (id, checked) => {
+      checked ? selectedIds.add(id) : selectedIds.delete(id);
       renderTable();
-    }
-  });
-  document.getElementById('empToggle').addEventListener('click', () => {
-    const list = document.getElementById('empList');
-    list.style.display = list.style.display === 'none' ? 'block' : 'none';
-  });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('#employeeDropdown')) document.getElementById('empList').style.display = 'none';
-  });
+    };
 
-  const now = new Date();
-  currentYear = now.getFullYear();
-  currentMonth = now.getMonth() + 1;
-  loadAllData();
-</script>
+    // Расчет зарплаты (как раньше, без изменений)
+    function getManagerNormDays(y, m) {
+      const days = new Date(y, m, 0).getDate();
+      let cnt = 0;
+      for (let d=1; d<=days; d++) if ((d-1)%6 < 3) cnt++;
+      return cnt;
+    }
+    function getFullMonthSales(emp) {
+      let total = 0;
+      const days = new Date(currentYear, currentMonth, 0).getDate();
+      for (let d=1; d<=days; d++) {
+        const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dta = worklog[key];
+        if (dta && dta.status === 'working') total += dta.daily_sales || 0;
+      }
+      return total;
+    }
+    function getSalary(emp) {
+      const days = new Date(currentYear, currentMonth, 0).getDate();
+      let worked = 0, indiv = 0, group = 0;
+      let fullSales = 0;
+      for (let d=1; d<=days; d++) {
+        const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const rec = worklog[key];
+        if (!rec || rec.status !== 'working') continue;
+        if (emp.role === 'Менеджер') fullSales += rec.daily_sales || 0;
+        if ((currentPeriod === 'full') || (currentPeriod === 'first' && d<=15) || (currentPeriod === 'second' && d>=16)) {
+          worked++;
+          if (emp.role === 'Преподаватель') { indiv += rec.indiv||0; group += rec.group_total||0; }
+        }
+      }
+      const params = salaryParams[emp.id] || {};
+      const norm = emp.role === 'Менеджер' ? getManagerNormDays(currentYear, currentMonth) : (params.norm_days || 22);
+      const rates = { 'Менеджер':20000, 'Администратор':35000, 'Управляющий':50000 };
+      const base = (rates[emp.role] || 0) / norm * worked;
+      if (emp.role === 'Преподаватель') return indiv*400 + group*500;
+      if (emp.role === 'Менеджер') {
+        const plan = params.plan_amount || 0;
+        const bonusPct = (plan>0 && fullSales>=plan) ? 7 : 5;
+        const bonus = currentPeriod==='first' ? 0 : fullSales * bonusPct/100;
+        return base + bonus;
+      }
+      if (emp.role === 'Администратор') {
+        const mgrs = employees.filter(e=>e.role==='Менеджер');
+        let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
+        return base + (currentPeriod!=='first' ? totalMgrs*0.01 : 0);
+      }
+      if (emp.role === 'Управляющий') {
+        const mgrs = employees.filter(e=>e.role==='Менеджер');
+        let totalMgrs = 0; mgrs.forEach(m=> totalMgrs += getFullMonthSales(m));
+        const plan = params.plan_amount || 0;
+        const fulfilled = plan>0 && totalMgrs>=plan;
+        return base + (fulfilled && currentPeriod!=='first' ? totalMgrs*0.01 : 0);
+      }
+      return 0;
+    }
+
+    function renderTable() {
+      const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+      document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1).toLocaleDateString('ru',{month:'long',year:'numeric'});
+      const filtered = employees.filter(e => selectedIds.has(e.id));
+      let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
+      for (let d=1; d<=daysInMonth; d++) html += `<th>${d}<br><small>${new Date(currentYear,currentMonth-1,d).toLocaleDateString('ru',{weekday:'short'})}</small></th>`;
+      html += '</tr></thead><tbody>';
+      ['Управляющий','Менеджер','Администратор','Преподаватель'].forEach(role => {
+        const group = filtered.filter(e => e.role === role);
+        if (!group.length) return;
+        html += `<tr><td colspan="${daysInMonth+3}" class="group-header">${role}ы</td></tr>`;
+        group.forEach(emp => {
+          let worked = 0, indiv = 0, group = 0;
+          let cells = '';
+          for (let d=1; d<=daysInMonth; d++) {
+            const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const rec = worklog[`${emp.id}_${dateStr}`] || {};
+            const status = rec.status;
+            if (status === 'working' && (currentPeriod==='full' || (currentPeriod==='first' && d<=15) || (currentPeriod==='second' && d>=16))) {
+              worked++;
+              if (emp.role === 'Преподаватель') { indiv += rec.indiv||0; group += rec.group_total||0; }
+            }
+            let cls = 'day-cell';
+            if (status) cls += ' ' + (STATUS_CLASSES[status]||'');
+            if (rec.comment) cls += ' has-comment';
+            let content = status ? (STATUS_LABELS[status]||status) : '';
+            let tooltip = '';
+            if (emp.role === 'Менеджер' && status === 'working') {
+              content = rec.daily_sales > 0 ? '<span class="big-ruble">₽</span>' : 'Д';
+              if (rec.daily_sales) tooltip = `Выручка: ${rec.daily_sales} ₽`;
+            } else if (emp.role === 'Преподаватель' && status === 'working') {
+              content = `Д<br><small>${rec.indiv||0}/${rec.group_total||0}</small>`;
+            }
+            if (rec.comment) tooltip += (tooltip?' ':'') + rec.comment;
+            cells += `<td onclick="openDayModal('${emp.id}','${dateStr}')" ${tooltip?`title="${tooltip}"`:''}><div class="${cls}">${content}</div></td>`;
+          }
+          const salary = getSalary(emp);
+          html += `<tr><td class="employee-name" onclick="openSalaryModal('${emp.id}')">${emp.name}</td>`;
+          html += `<td class="summary-cell">${worked}</td><td class="summary-cell">${salary.toFixed(0)} ₽</td>${cells}</tr>`;
+        });
+      });
+      html += '</tbody></table>';
+      document.getElementById('scheduleTableContainer').innerHTML = html;
+    }
+
+    window.changeMonth = (delta) => {
+      currentMonth += delta;
+      if (currentMonth < 1) { currentMonth=12; currentYear--; }
+      else if (currentMonth > 12) { currentMonth=1; currentYear++; }
+      loadData();
+    };
+
+    window.openDayModal = (empId, dateStr) => {
+      const emp = employees.find(e=>e.id===empId);
+      const rec = worklog[`${empId}_${dateStr}`] || {};
+      document.getElementById('modalTitle').textContent = `${emp.name} — ${dateStr}`;
+      document.getElementById('comment').value = rec.comment || '';
+      document.getElementById('statusOptions').innerHTML = STATUSES.map(s =>
+        `<label style="margin-right:1rem;"><input type="radio" name="dayStatus" value="${s}" ${rec.status===s?'checked':''}> ${STATUS_LABELS[s]}</label>`
+      ).join('');
+      let dyn = '';
+      if (emp.role === 'Менеджер') dyn = `<label>Выручка: <input type="number" id="dailySales" value="${rec.daily_sales||''}" style="width:120px; margin-left:0.5rem;"></label>`;
+      else if (emp.role === 'Преподаватель') dyn = `<label>Инд.: <input type="number" id="indiv" value="${rec.indiv||''}" style="width:70px; margin:0 0.5rem;"></label><label>Групп.: <input type="number" id="groupTotal" value="${rec.group_total||''}" style="width:70px;"></label>`;
+      document.getElementById('dynamicFields').innerHTML = dyn;
+      document.getElementById('dayModal').style.display = 'flex';
+      window._editEmpId = empId;
+      window._editDate = dateStr;
+    };
+
+    window.saveDay = async () => {
+      const status = document.querySelector('input[name="dayStatus"]:checked')?.value;
+      if (!status) return showToast('Выберите статус', true);
+      const comment = document.getElementById('comment').value.trim();
+      const emp = employees.find(e=>e.id===window._editEmpId);
+      let dailySales=0, indiv=0, groupTotal=0;
+      if (emp.role==='Менеджер') dailySales = parseFloat(document.getElementById('dailySales')?.value)||0;
+      if (emp.role==='Преподаватель') {
+        indiv = parseInt(document.getElementById('indiv')?.value)||0;
+        groupTotal = parseInt(document.getElementById('groupTotal')?.value)||0;
+      }
+      const {error} = await supabase.from('worklog').upsert({
+        emp_id: window._editEmpId,
+        date: window._editDate,
+        status, comment, daily_sales: dailySales, indiv, group_total: groupTotal
+      }, {onConflict: 'emp_id, date'});
+      if (error) return showToast('Ошибка: '+error.message, true);
+      showToast('Сохранено');
+      closeModal('dayModal');
+      loadData();
+    };
+
+    window.openSalaryModal = (empId) => {
+      const emp = employees.find(e=>e.id===empId);
+      const params = salaryParams[empId] || {};
+      let html = `<p><b>${emp.name}</b></p>`;
+      if (emp.role==='Менеджер') html += `<label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px;"></label>`;
+      else if (emp.role==='Управляющий') html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label><br><label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:120px;"></label>`;
+      else if (emp.role==='Администратор') html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label>`;
+      document.getElementById('salaryModalTitle').textContent = 'Параметры зарплаты';
+      document.getElementById('salaryContent').innerHTML = html;
+      document.getElementById('salaryModal').style.display = 'flex';
+      window._salaryEmpId = empId;
+    };
+
+    window.saveSalary = async () => {
+      const emp = employees.find(e=>e.id===window._salaryEmpId);
+      const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+      let normDays=null, planAmount=null;
+      if (emp.role==='Менеджер') planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
+      else if (emp.role==='Управляющий') {
+        normDays = parseInt(document.getElementById('normDays')?.value)||22;
+        planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
+      } else if (emp.role==='Администратор') normDays = parseInt(document.getElementById('normDays')?.value)||22;
+      const {error} = await supabase.from('salary_params').upsert({
+        emp_id: window._salaryEmpId, month: monthStr, norm_days: normDays, plan_amount: planAmount
+      }, {onConflict: 'emp_id, month'});
+      if (error) return showToast('Ошибка: '+error.message, true);
+      showToast('Параметры сохранены');
+      closeModal('salaryModal');
+      loadData();
+    };
+
+    window.exportToExcel = () => {
+      const table = document.querySelector('.schedule-container table');
+      if (!table) return showToast('Нет данных', true);
+      const wb = XLSX.utils.table_to_book(table, {sheet:'График'});
+      XLSX.writeFile(wb, `График_${currentYear}-${String(currentMonth).padStart(2,'0')}.xlsx`);
+      showToast('Excel скачан');
+    };
+
+    // Переключение периода
+    document.getElementById('periodBtns').addEventListener('click', (e) => {
+      if (e.target.classList.contains('period-btn')) {
+        document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentPeriod = e.target.dataset.period;
+        renderTable();
+      }
+    });
+    // Выпадающий список сотрудников
+    document.getElementById('empToggle').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const list = document.getElementById('empList');
+      list.style.display = list.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#empToggle') && !e.target.closest('#empList')) {
+        document.getElementById('empList').style.display = 'none';
+      }
+    });
+
+    // Старт
+    const now = new Date();
+    currentYear = now.getFullYear();
+    currentMonth = now.getMonth() + 1;
+    loadData();
+  </script>
 </body>
 </html>
