@@ -9,16 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --surface: #ffffff;
-      --text: #0f172a;
-      --text-secondary: #64748b;
-      --border: #e2e8f0;
-      --accent: #3b82f6;
-    }
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f0f4ff, #fff, #f0f9ff);
+      background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 50%, #fab1a0 100%);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -26,27 +19,27 @@
       margin: 0;
     }
     .card {
-      background: var(--surface);
+      background: white;
       border-radius: 24px;
       padding: 2.5rem;
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
       text-align: center;
     }
-    h2 { margin-bottom: 1.5rem; }
+    h2 { margin-bottom: 1.5rem; color: #2d3436; }
     input {
       width: 100%;
       padding: 0.8rem;
       margin-bottom: 1rem;
-      border: 1px solid var(--border);
+      border: 1px solid #e0e0e0;
       border-radius: 12px;
       font-size: 1rem;
     }
     button {
       width: 100%;
       padding: 0.8rem;
-      background: var(--accent);
+      background: #ff6b6b;
       color: white;
       border: none;
       border-radius: 12px;
@@ -54,27 +47,26 @@
       cursor: pointer;
       font-size: 1rem;
       margin-top: 0.5rem;
+      transition: background 0.2s;
     }
-    button:hover { background: #2563eb; }
+    button:hover { background: #ee5a24; }
     .toggle {
       margin-top: 1rem;
-      color: var(--accent);
+      color: #d63031;
       cursor: pointer;
       font-weight: 500;
     }
-    .error {
-      color: #ef4444;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-    }
+    .error { color: #d63031; margin-bottom: 0.5rem; font-size: 0.9rem; }
+    .info { color: #636e72; margin-bottom: 0.5rem; font-size: 0.9rem; }
   </style>
 </head>
 <body>
   <div class="card">
     <h2 id="formTitle">Вход</h2>
     <div id="error" class="error"></div>
-    <input type="email" id="email" placeholder="Email" autocomplete="email">
-    <input type="password" id="password" placeholder="Пароль" autocomplete="current-password">
+    <div id="info" class="info"></div>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Пароль">
     <button id="submitBtn">Войти</button>
     <div class="toggle" id="toggleForm">Нет аккаунта? Зарегистрироваться</div>
   </div>
@@ -84,7 +76,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let mode = 'login'; // 'login' or 'register'
+    let mode = 'login';
 
     document.getElementById('toggleForm').addEventListener('click', () => {
       mode = mode === 'login' ? 'register' : 'login';
@@ -92,29 +84,44 @@
       document.getElementById('submitBtn').textContent = mode === 'login' ? 'Войти' : 'Зарегистрироваться';
       document.getElementById('toggleForm').textContent = mode === 'login' ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти';
       document.getElementById('error').textContent = '';
+      document.getElementById('info').textContent = '';
     });
 
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const errorEl = document.getElementById('error');
+      const infoEl = document.getElementById('info');
       errorEl.textContent = '';
+      infoEl.textContent = '';
 
       if (!email || !password) {
         errorEl.textContent = 'Заполните все поля';
         return;
       }
 
-      const { data, error } = mode === 'login'
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-
-      if (error) {
-        errorEl.textContent = error.message;
-        return;
+      if (mode === 'login') {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          errorEl.textContent = error.message;
+          return;
+        }
+        window.location.href = 'index.html';
+      } else {
+        // Регистрация
+        const { data, error } = await supabase.auth.signUp({ email, password });
+        if (error) {
+          errorEl.textContent = error.message;
+          return;
+        }
+        // Если email подтверждение отключено, сессия будет активна сразу
+        if (data.session) {
+          window.location.href = 'index.html';
+        } else {
+          // Подтверждение email требуется
+          infoEl.textContent = 'Регистрация успешна. Проверьте почту для подтверждения (если не отключено в настройках Supabase).';
+        }
       }
-
-      window.location.href = 'index.html';
     });
   </script>
 </body>
