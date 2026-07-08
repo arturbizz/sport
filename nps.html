@@ -71,7 +71,7 @@
       opacity: 0.5;
       cursor: default;
     }
-    .error { color: #d63031; margin: 1rem 0; font-size: 0.9rem; }
+    .error { color: #d63031; margin: 1rem 0; font-size: 0.9rem; white-space: pre-wrap; }
     .info { color: #636e72; margin: 1rem 0; }
     table {
       width: 100%;
@@ -134,7 +134,7 @@
     const EDGE_FUNCTION_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/hyper-responder';
     const _supabaseNPS = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let customersFromFile = []; // { id, name }
+    let customersFromFile = [];
 
     (async () => {
       const { data: { session } } = await _supabaseNPS.auth.getSession();
@@ -172,7 +172,6 @@
           const sheet = workbook.Sheets[firstSheet];
           const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-          // Ищем строку заголовка
           let headerRowIndex = -1;
           for (let i = 0; i < Math.min(rows.length, 20); i++) {
             const row = rows[i];
@@ -190,7 +189,7 @@
           }
 
           const headers = rows[headerRowIndex].map(h => String(h).trim().toLowerCase());
-          const idIdx = headers.findIndex(h => h === 'id');   // <-- исправлено: только ID
+          const idIdx = headers.findIndex(h => h === 'id');
           const nameIdx = headers.findIndex(h => h.includes('фио') || h.includes('имя') || h.includes('клиент'));
 
           if (idIdx === -1 || nameIdx === -1) {
@@ -209,7 +208,6 @@
             customers.push({ id: idVal, name: nameVal });
           }
 
-          // Убираем дубликаты по ID
           const unique = [];
           const seen = new Set();
           for (const c of customers) {
@@ -252,12 +250,16 @@
           body: JSON.stringify({ customer_ids: ids })
         });
 
-        const result = await response.json();
         if (!response.ok) {
-          throw new Error(result.error || 'Ошибка сервера');
+          const text = await response.text();
+          throw new Error(`Ошибка ${response.status}: ${text}`);
         }
 
-        // Объединяем с исходными именами
+        const result = await response.json();
+        if (!result.customers) {
+          throw new Error('Ответ не содержит массив customers');
+        }
+
         const merged = customersFromFile.map(cf => {
           const apiData = result.customers.find(ac => String(ac.id) === String(cf.id));
           return {
