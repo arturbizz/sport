@@ -7,7 +7,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <style>
-    /* ========== ГЛОБАЛЬНЫЕ СТИЛИ И ПЕРЕМЕННЫЕ ========== */
     :root {
       --sun-color: #FFD700;
       --ocean-shallow: #40E0D0;
@@ -31,10 +30,8 @@
       padding: 15px;
     }
 
-    /* ========== АНИМИРОВАННЫЙ ФОН ========== */
     .tropical-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; overflow: hidden; }
 
-    /* Солнце с лицом (CSS, не эмодзи) */
     .sun {
       position: absolute; top: 30px; right: 80px; width: 100px; height: 100px;
       background: var(--sun-color); border-radius: 50%;
@@ -57,7 +54,6 @@
       100% { transform: scale(1.05); box-shadow: 0 0 130px 35px #FFB347, 0 0 220px 80px #FFA500; }
     }
 
-    /* Океан */
     .ocean {
       position: absolute; bottom: 12%; left: 0; width: 100%; height: 30%;
       background: linear-gradient(180deg, var(--ocean-shallow) 0%, var(--ocean-deep) 100%);
@@ -78,7 +74,6 @@
       100% { transform: translateX(-300px); }
     }
 
-    /* Пляж и пальмы (CSS, не эмодзи) */
     .beach {
       position: absolute; bottom: 0; left: 0; width: 100%; height: 18%;
       background: linear-gradient(180deg, var(--beach-sand) 0%, var(--beach-dark) 100%);
@@ -107,7 +102,6 @@
     .leaf:nth-child(4) { transform: rotate(-80deg); bottom: 15px; right: 5px; border-radius: 50% 0; }
     .leaf:nth-child(5) { transform: rotate(130deg); bottom: 10px; right: -5px; border-radius: 0 50%; }
 
-    /* Самолет */
     .airplane {
       position: absolute; bottom: 45%; right: -100px; width: 60px; height: 20px;
       background: white; border-radius: 50% 10% 10% 50%;
@@ -129,7 +123,6 @@
       100% { right: 110%; bottom: 45%; transform: rotate(5deg); }
     }
 
-    /* ========== ОСНОВНОЙ КОНТЕНТ ========== */
     .container { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; padding: 15px 20px; }
 
     .header {
@@ -213,7 +206,6 @@
     }
     .salary-summary .grand-total { margin-left: auto; color: #FF4B2B; font-size: 18px; }
 
-    /* ========== МОДАЛЬНЫЕ ОКНА И УВЕДОМЛЕНИЯ ========== */
     .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     .modal {
       background: linear-gradient(145deg, #ffffff, #fdfcfb);
@@ -290,7 +282,7 @@
       <button class="period-btn" data-period="second">16–31</button>
     </div>
     <button class="export-btn" onclick="exportToExcel()">📥 Excel</button>
-    <button class="export-btn" onclick="createGoogleCopy()">📋 Копия</button>
+    <button class="export-btn" onclick="copyToGoogleSheet()">📋 Копия</button>
     <div style="flex-grow:1;"></div>
     <div class="employee-dropdown" id="employeeDropdown">
       <button class="emp-dropdown-btn" id="empToggle">👥 Сотрудники</button>
@@ -329,8 +321,8 @@
 
 <script>
   // ================== КОНФИГУРАЦИЯ SUPABASE ==================
-  const SUPABASE_URL = 'https://your-project-id.supabase.co'; // ЗАМЕНИ НА СВОЙ Project URL
-  const SUPABASE_ANON_KEY = 'your-anon-key'; // ЗАМЕНИ НА СВОЙ anon public key
+  const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // ================== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ==================
@@ -342,6 +334,10 @@
   let currentPeriod = 'full';
   let editingEmpId, editingDateStr;
 
+  const STATUSES = ['working', 'dayoff', 'sick', 'vacation', 'leave'];
+  const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
+  const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
+
   // ================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==================
   function showToast(msg, err = false) {
     const toast = document.createElement('div'); toast.className = 'toast-center';
@@ -350,30 +346,27 @@
   }
   function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-  // ================== ЗАГРУЗКА ДАННЫХ ИЗ SUPABASE ==================
+  // ================== ЗАГРУЗКА ДАННЫХ ==================
   async function loadAllData() {
     try {
+      const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
       const [empRes, logRes, salRes] = await Promise.all([
         supabase.from('employees').select('*'),
-        supabase.from('worklog').select('*').like('date', `${currentYear}-${String(currentMonth).padStart(2,'0')}%`),
-        supabase.from('salary_params').select('*').eq('month', `${currentYear}-${String(currentMonth).padStart(2,'0')}`)
+        supabase.from('worklog').select('*').like('date', `${monthStr}%`),
+        supabase.from('salary_params').select('*').eq('month', monthStr)
       ]);
-      
       if (empRes.error) throw empRes.error;
       employees = empRes.data;
       if (selectedEmployeeIds.size === 0) employees.forEach(e => selectedEmployeeIds.add(e.id));
-      
       worklog = {};
       (logRes.data || []).forEach(rec => { worklog[`${rec.emp_id}_${rec.date}`] = rec; });
-      
       salaryParams = {};
       (salRes.data || []).forEach(rec => { salaryParams[rec.emp_id] = rec; });
-      
       renderEmployeeCheckboxes();
       renderTable();
     } catch (e) {
-      showToast('Ошибка загрузки данных: ' + e.message, true);
-      document.getElementById('scheduleTableContainer').innerHTML = '<p>Ошибка соединения с базой данных</p>';
+      showToast('Ошибка загрузки: ' + e.message, true);
+      document.getElementById('scheduleTableContainer').innerHTML = '<p>Ошибка соединения с базой</p>';
     }
   }
 
@@ -392,15 +385,88 @@
     renderTable();
   };
 
+  // ================== РАСЧЁТ ЗАРПЛАТЫ ==================
+  function getManagerNormDays(year, month) {
+    const days = new Date(year, month, 0).getDate();
+    let count = 0;
+    for (let d = 1; d <= days; d++) {
+      if ((d - 1) % 6 < 3) count++;
+    }
+    return count;
+  }
+
+  function getFullMonthSales(emp) {
+    const days = new Date(currentYear, currentMonth, 0).getDate();
+    let total = 0;
+    for (let d = 1; d <= days; d++) {
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const key = `${emp.id}_${dateStr}`;
+      const data = worklog[key];
+      if (data && data.status === 'working') total += data.daily_sales || 0;
+    }
+    return total;
+  }
+
+  function getEmployeeSalary(emp) {
+    const days = new Date(currentYear, currentMonth, 0).getDate();
+    let workedDays = 0, totalIndiv = 0, totalGroup = 0;
+    let fullMonthSales = 0;
+    for (let d = 1; d <= days; d++) {
+      const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const key = `${emp.id}_${dateStr}`;
+      const data = worklog[key];
+      if (!data || data.status !== 'working') continue;
+      if (emp.role === 'Менеджер') fullMonthSales += data.daily_sales || 0;
+      if ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16)) {
+        workedDays++;
+        if (emp.role === 'Преподаватель') {
+          totalIndiv += data.indiv || 0;
+          totalGroup += data.group_total || 0;
+        }
+      }
+    }
+    const params = salaryParams[emp.id] || {};
+    const normDays = (emp.role === 'Менеджер') ? getManagerNormDays(currentYear, currentMonth) : (params.norm_days || 22);
+    const dailyRate = {
+      'Менеджер': 20000, 'Администратор': 35000, 'Управляющий': 50000
+    }[emp.role] || 0;
+    const base = (dailyRate / normDays) * workedDays;
+
+    if (emp.role === 'Преподаватель') return totalIndiv * 400 + totalGroup * 500;
+    if (emp.role === 'Менеджер') {
+      const plan = params.plan_amount || 0;
+      const bonusPercent = (plan > 0 && fullMonthSales >= plan) ? 7 : 5;
+      const bonus = (currentPeriod === 'first') ? 0 : (fullMonthSales * bonusPercent / 100);
+      return base + bonus;
+    }
+    if (emp.role === 'Администратор') {
+      const managers = employees.filter(e => e.role === 'Менеджер');
+      let totalSales = 0;
+      managers.forEach(m => totalSales += getFullMonthSales(m));
+      const bonus = currentPeriod !== 'first' ? totalSales * 0.01 : 0;
+      return base + bonus;
+    }
+    if (emp.role === 'Управляющий') {
+      const managers = employees.filter(e => e.role === 'Менеджер');
+      let totalSales = 0;
+      managers.forEach(m => totalSales += getFullMonthSales(m));
+      const plan = params.plan_amount || 0;
+      const fulfilled = plan > 0 && totalSales >= plan;
+      const bonus = fulfilled && currentPeriod !== 'first' ? totalSales * 0.01 : 0;
+      return base + bonus;
+    }
+    return 0;
+  }
+
   // ================== РЕНДЕР ТАБЛИЦЫ ==================
   function renderTable() {
     const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-    document.getElementById('monthTitle').textContent = 
+    document.getElementById('monthTitle').textContent =
       new Date(currentYear, currentMonth-1, 1).toLocaleDateString('ru', { month:'long', year:'numeric' });
 
     const filtered = employees.filter(e => selectedEmployeeIds.has(e.id));
     let html = '<table><thead><tr><th>Сотрудник</th><th>Смен</th><th>ЗП</th>';
-    for (let d=1; d<=daysInMonth; d++) {
+    for (let d = 1; d <= daysInMonth; d++) {
       html += `<th>${d}<br><small>${new Date(currentYear, currentMonth-1, d).toLocaleDateString('ru', {weekday:'short'})}</small></th>`;
     }
     html += '</tr></thead><tbody>';
@@ -408,4 +474,174 @@
     ['Управляющий', 'Менеджер', 'Администратор', 'Преподаватель'].forEach(role => {
       const group = filtered.filter(e => e.role === role);
       if (!group.length) return;
-      html += `<tr><td colspan="${daysIn
+      html += `<tr><td colspan="${daysInMonth+3}" class="group-header">${role}ы</td></tr>`;
+      group.forEach(emp => {
+        let totalWorking = 0, totalIndiv = 0, totalGroup = 0;
+        let cells = '';
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const data = worklog[`${emp.id}_${dateStr}`] || {};
+          const status = data.status;
+          const inPeriod = (currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16);
+          if (status === 'working' && inPeriod) {
+            totalWorking++;
+            if (emp.role === 'Преподаватель') { totalIndiv += data.indiv||0; totalGroup += data.group_total||0; }
+          }
+          let cls = 'day-cell';
+          if (status) cls += ' ' + (STATUS_CLASSES[status] || '');
+          if (data.comment) cls += ' has-comment';
+          let content = status ? STATUS_LABELS[status] || status : '';
+          let tooltip = '';
+          if (emp.role === 'Менеджер' && status === 'working') {
+            content = data.daily_sales > 0 ? '<span class="big-ruble">₽</span>' : 'Д';
+            if (data.daily_sales) tooltip = `Выручка: ${data.daily_sales} ₽`;
+          } else if (emp.role === 'Преподаватель' && status === 'working') {
+            content = `Д<br><small>${data.indiv||0}/${data.group_total||0}</small>`;
+          }
+          if (data.comment) tooltip += (tooltip?' ':'') + data.comment;
+          cells += `<td onclick="openDayModal('${emp.id}', '${dateStr}')" ${tooltip ? `title="${tooltip}"` : ''}><div class="${cls}">${content}</div></td>`;
+        }
+        const salary = getEmployeeSalary(emp);
+        html += `<tr><td class="employee-name" onclick="openSalaryModal('${emp.id}')">${emp.name}</td>`;
+        html += `<td class="summary-cell">${totalWorking}</td>`;
+        html += `<td class="summary-cell">${salary.toFixed(0)} ₽</td>`;
+        html += cells + '</tr>';
+      });
+    });
+    html += '</tbody></table>';
+    document.getElementById('scheduleTableContainer').innerHTML = html;
+  }
+
+  window.changeMonth = function(delta) {
+    currentMonth += delta;
+    if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+    else if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+    loadAllData();
+  };
+
+  // ================== МОДАЛКА ДНЯ ==================
+  window.openDayModal = function(empId, dateStr) {
+    editingEmpId = empId;
+    editingDateStr = dateStr;
+    const emp = employees.find(e => e.id === empId);
+    const data = worklog[`${empId}_${dateStr}`] || {};
+    document.getElementById('modalTitle').textContent = `${emp.name} — ${dateStr}`;
+    document.getElementById('comment').value = data.comment || '';
+
+    let statusHtml = '';
+    STATUSES.forEach(s => {
+      statusHtml += `<label style="margin-right:15px;"><input type="radio" name="dayStatus" value="${s}" ${data.status === s ? 'checked' : ''}> ${STATUS_LABELS[s]}</label>`;
+    });
+    document.getElementById('statusOptions').innerHTML = statusHtml;
+
+    let dynamicHtml = '';
+    if (emp.role === 'Менеджер') {
+      dynamicHtml = `<label>Выручка за смену: <input type="number" id="dailySales" value="${data.daily_sales||''}" style="width:150px; margin-left:10px;"></label>`;
+    } else if (emp.role === 'Преподаватель') {
+      dynamicHtml = `<label>Инд. уроки: <input type="number" id="indiv" value="${data.indiv||''}" style="width:80px; margin:0 10px;"></label>
+                     <label>Группы: <input type="number" id="groupTotal" value="${data.group_total||''}" style="width:80px;"></label>`;
+    }
+    document.getElementById('dynamicFields').innerHTML = dynamicHtml;
+    document.getElementById('dayModal').style.display = 'flex';
+  };
+
+  window.saveDay = async function() {
+    const status = document.querySelector('input[name="dayStatus"]:checked')?.value;
+    if (!status) return showToast('Выберите статус', true);
+    const comment = document.getElementById('comment').value.trim();
+    const emp = employees.find(e => e.id === editingEmpId);
+    let dailySales = 0, indiv = 0, groupTotal = 0;
+    if (emp.role === 'Менеджер') dailySales = parseFloat(document.getElementById('dailySales')?.value) || 0;
+    if (emp.role === 'Преподаватель') {
+      indiv = parseInt(document.getElementById('indiv')?.value) || 0;
+      groupTotal = parseInt(document.getElementById('groupTotal')?.value) || 0;
+    }
+    const { error } = await supabase.from('worklog').upsert({
+      emp_id: editingEmpId,
+      date: editingDateStr,
+      status, comment, daily_sales: dailySales, indiv, group_total: groupTotal
+    }, { onConflict: 'emp_id, date' });
+    if (error) return showToast('Ошибка сохранения: ' + error.message, true);
+    showToast('Сохранено');
+    closeModal('dayModal');
+    loadAllData();
+  };
+
+  // ================== МОДАЛКА ЗАРПЛАТЫ ==================
+  window.openSalaryModal = function(empId) {
+    const emp = employees.find(e => e.id === empId);
+    const params = salaryParams[empId] || {};
+    let html = `<p>Сотрудник: <b>${emp.name}</b></p>`;
+    if (emp.role === 'Менеджер') {
+      html += `<label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:150px;"></label>`;
+    } else if (emp.role === 'Управляющий') {
+      html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label><br>
+               <label>План продаж: <input type="number" id="planAmount" value="${params.plan_amount||''}" style="width:150px;"></label>`;
+    } else if (emp.role === 'Администратор') {
+      html += `<label>Норма дней: <input type="number" id="normDays" value="${params.norm_days||''}" style="width:80px;"></label>`;
+    }
+    document.getElementById('salaryModalTitle').textContent = `Параметры зарплаты`;
+    document.getElementById('salaryContent').innerHTML = html;
+    document.getElementById('salaryModal').style.display = 'flex';
+    window.salaryEmpId = empId;
+  };
+
+  window.saveSalary = async function() {
+    const empId = window.salaryEmpId;
+    const emp = employees.find(e => e.id === empId);
+    const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+    let normDays = null, planAmount = null;
+    if (emp.role === 'Менеджер') {
+      planAmount = parseFloat(document.getElementById('planAmount')?.value) || 0;
+    } else if (emp.role === 'Управляющий') {
+      normDays = parseInt(document.getElementById('normDays')?.value) || 22;
+      planAmount = parseFloat(document.getElementById('planAmount')?.value) || 0;
+    } else if (emp.role === 'Администратор') {
+      normDays = parseInt(document.getElementById('normDays')?.value) || 22;
+    }
+    const { error } = await supabase.from('salary_params').upsert({
+      emp_id: empId, month: monthStr, norm_days: normDays, plan_amount: planAmount
+    }, { onConflict: 'emp_id, month' });
+    if (error) return showToast('Ошибка: ' + error.message, true);
+    showToast('Параметры сохранены');
+    closeModal('salaryModal');
+    loadAllData();
+  };
+
+  // ================== ЭКСПОРТ ==================
+  window.exportToExcel = function() {
+    const table = document.querySelector('.schedule-container table');
+    if (!table) return showToast('Нет данных', true);
+    const wb = XLSX.utils.table_to_book(table, { sheet: 'График' });
+    XLSX.writeFile(wb, `График_${currentYear}-${String(currentMonth).padStart(2,'0')}.xlsx`);
+    showToast('Excel скачан');
+  };
+
+  window.copyToGoogleSheet = function() {
+    showToast('Функция в разработке');
+  };
+
+  // ================== ИНИЦИАЛИЗАЦИЯ ==================
+  document.getElementById('periodBtns').addEventListener('click', (e) => {
+    if (e.target.classList.contains('period-btn')) {
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+      e.target.classList.add('active');
+      currentPeriod = e.target.dataset.period;
+      renderTable();
+    }
+  });
+  document.getElementById('empToggle').addEventListener('click', () => {
+    const list = document.getElementById('empList');
+    list.style.display = list.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#employeeDropdown')) document.getElementById('empList').style.display = 'none';
+  });
+
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth() + 1;
+  loadAllData();
+</script>
+</body>
+</html>
