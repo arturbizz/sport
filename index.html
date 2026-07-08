@@ -227,12 +227,16 @@
   </div>
 
   <script>
+    // Всё обёрнуто в немедленно вызываемую функцию, чтобы избежать конфликтов имён
     (function() {
-      // Конфигурация Supabase
+      // Конфигурация Supabase (твои ключи)
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-      const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      
+      // Создаём клиент Supabase ОДИН раз
+      const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+      // Глобальные переменные приложения
       let employees = [], worklog = {}, salaryParams = {};
       let currentYear, currentMonth, currentPeriod = 'full';
       let selectedIds = new Set();
@@ -241,6 +245,7 @@
       const STATUS_LABELS = { working: 'Д', dayoff: 'В', sick: 'Б', vacation: 'О', leave: 'От' };
       const STATUS_CLASSES = { working: 'working', dayoff: 'dayoff', sick: 'sick', vacation: 'vacation', leave: 'leave' };
 
+      // Функции уведомлений и модалок
       function showToast(msg, err=false) {
         const t = document.createElement('div'); t.className = 'toast-center';
         t.innerHTML = `<div class="toast-content" style="background:${err?'#ef4444':'#0f172a'}">${msg}</div>`;
@@ -248,14 +253,15 @@
       }
       function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
+      // Загрузка данных из Supabase
       async function loadData() {
         document.getElementById('errorContainer').innerHTML = '';
         try {
           const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
           const [empRes, logRes, salRes] = await Promise.all([
-            supabaseClient.from('employees').select('*'),
-            supabaseClient.from('worklog').select('*').like('date', `${monthStr}%`),
-            supabaseClient.from('salary_params').select('*').eq('month', monthStr)
+            db.from('employees').select('*'),
+            db.from('worklog').select('*').like('date', `${monthStr}%`),
+            db.from('salary_params').select('*').eq('month', monthStr)
           ]);
           if (empRes.error) throw new Error('Ошибка загрузки сотрудников: ' + empRes.error.message);
           if (logRes.error) throw new Error('Ошибка загрузки журнала: ' + logRes.error.message);
@@ -273,6 +279,7 @@
         }
       }
 
+      // Чекбоксы сотрудников
       function renderCheckboxes() {
         document.getElementById('empCheckboxes').innerHTML = employees.map(e => `
           <label style="display:block; margin:0.3rem 0; cursor:pointer; font-weight:500;">
@@ -288,6 +295,7 @@
         });
       }
 
+      // Вспомогательные функции расчёта
       function getManagerNormDays(y, m) {
         const days = new Date(y, m, 0).getDate();
         let cnt = 0;
@@ -344,6 +352,7 @@
         return 0;
       }
 
+      // Отрисовка таблицы
       function renderTable() {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1).toLocaleDateString('ru',{month:'long',year:'numeric'});
@@ -392,7 +401,7 @@
         html += '</tbody></table>';
         document.getElementById('scheduleTableContainer').innerHTML = html;
 
-        // Навешиваем обработчики кликов на ячейки и имена
+        // Навешиваем обработчики
         document.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', function() {
             const empId = this.dataset.empid;
@@ -408,6 +417,7 @@
         });
       }
 
+      // Переключение месяцев
       window.changeMonth = function(delta) {
         currentMonth += delta;
         if (currentMonth < 1) { currentMonth=12; currentYear--; }
@@ -415,6 +425,7 @@
         loadData();
       };
 
+      // Модалка дня
       function openDayModal(empId, dateStr) {
         const emp = employees.find(e=>e.id===empId);
         if (!emp) return;
@@ -444,7 +455,7 @@
           indiv = parseInt(document.getElementById('indiv')?.value)||0;
           groupTotal = parseInt(document.getElementById('groupTotal')?.value)||0;
         }
-        const {error} = await supabaseClient.from('worklog').upsert({
+        const {error} = await db.from('worklog').upsert({
           emp_id: window._editEmpId,
           date: window._editDate,
           status, comment, daily_sales: dailySales, indiv, group_total: groupTotal
@@ -455,6 +466,7 @@
         loadData();
       }
 
+      // Модалка зарплаты
       function openSalaryModal(empId) {
         const emp = employees.find(e=>e.id===empId);
         if (!emp) return;
@@ -478,7 +490,7 @@
           normDays = parseInt(document.getElementById('normDays')?.value)||22;
           planAmount = parseFloat(document.getElementById('planAmount')?.value)||0;
         } else if (emp.role==='Администратор') normDays = parseInt(document.getElementById('normDays')?.value)||22;
-        const {error} = await supabaseClient.from('salary_params').upsert({
+        const {error} = await db.from('salary_params').upsert({
           emp_id: window._salaryEmpId, month: monthStr, norm_days: normDays, plan_amount: planAmount
         }, {onConflict: 'emp_id, month'});
         if (error) return showToast('Ошибка: '+error.message, true);
@@ -495,7 +507,7 @@
         showToast('Excel скачан');
       }
 
-      // Привязка событий
+      // Привязка событий к кнопкам
       document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
       document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
       document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
@@ -526,7 +538,7 @@
         }
       });
 
-      // Инициализация
+      // Старт
       const now = new Date();
       currentYear = now.getFullYear();
       currentMonth = now.getMonth() + 1;
