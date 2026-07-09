@@ -10,15 +10,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --accent: #ff6b6b;
+      --accent: #0fb9b1;
+      --accent-light: #e0f7f5;
       --bg: #fef9f0;
       --surface: rgba(255,255,255,0.85);
       --text: #2d3436;
       --text-light: #636e72;
-      --border: #e0e0e0;
+      --border: #d0e0e0;
       --critical: #e74c3c;
-      --high: #e67e22;
-      --medium: #f1c40f;
+      --high: #f39c12;
+      --medium: #3498db;
       --low: #2ecc71;
       --idea: #9b59b6;
     }
@@ -33,7 +34,7 @@
     }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: linear-gradient(135deg, #ffe0f0 0%, #fefce8 50%, #e0f0ff 100%);
+      background: linear-gradient(135deg, #e0f7f5 0%, #fefce8 50%, #e8f0fe 100%);
       color: var(--text);
       padding: 1.5rem;
       min-height: 100vh;
@@ -50,7 +51,7 @@
     .note {
       position: absolute;
       font-size: 2rem;
-      color: rgba(255,107,107,0.15);
+      color: rgba(15,185,177,0.15);
       animation: floatNote 10s infinite ease-in-out;
     }
     .note::before { content: '♪'; }
@@ -59,7 +60,7 @@
     .clef {
       position: absolute;
       font-size: 5rem;
-      color: rgba(249,202,36,0.15);
+      color: rgba(52,152,219,0.1);
       animation: pulse 6s infinite;
     }
     .clef::before { content: '𝄞'; }
@@ -81,7 +82,7 @@
       backdrop-filter: blur(10px);
       border-radius: 24px;
       padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
       border: 1px solid rgba(255,255,255,0.6);
     }
     .header {
@@ -89,15 +90,15 @@
       margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
     }
     .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-    h1 { font-size: 2rem; font-weight: 700; color: #ff4d6d; }
+    h1 { font-size: 2rem; font-weight: 700; color: #0fb9b1; }
     .btn {
       border: none; padding: 0.6rem 1.3rem; border-radius: 14px;
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
-      background: linear-gradient(135deg, #ff4d6d, #ff6b6b);
-      color: white; box-shadow: 0 6px 12px rgba(255,77,109,0.3);
+      background: linear-gradient(135deg, #55efc4, #0fb9b1);
+      color: white; box-shadow: 0 4px 8px rgba(15,185,177,0.2);
     }
-    .btn:hover { box-shadow: 0 10px 20px rgba(255,77,109,0.5); transform: translateY(-2px); }
+    .btn:hover { box-shadow: 0 8px 20px rgba(15,185,177,0.4); transform: translateY(-2px); }
     .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
     .btn-outline:hover { background: var(--accent); color: white; }
     .btn:disabled { opacity: 0.5; cursor: default; }
@@ -110,12 +111,13 @@
       padding: 0.4rem 1rem; border-radius: 20px;
       border: 1px solid var(--border); background: white;
       cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
+      color: var(--text);
     }
     .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
     .employee-filter {
       padding: 0.4rem 1rem; border-radius: 20px;
       border: 1px solid var(--border); font-size: 0.8rem; background: white;
-      cursor: pointer; width: 170px; min-width: 140px; /* компактная ширина */
+      cursor: pointer; width: 170px; min-width: 140px;
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 0.8rem center;
@@ -127,13 +129,13 @@
       gap: 1rem;
     }
     .task-card {
-      background: white; border: 2px solid #ffe0e0;
+      background: white; border: 2px solid #d0f0ee;
       border-radius: 20px; padding: 1.2rem;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.03);
       transition: all 0.3s; display: flex; flex-direction: column; gap: 0.5rem;
       position: relative; overflow: hidden;
     }
-    .task-card:hover { border-color: #ff6b6b; box-shadow: 0 12px 25px rgba(255,107,107,0.2); transform: translateY(-3px); }
+    .task-card:hover { border-color: var(--accent); box-shadow: 0 12px 25px rgba(15,185,177,0.15); transform: translateY(-3px); }
     .task-card.critical-overdue {
       animation: shake 0.5s infinite, glowRed 1s infinite alternate;
       border-color: var(--critical);
@@ -149,7 +151,7 @@
       0% { box-shadow: 0 0 5px red; }
       100% { box-shadow: 0 0 20px red; }
     }
-    .task-title { font-weight: 700; font-size: 1.1rem; color: #ff4d6d; }
+    .task-title { font-weight: 700; font-size: 1.1rem; color: #2d3436; }
     .task-meta { font-size: 0.8rem; color: var(--text-light); display: flex; gap: 1rem; flex-wrap: wrap; }
     .badge {
       display: inline-block; padding: 0.25rem 0.7rem; border-radius: 12px;
@@ -182,14 +184,14 @@
     }
 
     .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
       backdrop-filter: blur(4px); display: flex;
       align-items: center; justify-content: center; z-index: 1000;
     }
     .modal {
       background: white; border-radius: 24px; padding: 2rem;
       max-width: 500px; width: 90%;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15);
       animation: slideUp 0.2s ease-out;
     }
     @keyframes slideUp {
@@ -202,6 +204,7 @@
       font-size: 0.9rem; font-family: inherit;
     }
 
+    /* Мультиселект (не закрывается при выборе) */
     .multi-select {
       position: relative; margin: 0.5rem 0;
     }
@@ -210,11 +213,13 @@
       border-radius: 10px; background: white; cursor: pointer;
       display: flex; align-items: center; justify-content: space-between;
       min-height: 42px; font-size: 0.9rem; color: var(--text);
+      transition: border-color 0.2s;
     }
+    .multi-select-trigger:hover { border-color: var(--accent); }
     .multi-select-dropdown {
       position: absolute; top: 100%; left: 0; right: 0;
       background: white; border: 1px solid var(--border);
-      border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      border-radius: 10px; box-shadow: 0 8px 20px rgba(0,0,0,0.08);
       z-index: 10; display: none; max-height: 200px; overflow-y: auto;
     }
     .multi-select-dropdown.open { display: block; }
@@ -222,7 +227,7 @@
       padding: 0.5rem 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
       border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;
     }
-    .multi-select-item:hover { background: #fff5f5; }
+    .multi-select-item:hover { background: #e0f7f5; }
     .multi-select-item input[type="checkbox"] { 
       accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; 
     }
@@ -272,25 +277,36 @@
         <label><input type="radio" name="taskType" value="idea" id="typeIdea"> Идея</label>
         <label><input type="radio" name="taskType" value="task" id="typeTask" checked> Задача</label>
       </div>
-      <div id="prioritySection">
-        <select id="taskPriority">
-          <option value="low">Низкий (раз в неделю)</option>
-          <option value="medium" selected>Средний (раз в 2 дня)</option>
-          <option value="high">Срочный (каждый день)</option>
-          <option value="critical">Суперсрочный (каждый час)</option>
+      <!-- Блок для Идеи -->
+      <div id="ideaSection" style="display:none;">
+        <select id="ideaType">
+          <option value="super">Суперидея</option>
+          <option value="think">На подумать</option>
+          <option value="future">На будущее</option>
         </select>
       </div>
-      <div class="multi-select" id="multiSelect">
-        <div class="multi-select-trigger" id="multiTrigger">Выберите ответственных</div>
-        <div class="multi-select-dropdown" id="multiDropdown"></div>
+      <!-- Блок для Задачи -->
+      <div id="taskSection">
+        <div id="prioritySection">
+          <select id="taskPriority">
+            <option value="low">Низкий (раз в неделю)</option>
+            <option value="medium" selected>Средний (раз в 2 дня)</option>
+            <option value="high">Срочный (каждый день)</option>
+            <option value="critical">Суперсрочный (каждый час)</option>
+          </select>
+        </div>
+        <div class="multi-select" id="multiSelect">
+          <div class="multi-select-trigger" id="multiTrigger">Выберите ответственных</div>
+          <div class="multi-select-dropdown" id="multiDropdown"></div>
+        </div>
+        <input type="date" id="taskDueDate" placeholder="Дата завершения">
+        <select id="taskStatus">
+          <option value="in_progress">В работе</option>
+          <option value="clarifying">Уточняю детали</option>
+          <option value="need_help">Нужна помощь</option>
+          <option value="completed">Выполнено</option>
+        </select>
       </div>
-      <input type="date" id="taskDueDate" placeholder="Дата завершения">
-      <select id="taskStatus">
-        <option value="in_progress">В работе</option>
-        <option value="clarifying">Уточняю детали</option>
-        <option value="need_help">Нужна помощь</option>
-        <option value="completed">Выполнено</option>
-      </select>
       <textarea id="taskComment" rows="2" placeholder="Комментарий"></textarea>
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
         <button class="btn" id="saveTaskBtn">Сохранить</button>
@@ -395,7 +411,6 @@
             </label>
           `).join('');
 
-          // Разрешаем множественный выбор (без сброса)
           multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', updateMultiTrigger);
           });
@@ -408,9 +423,12 @@
             const dropdown = getEl('multiDropdown');
             if (dropdown) dropdown.classList.toggle('open');
           });
-          document.addEventListener('click', () => {
-            const dropdown = getEl('multiDropdown');
-            if (dropdown) dropdown.classList.remove('open');
+          // Не закрываем при клике по самому dropdown, только если клик вне
+          document.addEventListener('click', (e) => {
+            if (!e.target.closest('#multiSelect')) {
+              const dropdown = getEl('multiDropdown');
+              if (dropdown) dropdown.classList.remove('open');
+            }
           });
         }
       }
@@ -431,10 +449,6 @@
         if (normEmail(task.created_by) === normEmail(currentUserEmail)) return true;
         if (currentEmployee && taskAssigneeIds(task).includes(currentEmployee.id)) return true;
         return false;
-      }
-
-      function canCompleteTask(task) {
-        return canEditTask(task);
       }
 
       function renderFilters() {
@@ -464,8 +478,8 @@
           const statusLabels = {
             in_progress: 'В работе', clarifying: 'Уточняю детали', need_help: 'Нужна помощь', completed: 'Выполнено'
           };
-          const priorityLabels = { idea: 'Идея', low: 'Низкий', medium: 'Средний', high: 'Срочный', critical: 'Суперсрочно' };
-          const priorityColors = { idea: 'var(--idea)', low: 'var(--low)', medium: 'var(--medium)', high: 'var(--high)', critical: 'var(--critical)' };
+          const priorityLabels = { super: 'Суперидея', think: 'На подумать', future: 'На будущее', low: 'Низкий', medium: 'Средний', high: 'Срочный', critical: 'Суперсрочно' };
+          const priorityColors = { super: '#f39c12', think: '#3498db', future: '#2ecc71', low: '#2ecc71', medium: '#3498db', high: '#f39c12', critical: 'var(--critical)' };
           const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
           const isCriticalOverdue = isOverdue && task.priority === 'critical';
           const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
@@ -481,7 +495,7 @@
             <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
             <div class="task-title">${task.title}</div>
             <div style="font-size:0.8rem; color:var(--text-light);">
-              <span class="priority-dot" style="background:${priorityColors[task.priority]}"></span>${priorityLabels[task.priority]}
+              <span class="priority-dot" style="background:${priorityColors[task.priority] || '#9b59b6'}"></span>${priorityLabels[task.priority] || task.priority}
             </div>
             ${task.description ? `<div class="text-collapsed task-desc">${task.description}</div>` : ''}
             <div class="task-meta">
@@ -536,24 +550,27 @@
         getEl('modalTitle').textContent = 'Редактирование задачи';
         getEl('taskTitle').value = task.title;
         getEl('taskDescription').value = task.description || '';
-        getEl('taskDueDate').value = task.due_date || '';
-        getEl('taskStatus').value = task.status;
         getEl('taskComment').value = task.comment || '';
-        const isIdea = task.priority === 'idea';
+
+        const isIdea = ['super','think','future'].includes(task.priority);
         getEl('typeIdea').checked = isIdea;
         getEl('typeTask').checked = !isIdea;
-        // Скрываем/показываем связанные поля
-        document.getElementById('prioritySection').style.display = isIdea ? 'none' : 'block';
-        getEl('taskDueDate').parentElement.style.display = isIdea ? 'none' : '';
-        getEl('taskStatus').parentElement.style.display = isIdea ? 'none' : '';
-        if (!isIdea) {
+        if (isIdea) {
+          document.getElementById('ideaSection').style.display = 'block';
+          document.getElementById('taskSection').style.display = 'none';
+          getEl('ideaType').value = task.priority || 'think';
+        } else {
+          document.getElementById('ideaSection').style.display = 'none';
+          document.getElementById('taskSection').style.display = 'block';
           getEl('taskPriority').value = task.priority || 'medium';
+          getEl('taskDueDate').value = task.due_date || '';
+          getEl('taskStatus').value = task.status;
+          const assignedIds = taskAssigneeIds(task);
+          document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
+            cb.checked = assignedIds.includes(cb.value);
+          });
+          updateMultiTrigger();
         }
-        const assignedIds = taskAssigneeIds(task);
-        document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
-          cb.checked = assignedIds.includes(cb.value);
-        });
-        updateMultiTrigger();
         const deleteBtn = getEl('deleteTaskBtn');
         if (deleteBtn) deleteBtn.style.display = (normEmail(currentUserEmail) === normEmail(OWNER_EMAIL)) ? 'inline-block' : 'none';
         getEl('taskModal').dataset.taskId = task.id;
@@ -564,16 +581,24 @@
         const title = getEl('taskTitle').value.trim();
         if (!title) { await customAlert('Введите название задачи'); return; }
         const isIdea = getEl('typeIdea').checked;
-        const priority = isIdea ? 'idea' : getEl('taskPriority').value;
-        const checkedBoxes = [...document.querySelectorAll('#multiDropdown input:checked')];
-        const assigneeIds = checkedBoxes.map(cb => cb.value);
+        let priority, assigneeIds = [], due_date = null, status = 'in_progress';
+
+        if (isIdea) {
+          priority = getEl('ideaType').value;
+        } else {
+          priority = getEl('taskPriority').value;
+          const checkedBoxes = [...document.querySelectorAll('#multiDropdown input:checked')];
+          assigneeIds = checkedBoxes.map(cb => cb.value);
+          due_date = getEl('taskDueDate').value || null;
+          status = getEl('taskStatus').value;
+        }
 
         const taskData = {
           title,
           description: getEl('taskDescription').value.trim(),
           assignee_ids: assigneeIds,
-          due_date: isIdea ? null : (getEl('taskDueDate').value || null),
-          status: isIdea ? 'in_progress' : getEl('taskStatus').value, // идея всегда в работе
+          due_date: due_date,
+          status: status,
           comment: getEl('taskComment').value.trim(),
           priority,
           created_by: currentUserEmail
@@ -585,10 +610,6 @@
           const task = tasks.find(t => t.id == taskId);
           if (!task || !canEditTask(task)) {
             await customAlert('Недостаточно прав для редактирования');
-            return;
-          }
-          if (taskData.status === 'completed' && !canCompleteTask(task)) {
-            await customAlert('Вы не можете закрыть эту задачу');
             return;
           }
           const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
@@ -616,8 +637,8 @@
         });
       }
       function createConfetti() {
-        const colors = ['#ff4d6d','#f9ca24','#55efc4','#a29bfe','#ff9a9e','#43e97b'];
-        for (let i = 0; i < 40; i++) {
+        const colors = ['#55efc4','#f9ca24','#0fb9b1','#3498db','#2ecc71','#f39c12'];
+        for (let i = 0; i < 50; i++) {
           const piece = document.createElement('div');
           piece.className = 'confetti-piece';
           piece.style.background = colors[Math.floor(Math.random() * colors.length)];
@@ -628,110 +649,4 @@
           document.body.appendChild(piece);
           setTimeout(() => piece.remove(), 800);
         }
-      }
-      function createPopParticles() {
-        for (let i=0; i<10; i++) {
-          const p = document.createElement('div');
-          p.className = 'pop-particle';
-          p.style.left = '50%';
-          p.style.top = '30%';
-          p.style.setProperty('--px', (Math.random()*80-40)+'px');
-          p.style.setProperty('--py', (Math.random()*80-40)+'px');
-          document.body.appendChild(p);
-          setTimeout(() => p.remove(), 500);
-        }
-      }
-
-      // Обработчики кнопок
-      getEl('addTaskBtn').addEventListener('click', () => {
-        getEl('modalTitle').textContent = 'Новая задача';
-        getEl('taskTitle').value = '';
-        getEl('taskDescription').value = '';
-        getEl('taskDueDate').value = '';
-        getEl('taskComment').value = '';
-        getEl('taskStatus').value = 'in_progress';
-        getEl('typeTask').checked = true;
-        getEl('typeIdea').checked = false;
-        document.getElementById('prioritySection').style.display = 'block';
-        getEl('taskDueDate').parentElement.style.display = '';
-        getEl('taskStatus').parentElement.style.display = '';
-        getEl('taskPriority').value = 'medium';
-        const deleteBtn = getEl('deleteTaskBtn');
-        if (deleteBtn) deleteBtn.style.display = 'none';
-        document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
-        updateMultiTrigger();
-        delete getEl('taskModal').dataset.taskId;
-        getEl('taskModal').style.display = 'flex';
-      });
-
-      getEl('cancelTaskBtn').addEventListener('click', () => { getEl('taskModal').style.display = 'none'; });
-      getEl('saveTaskBtn').addEventListener('click', saveTask);
-      getEl('deleteTaskBtn').addEventListener('click', async () => {
-        const taskId = getEl('taskModal').dataset.taskId;
-        if (!taskId) return;
-        const confirmed = await customConfirm('Удалить задачу?');
-        if (confirmed) {
-          await _supabase.from('tasks').delete().eq('id', taskId);
-          getEl('taskModal').style.display = 'none';
-          showBalloonAndConfetti();
-          await loadTasks();
-          renderTasks();
-        }
-      });
-
-      getEl('sendHelpBtn').addEventListener('click', async () => {
-        const taskId = getEl('helpModal').dataset.taskId;
-        const comment = getEl('helpComment').value.trim();
-        if (!comment) { await customAlert('Введите комментарий'); return; }
-        const { error } = await _supabase.from('tasks').update({ help_offered: true, help_comment: comment, help_by: currentUserEmail }).eq('id', taskId);
-        if (error) { await customAlert('Ошибка: ' + error.message); return; }
-        getEl('helpModal').style.display = 'none';
-        getEl('helpComment').value = '';
-        showBalloonAndConfetti();
-        await loadTasks();
-        renderTasks();
-      });
-
-      getEl('cancelHelpBtn').addEventListener('click', () => { getEl('helpModal').style.display = 'none'; });
-
-      getEl('filters').addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
-          currentFilter = e.target.dataset.status;
-          renderFilters();
-          renderTasks();
-        }
-      });
-      getEl('employeeFilter').addEventListener('change', (e) => {
-        currentEmployeeFilter = e.target.value;
-        renderTasks();
-      });
-
-      // Переключение Идея/Задача
-      getEl('typeIdea').addEventListener('change', () => {
-        document.getElementById('prioritySection').style.display = 'none';
-        getEl('taskDueDate').parentElement.style.display = 'none';
-        getEl('taskStatus').parentElement.style.display = 'none';
-      });
-      getEl('typeTask').addEventListener('change', () => {
-        document.getElementById('prioritySection').style.display = 'block';
-        getEl('taskDueDate').parentElement.style.display = '';
-        getEl('taskStatus').parentElement.style.display = '';
-      });
-
-      // Инициализация
-      (async () => {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) { window.location.href = 'login.html'; return; }
-        currentUserEmail = session.user.email;
-        const { data: empData } = await _supabase.from('employees').select('*').eq('email', currentUserEmail).maybeSingle();
-        currentEmployee = empData;
-        await loadEmployees();
-        await loadTasks();
-        initTasksContainerEvents();
-        renderFilters();
-        renderTasks();
-      })();
-    })();
-  </script>
-</body>
-</html>
+     
