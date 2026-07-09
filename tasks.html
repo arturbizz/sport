@@ -10,18 +10,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --accent: #0fb9b1;
-      --accent-light: #e0f7f5;
+      --accent: #ff4d6d;
+      --accent2: #f9ca24;
+      --accent3: #6c5ce7;
       --bg: #fef9f0;
       --surface: rgba(255,255,255,0.85);
       --text: #2d3436;
       --text-light: #636e72;
-      --border: #d0e0e0;
+      --border: #e0e0e0;
       --critical: #e74c3c;
       --high: #f39c12;
       --medium: #3498db;
       --low: #2ecc71;
-      --idea: #9b59b6;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, .container, .task-card, .modal, .filters, .header {
@@ -34,7 +34,7 @@
     }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: linear-gradient(135deg, #e0f7f5 0%, #fefce8 50%, #e8f0fe 100%);
+      background: linear-gradient(135deg, #ffe0f0 0%, #fefce8 50%, #e0f0ff 100%);
       color: var(--text);
       padding: 1.5rem;
       min-height: 100vh;
@@ -51,7 +51,7 @@
     .note {
       position: absolute;
       font-size: 2rem;
-      color: rgba(15,185,177,0.15);
+      color: rgba(255,77,109,0.12);
       animation: floatNote 10s infinite ease-in-out;
     }
     .note::before { content: '♪'; }
@@ -60,7 +60,7 @@
     .clef {
       position: absolute;
       font-size: 5rem;
-      color: rgba(52,152,219,0.1);
+      color: rgba(249,202,36,0.12);
       animation: pulse 6s infinite;
     }
     .clef::before { content: '𝄞'; }
@@ -90,66 +90,106 @@
       margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
     }
     .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-    h1 { font-size: 2rem; font-weight: 700; color: #0fb9b1; }
-    .btn {
-      border: none; padding: 0.6rem 1.3rem; border-radius: 14px;
-      font-weight: 600; cursor: pointer; font-size: 0.9rem;
-      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
-      background: linear-gradient(135deg, #55efc4, #0fb9b1);
-      color: white; box-shadow: 0 4px 8px rgba(15,185,177,0.2);
+    h1 { font-size: 2rem; font-weight: 700; color: var(--accent); }
+
+    /* Вкладки Идеи / Задачи */
+    .tabs {
+      display: flex; gap: 1rem; margin-bottom: 1.5rem;
     }
-    .btn:hover { box-shadow: 0 8px 20px rgba(15,185,177,0.4); transform: translateY(-2px); }
+    .tab {
+      padding: 0.6rem 2rem; border-radius: 20px;
+      border: 2px solid var(--border);
+      background: white; cursor: pointer;
+      font-weight: 600; font-size: 1rem; color: var(--text-light);
+      transition: all 0.3s;
+    }
+    .tab.active {
+      background: var(--accent); color: white; border-color: var(--accent);
+    }
+    .tab:hover:not(.active) {
+      border-color: var(--accent); color: var(--accent);
+    }
+
+    /* Кнопка создать */
+    .btn {
+      border: none; padding: 0.6rem 1.5rem; border-radius: 16px;
+      font-weight: 600; cursor: pointer; font-size: 0.95rem;
+      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
+      background: linear-gradient(135deg, #ff4d6d, #f9ca24);
+      color: white; box-shadow: 0 6px 12px rgba(255,77,109,0.3);
+    }
+    .btn:hover { box-shadow: 0 10px 20px rgba(255,77,109,0.5); transform: translateY(-2px); }
     .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
     .btn-outline:hover { background: var(--accent); color: white; }
     .btn:disabled { opacity: 0.5; cursor: default; }
 
+    /* Фильтры */
     .filters {
-      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      display: flex; gap: 0.8rem; flex-wrap: wrap;
       margin-bottom: 1.5rem; align-items: center;
     }
     .filter-btn {
-      padding: 0.4rem 1rem; border-radius: 20px;
+      padding: 0.4rem 1.2rem; border-radius: 20px;
       border: 1px solid var(--border); background: white;
-      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
-      color: var(--text);
+      cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: 0.2s;
     }
     .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-    .employee-filter {
-      padding: 0.4rem 1rem; border-radius: 20px;
-      border: 1px solid var(--border); font-size: 0.8rem; background: white;
-      cursor: pointer; width: 170px; min-width: 140px;
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 0.8rem center;
-      padding-right: 2rem;
+
+    /* Кастомный фильтр по сотрудникам */
+    .emp-filter-wrap {
+      position: relative;
     }
+    .emp-filter-btn {
+      padding: 0.4rem 1.5rem 0.4rem 1rem; border-radius: 20px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.85rem; font-weight: 500;
+      display: flex; align-items: center; gap: 0.5rem;
+      transition: 0.2s; white-space: nowrap;
+    }
+    .emp-filter-btn:hover { border-color: var(--accent); }
+    .emp-filter-btn::after {
+      content: '▼'; font-size: 0.6rem; color: var(--text-light);
+    }
+    .emp-dropdown {
+      position: absolute; top: 100%; left: 0; margin-top: 4px;
+      background: white; border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 20; min-width: 220px; display: none;
+      padding: 0.5rem; animation: fadeIn 0.2s ease;
+    }
+    .emp-dropdown.open { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .emp-dropdown-item {
+      padding: 0.4rem 0.8rem; cursor: pointer;
+      border-radius: 8px; font-size: 0.85rem; transition: 0.1s;
+    }
+    .emp-dropdown-item:hover { background: #ffe0e0; }
+    .emp-dropdown-item.active { background: var(--accent); color: white; }
 
     .tasks-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
       gap: 1rem;
     }
     .task-card {
-      background: white; border: 2px solid #d0f0ee;
+      background: white; border: 2px solid #ffe0e0;
       border-radius: 20px; padding: 1.2rem;
       box-shadow: 0 6px 15px rgba(0,0,0,0.03);
       transition: all 0.3s; display: flex; flex-direction: column; gap: 0.5rem;
       position: relative; overflow: hidden;
     }
-    .task-card:hover { border-color: var(--accent); box-shadow: 0 12px 25px rgba(15,185,177,0.15); transform: translateY(-3px); }
+    .task-card:hover { border-color: var(--accent); box-shadow: 0 12px 25px rgba(255,77,109,0.15); transform: translateY(-3px); }
     .task-card.critical-overdue {
       animation: shake 0.5s infinite, glowRed 1s infinite alternate;
       border-color: var(--critical);
     }
     @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-3px); }
-      50% { transform: translateX(3px); }
-      75% { transform: translateX(-3px); }
-      100% { transform: translateX(0); }
+      0% { transform: translateX(0); } 25% { transform: translateX(-3px); } 50% { transform: translateX(3px); } 75% { transform: translateX(-3px); } 100% { transform: translateX(0); }
     }
     @keyframes glowRed {
-      0% { box-shadow: 0 0 5px red; }
-      100% { box-shadow: 0 0 20px red; }
+      0% { box-shadow: 0 0 5px red; } 100% { box-shadow: 0 0 20px red; }
     }
     .task-title { font-weight: 700; font-size: 1.1rem; color: #2d3436; }
     .task-meta { font-size: 0.8rem; color: var(--text-light); display: flex; gap: 1rem; flex-wrap: wrap; }
@@ -161,10 +201,7 @@
     .badge.clarifying { background: #fef3c7; color: #92400e; }
     .badge.need_help { background: #fee2e2; color: #991b1b; }
     .badge.completed { background: #e0e7ff; color: #3730a3; }
-    .priority-dot {
-      width: 10px; height: 10px; border-radius: 50%;
-      display: inline-block; margin-right: 0.3rem;
-    }
+    .priority-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 0.3rem; }
     .help-indicator {
       position: absolute; top: -5px; right: -5px;
       width: 20px; height: 20px; border-radius: 50%;
@@ -173,11 +210,8 @@
     }
     .help-indicator.show { display: block; }
     @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
+      0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); }
     }
-
     .text-collapsed {
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden; cursor: pointer; transition: all 0.3s;
@@ -195,19 +229,14 @@
       animation: slideUp 0.2s ease-out;
     }
     @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }
     }
     input, textarea, select {
       width: 100%; padding: 0.6rem; margin: 0.5rem 0;
       border: 1px solid var(--border); border-radius: 10px;
       font-size: 0.9rem; font-family: inherit;
     }
-
-    /* Мультиселект (не закрывается при выборе) */
-    .multi-select {
-      position: relative; margin: 0.5rem 0;
-    }
+    .multi-select { position: relative; margin: 0.5rem 0; }
     .multi-select-trigger {
       padding: 0.6rem; border: 1px solid var(--border);
       border-radius: 10px; background: white; cursor: pointer;
@@ -227,82 +256,77 @@
       padding: 0.5rem 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
       border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;
     }
-    .multi-select-item:hover { background: #e0f7f5; }
-    .multi-select-item input[type="checkbox"] { 
-      accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; 
-    }
-
-    .alert-modal .btn { margin-top: 1rem; }
-    .alert-modal p { margin: 1rem 0; }
-
-    .radio-group { display: flex; gap: 1rem; margin: 0.5rem 0; align-items: center; }
+    .multi-select-item:hover { background: #ffe0e0; }
+    .multi-select-item input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; }
   </style>
 </head>
 <body>
   <div class="music-bg">
-    <div class="note" style="top:10%; left:5%; animation-delay:0s;"></div>
-    <div class="note two" style="top:25%; right:10%; animation-delay:2s;"></div>
-    <div class="note three" style="bottom:20%; left:15%; animation-delay:4s;"></div>
-    <div class="clef" style="top:60%; left:50%; transform:translateX(-50%);"></div>
+    <div class="note" style="top:10%; left:5%;"></div>
+    <div class="note two" style="top:25%; right:10%;"></div>
+    <div class="note three" style="bottom:20%; left:15%;"></div>
+    <div class="clef" style="top:60%; left:50%;"></div>
   </div>
 
   <div class="container">
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Управление задачами</h1>
-      <button class="btn" id="addTaskBtn">+ Новая задача</button>
     </div>
 
-    <div class="filters" id="filters">
-      <button class="filter-btn active" data-status="all">Все</button>
-      <button class="filter-btn" data-status="in_progress">В работе</button>
-      <button class="filter-btn" data-status="clarifying">Уточняю</button>
-      <button class="filter-btn" data-status="need_help">Нужна помощь</button>
-      <button class="filter-btn" data-status="completed">Выполнено</button>
-      <select class="employee-filter" id="employeeFilter">
-        <option value="">Все сотрудники</option>
-      </select>
+    <div class="tabs">
+      <div class="tab active" data-tab="idea">Идеи</div>
+      <div class="tab" data-tab="task">Задачи</div>
+      <button class="btn" id="addBtn" style="margin-left:auto;">+ Новая идея</button>
+    </div>
+
+    <div class="filters">
+      <div class="emp-filter-wrap" id="empFilterWrap">
+        <div class="emp-filter-btn" id="empFilterBtn">Все сотрудники</div>
+        <div class="emp-dropdown" id="empDropdown">
+          <div class="emp-dropdown-item active" data-id="">Все сотрудники</div>
+        </div>
+      </div>
+      <div id="statusFilters" style="display:none;">
+        <button class="filter-btn active" data-status="all">Все</button>
+        <button class="filter-btn" data-status="in_progress">В работе</button>
+        <button class="filter-btn" data-status="clarifying">Уточняю</button>
+        <button class="filter-btn" data-status="need_help">Нужна помощь</button>
+        <button class="filter-btn" data-status="completed">Выполнено</button>
+      </div>
     </div>
 
     <div id="tasksContainer" class="tasks-grid"></div>
   </div>
 
-  <!-- Модалка задачи -->
+  <!-- Модалка задачи/идеи -->
   <div class="modal-overlay" id="taskModal" style="display:none;">
     <div class="modal">
       <h2 id="modalTitle">Новая задача</h2>
-      <input type="text" id="taskTitle" placeholder="Название задачи">
-      <textarea id="taskDescription" rows="3" placeholder="Описание задачи"></textarea>
-      <div class="radio-group">
-        <label><input type="radio" name="taskType" value="idea" id="typeIdea"> Идея</label>
-        <label><input type="radio" name="taskType" value="task" id="typeTask" checked> Задача</label>
-      </div>
-      <!-- Блок для Идеи -->
-      <div id="ideaSection" style="display:none;">
+      <input type="text" id="taskTitle" placeholder="Название">
+      <textarea id="taskDescription" rows="3" placeholder="Описание"></textarea>
+      <div id="ideaFields" style="display:none;">
         <select id="ideaType">
           <option value="super">Суперидея</option>
           <option value="think">На подумать</option>
           <option value="future">На будущее</option>
         </select>
       </div>
-      <!-- Блок для Задачи -->
-      <div id="taskSection">
-        <div id="prioritySection">
-          <select id="taskPriority">
-            <option value="low">Низкий (раз в неделю)</option>
-            <option value="medium" selected>Средний (раз в 2 дня)</option>
-            <option value="high">Срочный (каждый день)</option>
-            <option value="critical">Суперсрочный (каждый час)</option>
-          </select>
-        </div>
+      <div id="taskFields">
+        <select id="taskPriority">
+          <option value="low">Низкий</option>
+          <option value="medium" selected>Средний</option>
+          <option value="high">Срочный</option>
+          <option value="critical">Суперсрочный</option>
+        </select>
         <div class="multi-select" id="multiSelect">
           <div class="multi-select-trigger" id="multiTrigger">Выберите ответственных</div>
           <div class="multi-select-dropdown" id="multiDropdown"></div>
         </div>
-        <input type="date" id="taskDueDate" placeholder="Дата завершения">
+        <input type="date" id="taskDueDate">
         <select id="taskStatus">
           <option value="in_progress">В работе</option>
-          <option value="clarifying">Уточняю детали</option>
+          <option value="clarifying">Уточняю</option>
           <option value="need_help">Нужна помощь</option>
           <option value="completed">Выполнено</option>
         </select>
@@ -320,28 +344,9 @@
   <div class="modal-overlay" id="helpModal" style="display:none;">
     <div class="modal">
       <h2>Предложить помощь</h2>
-      <textarea id="helpComment" rows="3" placeholder="Ваше предложение или решение"></textarea>
+      <textarea id="helpComment" rows="3" placeholder="Ваше предложение"></textarea>
       <button class="btn" id="sendHelpBtn">Отправить</button>
       <button class="btn btn-outline" id="cancelHelpBtn" style="margin-left:0.5rem;">Отмена</button>
-    </div>
-  </div>
-
-  <!-- Кастомный алерт -->
-  <div class="modal-overlay" id="alertModal" style="display:none;">
-    <div class="modal alert-modal" style="max-width:350px; text-align:center;">
-      <p id="alertMessage"></p>
-      <button class="btn" id="alertOkBtn">ОК</button>
-    </div>
-  </div>
-
-  <!-- Кастомный confirm -->
-  <div class="modal-overlay" id="confirmModal" style="display:none;">
-    <div class="modal alert-modal" style="max-width:350px; text-align:center;">
-      <p id="confirmMessage"></p>
-      <div style="display:flex; gap:1rem; justify-content:center; margin-top:1rem;">
-        <button class="btn" id="confirmYesBtn">Да</button>
-        <button class="btn btn-outline" id="confirmNoBtn">Нет</button>
-      </div>
     </div>
   </div>
 
@@ -352,400 +357,186 @@
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const OWNER_EMAIL = 'arturgalkin.ru@mail.ru';
       let currentUserEmail = null;
-      let currentEmployee = null;
       let employees = [];
       let tasks = [];
-      let currentFilter = 'all';
+      let activeTab = 'idea';
+      let currentStatusFilter = 'all';
       let currentEmployeeFilter = '';
 
-      const ALLOWED_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
-      const SENIOR_TEACHER_NAME = 'Андрошин Сергей';
-
       function getEl(id) { return document.getElementById(id); }
-      function normEmail(e) { return (e || '').trim().toLowerCase(); }
 
-      function customAlert(msg) {
-        return new Promise(resolve => {
-          const modal = getEl('alertModal');
-          if (!modal) { alert(msg); resolve(); return; }
-          getEl('alertMessage').textContent = msg;
-          modal.style.display = 'flex';
-          getEl('alertOkBtn').onclick = () => { modal.style.display = 'none'; resolve(); };
-        });
-      }
-      function customConfirm(msg) {
-        return new Promise(resolve => {
-          const modal = getEl('confirmModal');
-          if (!modal) { resolve(confirm(msg)); return; }
-          getEl('confirmMessage').textContent = msg;
-          modal.style.display = 'flex';
-          getEl('confirmYesBtn').onclick = () => { modal.style.display = 'none'; resolve(true); };
-          getEl('confirmNoBtn').onclick = () => { modal.style.display = 'none'; resolve(false); };
-        });
-      }
-
-      function updateMultiTrigger() {
-        const checked = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => {
-          const emp = employees.find(e => e.id === cb.value);
-          return emp ? emp.name : '';
-        }).filter(Boolean);
-        const trigger = getEl('multiTrigger');
-        if (trigger) trigger.textContent = checked.length ? checked.join(', ') : 'Выберите ответственных';
+      async function loadData() {
+        await Promise.all([loadEmployees(), loadTasks()]);
+        renderEmpDropdown();
+        renderAll();
       }
 
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
-        employees = data || [];
-        const allowed = employees.filter(e => ALLOWED_ROLES.includes(e.role) || e.name === SENIOR_TEACHER_NAME);
-
-        const empFilter = getEl('employeeFilter');
-        if (empFilter) {
-          empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
-        }
-
-        const multiDropdown = getEl('multiDropdown');
-        if (multiDropdown) {
-          multiDropdown.innerHTML = allowed.map(e => `
-            <label class="multi-select-item">
-              <input type="checkbox" value="${e.id}"> ${e.name} (${e.role})
-            </label>
-          `).join('');
-
-          multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', updateMultiTrigger);
-          });
-        }
-
-        const multiTrigger = getEl('multiTrigger');
-        if (multiTrigger) {
-          multiTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const dropdown = getEl('multiDropdown');
-            if (dropdown) dropdown.classList.toggle('open');
-          });
-          // Не закрываем при клике по самому dropdown, только если клик вне
-          document.addEventListener('click', (e) => {
-            if (!e.target.closest('#multiSelect')) {
-              const dropdown = getEl('multiDropdown');
-              if (dropdown) dropdown.classList.remove('open');
-            }
-          });
-        }
+        employees = (data || []).filter(e => ['Управляющий','Менеджер','Администратор'].includes(e.role) || e.name === 'Андрошин Сергей');
       }
 
       async function loadTasks() {
-        const { data, error } = await _supabase.from('tasks').select('*').order('created_at', { ascending: false });
-        if (error) { console.error(error); return; }
+        const { data } = await _supabase.from('tasks').select('*').order('created_at', { ascending: false });
         tasks = data || [];
       }
 
-      function taskAssigneeIds(task) {
-        return Array.isArray(task.assignee_ids) ? task.assignee_ids : [];
-      }
-
-      function canEditTask(task) {
-        if (!currentUserEmail) return false;
-        if (normEmail(currentUserEmail) === normEmail(OWNER_EMAIL)) return true;
-        if (normEmail(task.created_by) === normEmail(currentUserEmail)) return true;
-        if (currentEmployee && taskAssigneeIds(task).includes(currentEmployee.id)) return true;
-        return false;
-      }
-
-      function renderFilters() {
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-          btn.classList.toggle('active', btn.dataset.status === currentFilter);
+      function renderEmpDropdown() {
+        const dropdown = getEl('empDropdown');
+        dropdown.innerHTML = `
+          <div class="emp-dropdown-item ${currentEmployeeFilter === '' ? 'active' : ''}" data-id="">Все сотрудники</div>
+          ${employees.map(e => `<div class="emp-dropdown-item ${currentEmployeeFilter === e.id ? 'active' : ''}" data-id="${e.id}">${e.name}</div>`).join('')}
+        `;
+        dropdown.querySelectorAll('.emp-dropdown-item').forEach(item => {
+          item.addEventListener('click', () => {
+            currentEmployeeFilter = item.dataset.id;
+            getEl('empFilterBtn').textContent = item.textContent.trim();
+            dropdown.classList.remove('open');
+            renderEmpDropdown();
+            renderAll();
+          });
         });
-        const empFilter = getEl('employeeFilter');
-        if (empFilter) empFilter.value = currentEmployeeFilter;
       }
 
-      function renderTasks() {
-        const container = getEl('tasksContainer');
-        if (!container) return;
+      function renderAll() {
+        const isIdea = activeTab === 'idea';
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+        getEl('addBtn').textContent = isIdea ? '+ Новая идея' : '+ Новая задача';
+        getEl('statusFilters').style.display = isIdea ? 'none' : 'flex';
 
-        let filtered = tasks;
-        if (currentFilter !== 'all') filtered = filtered.filter(t => t.status === currentFilter);
-        if (currentEmployeeFilter) filtered = filtered.filter(t => taskAssigneeIds(t).includes(currentEmployeeFilter));
+        const container = getEl('tasksContainer');
+        let filtered = tasks.filter(t => {
+          if (isIdea) return ['super','think','future'].includes(t.priority);
+          return !['super','think','future'].includes(t.priority);
+        });
+        if (!isIdea) {
+          if (currentStatusFilter !== 'all') filtered = filtered.filter(t => t.status === currentStatusFilter);
+          if (currentEmployeeFilter) filtered = filtered.filter(t => (t.assignee_ids || []).includes(currentEmployeeFilter));
+        } else {
+          if (currentEmployeeFilter) filtered = filtered.filter(t => t.created_by === employees.find(e => e.id === currentEmployeeFilter)?.email);
+        }
 
         if (!filtered.length) {
-          container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет задач</p>';
+          container.innerHTML = '<p style="color:#636e72; text-align:center; width:100%;">Нет записей</p>';
           return;
         }
 
         container.innerHTML = filtered.map(task => {
-          const assignedIds = taskAssigneeIds(task);
-          const assigneeNames = assignedIds.map(id => employees.find(e => e.id === id)?.name).filter(Boolean).join(', ') || 'Не назначен';
-          const statusLabels = {
-            in_progress: 'В работе', clarifying: 'Уточняю детали', need_help: 'Нужна помощь', completed: 'Выполнено'
-          };
-          const priorityLabels = { super: 'Суперидея', think: 'На подумать', future: 'На будущее', low: 'Низкий', medium: 'Средний', high: 'Срочный', critical: 'Суперсрочно' };
-          const priorityColors = { super: '#f39c12', think: '#3498db', future: '#2ecc71', low: '#2ecc71', medium: '#3498db', high: '#f39c12', critical: 'var(--critical)' };
-          const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
-          const isCriticalOverdue = isOverdue && task.priority === 'critical';
-          const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
+          const assigneeNames = (task.assignee_ids || []).map(id => employees.find(e => e.id === id)?.name).filter(Boolean).join(', ') || '—';
+          const priorityLabels = { super:'Суперидея', think:'На подумать', future:'На будущее', low:'Низкий', medium:'Средний', high:'Срочный', critical:'Суперсрочно' };
+          const priorityColors = { super:'#f39c12', think:'#3498db', future:'#2ecc71', low:'#2ecc71', medium:'#3498db', high:'#f39c12', critical:'var(--critical)' };
+          const statusLabels = { in_progress:'В работе', clarifying:'Уточняю', need_help:'Нужна помощь', completed:'Выполнено' };
+          const isCriticalOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed' && task.priority === 'critical';
+          const cardClass = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
 
-          const canEdit = canEditTask(task);
-          const isAssigned = !!currentEmployee && assignedIds.includes(currentEmployee.id);
-          const isCreator = normEmail(task.created_by) === normEmail(currentUserEmail);
-          const canHelp = !isCreator && !isAssigned && task.status !== 'completed';
-          const canDelete = normEmail(currentUserEmail) === normEmail(OWNER_EMAIL);
-
-          return `
-          <div class="task-card ${cardClasses}" data-id="${task.id}">
-            <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
+          return `<div class="${cardClass}" data-id="${task.id}">
+            <div class="help-indicator ${task.help_offered ? 'show' : ''}"></div>
             <div class="task-title">${task.title}</div>
-            <div style="font-size:0.8rem; color:var(--text-light);">
-              <span class="priority-dot" style="background:${priorityColors[task.priority] || '#9b59b6'}"></span>${priorityLabels[task.priority] || task.priority}
-            </div>
+            <div><span class="priority-dot" style="background:${priorityColors[task.priority] || '#9b59b6'}"></span>${priorityLabels[task.priority] || task.priority}</div>
             ${task.description ? `<div class="text-collapsed task-desc">${task.description}</div>` : ''}
-            <div class="task-meta">
-              <span>${assigneeNames}</span>
-              <span>${task.due_date || '—'}</span>
-            </div>
-            <span class="badge ${task.status}">${statusLabels[task.status]}</span>
+            <div class="task-meta"><span>${assigneeNames}</span><span>${task.due_date || '—'}</span></div>
+            ${!isIdea ? `<span class="badge ${task.status}">${statusLabels[task.status]}</span>` : ''}
             ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${task.help_comment}</div>` : ''}
             ${task.comment ? `<div class="text-collapsed task-comment">${task.comment}</div>` : ''}
-            <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
-              ${canEdit ? `<button class="btn btn-outline edit-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>` : ''}
-              ${canHelp ? `<button class="btn btn-outline help-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Предложить помощь</button>` : ''}
-              ${canDelete ? `<button class="btn btn-outline delete-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>` : ''}
+            <div style="display:flex; gap:0.3rem; margin-top:0.5rem;">
+              <button class="btn btn-outline edit-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>
+              <button class="btn btn-outline help-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Предложить помощь</button>
+              ${currentUserEmail === OWNER_EMAIL ? `<button class="btn btn-outline delete-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>` : ''}
             </div>
           </div>`;
         }).join('');
-      }
 
-      function initTasksContainerEvents() {
-        const container = getEl('tasksContainer');
-        if (!container) return;
         container.addEventListener('click', (e) => {
-          const target = e.target;
-          if (target.classList.contains('task-desc') || target.classList.contains('task-comment') || target.classList.contains('task-help')) {
-            target.classList.toggle('text-collapsed');
-          }
-          if (target.classList.contains('edit-btn')) {
-            const id = target.dataset.id;
-            const task = tasks.find(t => t.id == id);
-            if (task) openEditModal(task);
-          }
-          if (target.classList.contains('help-btn')) {
-            const id = target.dataset.id;
-            const helpModal = getEl('helpModal');
-            if (helpModal) { helpModal.dataset.taskId = id; helpModal.style.display = 'flex'; }
-          }
-          if (target.classList.contains('delete-btn')) {
-            const id = target.dataset.id;
-            customConfirm('Удалить задачу?').then(async (ok) => {
-              if (ok) {
-                await _supabase.from('tasks').delete().eq('id', id);
-                showBalloonAndConfetti();
-                await loadTasks();
-                renderTasks();
-              }
-            });
+          const t = e.target;
+          if (t.classList.contains('text-collapsed')) t.classList.toggle('text-collapsed');
+          if (t.classList.contains('edit-btn')) openEditModal(t.dataset.id);
+          if (t.classList.contains('help-btn')) openHelpModal(t.dataset.id);
+          if (t.classList.contains('delete-btn') && confirm('Удалить?')) {
+            _supabase.from('tasks').delete().eq('id', t.dataset.id).then(() => loadData().then(renderAll));
           }
         });
       }
 
-      function openEditModal(task) {
-        getEl('modalTitle').textContent = 'Редактирование задачи';
+      function openEditModal(id) {
+        const task = tasks.find(t => t.id == id);
+        if (!task) return;
+        getEl('modalTitle').textContent = 'Редактирование';
         getEl('taskTitle').value = task.title;
         getEl('taskDescription').value = task.description || '';
         getEl('taskComment').value = task.comment || '';
-
         const isIdea = ['super','think','future'].includes(task.priority);
-        getEl('typeIdea').checked = isIdea;
-        getEl('typeTask').checked = !isIdea;
+        getEl('ideaFields').style.display = isIdea ? 'block' : 'none';
+        getEl('taskFields').style.display = isIdea ? 'none' : 'block';
         if (isIdea) {
-          document.getElementById('ideaSection').style.display = 'block';
-          document.getElementById('taskSection').style.display = 'none';
-          getEl('ideaType').value = task.priority || 'think';
+          getEl('ideaType').value = task.priority;
         } else {
-          document.getElementById('ideaSection').style.display = 'none';
-          document.getElementById('taskSection').style.display = 'block';
-          getEl('taskPriority').value = task.priority || 'medium';
+          getEl('taskPriority').value = task.priority;
           getEl('taskDueDate').value = task.due_date || '';
           getEl('taskStatus').value = task.status;
-          const assignedIds = taskAssigneeIds(task);
-          document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => {
-            cb.checked = assignedIds.includes(cb.value);
-          });
-          updateMultiTrigger();
+          document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => cb.checked = (task.assignee_ids||[]).includes(cb.value));
         }
-        const deleteBtn = getEl('deleteTaskBtn');
-        if (deleteBtn) deleteBtn.style.display = (normEmail(currentUserEmail) === normEmail(OWNER_EMAIL)) ? 'inline-block' : 'none';
-        getEl('taskModal').dataset.taskId = task.id;
+        getEl('taskModal').dataset.taskId = id;
         getEl('taskModal').style.display = 'flex';
       }
 
-      async function saveTask() {
+      getEl('saveTaskBtn').addEventListener('click', async () => {
+        const isIdea = activeTab === 'idea';
         const title = getEl('taskTitle').value.trim();
-        if (!title) { await customAlert('Введите название задачи'); return; }
-        const isIdea = getEl('typeIdea').checked;
-        let priority, assigneeIds = [], due_date = null, status = 'in_progress';
-
-        if (isIdea) {
-          priority = getEl('ideaType').value;
-        } else {
-          priority = getEl('taskPriority').value;
-          const checkedBoxes = [...document.querySelectorAll('#multiDropdown input:checked')];
-          assigneeIds = checkedBoxes.map(cb => cb.value);
-          due_date = getEl('taskDueDate').value || null;
-          status = getEl('taskStatus').value;
-        }
-
+        if (!title) return;
         const taskData = {
           title,
           description: getEl('taskDescription').value.trim(),
-          assignee_ids: assigneeIds,
-          due_date: due_date,
-          status: status,
           comment: getEl('taskComment').value.trim(),
-          priority,
+          priority: isIdea ? getEl('ideaType').value : getEl('taskPriority').value,
+          assignee_ids: isIdea ? [] : [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => cb.value),
+          due_date: isIdea ? null : (getEl('taskDueDate').value || null),
+          status: isIdea ? 'in_progress' : getEl('taskStatus').value,
           created_by: currentUserEmail
         };
-
-        const taskId = getEl('taskModal').dataset.taskId;
-        let error;
-        if (taskId) {
-          const task = tasks.find(t => t.id == taskId);
-          if (!task || !canEditTask(task)) {
-            await customAlert('Недостаточно прав для редактирования');
-            return;
-          }
-          const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
-          error = updateError;
-        } else {
-          const { error: insertError } = await _supabase.from('tasks').insert([taskData]);
-          error = insertError;
-        }
-
-        if (error) { await customAlert('Ошибка: ' + error.message); return; }
+        const id = getEl('taskModal').dataset.taskId;
+        const { error } = id ? await _supabase.from('tasks').update(taskData).eq('id', id) : await _supabase.from('tasks').insert([taskData]);
+        if (error) { alert(error.message); return; }
         getEl('taskModal').style.display = 'none';
         showBalloonAndConfetti();
-        await loadTasks();
-        renderTasks();
-      }
+        await loadData();
+        renderAll();
+      });
 
-      function showBalloonAndConfetti() {
-        const balloon = document.createElement('div');
-        balloon.className = 'balloon';
-        document.body.appendChild(balloon);
-        balloon.addEventListener('animationend', () => {
-          balloon.remove();
-          createConfetti();
-          createPopParticles();
-        });
-      }
-      function createConfetti() {
-        const colors = ['#55efc4','#f9ca24','#0fb9b1','#3498db','#2ecc71','#f39c12'];
-        for (let i = 0; i < 50; i++) {
-          const piece = document.createElement('div');
-          piece.className = 'confetti-piece';
-          piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-          piece.style.left = '50%';
-          piece.style.top = '30%';
-          piece.style.setProperty('--x', (Math.random()*300-150)+'px');
-          piece.style.setProperty('--y', (Math.random()*-200-50)+'px');
-          document.body.appendChild(piece);
-          setTimeout(() => piece.remove(), 800);
-        }
-      }
-      function createPopParticles() {
-        for (let i=0; i<12; i++) {
-          const p = document.createElement('div');
-          p.className = 'pop-particle';
-          p.style.left = '50%';
-          p.style.top = '30%';
-          p.style.setProperty('--px', (Math.random()*80-40)+'px');
-          p.style.setProperty('--py', (Math.random()*80-40)+'px');
-          document.body.appendChild(p);
-          setTimeout(() => p.remove(), 500);
-        }
-      }
-
-      // Обработчики кнопок
-      getEl('addTaskBtn').addEventListener('click', () => {
-        getEl('modalTitle').textContent = 'Новая задача';
+      // Инициализация
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => { activeTab = tab.dataset.tab; renderAll(); });
+      });
+      getEl('addBtn').addEventListener('click', () => {
+        activeTab = document.querySelector('.tab.active').dataset.tab;
         getEl('taskTitle').value = '';
         getEl('taskDescription').value = '';
-        getEl('taskDueDate').value = '';
         getEl('taskComment').value = '';
-        getEl('taskStatus').value = 'in_progress';
-        getEl('typeTask').checked = true;
-        getEl('typeIdea').checked = false;
-        document.getElementById('ideaSection').style.display = 'none';
-        document.getElementById('taskSection').style.display = 'block';
-        getEl('taskPriority').value = 'medium';
-        const deleteBtn = getEl('deleteTaskBtn');
-        if (deleteBtn) deleteBtn.style.display = 'none';
-        document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
-        updateMultiTrigger();
+        const isIdea = activeTab === 'idea';
+        getEl('ideaFields').style.display = isIdea ? 'block' : 'none';
+        getEl('taskFields').style.display = isIdea ? 'none' : 'block';
+        getEl('modalTitle').textContent = isIdea ? 'Новая идея' : 'Новая задача';
         delete getEl('taskModal').dataset.taskId;
         getEl('taskModal').style.display = 'flex';
       });
+      getEl('cancelTaskBtn').addEventListener('click', () => getEl('taskModal').style.display = 'none');
 
-      getEl('cancelTaskBtn').addEventListener('click', () => { getEl('taskModal').style.display = 'none'; });
-      getEl('saveTaskBtn').addEventListener('click', saveTask);
-      getEl('deleteTaskBtn').addEventListener('click', async () => {
-        const taskId = getEl('taskModal').dataset.taskId;
-        if (!taskId) return;
-        const confirmed = await customConfirm('Удалить задачу?');
-        if (confirmed) {
-          await _supabase.from('tasks').delete().eq('id', taskId);
-          getEl('taskModal').style.display = 'none';
-          showBalloonAndConfetti();
-          await loadTasks();
-          renderTasks();
-        }
-      });
+      getEl('empFilterBtn').addEventListener('click', () => getEl('empDropdown').classList.toggle('open'));
+      document.addEventListener('click', (e) => { if (!e.target.closest('#empFilterWrap')) getEl('empDropdown').classList.remove('open'); });
 
-      getEl('sendHelpBtn').addEventListener('click', async () => {
-        const taskId = getEl('helpModal').dataset.taskId;
-        const comment = getEl('helpComment').value.trim();
-        if (!comment) { await customAlert('Введите комментарий'); return; }
-        const { error } = await _supabase.from('tasks').update({ help_offered: true, help_comment: comment, help_by: currentUserEmail }).eq('id', taskId);
-        if (error) { await customAlert('Ошибка: ' + error.message); return; }
-        getEl('helpModal').style.display = 'none';
-        getEl('helpComment').value = '';
-        showBalloonAndConfetti();
-        await loadTasks();
-        renderTasks();
-      });
-
-      getEl('cancelHelpBtn').addEventListener('click', () => { getEl('helpModal').style.display = 'none'; });
-
-      getEl('filters').addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
-          currentFilter = e.target.dataset.status;
-          renderFilters();
-          renderTasks();
-        }
-      });
-      getEl('employeeFilter').addEventListener('change', (e) => {
-        currentEmployeeFilter = e.target.value;
-        renderTasks();
-      });
-
-      getEl('typeIdea').addEventListener('change', () => {
-        document.getElementById('ideaSection').style.display = 'block';
-        document.getElementById('taskSection').style.display = 'none';
-      });
-      getEl('typeTask').addEventListener('change', () => {
-        document.getElementById('ideaSection').style.display = 'none';
-        document.getElementById('taskSection').style.display = 'block';
-      });
+      // Анимация
+      function showBalloonAndConfetti() {
+        const balloon = document.createElement('div'); balloon.className = 'balloon'; document.body.appendChild(balloon);
+        balloon.addEventListener('animationend', () => { balloon.remove(); createConfetti(); });
+      }
+      function createConfetti() {
+        for (let i=0;i<50;i++) { const p=document.createElement('div'); p.className='confetti-piece'; p.style.background=['#ff4d6d','#f9ca24','#6c5ce7','#55efc4','#3498db'][i%5]; p.style.left='50%'; p.style.top='30%'; p.style.setProperty('--x',(Math.random()*300-150)+'px'); p.style.setProperty('--y',(Math.random()*-200-50)+'px'); document.body.appendChild(p); setTimeout(()=>p.remove(),800); }
+      }
 
       (async () => {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
-        const { data: empData } = await _supabase.from('employees').select('*').eq('email', currentUserEmail).maybeSingle();
-        currentEmployee = empData;
-        await loadEmployees();
-        await loadTasks();
-        initTasksContainerEvents();
-        renderFilters();
-        renderTasks();
+        await loadData();
       })();
     })();
   </script>
