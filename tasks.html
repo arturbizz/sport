@@ -23,7 +23,6 @@
       --idea: #9b59b6;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    /* Текстовый курсор и выделение — только в реальных полях ввода */
     body, .container, .task-card, .modal, .filters, .header {
       -webkit-user-select: none; -moz-user-select: none; user-select: none;
       cursor: default;
@@ -44,7 +43,6 @@
       position: relative;
       overflow-x: hidden;
     }
-    /* Музыкальный фон */
     .music-bg {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 0;
@@ -96,10 +94,10 @@
       border: none; padding: 0.6rem 1.3rem; border-radius: 14px;
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
-      background: linear-gradient(135deg, #ff9a9e, #fad0c4);
-      color: white; box-shadow: 0 4px 8px rgba(255,107,107,0.2);
+      background: linear-gradient(135deg, #ff4d6d, #ff6b6b);
+      color: white; box-shadow: 0 6px 12px rgba(255,77,109,0.3);
     }
-    .btn:hover { box-shadow: 0 8px 20px rgba(255,107,107,0.4); transform: translateY(-2px); }
+    .btn:hover { box-shadow: 0 10px 20px rgba(255,77,109,0.5); transform: translateY(-2px); }
     .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
     .btn-outline:hover { background: var(--accent); color: white; }
     .btn:disabled { opacity: 0.5; cursor: default; }
@@ -117,7 +115,7 @@
     .employee-filter {
       padding: 0.4rem 1rem; border-radius: 20px;
       border: 1px solid var(--border); font-size: 0.8rem; background: white;
-      margin-left: 0.5rem; cursor: pointer; min-width: 160px;
+      cursor: pointer; width: 170px; min-width: 140px; /* компактная ширина */
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 0.8rem center;
@@ -178,7 +176,6 @@
       100% { transform: scale(1); }
     }
 
-    /* Сворачивание текста */
     .text-collapsed {
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
       overflow: hidden; cursor: pointer; transition: all 0.3s;
@@ -205,7 +202,6 @@
       font-size: 0.9rem; font-family: inherit;
     }
 
-    /* Мультиселект */
     .multi-select {
       position: relative; margin: 0.5rem 0;
     }
@@ -223,11 +219,13 @@
     }
     .multi-select-dropdown.open { display: block; }
     .multi-select-item {
-      padding: 0.5rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
       border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;
     }
     .multi-select-item:hover { background: #fff5f5; }
-    .multi-select-item input[type="checkbox"] { accent-color: var(--accent); }
+    .multi-select-item input[type="checkbox"] { 
+      accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; 
+    }
 
     .alert-modal .btn { margin-top: 1rem; }
     .alert-modal p { margin: 1rem 0; }
@@ -283,10 +281,10 @@
         </select>
       </div>
       <div class="multi-select" id="multiSelect">
-        <div class="multi-select-trigger" id="multiTrigger">Выберите ответственного</div>
+        <div class="multi-select-trigger" id="multiTrigger">Выберите ответственных</div>
         <div class="multi-select-dropdown" id="multiDropdown"></div>
       </div>
-      <input type="date" id="taskDueDate">
+      <input type="date" id="taskDueDate" placeholder="Дата завершения">
       <select id="taskStatus">
         <option value="in_progress">В работе</option>
         <option value="clarifying">Уточняю детали</option>
@@ -338,7 +336,7 @@
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const OWNER_EMAIL = 'arturgalkin.ru@mail.ru';
       let currentUserEmail = null;
-      let currentEmployee = null; // запись из employees
+      let currentEmployee = null;
       let employees = [];
       let tasks = [];
       let currentFilter = 'all';
@@ -349,13 +347,7 @@
 
       function getEl(id) { return document.getElementById(id); }
       function normEmail(e) { return (e || '').trim().toLowerCase(); }
-      function escapeHtml(str) {
-        return String(str ?? '').replace(/[&<>"']/g, ch => ({
-          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-        }[ch]));
-      }
 
-      // Кастомные уведомления
       function customAlert(msg) {
         return new Promise(resolve => {
           const modal = getEl('alertModal');
@@ -376,14 +368,13 @@
         });
       }
 
-      // Мультиселект (один выбор)
       function updateMultiTrigger() {
         const checked = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => {
           const emp = employees.find(e => e.id === cb.value);
           return emp ? emp.name : '';
         }).filter(Boolean);
         const trigger = getEl('multiTrigger');
-        if (trigger) trigger.textContent = checked.length ? checked[0] : 'Выберите ответственного';
+        if (trigger) trigger.textContent = checked.length ? checked.join(', ') : 'Выберите ответственных';
       }
 
       async function loadEmployees() {
@@ -391,30 +382,22 @@
         employees = data || [];
         const allowed = employees.filter(e => ALLOWED_ROLES.includes(e.role) || e.name === SENIOR_TEACHER_NAME);
 
-        // Заполняем фильтр по сотрудникам
         const empFilter = getEl('employeeFilter');
         if (empFilter) {
-          empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
+          empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
         }
 
-        // Заполняем чекбоксы мультиселекта
         const multiDropdown = getEl('multiDropdown');
         if (multiDropdown) {
           multiDropdown.innerHTML = allowed.map(e => `
             <label class="multi-select-item">
-              <input type="checkbox" value="${e.id}"> ${escapeHtml(e.name)} (${escapeHtml(e.role)})
+              <input type="checkbox" value="${e.id}"> ${e.name} (${e.role})
             </label>
           `).join('');
 
+          // Разрешаем множественный выбор (без сброса)
           multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', () => {
-              if (cb.checked) {
-                multiDropdown.querySelectorAll('input[type="checkbox"]').forEach(other => {
-                  if (other !== cb) other.checked = false;
-                });
-              }
-              updateMultiTrigger();
-            });
+            cb.addEventListener('change', updateMultiTrigger);
           });
         }
 
@@ -438,8 +421,6 @@
         tasks = data || [];
       }
 
-      // Создавать задачи может любой авторизованный пользователь — ограничений нет.
-
       function taskAssigneeIds(task) {
         return Array.isArray(task.assignee_ids) ? task.assignee_ids : [];
       }
@@ -453,7 +434,6 @@
       }
 
       function canCompleteTask(task) {
-        // Закрыть (статус completed) может только создатель, ответственный или управляющий
         return canEditTask(task);
       }
 
@@ -480,28 +460,12 @@
 
         container.innerHTML = filtered.map(task => {
           const assignedIds = taskAssigneeIds(task);
-          const emp = employees.find(e => assignedIds.includes(e.id)) || {};
-          const assigneeName = escapeHtml(emp.name || 'Не назначен');
+          const assigneeNames = assignedIds.map(id => employees.find(e => e.id === id)?.name).filter(Boolean).join(', ') || 'Не назначен';
           const statusLabels = {
-            in_progress: 'В работе',
-            clarifying: 'Уточняю детали',
-            need_help: 'Нужна помощь',
-            completed: 'Выполнено'
+            in_progress: 'В работе', clarifying: 'Уточняю детали', need_help: 'Нужна помощь', completed: 'Выполнено'
           };
-          const priorityLabels = {
-            idea: 'Идея',
-            low: 'Низкий',
-            medium: 'Средний',
-            high: 'Срочный',
-            critical: 'Суперсрочно'
-          };
-          const priorityColors = {
-            idea: 'var(--idea)',
-            low: 'var(--low)',
-            medium: 'var(--medium)',
-            high: 'var(--high)',
-            critical: 'var(--critical)'
-          };
+          const priorityLabels = { idea: 'Идея', low: 'Низкий', medium: 'Средний', high: 'Срочный', critical: 'Суперсрочно' };
+          const priorityColors = { idea: 'var(--idea)', low: 'var(--low)', medium: 'var(--medium)', high: 'var(--high)', critical: 'var(--critical)' };
           const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed';
           const isCriticalOverdue = isOverdue && task.priority === 'critical';
           const cardClasses = isCriticalOverdue ? ' task-card critical-overdue' : ' task-card';
@@ -515,18 +479,18 @@
           return `
           <div class="task-card ${cardClasses}" data-id="${task.id}">
             <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
-            <div class="task-title">${escapeHtml(task.title)}</div>
+            <div class="task-title">${task.title}</div>
             <div style="font-size:0.8rem; color:var(--text-light);">
               <span class="priority-dot" style="background:${priorityColors[task.priority]}"></span>${priorityLabels[task.priority]}
             </div>
-            ${task.description ? `<div class="text-collapsed task-desc">${escapeHtml(task.description)}</div>` : ''}
+            ${task.description ? `<div class="text-collapsed task-desc">${task.description}</div>` : ''}
             <div class="task-meta">
-              <span>${assigneeName}</span>
+              <span>${assigneeNames}</span>
               <span>${task.due_date || '—'}</span>
             </div>
             <span class="badge ${task.status}">${statusLabels[task.status]}</span>
-            ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${escapeHtml(task.help_comment)}</div>` : ''}
-            ${task.comment ? `<div class="text-collapsed task-comment">${escapeHtml(task.comment)}</div>` : ''}
+            ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${task.help_comment}</div>` : ''}
+            ${task.comment ? `<div class="text-collapsed task-comment">${task.comment}</div>` : ''}
             <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
               ${canEdit ? `<button class="btn btn-outline edit-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>` : ''}
               ${canHelp ? `<button class="btn btn-outline help-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Предложить помощь</button>` : ''}
@@ -536,8 +500,6 @@
         }).join('');
       }
 
-      // Делегирование событий — навешивается ОДИН РАЗ на постоянный контейнер,
-      // а не при каждом renderTasks(), чтобы обработчики не накапливались.
       function initTasksContainerEvents() {
         const container = getEl('tasksContainer');
         if (!container) return;
@@ -577,12 +539,14 @@
         getEl('taskDueDate').value = task.due_date || '';
         getEl('taskStatus').value = task.status;
         getEl('taskComment').value = task.comment || '';
-        if (task.priority === 'idea') {
-          getEl('typeIdea').checked = true;
-          getEl('prioritySection').style.display = 'none';
-        } else {
-          getEl('typeTask').checked = true;
-          getEl('prioritySection').style.display = 'block';
+        const isIdea = task.priority === 'idea';
+        getEl('typeIdea').checked = isIdea;
+        getEl('typeTask').checked = !isIdea;
+        // Скрываем/показываем связанные поля
+        document.getElementById('prioritySection').style.display = isIdea ? 'none' : 'block';
+        getEl('taskDueDate').parentElement.style.display = isIdea ? 'none' : '';
+        getEl('taskStatus').parentElement.style.display = isIdea ? 'none' : '';
+        if (!isIdea) {
           getEl('taskPriority').value = task.priority || 'medium';
         }
         const assignedIds = taskAssigneeIds(task);
@@ -602,14 +566,14 @@
         const isIdea = getEl('typeIdea').checked;
         const priority = isIdea ? 'idea' : getEl('taskPriority').value;
         const checkedBoxes = [...document.querySelectorAll('#multiDropdown input:checked')];
-        const assignedId = checkedBoxes.length > 0 ? checkedBoxes[0].value : null;
+        const assigneeIds = checkedBoxes.map(cb => cb.value);
 
         const taskData = {
           title,
           description: getEl('taskDescription').value.trim(),
-          assignee_ids: assignedId ? [assignedId] : [],
-          due_date: getEl('taskDueDate').value || null,
-          status: getEl('taskStatus').value,
+          assignee_ids: assigneeIds,
+          due_date: isIdea ? null : (getEl('taskDueDate').value || null),
+          status: isIdea ? 'in_progress' : getEl('taskStatus').value, // идея всегда в работе
           comment: getEl('taskComment').value.trim(),
           priority,
           created_by: currentUserEmail
@@ -618,13 +582,11 @@
         const taskId = getEl('taskModal').dataset.taskId;
         let error;
         if (taskId) {
-          // Редактирование: проверка прав
           const task = tasks.find(t => t.id == taskId);
           if (!task || !canEditTask(task)) {
             await customAlert('Недостаточно прав для редактирования');
             return;
           }
-          // Дополнительная проверка на закрытие
           if (taskData.status === 'completed' && !canCompleteTask(task)) {
             await customAlert('Вы не можете закрыть эту задачу');
             return;
@@ -632,7 +594,6 @@
           const { error: updateError } = await _supabase.from('tasks').update(taskData).eq('id', taskId);
           error = updateError;
         } else {
-          // Создание задачи доступно любому авторизованному пользователю
           const { error: insertError } = await _supabase.from('tasks').insert([taskData]);
           error = insertError;
         }
@@ -644,7 +605,6 @@
         renderTasks();
       }
 
-      // Анимация успеха
       function showBalloonAndConfetti() {
         const balloon = document.createElement('div');
         balloon.className = 'balloon';
@@ -691,7 +651,10 @@
         getEl('taskComment').value = '';
         getEl('taskStatus').value = 'in_progress';
         getEl('typeTask').checked = true;
-        getEl('prioritySection').style.display = 'block';
+        getEl('typeIdea').checked = false;
+        document.getElementById('prioritySection').style.display = 'block';
+        getEl('taskDueDate').parentElement.style.display = '';
+        getEl('taskStatus').parentElement.style.display = '';
         getEl('taskPriority').value = 'medium';
         const deleteBtn = getEl('deleteTaskBtn');
         if (deleteBtn) deleteBtn.style.display = 'none';
@@ -720,7 +683,7 @@
         const taskId = getEl('helpModal').dataset.taskId;
         const comment = getEl('helpComment').value.trim();
         if (!comment) { await customAlert('Введите комментарий'); return; }
-        const { error } = await _supabase.rpc('offer_task_help', { p_task_id: taskId, p_comment: comment });
+        const { error } = await _supabase.from('tasks').update({ help_offered: true, help_comment: comment, help_by: currentUserEmail }).eq('id', taskId);
         if (error) { await customAlert('Ошибка: ' + error.message); return; }
         getEl('helpModal').style.display = 'none';
         getEl('helpComment').value = '';
@@ -731,7 +694,6 @@
 
       getEl('cancelHelpBtn').addEventListener('click', () => { getEl('helpModal').style.display = 'none'; });
 
-      // Фильтры
       getEl('filters').addEventListener('click', (e) => {
         if (e.target.classList.contains('filter-btn')) {
           currentFilter = e.target.dataset.status;
@@ -744,16 +706,23 @@
         renderTasks();
       });
 
-      // Радио-кнопки
-      getEl('typeIdea').addEventListener('change', () => { getEl('prioritySection').style.display = 'none'; });
-      getEl('typeTask').addEventListener('change', () => { getEl('prioritySection').style.display = 'block'; });
+      // Переключение Идея/Задача
+      getEl('typeIdea').addEventListener('change', () => {
+        document.getElementById('prioritySection').style.display = 'none';
+        getEl('taskDueDate').parentElement.style.display = 'none';
+        getEl('taskStatus').parentElement.style.display = 'none';
+      });
+      getEl('typeTask').addEventListener('change', () => {
+        document.getElementById('prioritySection').style.display = 'block';
+        getEl('taskDueDate').parentElement.style.display = '';
+        getEl('taskStatus').parentElement.style.display = '';
+      });
 
       // Инициализация
       (async () => {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
-        // Получаем запись текущего сотрудника
         const { data: empData } = await _supabase.from('employees').select('*').eq('email', currentUserEmail).maybeSingle();
         currentEmployee = empData;
         await loadEmployees();
