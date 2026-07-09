@@ -10,9 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --pink: #ff4d6d;
-      --gold: #f9ca24;
       --purple: #6c5ce7;
+      --gold: #f9ca24;
+      --pink: #ff4d6d;
       --blue: #3498db;
       --teal: #0fb9b1;
       --bg: #fef9f0;
@@ -531,4 +531,34 @@
         delete document.getElementById('taskModal').dataset.id;
         document.getElementById('deleteBtn').style.display = 'none';
         document.querySelectorAll('#multiDropdown input').forEach(cb => cb.checked = false);
-        document.getElementById('multiTrigger').text
+        document.getElementById('multiTrigger').textContent = 'Выберите ответственных';
+        document.getElementById('taskModal').style.display = 'flex';
+      });
+      document.getElementById('cancelBtn').addEventListener('click', () => document.getElementById('taskModal').style.display = 'none');
+
+      document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { activeTab = t.dataset.tab; renderAll(); }));
+      document.getElementById('statusFilters').addEventListener('click', (e) => {
+        if (e.target.classList.contains('filter-btn')) {
+          currentStatus = e.target.dataset.status;
+          document.querySelectorAll('#statusFilters .filter-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          renderAll();
+        }
+      });
+      document.getElementById('empFilterBtn').addEventListener('click', () => document.getElementById('empDropdown').classList.toggle('open'));
+      document.addEventListener('click', (e) => { if (!e.target.closest('#empFilterWrap')) document.getElementById('empDropdown').classList.remove('open'); });
+
+      document.getElementById('multiTrigger').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('multiDropdown').classList.toggle('open'); });
+      document.addEventListener('click', () => document.getElementById('multiDropdown').classList.remove('open'));
+      document.getElementById('multiDropdown').addEventListener('click', (e) => e.stopPropagation());
+
+      function showConfetti() {
+        const balloon = document.createElement('div'); balloon.className = 'balloon'; document.body.appendChild(balloon);
+        balloon.addEventListener('animationend', () => { balloon.remove(); for (let i=0;i<60;i++) { const p=document.createElement('div'); p.className='confetti-piece'; p.style.background=['#ff4d6d','#f9ca24','#6c5ce7','#55efc4','#3498db'][i%5]; p.style.left='50%'; p.style.top='30%'; p.style.setProperty('--x',(Math.random()*300-150)+'px'); p.style.setProperty('--y',(Math.random()*-200-50)+'px'); document.body.appendChild(p); setTimeout(()=>p.remove(),800); } });
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
