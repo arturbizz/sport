@@ -349,6 +349,11 @@
 
       function getEl(id) { return document.getElementById(id); }
       function normEmail(e) { return (e || '').trim().toLowerCase(); }
+      function escapeHtml(str) {
+        return String(str ?? '').replace(/[&<>"']/g, ch => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+      }
 
       // Кастомные уведомления
       function customAlert(msg) {
@@ -389,7 +394,7 @@
         // Заполняем фильтр по сотрудникам
         const empFilter = getEl('employeeFilter');
         if (empFilter) {
-          empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+          empFilter.innerHTML = '<option value="">Все сотрудники</option>' + allowed.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join('');
         }
 
         // Заполняем чекбоксы мультиселекта
@@ -397,7 +402,7 @@
         if (multiDropdown) {
           multiDropdown.innerHTML = allowed.map(e => `
             <label class="multi-select-item">
-              <input type="checkbox" value="${e.id}"> ${e.name} (${e.role})
+              <input type="checkbox" value="${e.id}"> ${escapeHtml(e.name)} (${escapeHtml(e.role)})
             </label>
           `).join('');
 
@@ -476,7 +481,7 @@
         container.innerHTML = filtered.map(task => {
           const assignedIds = taskAssigneeIds(task);
           const emp = employees.find(e => assignedIds.includes(e.id)) || {};
-          const assigneeName = emp.name || 'Не назначен';
+          const assigneeName = escapeHtml(emp.name || 'Не назначен');
           const statusLabels = {
             in_progress: 'В работе',
             clarifying: 'Уточняю детали',
@@ -510,18 +515,18 @@
           return `
           <div class="task-card ${cardClasses}" data-id="${task.id}">
             <div class="help-indicator ${task.help_offered ? 'show' : ''}" title="Предложена помощь"></div>
-            <div class="task-title">${task.title}</div>
+            <div class="task-title">${escapeHtml(task.title)}</div>
             <div style="font-size:0.8rem; color:var(--text-light);">
               <span class="priority-dot" style="background:${priorityColors[task.priority]}"></span>${priorityLabels[task.priority]}
             </div>
-            ${task.description ? `<div class="text-collapsed task-desc">${task.description}</div>` : ''}
+            ${task.description ? `<div class="text-collapsed task-desc">${escapeHtml(task.description)}</div>` : ''}
             <div class="task-meta">
               <span>${assigneeName}</span>
               <span>${task.due_date || '—'}</span>
             </div>
             <span class="badge ${task.status}">${statusLabels[task.status]}</span>
-            ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${task.help_comment}</div>` : ''}
-            ${task.comment ? `<div class="text-collapsed task-comment">${task.comment}</div>` : ''}
+            ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${escapeHtml(task.help_comment)}</div>` : ''}
+            ${task.comment ? `<div class="text-collapsed task-comment">${escapeHtml(task.comment)}</div>` : ''}
             <div style="display:flex; gap:0.3rem; margin-top:0.5rem; flex-wrap:wrap;">
               ${canEdit ? `<button class="btn btn-outline edit-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>` : ''}
               ${canHelp ? `<button class="btn btn-outline help-btn" data-id="${task.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Предложить помощь</button>` : ''}
@@ -715,7 +720,7 @@
         const taskId = getEl('helpModal').dataset.taskId;
         const comment = getEl('helpComment').value.trim();
         if (!comment) { await customAlert('Введите комментарий'); return; }
-        const { error } = await _supabase.from('tasks').update({ help_offered: true, help_comment: comment, help_by: currentUserEmail }).eq('id', taskId);
+        const { error } = await _supabase.rpc('offer_task_help', { p_task_id: taskId, p_comment: comment });
         if (error) { await customAlert('Ошибка: ' + error.message); return; }
         getEl('helpModal').style.display = 'none';
         getEl('helpComment').value = '';
