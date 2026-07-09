@@ -14,6 +14,7 @@
       --gold: #f9ca24;
       --purple: #6c5ce7;
       --blue: #3498db;
+      --teal: #0fb9b1;
       --bg: #fef9f0;
       --surface: rgba(255,255,255,0.9);
       --text: #2d3436;
@@ -30,7 +31,7 @@
     }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: linear-gradient(135deg, #f8e0f0 0%, #fefce8 50%, #e0f0ff 100%);
+      background: linear-gradient(135deg, #f0e0ff 0%, #fefce8 50%, #e0f0ff 100%);
       color: var(--text);
       padding: 1.5rem;
       min-height: 100vh;
@@ -73,7 +74,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;
     }
-    .back-link { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .back-link { color: var(--purple); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
     h1 { font-size: 1.8rem; font-weight: 700; color: var(--purple); }
 
     .tabs {
@@ -92,12 +93,12 @@
       border: none; padding: 0.6rem 1.4rem; border-radius: 16px;
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
-      background: linear-gradient(135deg, var(--pink), var(--gold));
-      color: white; box-shadow: 0 6px 12px rgba(255,77,109,0.3);
+      background: linear-gradient(135deg, var(--purple), var(--gold));
+      color: white; box-shadow: 0 6px 12px rgba(108,92,231,0.3);
     }
-    .btn:hover { box-shadow: 0 10px 20px rgba(255,77,109,0.5); transform: translateY(-2px); }
-    .btn-outline { background: transparent; border: 2px solid var(--pink); color: var(--pink); }
-    .btn-outline:hover { background: var(--pink); color: white; }
+    .btn:hover { box-shadow: 0 10px 20px rgba(108,92,231,0.5); transform: translateY(-2px); }
+    .btn-outline { background: transparent; border: 2px solid var(--purple); color: var(--purple); }
+    .btn-outline:hover { background: var(--purple); color: white; }
     .btn:disabled { opacity: 0.5; cursor: default; }
 
     .filters {
@@ -226,7 +227,7 @@
       border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;
     }
     .multi-select-item:hover { background: #f0e0ff; }
-    .multi-select-item input[type="checkbox"] { accent-color: var(--purple); width: 16px; height: 16px; }
+    .multi-select-item input[type="checkbox"] { accent-color: var(--purple); width: 16px; height: 16px; cursor: pointer; }
 
     @media (max-width: 600px) {
       body { padding: 0.5rem; }
@@ -312,6 +313,37 @@
     </div>
   </div>
 
+  <!-- Модалка помощи -->
+  <div class="modal-overlay" id="helpModal" style="display:none;">
+    <div class="modal">
+      <h2>Предложить помощь</h2>
+      <textarea id="helpComment" rows="3" placeholder="Ваше предложение"></textarea>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="sendHelpBtn">Отправить</button>
+        <button class="btn btn-outline" id="cancelHelpBtn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кастомный алерт -->
+  <div class="modal-overlay" id="alertModal" style="display:none;">
+    <div class="modal" style="max-width:350px; text-align:center;">
+      <p id="alertMessage"></p>
+      <button class="btn" id="alertOkBtn">ОК</button>
+    </div>
+  </div>
+
+  <!-- Кастомный confirm -->
+  <div class="modal-overlay" id="confirmModal" style="display:none;">
+    <div class="modal" style="max-width:350px; text-align:center;">
+      <p id="confirmMessage"></p>
+      <div style="display:flex; gap:1rem; justify-content:center; margin-top:1rem;">
+        <button class="btn" id="confirmYesBtn">Да</button>
+        <button class="btn btn-outline" id="confirmNoBtn">Нет</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function() {
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
@@ -319,6 +351,21 @@
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, employees = [], tasks = [], activeTab = 'task', currentStatus = 'all', currentEmp = '';
       const OWNER = 'arturgalkin.ru@mail.ru';
+
+      // Премиум-уведомления
+      function showAlert(msg) {
+        document.getElementById('alertMessage').textContent = msg;
+        document.getElementById('alertModal').style.display = 'flex';
+        document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none';
+      }
+      function showConfirm(msg) {
+        return new Promise(resolve => {
+          document.getElementById('confirmMessage').textContent = msg;
+          document.getElementById('confirmModal').style.display = 'flex';
+          document.getElementById('confirmYesBtn').onclick = () => { document.getElementById('confirmModal').style.display = 'none'; resolve(true); };
+          document.getElementById('confirmNoBtn').onclick = () => { document.getElementById('confirmModal').style.display = 'none'; resolve(false); };
+        });
+      }
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -333,6 +380,11 @@
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
         employees = (data || []).filter(e => ['Управляющий','Менеджер','Администратор'].includes(e.role) || e.name === 'Андрошин Сергей');
+        const multiDropdown = document.getElementById('multiDropdown');
+        multiDropdown.innerHTML = employees.map(e => `<label class="multi-select-item"><input type="checkbox" value="${e.id}"> ${e.name} (${e.role})</label>`).join('');
+        multiDropdown.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => {
+          document.getElementById('multiTrigger').textContent = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => employees.find(e => e.id === cb.value)?.name).filter(Boolean).join(', ') || 'Выберите ответственных';
+        }));
       }
 
       async function loadTasks() {
@@ -395,10 +447,12 @@
 
         container.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', (e) => openEdit(e.target.dataset.id)));
         container.querySelectorAll('.help-btn').forEach(b => b.addEventListener('click', (e) => {
-          document.getElementById('helpModal').dataset.id = e.target.dataset.id; document.getElementById('helpModal').style.display = 'flex';
+          document.getElementById('helpModal').dataset.id = e.target.dataset.id;
+          document.getElementById('helpComment').value = '';
+          document.getElementById('helpModal').style.display = 'flex';
         }));
         container.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async (e) => {
-          if (!confirm('Удалить?')) return;
+          if (!(await showConfirm('Удалить задачу?'))) return;
           await _supabase.from('tasks').delete().eq('id', e.target.dataset.id);
           showConfetti(); await loadTasks(); renderAll();
         }));
@@ -420,14 +474,16 @@
           document.getElementById('taskDueDate').value = task.due_date || '';
           document.getElementById('taskStatus').value = task.status;
           document.querySelectorAll('#multiDropdown input').forEach(cb => cb.checked = (task.assignee_ids||[]).includes(cb.value));
+          document.getElementById('multiTrigger').textContent = (task.assignee_ids||[]).map(id => employees.find(e => e.id === id)?.name).filter(Boolean).join(', ') || 'Выберите ответственных';
         }
         document.getElementById('taskModal').dataset.id = id;
+        document.getElementById('deleteBtn').style.display = (currentUserEmail === OWNER) ? 'inline-block' : 'none';
         document.getElementById('taskModal').style.display = 'flex';
       }
 
       document.getElementById('saveBtn').addEventListener('click', async () => {
         const isIdea = activeTab === 'idea';
-        const title = document.getElementById('taskTitle').value.trim(); if (!title) return;
+        const title = document.getElementById('taskTitle').value.trim(); if (!title) { showAlert('Введите название'); return; }
         const data = {
           title, description: document.getElementById('taskDescription').value.trim(),
           comment: document.getElementById('taskComment').value.trim(),
@@ -439,11 +495,30 @@
         };
         const id = document.getElementById('taskModal').dataset.id;
         const { error } = id ? await _supabase.from('tasks').update(data).eq('id', id) : await _supabase.from('tasks').insert([data]);
-        if (error) { alert(error.message); return; }
+        if (error) { showAlert('Ошибка: ' + error.message); return; }
         document.getElementById('taskModal').style.display = 'none';
         showConfetti(); await loadTasks(); renderAll();
       });
 
+      document.getElementById('deleteBtn').addEventListener('click', async () => {
+        const id = document.getElementById('taskModal').dataset.id;
+        if (!(await showConfirm('Удалить задачу?'))) return;
+        await _supabase.from('tasks').delete().eq('id', id);
+        document.getElementById('taskModal').style.display = 'none';
+        showConfetti(); await loadTasks(); renderAll();
+      });
+
+      document.getElementById('sendHelpBtn').addEventListener('click', async () => {
+        const id = document.getElementById('helpModal').dataset.id;
+        const comment = document.getElementById('helpComment').value.trim();
+        if (!comment) { showAlert('Введите комментарий'); return; }
+        const { error } = await _supabase.from('tasks').update({ help_offered: true, help_comment: comment, help_by: currentUserEmail }).eq('id', id);
+        if (error) { showAlert('Ошибка: ' + error.message); return; }
+        document.getElementById('helpModal').style.display = 'none';
+        showConfetti(); await loadTasks(); renderAll();
+      });
+
+      document.getElementById('cancelHelpBtn').addEventListener('click', () => document.getElementById('helpModal').style.display = 'none');
       document.getElementById('addBtn').addEventListener('click', () => {
         activeTab = document.querySelector('.tab.active').dataset.tab;
         const isIdea = activeTab === 'idea';
@@ -454,40 +529,6 @@
         document.getElementById('ideaFields').style.display = isIdea ? 'block' : 'none';
         document.getElementById('taskFields').style.display = isIdea ? 'none' : 'block';
         delete document.getElementById('taskModal').dataset.id;
-        document.getElementById('taskModal').style.display = 'flex';
-      });
-      document.getElementById('cancelBtn').addEventListener('click', () => document.getElementById('taskModal').style.display = 'none');
-
-      document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { activeTab = t.dataset.tab; renderAll(); }));
-      document.getElementById('statusFilters').addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-btn')) {
-          currentStatus = e.target.dataset.status;
-          document.querySelectorAll('#statusFilters .filter-btn').forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-          renderAll();
-        }
-      });
-      document.getElementById('empFilterBtn').addEventListener('click', () => document.getElementById('empDropdown').classList.toggle('open'));
-      document.addEventListener('click', (e) => { if (!e.target.closest('#empFilterWrap')) document.getElementById('empDropdown').classList.remove('open'); });
-
-      function showConfetti() {
-        const balloon = document.createElement('div'); balloon.className = 'balloon'; document.body.appendChild(balloon);
-        balloon.addEventListener('animationend', () => { balloon.remove(); for (let i=0;i<60;i++) { const p=document.createElement('div'); p.className='confetti-piece'; p.style.background=['#ff4d6d','#f9ca24','#6c5ce7','#55efc4','#3498db'][i%5]; p.style.left='50%'; p.style.top='30%'; p.style.setProperty('--x',(Math.random()*300-150)+'px'); p.style.setProperty('--y',(Math.random()*-200-50)+'px'); document.body.appendChild(p); setTimeout(()=>p.remove(),800); } });
-      }
-
-      document.getElementById('multiTrigger').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('multiDropdown').classList.toggle('open'); });
-      document.addEventListener('click', () => document.getElementById('multiDropdown').classList.remove('open'));
-      document.getElementById('multiDropdown').addEventListener('click', (e) => e.stopPropagation());
-
-      (async () => {
-        await init();
-        const multiDropdown = document.getElementById('multiDropdown');
-        multiDropdown.innerHTML = employees.map(e => `<label class="multi-select-item"><input type="checkbox" value="${e.id}"> ${e.name} (${e.role})</label>`).join('');
-        multiDropdown.querySelectorAll('input').forEach(cb => cb.addEventListener('change', () => {
-          document.getElementById('multiTrigger').textContent = [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => employees.find(e => e.id === cb.value)?.name).filter(Boolean).join(', ') || 'Выберите ответственных';
-        }));
-      })();
-    })();
-  </script>
-</body>
-</html>
+        document.getElementById('deleteBtn').style.display = 'none';
+        document.querySelectorAll('#multiDropdown input').forEach(cb => cb.checked = false);
+        document.getElementById('multiTrigger').text
