@@ -649,4 +649,105 @@
           document.body.appendChild(piece);
           setTimeout(() => piece.remove(), 800);
         }
-     
+      }
+      function createPopParticles() {
+        for (let i=0; i<12; i++) {
+          const p = document.createElement('div');
+          p.className = 'pop-particle';
+          p.style.left = '50%';
+          p.style.top = '30%';
+          p.style.setProperty('--px', (Math.random()*80-40)+'px');
+          p.style.setProperty('--py', (Math.random()*80-40)+'px');
+          document.body.appendChild(p);
+          setTimeout(() => p.remove(), 500);
+        }
+      }
+
+      // Обработчики кнопок
+      getEl('addTaskBtn').addEventListener('click', () => {
+        getEl('modalTitle').textContent = 'Новая задача';
+        getEl('taskTitle').value = '';
+        getEl('taskDescription').value = '';
+        getEl('taskDueDate').value = '';
+        getEl('taskComment').value = '';
+        getEl('taskStatus').value = 'in_progress';
+        getEl('typeTask').checked = true;
+        getEl('typeIdea').checked = false;
+        document.getElementById('ideaSection').style.display = 'none';
+        document.getElementById('taskSection').style.display = 'block';
+        getEl('taskPriority').value = 'medium';
+        const deleteBtn = getEl('deleteTaskBtn');
+        if (deleteBtn) deleteBtn.style.display = 'none';
+        document.querySelectorAll('#multiDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+        updateMultiTrigger();
+        delete getEl('taskModal').dataset.taskId;
+        getEl('taskModal').style.display = 'flex';
+      });
+
+      getEl('cancelTaskBtn').addEventListener('click', () => { getEl('taskModal').style.display = 'none'; });
+      getEl('saveTaskBtn').addEventListener('click', saveTask);
+      getEl('deleteTaskBtn').addEventListener('click', async () => {
+        const taskId = getEl('taskModal').dataset.taskId;
+        if (!taskId) return;
+        const confirmed = await customConfirm('Удалить задачу?');
+        if (confirmed) {
+          await _supabase.from('tasks').delete().eq('id', taskId);
+          getEl('taskModal').style.display = 'none';
+          showBalloonAndConfetti();
+          await loadTasks();
+          renderTasks();
+        }
+      });
+
+      getEl('sendHelpBtn').addEventListener('click', async () => {
+        const taskId = getEl('helpModal').dataset.taskId;
+        const comment = getEl('helpComment').value.trim();
+        if (!comment) { await customAlert('Введите комментарий'); return; }
+        const { error } = await _supabase.from('tasks').update({ help_offered: true, help_comment: comment, help_by: currentUserEmail }).eq('id', taskId);
+        if (error) { await customAlert('Ошибка: ' + error.message); return; }
+        getEl('helpModal').style.display = 'none';
+        getEl('helpComment').value = '';
+        showBalloonAndConfetti();
+        await loadTasks();
+        renderTasks();
+      });
+
+      getEl('cancelHelpBtn').addEventListener('click', () => { getEl('helpModal').style.display = 'none'; });
+
+      getEl('filters').addEventListener('click', (e) => {
+        if (e.target.classList.contains('filter-btn')) {
+          currentFilter = e.target.dataset.status;
+          renderFilters();
+          renderTasks();
+        }
+      });
+      getEl('employeeFilter').addEventListener('change', (e) => {
+        currentEmployeeFilter = e.target.value;
+        renderTasks();
+      });
+
+      getEl('typeIdea').addEventListener('change', () => {
+        document.getElementById('ideaSection').style.display = 'block';
+        document.getElementById('taskSection').style.display = 'none';
+      });
+      getEl('typeTask').addEventListener('change', () => {
+        document.getElementById('ideaSection').style.display = 'none';
+        document.getElementById('taskSection').style.display = 'block';
+      });
+
+      (async () => {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        const { data: empData } = await _supabase.from('employees').select('*').eq('email', currentUserEmail).maybeSingle();
+        currentEmployee = empData;
+        await loadEmployees();
+        await loadTasks();
+        initTasksContainerEvents();
+        renderFilters();
+        renderTasks();
+      })();
+    })();
+  </script>
+</body>
+</html>
