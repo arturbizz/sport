@@ -189,6 +189,9 @@
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, employees = [];
+      const ADMINS = ['arturgalkin.ru@mail.ru', 'evelifetv@gmail.com'];
+
+      function isAdmin() { return ADMINS.includes(currentUserEmail); }
 
       function showConfirm(msg) {
         return new Promise(resolve => {
@@ -220,25 +223,29 @@
             <td>${e.specialization || '—'}</td>
             <td>${e.email || '—'}</td>
             <td>
-              <button class="btn btn-outline edit-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>
-              <button class="btn btn-danger delete-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>
+              ${isAdmin() ? `
+                <button class="btn btn-outline edit-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>
+                <button class="btn btn-danger delete-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>
+              ` : '—'}
             </td>
           </tr>
         `).join('');
 
-        tbody.querySelectorAll('.edit-btn').forEach(btn => {
-          btn.addEventListener('click', () => openEditModal(btn.dataset.id));
-        });
-        tbody.querySelectorAll('.delete-btn').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            const id = btn.dataset.id;
-            const confirmed = await showConfirm('Удалить сотрудника? Это также удалит все его записи в графике, отпусках и задачах.');
-            if (!confirmed) return;
-            const { error } = await _supabase.from('employees').delete().eq('id', id);
-            if (error) { alert('Ошибка удаления: ' + error.message); return; }
-            await loadEmployees();
+        if (isAdmin()) {
+          tbody.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => openEditModal(btn.dataset.id));
           });
-        });
+          tbody.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+              const confirmed = await showConfirm('Удалить сотрудника? Это также удалит все его записи в графике, отпусках и задачах.');
+              if (!confirmed) return;
+              const { error } = await _supabase.from('employees').delete().eq('id', id);
+              if (error) { alert('Ошибка удаления: ' + error.message); return; }
+              await loadEmployees();
+            });
+          });
+        }
       }
 
       function openEditModal(id) {
@@ -254,6 +261,7 @@
       }
 
       document.getElementById('addBtn').addEventListener('click', () => {
+        if (!isAdmin()) { alert('Недостаточно прав'); return; }
         document.getElementById('modalTitle').textContent = 'Новый сотрудник';
         document.getElementById('name').value = '';
         document.getElementById('role').value = 'Преподаватель';
@@ -268,6 +276,7 @@
       });
 
       document.getElementById('saveBtn').addEventListener('click', async () => {
+        if (!isAdmin()) { alert('Недостаточно прав'); return; }
         const name = document.getElementById('name').value.trim();
         if (!name) { alert('Введите имя'); return; }
         const data = {
