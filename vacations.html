@@ -11,10 +11,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --purple: #6c5ce7;
-      --gold: #f9ca24;
-      --teal: #0fb9b1;
-      --blue: #3498db;
+      --pink: #ff8c94;
+      --mint: #a0e7e5;
+      --peach: #fad0c4;
+      --sun: #ffd166;
       --bg: #fef9f0;
       --surface: rgba(255,255,255,0.9);
       --text: #2d3436;
@@ -30,7 +30,7 @@
     }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: linear-gradient(135deg, #f0e0ff 0%, #fefce8 50%, #e0f0ff 100%);
+      background: linear-gradient(135deg, #fff0f0 0%, #fefce8 50%, #e0f7f5 100%);
       color: var(--text);
       padding: 1.5rem;
       min-height: 100vh;
@@ -47,7 +47,7 @@
     .note {
       position: absolute;
       font-size: 2rem;
-      color: rgba(108,92,231,0.12);
+      color: rgba(255,140,148,0.12);
       animation: floatNote 10s infinite ease-in-out;
     }
     .note::before { content: '♪'; }
@@ -73,8 +73,8 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
     }
-    .back-link { color: var(--purple); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-    h1 { font-size: 1.8rem; font-weight: 700; color: var(--purple); }
+    .back-link { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--pink); }
 
     .nav-arrows { display: flex; gap: 0.5rem; align-items: center; }
     .nav-arrows button {
@@ -82,7 +82,7 @@
       border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
       transition: 0.2s;
     }
-    .nav-arrows button:hover { border-color: var(--purple); color: var(--purple); }
+    .nav-arrows button:hover { border-color: var(--pink); color: var(--pink); }
     .month-title {
       min-width: 140px; text-align: center; font-weight: 600; font-size: 1rem;
       background: white; padding: 0.4rem 1rem; border-radius: 12px;
@@ -102,7 +102,7 @@
       transition: 0.2s; white-space: nowrap;
     }
     .emp-filter-btn::after { content: '▼'; font-size: 0.6rem; color: var(--text-light); }
-    .emp-filter-btn:hover { border-color: var(--purple); }
+    .emp-filter-btn:hover { border-color: var(--pink); }
     .emp-dropdown {
       position: absolute; top: 100%; left: 0; margin-top: 4px;
       background: white; border: 1px solid var(--border);
@@ -119,8 +119,20 @@
       padding: 0.4rem 0.8rem; cursor: pointer;
       border-radius: 8px; font-size: 0.85rem; transition: 0.1s;
     }
-    .emp-dropdown-item:hover { background: #f0e0ff; }
-    .emp-dropdown-item.active { background: var(--purple); color: white; }
+    .emp-dropdown-item:hover { background: #ffebee; }
+    .emp-dropdown-item.active { background: var(--pink); color: white; }
+
+    .role-filters {
+      display: flex; gap: 0.3rem; flex-wrap: wrap;
+    }
+    .role-btn {
+      padding: 0.3rem 0.8rem; border-radius: 16px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      transition: 0.2s; white-space: nowrap;
+    }
+    .role-btn.active { background: var(--mint); border-color: var(--mint); color: #055b5c; }
+    .role-btn:hover:not(.active) { border-color: var(--mint); }
 
     .calendar-container {
       overflow-x: auto;
@@ -160,16 +172,16 @@
       transition: 0.2s;
     }
     .day-cell:hover {
-      background: #f0e0ff;
+      background: #ffebee;
     }
     .day-cell.vacation {
-      background: #55efc4;
-      color: #065f46;
+      background: var(--mint);
+      color: #055b5c;
       font-weight: 600;
     }
     .day-cell.multiple {
-      background: #0fb9b1;
-      color: white;
+      background: var(--sun);
+      color: #7d5a00;
       font-weight: 600;
     }
 
@@ -196,12 +208,21 @@
       border: none; padding: 0.6rem 1.4rem; border-radius: 16px;
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
-      background: linear-gradient(135deg, var(--purple), var(--gold));
-      color: white; box-shadow: 0 6px 12px rgba(108,92,231,0.3);
+      background: linear-gradient(135deg, var(--pink), var(--peach));
+      color: white; box-shadow: 0 6px 12px rgba(255,140,148,0.3);
     }
-    .btn:hover { box-shadow: 0 10px 20px rgba(108,92,231,0.5); transform: translateY(-2px); }
-    .btn-outline { background: transparent; border: 2px solid var(--purple); color: var(--purple); }
-    .btn-outline:hover { background: var(--purple); color: white; }
+    .btn:hover { box-shadow: 0 10px 20px rgba(255,140,148,0.5); transform: translateY(-2px); }
+    .btn-outline { background: transparent; border: 2px solid var(--pink); color: var(--pink); }
+    .btn-outline:hover { background: var(--pink); color: white; }
+
+    .vacation-list {
+      max-height: 400px; overflow-y: auto; margin: 1rem 0;
+    }
+    .vacation-item {
+      padding: 0.5rem; border-bottom: 1px solid #f0f0f0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .vacation-item:last-child { border-bottom: none; }
 
     @media (max-width: 600px) {
       body { padding: 0.5rem; }
@@ -233,7 +254,15 @@
         <div class="emp-filter-btn" id="empFilterBtn">Все сотрудники</div>
         <div class="emp-dropdown" id="empDropdown"><div class="emp-dropdown-item active" data-id="">Все сотрудники</div></div>
       </div>
-      <button class="btn" id="addVacationBtn" style="margin-left:auto;">+ Добавить отпуск</button>
+      <div class="role-filters" id="roleFilters">
+        <button class="role-btn active" data-role="all">Все</button>
+        <button class="role-btn" data-role="Управляющий">Управляющие</button>
+        <button class="role-btn" data-role="Менеджер">Менеджеры</button>
+        <button class="role-btn" data-role="Администратор">Администраторы</button>
+        <button class="role-btn" data-role="Преподаватель">Преподаватели</button>
+      </div>
+      <button class="btn" id="summaryBtn" style="margin-left:auto;">Сводка</button>
+      <button class="btn" id="addVacationBtn">+ Добавить отпуск</button>
     </div>
 
     <div id="calendarContainer" class="calendar-container"></div>
@@ -261,15 +290,73 @@
     </div>
   </div>
 
+  <!-- Модалка сводки -->
+  <div class="modal-overlay" id="summaryModal" style="display:none;">
+    <div class="modal">
+      <h2>Отпуска в этом и следующем месяце</h2>
+      <div class="vacation-list" id="summaryList"></div>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn btn-outline" id="closeSummaryBtn">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кастомный confirm -->
+  <div class="modal-overlay" id="confirmModal" style="display:none;">
+    <div class="modal" style="max-width:350px; text-align:center;">
+      <p id="confirmMessage"></p>
+      <div style="display:flex; gap:1rem; justify-content:center; margin-top:1rem;">
+        <button class="btn" id="confirmYesBtn">Да</button>
+        <button class="btn btn-outline" id="confirmNoBtn">Нет</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function() {
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, employees = [], vacations = [];
-      let currentYear, currentMonth, selectedEmployeeId = '';
+      let currentYear, currentMonth, selectedEmployeeId = '', selectedRole = 'all';
 
-      // Инициализация
+      // Кастомный confirm
+      function showConfirm(msg) {
+        return new Promise(resolve => {
+          document.getElementById('confirmMessage').textContent = msg;
+          document.getElementById('confirmModal').style.display = 'flex';
+          document.getElementById('confirmYesBtn').onclick = () => {
+            document.getElementById('confirmModal').style.display = 'none';
+            resolve(true);
+          };
+          document.getElementById('confirmNoBtn').onclick = () => {
+            document.getElementById('confirmModal').style.display = 'none';
+            resolve(false);
+          };
+        });
+      }
+
+      // Анимация успеха (шарик и конфетти)
+      function showConfetti() {
+        const balloon = document.createElement('div');
+        balloon.className = 'balloon';
+        document.body.appendChild(balloon);
+        balloon.addEventListener('animationend', () => {
+          balloon.remove();
+          for (let i = 0; i < 60; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti-piece';
+            p.style.background = ['#ff8c94','#a0e7e5','#fad0c4','#ffd166','#ffb3ba'][i%5];
+            p.style.left = '50%';
+            p.style.top = '30%';
+            p.style.setProperty('--x', (Math.random()*300-150)+'px');
+            p.style.setProperty('--y', (Math.random()*-200-50)+'px');
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+          }
+        });
+      }
+
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
@@ -317,6 +404,17 @@
         });
       }
 
+      function getFilteredEmployees() {
+        let filtered = employees;
+        if (selectedEmployeeId) {
+          filtered = filtered.filter(e => e.id === selectedEmployeeId);
+        }
+        if (selectedRole !== 'all') {
+          filtered = filtered.filter(e => e.role === selectedRole);
+        }
+        return filtered;
+      }
+
       function renderCalendar() {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         document.getElementById('monthTitle').textContent =
@@ -329,9 +427,7 @@
         }
         html += '</tr></thead><tbody>';
 
-        const filteredEmployees = selectedEmployeeId
-          ? employees.filter(e => e.id === selectedEmployeeId)
-          : employees;
+        const filteredEmployees = getFilteredEmployees();
 
         filteredEmployees.forEach(emp => {
           html += `<tr><td class="employee-name">${emp.name}</td>`;
@@ -348,26 +444,27 @@
         html += '</tbody></table>';
         container.innerHTML = html;
 
-        // Обработчики клика по ячейкам
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', () => {
             const empId = cell.dataset.emp;
             const date = cell.dataset.date;
-            openVacationModal(empId, date);
+            // Ищем отпуск, который покрывает эту дату
+            const vacation = vacations.find(v => v.emp_id === empId && date >= v.start_date && date <= v.end_date);
+            openVacationModal(empId, date, vacation);
           });
         });
       }
 
-      function openVacationModal(empId, date) {
+      function openVacationModal(empId, date, vacation = null) {
         document.getElementById('employeeSelect').value = empId || '';
-        document.getElementById('startDate').value = date;
-        document.getElementById('endDate').value = date;
-        document.getElementById('vacationType').value = 'paid';
-        document.getElementById('comment').value = '';
-        document.getElementById('deleteVacationBtn').style.display = 'none';
-        document.getElementById('modalTitle').textContent = 'Новый отпуск';
+        document.getElementById('startDate').value = vacation ? vacation.start_date : date;
+        document.getElementById('endDate').value = vacation ? vacation.end_date : date;
+        document.getElementById('vacationType').value = vacation ? vacation.type : 'paid';
+        document.getElementById('comment').value = vacation ? vacation.comment : '';
+        document.getElementById('deleteVacationBtn').style.display = vacation ? 'inline-block' : 'none';
+        document.getElementById('modalTitle').textContent = vacation ? 'Редактирование отпуска' : 'Новый отпуск';
+        document.getElementById('vacationModal').dataset.editId = vacation ? vacation.id : '';
         document.getElementById('vacationModal').style.display = 'flex';
-        document.getElementById('vacationModal').dataset.editId = '';
       }
 
       document.getElementById('saveVacationBtn').addEventListener('click', async () => {
@@ -391,6 +488,7 @@
         }
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('vacationModal').style.display = 'none';
+        showConfetti();
         await loadVacations();
         renderCalendar();
       });
@@ -402,9 +500,12 @@
       document.getElementById('deleteVacationBtn').addEventListener('click', async () => {
         const editId = document.getElementById('vacationModal').dataset.editId;
         if (!editId) return;
+        const confirmed = await showConfirm('Удалить отпуск?');
+        if (!confirmed) return;
         const { error } = await _supabase.from('vacations').delete().eq('id', editId);
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('vacationModal').style.display = 'none';
+        showConfetti();
         await loadVacations();
         renderCalendar();
       });
@@ -418,6 +519,46 @@
       });
       document.addEventListener('click', (e) => {
         if (!e.target.closest('#empFilterWrap')) document.getElementById('empDropdown').classList.remove('open');
+      });
+
+      document.getElementById('roleFilters').addEventListener('click', (e) => {
+        if (e.target.classList.contains('role-btn')) {
+          document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          selectedRole = e.target.dataset.role;
+          renderCalendar();
+        }
+      });
+
+      document.getElementById('summaryBtn').addEventListener('click', async () => {
+        const today = new Date();
+        const thisMonthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-01`;
+        const nextMonth = today.getMonth() + 2;
+        const nextYear = nextMonth > 12 ? today.getFullYear() + 1 : today.getFullYear();
+        const nextMonthEnd = `${nextYear}-${String(nextMonth > 12 ? nextMonth - 12 : nextMonth).padStart(2,'0')}-01`;
+
+        const { data } = await _supabase.from('vacations').select('*')
+          .gte('end_date', thisMonthStart)
+          .lt('start_date', nextMonthEnd);
+        const list = document.getElementById('summaryList');
+        if (!data || data.length === 0) {
+          list.innerHTML = '<p>Нет отпусков в этом и следующем месяце</p>';
+        } else {
+          const grouped = {};
+          data.forEach(v => {
+            const emp = employees.find(e => e.id === v.emp_id);
+            const name = emp ? emp.name : 'Сотрудник';
+            if (!grouped[name]) grouped[name] = [];
+            grouped[name].push(`${v.start_date} – ${v.end_date} (${v.type})`);
+          });
+          list.innerHTML = Object.entries(grouped).map(([name, dates]) =>
+            `<div class="vacation-item"><strong>${name}</strong><span>${dates.join(', ')}</span></div>`
+          ).join('');
+        }
+        document.getElementById('summaryModal').style.display = 'flex';
+      });
+      document.getElementById('closeSummaryBtn').addEventListener('click', () => {
+        document.getElementById('summaryModal').style.display = 'none';
       });
 
       document.getElementById('prevMonthBtn').addEventListener('click', () => {
