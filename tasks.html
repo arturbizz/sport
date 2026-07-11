@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Управление задачами и идеями — Music Club Орёл</title>
+  <title>Управление задачами — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -234,6 +234,14 @@
       .container { padding: 1rem; }
       .tasks-grid { grid-template-columns: 1fr; }
     }
+
+    .datetime-row {
+      display: flex; gap: 0.5rem;
+    }
+    .datetime-row input[type="date"],
+    .datetime-row input[type="time"] {
+      flex: 1;
+    }
   </style>
 </head>
 <body>
@@ -296,7 +304,10 @@
           <div class="multi-select-trigger" id="multiTrigger">Выберите ответственных</div>
           <div class="multi-select-dropdown" id="multiDropdown"></div>
         </div>
-        <input type="date" id="taskDueDate">
+        <div class="datetime-row">
+          <input type="date" id="taskDueDate" placeholder="Дата">
+          <input type="time" id="taskDueTime" placeholder="Время">
+        </div>
         <select id="taskStatus">
           <option value="in_progress">В работе</option>
           <option value="clarifying">Уточняю</option>
@@ -352,7 +363,6 @@
       let currentUserEmail = null, employees = [], tasks = [], activeTab = 'task', currentStatus = 'all', currentEmp = '';
       const OWNER = 'arturgalkin.ru@mail.ru';
 
-      // Премиум-уведомления
       function showAlert(msg) {
         document.getElementById('alertMessage').textContent = msg;
         document.getElementById('alertModal').style.display = 'flex';
@@ -427,13 +437,14 @@
           const pl = { super:'Суперидея', think:'На подумать', future:'На будущее', low:'Низкий', medium:'Средний', high:'Срочный', critical:'Суперсрочно' };
           const pc = { super:'#f39c12', think:'#3498db', future:'#2ecc71', low:'#2ecc71', medium:'#3498db', high:'#f39c12', critical:'var(--critical)' };
           const sl = { in_progress:'В работе', clarifying:'Уточняю', need_help:'Нужна помощь', completed:'Выполнено' };
-          const overdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'completed' && task.priority === 'critical';
+          const overdue = task.due_date && new Date(task.due_date + 'T' + (task.due_time || '23:59:59')) < new Date() && task.status !== 'completed' && task.priority === 'critical';
+          const dateDisplay = task.due_date ? `${task.due_date}${task.due_time ? ' ' + task.due_time.substring(0,5) : ''}` : '—';
           return `<div class="task-card ${overdue ? 'critical-overdue' : ''}" data-id="${task.id}">
             <div class="help-indicator ${task.help_offered ? 'show' : ''}"></div>
             <div class="task-title">${task.title}</div>
             <div><span class="priority-dot" style="background:${pc[task.priority] || '#9b59b6'}"></span>${pl[task.priority] || task.priority}</div>
             ${task.description ? `<div class="text-collapsed task-desc">${task.description}</div>` : ''}
-            <div class="task-meta"><span>${names}</span><span>${task.due_date || '—'}</span></div>
+            <div class="task-meta"><span>${names}</span><span>${dateDisplay}</span></div>
             ${!isIdea ? `<span class="badge ${task.status}">${sl[task.status]}</span>` : ''}
             ${task.help_offered && task.help_comment ? `<div class="text-collapsed task-help">${task.help_comment}</div>` : ''}
             ${task.comment ? `<div class="text-collapsed task-comment">${task.comment}</div>` : ''}
@@ -472,6 +483,7 @@
         else {
           document.getElementById('taskPriority').value = task.priority;
           document.getElementById('taskDueDate').value = task.due_date || '';
+          document.getElementById('taskDueTime').value = task.due_time || '';
           document.getElementById('taskStatus').value = task.status;
           document.querySelectorAll('#multiDropdown input').forEach(cb => cb.checked = (task.assignee_ids||[]).includes(cb.value));
           document.getElementById('multiTrigger').textContent = (task.assignee_ids||[]).map(id => employees.find(e => e.id === id)?.name).filter(Boolean).join(', ') || 'Выберите ответственных';
@@ -490,6 +502,7 @@
           priority: isIdea ? document.getElementById('ideaType').value : document.getElementById('taskPriority').value,
           assignee_ids: isIdea ? [] : [...document.querySelectorAll('#multiDropdown input:checked')].map(cb => cb.value),
           due_date: isIdea ? null : (document.getElementById('taskDueDate').value || null),
+          due_time: isIdea ? null : (document.getElementById('taskDueTime').value || null),
           status: isIdea ? 'in_progress' : document.getElementById('taskStatus').value,
           created_by: currentUserEmail
         };
@@ -532,6 +545,7 @@
         document.getElementById('deleteBtn').style.display = 'none';
         document.querySelectorAll('#multiDropdown input').forEach(cb => cb.checked = false);
         document.getElementById('multiTrigger').textContent = 'Выберите ответственных';
+        document.getElementById('taskDueTime').value = '';
         document.getElementById('taskModal').style.display = 'flex';
       });
       document.getElementById('cancelBtn').addEventListener('click', () => document.getElementById('taskModal').style.display = 'none');
