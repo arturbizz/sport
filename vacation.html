@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>График отпусков — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple: #6c5ce7;
+      --gold: #f9ca24;
+      --teal: #0fb9b1;
+      --blue: #3498db;
+      --bg: #fef9f0;
+      --surface: rgba(255,255,255,0.9);
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .header, .modal {
+      -webkit-user-select: none; user-select: none; cursor: default;
+    }
+    input, textarea {
+      -webkit-user-select: text; user-select: text; cursor: text;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #f0e0ff 0%, #fefce8 50%, #e0f0ff 100%);
+      color: var(--text);
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .music-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .note {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(108,92,231,0.12);
+      animation: floatNote 10s infinite ease-in-out;
+    }
+    .note::before { content: '♪'; }
+    .note.two::before { content: '♫'; }
+    .note.three::before { content: '♩'; }
+    @keyframes floatNote {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+      50% { transform: translateY(-25px) rotate(5deg); opacity: 0.9; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+    }
+
+    .container {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1300px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .back-link { color: var(--purple); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--purple); }
+
+    .nav-arrows { display: flex; gap: 0.5rem; align-items: center; }
+    .nav-arrows button {
+      background: white; border: 1px solid var(--border); padding: 0.4rem 1rem;
+      border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+      transition: 0.2s;
+    }
+    .nav-arrows button:hover { border-color: var(--purple); color: var(--purple); }
+    .month-title {
+      min-width: 140px; text-align: center; font-weight: 600; font-size: 1rem;
+      background: white; padding: 0.4rem 1rem; border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .filters {
+      display: flex; gap: 0.8rem; flex-wrap: wrap;
+      margin-bottom: 1.5rem; align-items: center;
+    }
+    .emp-filter-wrap { position: relative; }
+    .emp-filter-btn {
+      padding: 0.4rem 1.5rem 0.4rem 1rem; border-radius: 20px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.85rem; font-weight: 500;
+      display: flex; align-items: center; gap: 0.5rem;
+      transition: 0.2s; white-space: nowrap;
+    }
+    .emp-filter-btn::after { content: '▼'; font-size: 0.6rem; color: var(--text-light); }
+    .emp-filter-btn:hover { border-color: var(--purple); }
+    .emp-dropdown {
+      position: absolute; top: 100%; left: 0; margin-top: 4px;
+      background: white; border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 20; min-width: 220px; display: none;
+      padding: 0.5rem; animation: fadeIn 0.2s ease;
+    }
+    .emp-dropdown.open { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .emp-dropdown-item {
+      padding: 0.4rem 0.8rem; cursor: pointer;
+      border-radius: 8px; font-size: 0.85rem; transition: 0.1s;
+    }
+    .emp-dropdown-item:hover { background: #f0e0ff; }
+    .emp-dropdown-item.active { background: var(--purple); color: white; }
+
+    .calendar-container {
+      overflow-x: auto;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 750px;
+    }
+    th, td {
+      text-align: center;
+      padding: 0.5rem 0.3rem;
+      font-size: 0.8rem;
+      border: 1px solid #f0f0f0;
+      height: 42px;
+    }
+    th {
+      background: #fafafa;
+      color: var(--text-light);
+      font-weight: 600;
+      position: sticky; top: 0; z-index: 3;
+    }
+    .employee-name {
+      text-align: left;
+      padding-left: 1rem;
+      font-weight: 600;
+      background: white;
+      position: sticky; left: 0; z-index: 2;
+      min-width: 180px;
+    }
+    .day-cell {
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .day-cell:hover {
+      background: #f0e0ff;
+    }
+    .day-cell.vacation {
+      background: #55efc4;
+      color: #065f46;
+      font-weight: 600;
+    }
+    .day-cell.multiple {
+      background: #0fb9b1;
+      color: white;
+      font-weight: 600;
+    }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px); display: flex;
+      align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal {
+      background: white; border-radius: 24px; padding: 2rem;
+      max-width: 500px; width: 90%;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+      animation: slideUp 0.2s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }
+    }
+    input, textarea, select {
+      width: 100%; padding: 0.6rem; margin: 0.5rem 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit;
+    }
+    .btn {
+      border: none; padding: 0.6rem 1.4rem; border-radius: 16px;
+      font-weight: 600; cursor: pointer; font-size: 0.9rem;
+      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
+      background: linear-gradient(135deg, var(--purple), var(--gold));
+      color: white; box-shadow: 0 6px 12px rgba(108,92,231,0.3);
+    }
+    .btn:hover { box-shadow: 0 10px 20px rgba(108,92,231,0.5); transform: translateY(-2px); }
+    .btn-outline { background: transparent; border: 2px solid var(--purple); color: var(--purple); }
+    .btn-outline:hover { background: var(--purple); color: white; }
+
+    @media (max-width: 600px) {
+      body { padding: 0.5rem; }
+      .container { padding: 1rem; }
+      .employee-name { min-width: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="music-bg">
+    <div class="note" style="top:10%; left:5%;"></div>
+    <div class="note two" style="top:25%; right:10%;"></div>
+    <div class="note three" style="bottom:20%; left:15%;"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>График отпусков</h1>
+      <div class="nav-arrows">
+        <button id="prevMonthBtn">◀</button>
+        <span class="month-title" id="monthTitle"></span>
+        <button id="nextMonthBtn">▶</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="emp-filter-wrap" id="empFilterWrap">
+        <div class="emp-filter-btn" id="empFilterBtn">Все сотрудники</div>
+        <div class="emp-dropdown" id="empDropdown"><div class="emp-dropdown-item active" data-id="">Все сотрудники</div></div>
+      </div>
+      <button class="btn" id="addVacationBtn" style="margin-left:auto;">+ Добавить отпуск</button>
+    </div>
+
+    <div id="calendarContainer" class="calendar-container"></div>
+  </div>
+
+  <!-- Модалка отпуска -->
+  <div class="modal-overlay" id="vacationModal" style="display:none;">
+    <div class="modal">
+      <h2 id="modalTitle">Новый отпуск</h2>
+      <select id="employeeSelect"></select>
+      <input type="date" id="startDate">
+      <input type="date" id="endDate">
+      <select id="vacationType">
+        <option value="paid">Оплачиваемый</option>
+        <option value="unpaid">Неоплачиваемый</option>
+        <option value="sick">Больничный</option>
+        <option value="other">Другое</option>
+      </select>
+      <textarea id="comment" rows="2" placeholder="Комментарий"></textarea>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="saveVacationBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelVacationBtn">Отмена</button>
+        <button class="btn btn-outline" id="deleteVacationBtn" style="display:none;">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      let currentUserEmail = null, employees = [], vacations = [];
+      let currentYear, currentMonth, selectedEmployeeId = '';
+
+      // Инициализация
+      async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth() + 1;
+        await loadEmployees();
+        await loadVacations();
+        renderEmpDropdown();
+        renderCalendar();
+      }
+
+      async function loadEmployees() {
+        const { data } = await _supabase.from('employees').select('*');
+        employees = data || [];
+        const select = document.getElementById('employeeSelect');
+        select.innerHTML = employees.map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join('');
+      }
+
+      async function loadVacations() {
+        const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+        const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
+        const { data, error } = await _supabase.from('vacations').select('*')
+          .gte('start_date', startDate)
+          .lt('start_date', endDate);
+        if (error) { console.error(error); return; }
+        vacations = data || [];
+      }
+
+      function renderEmpDropdown() {
+        const dd = document.getElementById('empDropdown');
+        dd.innerHTML = `<div class="emp-dropdown-item ${selectedEmployeeId === '' ? 'active' : ''}" data-id="">Все сотрудники</div>` +
+          employees.map(e => `<div class="emp-dropdown-item ${selectedEmployeeId === e.id ? 'active' : ''}" data-id="${e.id}">${e.name}</div>`).join('');
+        dd.querySelectorAll('.emp-dropdown-item').forEach(item => {
+          item.addEventListener('click', () => {
+            selectedEmployeeId = item.dataset.id;
+            document.getElementById('empFilterBtn').textContent = item.textContent.trim();
+            dd.classList.remove('open');
+            renderEmpDropdown();
+            renderCalendar();
+          });
+        });
+      }
+
+      function renderCalendar() {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        document.getElementById('monthTitle').textContent =
+          new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+
+        const container = document.getElementById('calendarContainer');
+        let html = '<table><thead><tr><th class="employee-name">Сотрудник</th>';
+        for (let d = 1; d <= daysInMonth; d++) {
+          html += `<th>${d}</th>`;
+        }
+        html += '</tr></thead><tbody>';
+
+        const filteredEmployees = selectedEmployeeId
+          ? employees.filter(e => e.id === selectedEmployeeId)
+          : employees;
+
+        filteredEmployees.forEach(emp => {
+          html += `<tr><td class="employee-name">${emp.name}</td>`;
+          for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const cellVacations = vacations.filter(v => v.emp_id === emp.id && dateStr >= v.start_date && dateStr <= v.end_date);
+            let cellClass = 'day-cell';
+            if (cellVacations.length > 1) cellClass += ' multiple';
+            else if (cellVacations.length === 1) cellClass += ' vacation';
+            html += `<td class="${cellClass}" data-emp="${emp.id}" data-date="${dateStr}">${cellVacations.length > 0 ? 'О' : ''}</td>`;
+          }
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+
+        // Обработчики клика по ячейкам
+        container.querySelectorAll('.day-cell').forEach(cell => {
+          cell.addEventListener('click', () => {
+            const empId = cell.dataset.emp;
+            const date = cell.dataset.date;
+            openVacationModal(empId, date);
+          });
+        });
+      }
+
+      function openVacationModal(empId, date) {
+        document.getElementById('employeeSelect').value = empId || '';
+        document.getElementById('startDate').value = date;
+        document.getElementById('endDate').value = date;
+        document.getElementById('vacationType').value = 'paid';
+        document.getElementById('comment').value = '';
+        document.getElementById('deleteVacationBtn').style.display = 'none';
+        document.getElementById('modalTitle').textContent = 'Новый отпуск';
+        document.getElementById('vacationModal').style.display = 'flex';
+        document.getElementById('vacationModal').dataset.editId = '';
+      }
+
+      document.getElementById('saveVacationBtn').addEventListener('click', async () => {
+        const empId = document.getElementById('employeeSelect').value;
+        if (!empId) { alert('Выберите сотрудника'); return; }
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (!startDate || !endDate) { alert('Выберите даты'); return; }
+        const type = document.getElementById('vacationType').value;
+        const comment = document.getElementById('comment').value.trim();
+        const editId = document.getElementById('vacationModal').dataset.editId;
+
+        const data = { emp_id: empId, start_date: startDate, end_date: endDate, type, comment };
+        let error;
+        if (editId) {
+          const { error: updateError } = await _supabase.from('vacations').update(data).eq('id', editId);
+          error = updateError;
+        } else {
+          const { error: insertError } = await _supabase.from('vacations').insert([data]);
+          error = insertError;
+        }
+        if (error) { alert('Ошибка: ' + error.message); return; }
+        document.getElementById('vacationModal').style.display = 'none';
+        await loadVacations();
+        renderCalendar();
+      });
+
+      document.getElementById('cancelVacationBtn').addEventListener('click', () => {
+        document.getElementById('vacationModal').style.display = 'none';
+      });
+
+      document.getElementById('deleteVacationBtn').addEventListener('click', async () => {
+        const editId = document.getElementById('vacationModal').dataset.editId;
+        if (!editId) return;
+        const { error } = await _supabase.from('vacations').delete().eq('id', editId);
+        if (error) { alert('Ошибка: ' + error.message); return; }
+        document.getElementById('vacationModal').style.display = 'none';
+        await loadVacations();
+        renderCalendar();
+      });
+
+      document.getElementById('addVacationBtn').addEventListener('click', () => {
+        openVacationModal('', '');
+      });
+
+      document.getElementById('empFilterBtn').addEventListener('click', () => {
+        document.getElementById('empDropdown').classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#empFilterWrap')) document.getElementById('empDropdown').classList.remove('open');
+      });
+
+      document.getElementById('prevMonthBtn').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+        loadVacations().then(renderCalendar);
+      });
+      document.getElementById('nextMonthBtn').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+        loadVacations().then(renderCalendar);
+      });
+
+      init();
+    })();
+  </script>
+</body>
+</html>
