@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Сотрудники — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink: #ff8c94;
+      --mint: #a0e7e5;
+      --peach: #fad0c4;
+      --sun: #ffd166;
+      --bg: #fef9f0;
+      --surface: rgba(255,255,255,0.9);
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .header, .modal {
+      -webkit-user-select: none; user-select: none; cursor: default;
+    }
+    input, textarea {
+      -webkit-user-select: text; user-select: text; cursor: text;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #fff0f0 0%, #fefce8 50%, #e0f7f5 100%);
+      color: var(--text);
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .music-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .note {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(255,140,148,0.12);
+      animation: floatNote 10s infinite ease-in-out;
+    }
+    .note::before { content: '♪'; }
+    .note.two::before { content: '♫'; }
+    .note.three::before { content: '♩'; }
+    @keyframes floatNote {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+      50% { transform: translateY(-25px) rotate(5deg); opacity: 0.9; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+    }
+
+    .container {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1000px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .back-link { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--pink); }
+
+    .btn {
+      border: none; padding: 0.6rem 1.4rem; border-radius: 16px;
+      font-weight: 600; cursor: pointer; font-size: 0.9rem;
+      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
+      background: linear-gradient(135deg, var(--pink), var(--peach));
+      color: white; box-shadow: 0 6px 12px rgba(255,140,148,0.3);
+    }
+    .btn:hover { box-shadow: 0 10px 20px rgba(255,140,148,0.5); transform: translateY(-2px); }
+    .btn-outline { background: transparent; border: 2px solid var(--pink); color: var(--pink); }
+    .btn-outline:hover { background: var(--pink); color: white; }
+    .btn-danger { background: #ff6b6b; color: white; border: none; }
+    .btn-danger:hover { background: #e74c3c; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+    th, td {
+      padding: 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #fafafa;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+    tr:hover { background: #fff5f5; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px); display: flex;
+      align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal {
+      background: white; border-radius: 24px; padding: 2rem;
+      max-width: 500px; width: 90%;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+      animation: slideUp 0.2s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }
+    }
+    input, select {
+      width: 100%; padding: 0.6rem; margin: 0.5rem 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+  <div class="music-bg">
+    <div class="note" style="top:10%; left:5%;"></div>
+    <div class="note two" style="top:25%; right:10%;"></div>
+    <div class="note three" style="bottom:20%; left:15%;"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>Сотрудники</h1>
+      <button class="btn" id="addBtn">+ Добавить сотрудника</button>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Имя</th><th>Роль</th><th>Специализация</th><th>Email</th><th>Действия</th></tr>
+      </thead>
+      <tbody id="employeesBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Модалка добавления/редактирования -->
+  <div class="modal-overlay" id="empModal" style="display:none;">
+    <div class="modal">
+      <h2 id="modalTitle">Новый сотрудник</h2>
+      <input type="text" id="name" placeholder="Имя">
+      <select id="role">
+        <option value="Управляющий">Управляющий</option>
+        <option value="Менеджер">Менеджер</option>
+        <option value="Администратор">Администратор</option>
+        <option value="Преподаватель" selected>Преподаватель</option>
+      </select>
+      <input type="text" id="spec" placeholder="Специализация (для преподавателей)">
+      <input type="email" id="email" placeholder="Email (для входа в систему)">
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="saveBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelBtn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Кастомный confirm -->
+  <div class="modal-overlay" id="confirmModal" style="display:none;">
+    <div class="modal" style="max-width:350px; text-align:center;">
+      <p id="confirmMessage"></p>
+      <div style="display:flex; gap:1rem; justify-content:center; margin-top:1rem;">
+        <button class="btn" id="confirmYesBtn">Да</button>
+        <button class="btn btn-outline" id="confirmNoBtn">Нет</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      let currentUserEmail = null, employees = [];
+
+      function showConfirm(msg) {
+        return new Promise(resolve => {
+          document.getElementById('confirmMessage').textContent = msg;
+          document.getElementById('confirmModal').style.display = 'flex';
+          document.getElementById('confirmYesBtn').onclick = () => {
+            document.getElementById('confirmModal').style.display = 'none';
+            resolve(true);
+          };
+          document.getElementById('confirmNoBtn').onclick = () => {
+            document.getElementById('confirmModal').style.display = 'none';
+            resolve(false);
+          };
+        });
+      }
+
+      async function loadEmployees() {
+        const { data } = await _supabase.from('employees').select('*').order('name');
+        employees = data || [];
+        renderTable();
+      }
+
+      function renderTable() {
+        const tbody = document.getElementById('employeesBody');
+        tbody.innerHTML = employees.map(e => `
+          <tr>
+            <td>${e.name}</td>
+            <td>${e.role}</td>
+            <td>${e.specialization || '—'}</td>
+            <td>${e.email || '—'}</td>
+            <td>
+              <button class="btn btn-outline edit-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>
+              <button class="btn btn-danger delete-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>
+            </td>
+          </tr>
+        `).join('');
+
+        tbody.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', () => openEditModal(btn.dataset.id));
+        });
+        tbody.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const confirmed = await showConfirm('Удалить сотрудника? Это также удалит все его записи в графике, отпусках и задачах.');
+            if (!confirmed) return;
+            const { error } = await _supabase.from('employees').delete().eq('id', id);
+            if (error) { alert('Ошибка удаления: ' + error.message); return; }
+            await loadEmployees();
+          });
+        });
+      }
+
+      function openEditModal(id) {
+        const emp = employees.find(e => e.id === id);
+        if (!emp) return;
+        document.getElementById('modalTitle').textContent = 'Редактирование сотрудника';
+        document.getElementById('name').value = emp.name;
+        document.getElementById('role').value = emp.role;
+        document.getElementById('spec').value = emp.specialization || '';
+        document.getElementById('email').value = emp.email || '';
+        document.getElementById('empModal').dataset.editId = id;
+        document.getElementById('empModal').style.display = 'flex';
+      }
+
+      document.getElementById('addBtn').addEventListener('click', () => {
+        document.getElementById('modalTitle').textContent = 'Новый сотрудник';
+        document.getElementById('name').value = '';
+        document.getElementById('role').value = 'Преподаватель';
+        document.getElementById('spec').value = '';
+        document.getElementById('email').value = '';
+        delete document.getElementById('empModal').dataset.editId;
+        document.getElementById('empModal').style.display = 'flex';
+      });
+
+      document.getElementById('cancelBtn').addEventListener('click', () => {
+        document.getElementById('empModal').style.display = 'none';
+      });
+
+      document.getElementById('saveBtn').addEventListener('click', async () => {
+        const name = document.getElementById('name').value.trim();
+        if (!name) { alert('Введите имя'); return; }
+        const data = {
+          name,
+          role: document.getElementById('role').value,
+          specialization: document.getElementById('spec').value.trim(),
+          email: document.getElementById('email').value.trim()
+        };
+        const editId = document.getElementById('empModal').dataset.editId;
+        let error;
+        if (editId) {
+          const { error: updateError } = await _supabase.from('employees').update(data).eq('id', editId);
+          error = updateError;
+        } else {
+          const { error: insertError } = await _supabase.from('employees').insert([data]);
+          error = insertError;
+        }
+        if (error) { alert('Ошибка: ' + error.message); return; }
+        document.getElementById('empModal').style.display = 'none';
+        await loadEmployees();
+      });
+
+      (async () => {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        await loadEmployees();
+      })();
+    })();
+  </script>
+</body>
+</html>
