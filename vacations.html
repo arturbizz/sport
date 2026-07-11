@@ -166,6 +166,11 @@
       background: white;
       position: sticky; left: 0; z-index: 2;
       min-width: 180px;
+      cursor: pointer; /* теперь кликабельно */
+      transition: background 0.2s;
+    }
+    .employee-name:hover {
+      background: #ffebee;
     }
     .day-cell {
       cursor: pointer;
@@ -320,7 +325,6 @@
       let currentUserEmail = null, employees = [], vacations = [];
       let currentYear, currentMonth, selectedEmployeeId = '', selectedRole = 'all';
 
-      // Кастомный confirm
       function showConfirm(msg) {
         return new Promise(resolve => {
           document.getElementById('confirmMessage').textContent = msg;
@@ -336,7 +340,6 @@
         });
       }
 
-      // Анимация успеха (шарик и конфетти)
       function showConfetti() {
         const balloon = document.createElement('div');
         balloon.className = 'balloon';
@@ -430,7 +433,7 @@
         const filteredEmployees = getFilteredEmployees();
 
         filteredEmployees.forEach(emp => {
-          html += `<tr><td class="employee-name">${emp.name}</td>`;
+          html += `<tr><td class="employee-name" data-emp="${emp.id}">${emp.name}</td>`;
           for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             const cellVacations = vacations.filter(v => v.emp_id === emp.id && dateStr >= v.start_date && dateStr <= v.end_date);
@@ -444,21 +447,29 @@
         html += '</tbody></table>';
         container.innerHTML = html;
 
+        // Клик по имени сотрудника — открыть модалку с этим сотрудником
+        container.querySelectorAll('.employee-name').forEach(nameCell => {
+          nameCell.addEventListener('click', () => {
+            const empId = nameCell.dataset.emp;
+            openVacationModal(empId, null, null);
+          });
+        });
+
+        // Клик по дню — открыть модалку с датой (и существующим отпуском, если есть)
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', () => {
             const empId = cell.dataset.emp;
             const date = cell.dataset.date;
-            // Ищем отпуск, который покрывает эту дату
             const vacation = vacations.find(v => v.emp_id === empId && date >= v.start_date && date <= v.end_date);
             openVacationModal(empId, date, vacation);
           });
         });
       }
 
-      function openVacationModal(empId, date, vacation = null) {
+      function openVacationModal(empId, date, vacation) {
         document.getElementById('employeeSelect').value = empId || '';
-        document.getElementById('startDate').value = vacation ? vacation.start_date : date;
-        document.getElementById('endDate').value = vacation ? vacation.end_date : date;
+        document.getElementById('startDate').value = vacation ? vacation.start_date : (date || '');
+        document.getElementById('endDate').value = vacation ? vacation.end_date : (date || '');
         document.getElementById('vacationType').value = vacation ? vacation.type : 'paid';
         document.getElementById('comment').value = vacation ? vacation.comment : '';
         document.getElementById('deleteVacationBtn').style.display = vacation ? 'inline-block' : 'none';
@@ -511,7 +522,7 @@
       });
 
       document.getElementById('addVacationBtn').addEventListener('click', () => {
-        openVacationModal('', '');
+        openVacationModal('', '', null);
       });
 
       document.getElementById('empFilterBtn').addEventListener('click', () => {
