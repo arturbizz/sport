@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Мониторинг — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --pink: #ff8c94;
+      --mint: #a0e7e5;
+      --peach: #fad0c4;
+      --sun: #ffd166;
+      --bg: #fef9f0;
+      --surface: rgba(255,255,255,0.9);
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .header, .modal {
+      -webkit-user-select: none; user-select: none; cursor: default;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #fff0f0 0%, #fefce8 50%, #e0f7f5 100%);
+      color: var(--text);
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .container {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1100px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .back-link { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--pink); }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+    }
+    .section h2 {
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+      color: var(--pink);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 0.6rem;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.85rem;
+    }
+    th {
+      background: #fafafa;
+      font-weight: 600;
+      color: var(--text-light);
+    }
+    tr:hover { background: #fff5f5; }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .badge.insert { background: #d1fae5; color: #065f46; }
+    .badge.update { background: #fef3c7; color: #92400e; }
+    .badge.delete { background: #fee2e2; color: #991b1b; }
+
+    @media (max-width: 600px) {
+      body { padding: 0.5rem; }
+      .container { padding: 1rem; }
+      table { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>Мониторинг</h1>
+    </div>
+
+    <div class="section">
+      <h2>Зарегистрированные пользователи</h2>
+      <table>
+        <thead><tr><th>Email</th><th>Зарегистрирован</th><th>Последний вход</th></tr></thead>
+        <tbody id="usersBody"><tr><td colspan="3">Загрузка...</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Последние действия</h2>
+      <table>
+        <thead><tr><th>Время</th><th>Пользователь</th><th>Таблица</th><th>Действие</th><th>Детали</th></tr></thead>
+        <tbody id="logsBody"><tr><td colspan="5">Загрузка...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        // Проверяем, что это управляющий
+        if (session.user.email !== 'arturgalkin.ru@mail.ru') {
+          alert('Доступ запрещён');
+          window.location.href = 'index.html';
+          return;
+        }
+        await loadUsers();
+        await loadLogs();
+      }
+
+      async function loadUsers() {
+        // Получаем список пользователей через Supabase Auth Admin API (доступен через REST)
+        // Требуется Service Role Key, поэтому используем простой запрос к таблице auth.users через rpc
+        // Но для простоты используем стандартный метод getUsers() из Admin API – он не доступен с anon key.
+        // Вместо этого покажем заглушку, т.к. прямой доступ к auth.users из браузера ограничен.
+        // Лучшее решение: создать свою таблицу profiles и триггер, но для MVP используем audit_log.
+        // Пока отобразим только тех, кто совершал действия (из audit_log).
+        const { data } = await _supabase.from('audit_log').select('changed_by').order('changed_at', { ascending: false }).limit(100);
+        const emails = [...new Set(data.map(d => d.changed_by).filter(Boolean))];
+        document.getElementById('usersBody').innerHTML = emails.map(email => `
+          <tr><td>${email}</td><td>—</td><td>—</td></tr>
+        `).join('') || '<tr><td colspan="3">Нет данных</td></tr>';
+      }
+
+      async function loadLogs() {
+        const { data } = await _supabase.from('audit_log').select('*').order('changed_at', { ascending: false }).limit(50);
+        if (!data || data.length === 0) {
+          document.getElementById('logsBody').innerHTML = '<tr><td colspan="5">Нет записей</td></tr>';
+          return;
+        }
+        const actionLabels = { INSERT: 'Создание', UPDATE: 'Изменение', DELETE: 'Удаление' };
+        document.getElementById('logsBody').innerHTML = data.map(log => {
+          const date = new Date(log.changed_at).toLocaleString('ru-RU');
+          const action = actionLabels[log.action] || log.action;
+          let details = '';
+          if (log.action === 'INSERT') details = JSON.stringify(log.new_data).substring(0, 80);
+          else if (log.action === 'UPDATE') details = `изм. ${log.record_id}`;
+          else if (log.action === 'DELETE') details = `удал. ${log.record_id}`;
+          return `<tr>
+            <td>${date}</td>
+            <td>${log.changed_by || '—'}</td>
+            <td>${log.table_name}</td>
+            <td><span class="badge ${log.action.toLowerCase()}">${action}</span></td>
+            <td>${details}</td>
+          </tr>`;
+        }).join('');
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
