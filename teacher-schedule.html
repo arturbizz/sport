@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Расписание преподавателей — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --violet: #7c5ce7;
+      --teal: #0fb9b1;
+      --gold: #f9ca24;
+      --rose: #ff8c94;
+      --bg: #fef9f0;
+      --surface: rgba(255,255,255,0.85);
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .header, .modal {
+      -webkit-user-select: none; user-select: none; cursor: default;
+    }
+    input, textarea, select {
+      -webkit-user-select: text; user-select: text; cursor: text;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #fef9f0 0%, #f0f7f5 100%);
+      color: var(--text);
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .music-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .note {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(124,92,231,0.08);
+      animation: floatNote 12s infinite ease-in-out;
+    }
+    .note::before { content: '♪'; }
+    .note.two::before { content: '♫'; }
+    .note.three::before { content: '♩'; }
+    @keyframes floatNote {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(8deg); opacity: 0.7; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+    }
+
+    .container {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1100px;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .back-link { color: var(--violet); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 {
+      font-size: 2rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--violet), var(--gold), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn {
+      border: 1px solid var(--violet); padding: 0.55rem 1.4rem; border-radius: 14px;
+      font-weight: 600; cursor: pointer; font-size: 0.9rem;
+      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
+      background: transparent; color: var(--violet);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, var(--violet), var(--teal));
+      color: white; border-color: transparent;
+      box-shadow: 0 6px 14px rgba(124,92,231,0.2);
+      transform: translateY(-1px);
+    }
+    .btn-outline { background: transparent; border: 1px solid var(--violet); color: var(--violet); }
+    .btn-outline:hover { background: var(--violet); color: white; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+
+    .toolbar {
+      display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+      margin-bottom: 2rem;
+    }
+    .teacher-select {
+      padding: 0.5rem 1rem; border-radius: 14px;
+      border: 1px solid var(--border); background: white;
+      font-size: 0.9rem; font-weight: 500; cursor: pointer;
+      min-width: 200px;
+    }
+    .month-nav {
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .month-nav button {
+      background: white; border: 1px solid var(--border);
+      padding: 0.4rem 1rem; border-radius: 12px;
+      font-weight: 600; cursor: pointer; font-size: 0.9rem;
+      transition: 0.2s;
+    }
+    .month-nav button:hover { border-color: var(--violet); color: var(--violet); }
+    .month-title {
+      min-width: 140px; text-align: center; font-weight: 600;
+      background: white; padding: 0.4rem 1rem; border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .calendar-container {
+      overflow-x: auto;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+    th, td {
+      text-align: center;
+      padding: 0.6rem 0.3rem;
+      font-size: 0.85rem;
+      border: 1px solid #f0f0f0;
+      height: 50px;
+    }
+    th {
+      background: #fafafa;
+      color: var(--text-light);
+      font-weight: 600;
+      position: sticky; top: 0; z-index: 3;
+    }
+    .day-cell {
+      cursor: pointer;
+      transition: 0.2s;
+      vertical-align: top;
+      text-align: left;
+      padding: 0.3rem;
+    }
+    .day-cell:hover {
+      background: #f4f0ff;
+    }
+    .unavail-slot {
+      background: #ffe0e0;
+      font-size: 0.65rem;
+      padding: 0.1rem 0.3rem;
+      border-radius: 6px;
+      margin: 2px 0;
+      white-space: nowrap;
+      cursor: pointer;
+      border-left: 2px solid var(--rose);
+    }
+    .unavail-slot:hover { background: #ffccd5; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(4px); display: flex;
+      align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal {
+      background: white; border-radius: 24px; padding: 2rem;
+      max-width: 400px; width: 90%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+      animation: slideUp 0.25s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }
+    }
+    input, textarea, select {
+      width: 100%; padding: 0.6rem; margin: 0.5rem 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit;
+    }
+    .time-row {
+      display: flex; gap: 0.5rem; align-items: center;
+    }
+    .time-row input { flex: 1; }
+    @media (max-width: 600px) {
+      body { padding: 0.5rem; }
+      .container { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="music-bg">
+    <div class="note" style="top:10%; left:5%;"></div>
+    <div class="note two" style="top:25%; right:10%;"></div>
+    <div class="note three" style="bottom:20%; left:15%;"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>Расписание преподавателей</h1>
+    </div>
+
+    <div class="toolbar">
+      <select class="teacher-select" id="teacherSelect"></select>
+      <div class="month-nav">
+        <button id="prevMonthBtn">◀</button>
+        <span class="month-title" id="monthTitle"></span>
+        <button id="nextMonthBtn">▶</button>
+      </div>
+    </div>
+
+    <div id="calendarContainer" class="calendar-container"></div>
+  </div>
+
+  <!-- Модалка слота недоступности -->
+  <div class="modal-overlay" id="slotModal" style="display:none;">
+    <div class="modal">
+      <h2 id="slotModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Добавить недоступность</h2>
+      <input type="date" id="slotDate" disabled>
+      <div class="time-row">
+        <input type="time" id="slotStart" placeholder="Начало">
+        <input type="time" id="slotEnd" placeholder="Конец">
+      </div>
+      <textarea id="slotNote" rows="2" placeholder="Примечание (необязательно)"></textarea>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="saveSlotBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelSlotBtn">Отмена</button>
+        <button class="btn btn-outline" id="deleteSlotBtn" style="display:none;">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      let currentUserEmail = null, teachers = [], unavail = [];
+      let currentYear, currentMonth, selectedTeacherId = '';
+
+      async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth() + 1;
+        await loadTeachers();
+        await loadUnavailability();
+        renderCalendar();
+      }
+
+      async function loadTeachers() {
+        const { data } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель');
+        teachers = data || [];
+        const select = document.getElementById('teacherSelect');
+        select.innerHTML = teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        if (teachers.length > 0) selectedTeacherId = teachers[0].id;
+        select.value = selectedTeacherId;
+        select.addEventListener('change', (e) => {
+          selectedTeacherId = e.target.value;
+          loadUnavailability().then(renderCalendar);
+        });
+      }
+
+      async function loadUnavailability() {
+        if (!selectedTeacherId) { unavail = []; return; }
+        const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+        const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
+        const { data, error } = await _supabase.from('teacher_unavailability')
+          .select('*')
+          .eq('teacher_id', selectedTeacherId)
+          .gte('date', startDate)
+          .lt('date', endDate);
+        if (error) { console.error(error); return; }
+        unavail = data || [];
+      }
+
+      function renderCalendar() {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        document.getElementById('monthTitle').textContent =
+          new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+
+        const container = document.getElementById('calendarContainer');
+        let html = '<table><thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead><tbody><tr>';
+
+        // Определяем день недели первого числа (0 = Вс, 1 = Пн, ...)
+        const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Пн = 0
+
+        for (let i = 0; i < startOffset; i++) {
+          html += '<td></td>';
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const daySlots = unavail.filter(u => u.date === dateStr);
+          let cellContent = `<strong>${d}</strong>`;
+          daySlots.forEach(slot => {
+            cellContent += `<div class="unavail-slot" data-id="${slot.id}" data-date="${dateStr}" data-start="${slot.start_time}" data-end="${slot.end_time}" data-note="${slot.note || ''}">${slot.start_time.substring(0,5)}–${slot.end_time.substring(0,5)}</div>`;
+          });
+          html += `<td class="day-cell" data-date="${dateStr}">${cellContent}</td>`;
+
+          // Если воскресенье (7 день), закрываем строку
+          if ((startOffset + d) % 7 === 0) {
+            html += '</tr><tr>';
+          }
+        }
+        html += '</tr></tbody></table>';
+        container.innerHTML = html;
+
+        // Обработчики клика по ячейке дня
+        container.querySelectorAll('.day-cell').forEach(cell => {
+          cell.addEventListener('click', (e) => {
+            if (e.target.classList.contains('unavail-slot')) return; // обрабатывается отдельно
+            const dateStr = cell.dataset.date;
+            openSlotModal(dateStr, null);
+          });
+        });
+
+        // Обработчики клика по слоту
+        container.querySelectorAll('.unavail-slot').forEach(slotEl => {
+          slotEl.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = slotEl.dataset.id;
+            const date = slotEl.dataset.date;
+            const start = slotEl.dataset.start;
+            const end = slotEl.dataset.end;
+            const note = slotEl.dataset.note;
+            openSlotModal(date, { id, start_time: start, end_time: end, note });
+          });
+        });
+      }
+
+      function openSlotModal(dateStr, existingSlot) {
+        document.getElementById('slotDate').value = dateStr;
+        document.getElementById('slotStart').value = existingSlot ? existingSlot.start_time : '09:00';
+        document.getElementById('slotEnd').value = existingSlot ? existingSlot.end_time : '10:00';
+        document.getElementById('slotNote').value = existingSlot ? (existingSlot.note || '') : '';
+        document.getElementById('deleteSlotBtn').style.display = existingSlot ? 'inline-block' : 'none';
+        document.getElementById('slotModalTitle').textContent = existingSlot ? 'Редактировать недоступность' : 'Добавить недоступность';
+        document.getElementById('slotModal').dataset.editId = existingSlot ? existingSlot.id : '';
+        document.getElementById('slotModal').style.display = 'flex';
+      }
+
+      document.getElementById('saveSlotBtn').addEventListener('click', async () => {
+        const date = document.getElementById('slotDate').value;
+        const start = document.getElementById('slotStart').value;
+        const end = document.getElementById('slotEnd').value;
+        const note = document.getElementById('slotNote').value.trim();
+        if (!start || !end) { alert('Заполните время начала и конца'); return; }
+        if (start >= end) { alert('Время начала должно быть раньше времени конца'); return; }
+        const editId = document.getElementById('slotModal').dataset.editId;
+
+        const data = {
+          teacher_id: selectedTeacherId,
+          date,
+          start_time: start,
+          end_time: end,
+          note
+        };
+        let error;
+        if (editId) {
+          const { error: updateError } = await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
+          error = updateError;
+        } else {
+          const { error: insertError } = await _supabase.from('teacher_unavailability').insert([data]);
+          error = insertError;
+        }
+        if (error) { alert('Ошибка: ' + error.message); return; }
+        document.getElementById('slotModal').style.display = 'none';
+        await loadUnavailability();
+        renderCalendar();
+      });
+
+      document.getElementById('deleteSlotBtn').addEventListener('click', async () => {
+        const editId = document.getElementById('slotModal').dataset.editId;
+        if (!editId) return;
+        const { error } = await _supabase.from('teacher_unavailability').delete().eq('id', editId);
+        if (error) { alert('Ошибка: ' + error.message); return; }
+        document.getElementById('slotModal').style.display = 'none';
+        await loadUnavailability();
+        renderCalendar();
+      });
+
+      document.getElementById('cancelSlotBtn').addEventListener('click', () => {
+        document.getElementById('slotModal').style.display = 'none';
+      });
+
+      document.getElementById('prevMonthBtn').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+        loadUnavailability().then(renderCalendar);
+      });
+      document.getElementById('nextMonthBtn').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+        loadUnavailability().then(renderCalendar);
+      });
+
+      init();
+    })();
+  </script>
+</body>
+</html>
