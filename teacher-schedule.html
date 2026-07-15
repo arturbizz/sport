@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Расписание преподавателей — Music Club Орёл</title>
+  <title>Доступность преподавателей — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,6 +14,7 @@
       --teal: #0fb9b1;
       --gold: #f9ca24;
       --rose: #ff8c94;
+      --green: #55efc4;
       --bg: #fef9f0;
       --surface: rgba(255,255,255,0.85);
       --text: #2d3436;
@@ -60,7 +61,7 @@
 
     .container {
       position: relative; z-index: 2;
-      width: 100%; max-width: 1100px;
+      width: 100%; max-width: 1200px;
       background: var(--surface);
       backdrop-filter: blur(12px);
       border-radius: 24px;
@@ -101,12 +102,39 @@
       display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
       margin-bottom: 2rem;
     }
-    .teacher-select {
-      padding: 0.5rem 1rem; border-radius: 14px;
-      border: 1px solid var(--border); background: white;
-      font-size: 0.9rem; font-weight: 500; cursor: pointer;
-      min-width: 200px;
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 250px;
     }
+    .search-wrapper input {
+      width: 100%;
+      padding: 0.5rem 1rem;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .search-results {
+      position: absolute;
+      top: 100%; left: 0; right: 0;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+      z-index: 10;
+      display: none;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .search-results.open { display: block; }
+    .search-item {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .search-item:hover { background: #f4f0ff; }
+
     .month-nav {
       display: flex; align-items: center; gap: 0.5rem;
     }
@@ -154,21 +182,27 @@
       vertical-align: top;
       text-align: left;
       padding: 0.3rem;
+      position: relative;
     }
     .day-cell:hover {
       background: #f4f0ff;
     }
-    .unavail-slot {
-      background: #ffe0e0;
+    .day-cell.available { background: rgba(85,239,196,0.25); }
+    .day-cell.unavailable { background: rgba(255,140,148,0.25); }
+    .day-cell.by_agreement { background: rgba(249,202,36,0.25); }
+
+    .slot-indicator {
       font-size: 0.65rem;
       padding: 0.1rem 0.3rem;
       border-radius: 6px;
       margin: 2px 0;
       white-space: nowrap;
       cursor: pointer;
-      border-left: 2px solid var(--rose);
+      border-left: 2px solid;
     }
-    .unavail-slot:hover { background: #ffccd5; }
+    .slot-indicator.available { background: #d1fae5; border-color: var(--green); color: #065f46; }
+    .slot-indicator.unavailable { background: #ffe0e0; border-color: var(--rose); color: #991b1b; }
+    .slot-indicator.by_agreement { background: #fef3c7; border-color: var(--gold); color: #92400e; }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.35);
@@ -193,6 +227,7 @@
       display: flex; gap: 0.5rem; align-items: center;
     }
     .time-row input { flex: 1; }
+
     @media (max-width: 600px) {
       body { padding: 0.5rem; }
       .container { padding: 1rem; }
@@ -209,11 +244,14 @@
   <div class="container">
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
-      <h1>Расписание преподавателей</h1>
+      <h1>Доступность преподавателей</h1>
     </div>
 
     <div class="toolbar">
-      <select class="teacher-select" id="teacherSelect"></select>
+      <div class="search-wrapper" id="searchWrapper">
+        <input type="text" id="teacherSearch" placeholder="Поиск преподавателя...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
       <div class="month-nav">
         <button id="prevMonthBtn">◀</button>
         <span class="month-title" id="monthTitle"></span>
@@ -224,20 +262,25 @@
     <div id="calendarContainer" class="calendar-container"></div>
   </div>
 
-  <!-- Модалка слота недоступности -->
-  <div class="modal-overlay" id="slotModal" style="display:none;">
+  <!-- Модалка настройки дня -->
+  <div class="modal-overlay" id="settingModal" style="display:none;">
     <div class="modal">
-      <h2 id="slotModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Добавить недоступность</h2>
-      <input type="date" id="slotDate" disabled>
+      <h2 id="settingModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Настройка дня</h2>
+      <p id="settingDayInfo"></p>
+      <select id="settingType">
+        <option value="available">Доступен</option>
+        <option value="unavailable">Недоступен</option>
+        <option value="by_agreement">По согласованию</option>
+      </select>
       <div class="time-row">
-        <input type="time" id="slotStart" placeholder="Начало">
-        <input type="time" id="slotEnd" placeholder="Конец">
+        <input type="time" id="settingStart" placeholder="Начало">
+        <input type="time" id="settingEnd" placeholder="Конец">
       </div>
-      <textarea id="slotNote" rows="2" placeholder="Примечание (необязательно)"></textarea>
+      <textarea id="settingNote" rows="2" placeholder="Примечание"></textarea>
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-        <button class="btn" id="saveSlotBtn">Сохранить</button>
-        <button class="btn btn-outline" id="cancelSlotBtn">Отмена</button>
-        <button class="btn btn-outline" id="deleteSlotBtn" style="display:none;">Удалить</button>
+        <button class="btn" id="saveSettingBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelSettingBtn">Отмена</button>
+        <button class="btn btn-outline" id="deleteSettingBtn" style="display:none;">Удалить</button>
       </div>
     </div>
   </div>
@@ -247,8 +290,8 @@
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      let currentUserEmail = null, teachers = [], unavail = [];
-      let currentYear, currentMonth, selectedTeacherId = '';
+      let currentUserEmail = null, teachers = [], settings = [], unavail = [];
+      let currentYear, currentMonth, selectedTeacherId = null;
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -258,21 +301,27 @@
         currentYear = now.getFullYear();
         currentMonth = now.getMonth() + 1;
         await loadTeachers();
-        await loadUnavailability();
         renderCalendar();
       }
 
       async function loadTeachers() {
         const { data } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель');
         teachers = data || [];
-        const select = document.getElementById('teacherSelect');
-        select.innerHTML = teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-        if (teachers.length > 0) selectedTeacherId = teachers[0].id;
-        select.value = selectedTeacherId;
-        select.addEventListener('change', (e) => {
-          selectedTeacherId = e.target.value;
-          loadUnavailability().then(renderCalendar);
-        });
+      }
+
+      async function selectTeacher(id) {
+        selectedTeacherId = id;
+        document.getElementById('searchResults').classList.remove('open');
+        document.getElementById('teacherSearch').value = teachers.find(t => t.id === id)?.name || '';
+        await loadTeacherSettings();
+        await loadUnavailability();
+        renderCalendar();
+      }
+
+      async function loadTeacherSettings() {
+        if (!selectedTeacherId) { settings = []; return; }
+        const { data } = await _supabase.from('teacher_settings').select('*').eq('teacher_id', selectedTeacherId);
+        settings = data || [];
       }
 
       async function loadUnavailability() {
@@ -281,16 +330,51 @@
         const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
         const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
         const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
-        const { data, error } = await _supabase.from('teacher_unavailability')
+        const { data } = await _supabase.from('teacher_unavailability')
           .select('*')
           .eq('teacher_id', selectedTeacherId)
           .gte('date', startDate)
           .lt('date', endDate);
-        if (error) { console.error(error); return; }
         unavail = data || [];
       }
 
+      function getDayStatus(dateStr) {
+        const date = new Date(dateStr);
+        const dayOfWeek = date.getDay(); // 0=Вс, 1=Пн, ...
+        // Сначала проверяем переопределение на эту дату
+        const override = unavail.find(u => u.date === dateStr);
+        if (override) {
+          return {
+            type: override.type || 'unavailable',
+            start: override.start_time,
+            end: override.end_time,
+            note: override.note,
+            id: override.id,
+            isOverride: true
+          };
+        }
+        // Ищем правило для этого дня недели
+        const rule = settings.find(s => s.day_of_week === dayOfWeek);
+        if (rule) {
+          return {
+            type: rule.type,
+            start: rule.start_time,
+            end: rule.end_time,
+            note: rule.note,
+            id: rule.id,
+            isOverride: false
+          };
+        }
+        // По умолчанию — доступен
+        return { type: 'available', start: null, end: null, note: '', id: null, isOverride: false };
+      }
+
       function renderCalendar() {
+        if (!selectedTeacherId) {
+          document.getElementById('calendarContainer').innerHTML = '<p style="color:#636e72; text-align:center;">Выберите преподавателя для отображения графика</p>';
+          return;
+        }
+
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         document.getElementById('monthTitle').textContent =
           new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
@@ -298,9 +382,8 @@
         const container = document.getElementById('calendarContainer');
         let html = '<table><thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead><tbody><tr>';
 
-        // Определяем день недели первого числа (0 = Вс, 1 = Пн, ...)
         const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
-        const startOffset = firstDay === 0 ? 6 : firstDay - 1; // Пн = 0
+        const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
         for (let i = 0; i < startOffset; i++) {
           html += '<td></td>';
@@ -308,14 +391,14 @@
 
         for (let d = 1; d <= daysInMonth; d++) {
           const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const daySlots = unavail.filter(u => u.date === dateStr);
+          const status = getDayStatus(dateStr);
+          const cellClass = `day-cell ${status.type}`;
           let cellContent = `<strong>${d}</strong>`;
-          daySlots.forEach(slot => {
-            cellContent += `<div class="unavail-slot" data-id="${slot.id}" data-date="${dateStr}" data-start="${slot.start_time}" data-end="${slot.end_time}" data-note="${slot.note || ''}">${slot.start_time.substring(0,5)}–${slot.end_time.substring(0,5)}</div>`;
-          });
-          html += `<td class="day-cell" data-date="${dateStr}">${cellContent}</td>`;
+          if (status.id) {
+            cellContent += `<div class="slot-indicator ${status.type}" data-id="${status.id}" data-date="${dateStr}" data-type="${status.type}" data-start="${status.start || ''}" data-end="${status.end || ''}" data-note="${status.note || ''}">${status.type === 'available' ? 'Доступен' : status.type === 'unavailable' ? 'Недоступен' : 'По согласованию'}</div>`;
+          }
+          html += `<td class="${cellClass}" data-date="${dateStr}">${cellContent}</td>`;
 
-          // Если воскресенье (7 день), закрываем строку
           if ((startOffset + d) % 7 === 0) {
             html += '</tr><tr>';
           }
@@ -323,93 +406,151 @@
         html += '</tr></tbody></table>';
         container.innerHTML = html;
 
-        // Обработчики клика по ячейке дня
+        // Клик по ячейке дня
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', (e) => {
-            if (e.target.classList.contains('unavail-slot')) return; // обрабатывается отдельно
+            if (e.target.classList.contains('slot-indicator')) return;
             const dateStr = cell.dataset.date;
-            openSlotModal(dateStr, null);
+            openSettingModal(dateStr);
           });
         });
 
-        // Обработчики клика по слоту
-        container.querySelectorAll('.unavail-slot').forEach(slotEl => {
-          slotEl.addEventListener('click', (e) => {
+        // Клик по индикатору
+        container.querySelectorAll('.slot-indicator').forEach(ind => {
+          ind.addEventListener('click', (e) => {
             e.stopPropagation();
-            const id = slotEl.dataset.id;
-            const date = slotEl.dataset.date;
-            const start = slotEl.dataset.start;
-            const end = slotEl.dataset.end;
-            const note = slotEl.dataset.note;
-            openSlotModal(date, { id, start_time: start, end_time: end, note });
+            const id = ind.dataset.id;
+            const date = ind.dataset.date;
+            const type = ind.dataset.type;
+            const start = ind.dataset.start;
+            const end = ind.dataset.end;
+            const note = ind.dataset.note;
+            openSettingModal(date, { id, type, start_time: start, end_time: end, note });
           });
         });
       }
 
-      function openSlotModal(dateStr, existingSlot) {
-        document.getElementById('slotDate').value = dateStr;
-        document.getElementById('slotStart').value = existingSlot ? existingSlot.start_time : '09:00';
-        document.getElementById('slotEnd').value = existingSlot ? existingSlot.end_time : '10:00';
-        document.getElementById('slotNote').value = existingSlot ? (existingSlot.note || '') : '';
-        document.getElementById('deleteSlotBtn').style.display = existingSlot ? 'inline-block' : 'none';
-        document.getElementById('slotModalTitle').textContent = existingSlot ? 'Редактировать недоступность' : 'Добавить недоступность';
-        document.getElementById('slotModal').dataset.editId = existingSlot ? existingSlot.id : '';
-        document.getElementById('slotModal').style.display = 'flex';
+      function openSettingModal(dateStr, existing = null) {
+        const date = new Date(dateStr);
+        const dayOfWeek = date.getDay();
+        const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+        document.getElementById('settingDayInfo').textContent = `${dateStr} (${dayNames[dayOfWeek]})`;
+        document.getElementById('settingType').value = existing ? existing.type : 'available';
+        document.getElementById('settingStart').value = existing ? (existing.start_time || '') : '';
+        document.getElementById('settingEnd').value = existing ? (existing.end_time || '') : '';
+        document.getElementById('settingNote').value = existing ? (existing.note || '') : '';
+        document.getElementById('deleteSettingBtn').style.display = existing ? 'inline-block' : 'none';
+        document.getElementById('settingModal').dataset.editId = existing ? existing.id : '';
+        document.getElementById('settingModal').dataset.date = dateStr;
+        document.getElementById('settingModal').dataset.dayOfWeek = dayOfWeek;
+        document.getElementById('settingModal').style.display = 'flex';
       }
 
-      document.getElementById('saveSlotBtn').addEventListener('click', async () => {
-        const date = document.getElementById('slotDate').value;
-        const start = document.getElementById('slotStart').value;
-        const end = document.getElementById('slotEnd').value;
-        const note = document.getElementById('slotNote').value.trim();
-        if (!start || !end) { alert('Заполните время начала и конца'); return; }
-        if (start >= end) { alert('Время начала должно быть раньше времени конца'); return; }
-        const editId = document.getElementById('slotModal').dataset.editId;
+      document.getElementById('saveSettingBtn').addEventListener('click', async () => {
+        const dateStr = document.getElementById('settingModal').dataset.date;
+        const dayOfWeek = parseInt(document.getElementById('settingModal').dataset.dayOfWeek);
+        const type = document.getElementById('settingType').value;
+        const start = document.getElementById('settingStart').value;
+        const end = document.getElementById('settingEnd').value;
+        const note = document.getElementById('settingNote').value.trim();
+        const editId = document.getElementById('settingModal').dataset.editId;
 
+        // Сохраняем как правило для дня недели (если не переопределение)
         const data = {
           teacher_id: selectedTeacherId,
-          date,
-          start_time: start,
-          end_time: end,
+          day_of_week: dayOfWeek,
+          type,
+          start_time: start || null,
+          end_time: end || null,
           note
         };
+
         let error;
         if (editId) {
-          const { error: updateError } = await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
-          error = updateError;
+          // Если это переопределение (unavail), обновляем его
+          const isOverride = document.querySelector(`.slot-indicator[data-id="${editId}"]`)?.closest('.day-cell')?.classList.contains('unavailable') || false;
+          if (isOverride) {
+            const { error: updateError } = await _supabase.from('teacher_unavailability').update({ type, start_time: start, end_time: end, note }).eq('id', editId);
+            error = updateError;
+          } else {
+            const { error: updateError } = await _supabase.from('teacher_settings').update(data).eq('id', editId);
+            error = updateError;
+          }
         } else {
-          const { error: insertError } = await _supabase.from('teacher_unavailability').insert([data]);
+          // Сохраняем в teacher_settings для дня недели
+          const { error: insertError } = await _supabase.from('teacher_settings').insert([data]);
           error = insertError;
         }
+
         if (error) { alert('Ошибка: ' + error.message); return; }
-        document.getElementById('slotModal').style.display = 'none';
+        document.getElementById('settingModal').style.display = 'none';
+        await loadTeacherSettings();
         await loadUnavailability();
         renderCalendar();
       });
 
-      document.getElementById('deleteSlotBtn').addEventListener('click', async () => {
-        const editId = document.getElementById('slotModal').dataset.editId;
+      document.getElementById('deleteSettingBtn').addEventListener('click', async () => {
+        const editId = document.getElementById('settingModal').dataset.editId;
         if (!editId) return;
-        const { error } = await _supabase.from('teacher_unavailability').delete().eq('id', editId);
+        // Удаляем из teacher_settings
+        const { error } = await _supabase.from('teacher_settings').delete().eq('id', editId);
         if (error) { alert('Ошибка: ' + error.message); return; }
-        document.getElementById('slotModal').style.display = 'none';
-        await loadUnavailability();
+        document.getElementById('settingModal').style.display = 'none';
+        await loadTeacherSettings();
         renderCalendar();
       });
 
-      document.getElementById('cancelSlotBtn').addEventListener('click', () => {
-        document.getElementById('slotModal').style.display = 'none';
+      document.getElementById('cancelSettingBtn').addEventListener('click', () => {
+        document.getElementById('settingModal').style.display = 'none';
+      });
+
+      // Поиск преподавателя
+      document.getElementById('teacherSearch').addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        const results = document.getElementById('searchResults');
+        if (query.length === 0) {
+          results.classList.remove('open');
+          return;
+        }
+        const filtered = teachers.filter(t => t.name.toLowerCase().includes(query));
+        if (filtered.length === 0) {
+          results.innerHTML = '<div class="search-item">Никого не найдено</div>';
+        } else {
+          results.innerHTML = filtered.map(t => `<div class="search-item" data-id="${t.id}">${t.name}</div>`).join('');
+        }
+        results.classList.add('open');
+      });
+
+      document.getElementById('searchResults').addEventListener('click', (e) => {
+        const item = e.target.closest('.search-item');
+        if (!item) return;
+        const id = item.dataset.id;
+        selectTeacher(id);
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#searchWrapper')) {
+          document.getElementById('searchResults').classList.remove('open');
+        }
       });
 
       document.getElementById('prevMonthBtn').addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-        loadUnavailability().then(renderCalendar);
+        if (selectedTeacherId) {
+          loadUnavailability().then(renderCalendar);
+        } else {
+          renderCalendar();
+        }
       });
       document.getElementById('nextMonthBtn').addEventListener('click', () => {
         currentMonth++;
         if (currentMonth > 12) { currentMonth = 1; currentYear++; }
-        loadUnavailability().then(renderCalendar);
+        if (selectedTeacherId) {
+          loadUnavailability().then(renderCalendar);
+        } else {
+          renderCalendar();
+        }
       });
 
       init();
