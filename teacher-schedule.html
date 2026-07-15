@@ -290,7 +290,7 @@
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      let currentUserEmail = null, teachers = [], settings = [], unavail = [];
+      let currentUserEmail = null, teachers = [], settings = [];
       let currentYear, currentMonth, selectedTeacherId = null;
 
       async function init() {
@@ -314,7 +314,6 @@
         document.getElementById('searchResults').classList.remove('open');
         document.getElementById('teacherSearch').value = teachers.find(t => t.id === id)?.name || '';
         await loadTeacherSettings();
-        await loadUnavailability();
         renderCalendar();
       }
 
@@ -324,36 +323,9 @@
         settings = data || [];
       }
 
-      async function loadUnavailability() {
-        if (!selectedTeacherId) { unavail = []; return; }
-        const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
-        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
-        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
-        const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
-        const { data } = await _supabase.from('teacher_unavailability')
-          .select('*')
-          .eq('teacher_id', selectedTeacherId)
-          .gte('date', startDate)
-          .lt('date', endDate);
-        unavail = data || [];
-      }
-
       function getDayStatus(dateStr) {
         const date = new Date(dateStr);
         const dayOfWeek = date.getDay(); // 0=Вс, 1=Пн, ...
-        // Сначала проверяем переопределение на эту дату
-        const override = unavail.find(u => u.date === dateStr);
-        if (override) {
-          return {
-            type: override.type || 'unavailable',
-            start: override.start_time,
-            end: override.end_time,
-            note: override.note,
-            id: override.id,
-            isOverride: true
-          };
-        }
-        // Ищем правило для этого дня недели
         const rule = settings.find(s => s.day_of_week === dayOfWeek);
         if (rule) {
           return {
@@ -365,7 +337,6 @@
             isOverride: false
           };
         }
-        // По умолчанию — доступен
         return { type: 'available', start: null, end: null, note: '', id: null, isOverride: false };
       }
 
@@ -395,7 +366,8 @@
           const cellClass = `day-cell ${status.type}`;
           let cellContent = `<strong>${d}</strong>`;
           if (status.id) {
-            cellContent += `<div class="slot-indicator ${status.type}" data-id="${status.id}" data-date="${dateStr}" data-type="${status.type}" data-start="${status.start || ''}" data-end="${status.end || ''}" data-note="${status.note || ''}">${status.type === 'available' ? 'Доступен' : status.type === 'unavailable' ? 'Недоступен' : 'По согласованию'}</div>`;
+            const label = status.type === 'available' ? 'Доступен' : status.type === 'unavailable' ? 'Недоступен' : 'По согласованию';
+            cellContent += `<div class="slot-indicator ${status.type}" data-id="${status.id}" data-date="${dateStr}" data-type="${status.type}" data-start="${status.start || ''}" data-end="${status.end || ''}" data-note="${status.note || ''}">${label}</div>`;
           }
           html += `<td class="${cellClass}" data-date="${dateStr}">${cellContent}</td>`;
 
@@ -455,7 +427,6 @@
         const note = document.getElementById('settingNote').value.trim();
         const editId = document.getElementById('settingModal').dataset.editId;
 
-        // Сохраняем как правило для дня недели (если не переопределение)
         const data = {
           teacher_id: selectedTeacherId,
           day_of_week: dayOfWeek,
@@ -467,17 +438,9 @@
 
         let error;
         if (editId) {
-          // Если это переопределение (unavail), обновляем его
-          const isOverride = document.querySelector(`.slot-indicator[data-id="${editId}"]`)?.closest('.day-cell')?.classList.contains('unavailable') || false;
-          if (isOverride) {
-            const { error: updateError } = await _supabase.from('teacher_unavailability').update({ type, start_time: start, end_time: end, note }).eq('id', editId);
-            error = updateError;
-          } else {
-            const { error: updateError } = await _supabase.from('teacher_settings').update(data).eq('id', editId);
-            error = updateError;
-          }
+          const { error: updateError } = await _supabase.from('teacher_settings').update(data).eq('id', editId);
+          error = updateError;
         } else {
-          // Сохраняем в teacher_settings для дня недели
           const { error: insertError } = await _supabase.from('teacher_settings').insert([data]);
           error = insertError;
         }
@@ -485,14 +448,12 @@
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('settingModal').style.display = 'none';
         await loadTeacherSettings();
-        await loadUnavailability();
         renderCalendar();
       });
 
       document.getElementById('deleteSettingBtn').addEventListener('click', async () => {
         const editId = document.getElementById('settingModal').dataset.editId;
         if (!editId) return;
-        // Удаляем из teacher_settings
         const { error } = await _supabase.from('teacher_settings').delete().eq('id', editId);
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('settingModal').style.display = 'none';
@@ -504,7 +465,6 @@
         document.getElementById('settingModal').style.display = 'none';
       });
 
-      // Поиск преподавателя
       document.getElementById('teacherSearch').addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         const results = document.getElementById('searchResults');
@@ -523,9 +483,8 @@
 
       document.getElementById('searchResults').addEventListener('click', (e) => {
         const item = e.target.closest('.search-item');
-        if (!item) return;
-        const id = item.dataset.id;
-        selectTeacher(id);
+        if (!item || !item.dataset.id) return;
+        selectTeacher(item.dataset.id);
       });
 
       document.addEventListener('click', (e) => {
@@ -537,20 +496,12 @@
       document.getElementById('prevMonthBtn').addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-        if (selectedTeacherId) {
-          loadUnavailability().then(renderCalendar);
-        } else {
-          renderCalendar();
-        }
+        renderCalendar();
       });
       document.getElementById('nextMonthBtn').addEventListener('click', () => {
         currentMonth++;
         if (currentMonth > 12) { currentMonth = 1; currentYear++; }
-        if (selectedTeacherId) {
-          loadUnavailability().then(renderCalendar);
-        } else {
-          renderCalendar();
-        }
+        renderCalendar();
       });
 
       init();
