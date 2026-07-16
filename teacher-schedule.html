@@ -325,7 +325,7 @@
 
       function getDayStatus(dateStr) {
         const date = new Date(dateStr);
-        const dayOfWeek = date.getDay(); // 0=Вс, 1=Пн, ...
+        const dayOfWeek = date.getDay();
         const rule = settings.find(s => s.day_of_week === dayOfWeek);
         if (rule) {
           return {
@@ -378,7 +378,6 @@
         html += '</tr></tbody></table>';
         container.innerHTML = html;
 
-        // Клик по ячейке дня
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', (e) => {
             if (e.target.classList.contains('slot-indicator')) return;
@@ -387,7 +386,6 @@
           });
         });
 
-        // Клик по индикатору
         container.querySelectorAll('.slot-indicator').forEach(ind => {
           ind.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -438,11 +436,15 @@
 
         let error;
         if (editId) {
+          // Обновление существующей записи
           const { error: updateError } = await _supabase.from('teacher_settings').update(data).eq('id', editId);
           error = updateError;
         } else {
-          const { error: insertError } = await _supabase.from('teacher_settings').insert([data]);
-          error = insertError;
+          // Вставка с обработкой конфликта по уникальному ключу (teacher_id, day_of_week)
+          const { error: upsertError } = await _supabase
+            .from('teacher_settings')
+            .upsert(data, { onConflict: 'teacher_id, day_of_week' });
+          error = upsertError;
         }
 
         if (error) { alert('Ошибка: ' + error.message); return; }
