@@ -81,7 +81,44 @@
       background-clip: text;
     }
 
-    /* Фильтр */
+    /* голографические кнопки */
+    .btn {
+      border: none;
+      padding: 0.5rem 1.4rem;
+      border-radius: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
+      color: var(--violet);
+      box-shadow: 0 4px 12px rgba(124,92,231,0.15), 0 0 0 1px rgba(124,92,231,0.1) inset;
+      backdrop-filter: blur(4px);
+      letter-spacing: 0.02em;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, var(--violet), var(--teal));
+      color: white;
+      box-shadow: 0 8px 24px rgba(124,92,231,0.3), 0 0 0 1px rgba(255,255,255,0.2) inset;
+      transform: translateY(-2px);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--violet);
+      color: var(--violet);
+      box-shadow: none;
+    }
+    .btn-outline:hover {
+      background: var(--violet);
+      color: white;
+      box-shadow: 0 8px 24px rgba(124,92,231,0.2);
+    }
+    .btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+    /* воздушный фильтр */
     .toolbar {
       display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
       margin-bottom: 1.5rem;
@@ -92,8 +129,10 @@
     }
     .search-input {
       padding: 0.45rem 0.9rem; border-radius: 14px;
-      border: 1px solid var(--border); background: white;
+      border: 1px solid rgba(124,92,231,0.2);
+      background: rgba(255,255,255,0.6);
       font-size: 0.9rem; width: 180px; transition: 0.2s;
+      backdrop-filter: blur(4px);
     }
     .search-input:focus {
       border-color: var(--violet);
@@ -102,13 +141,15 @@
     }
     .teacher-select {
       padding: 0.45rem 2rem 0.45rem 0.9rem; border-radius: 14px;
-      border: 1px solid var(--border); background: white;
+      border: 1px solid rgba(124,92,231,0.2);
+      background: rgba(255,255,255,0.6);
       font-size: 0.9rem; font-weight: 500; cursor: pointer;
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
       background-repeat: no-repeat; background-position: right 0.8rem center;
       background-size: 10px;
       transition: 0.2s; flex: 1; max-width: 280px;
+      backdrop-filter: blur(4px);
     }
     .teacher-select:focus {
       border-color: var(--violet);
@@ -121,23 +162,28 @@
       margin-left: auto;
     }
     .month-nav button {
-      background: white; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(124,92,231,0.2);
       padding: 0.4rem 0.9rem; border-radius: 12px;
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       transition: 0.2s;
+      backdrop-filter: blur(4px);
     }
     .month-nav button:hover { border-color: var(--violet); color: var(--violet); }
     .month-title {
       min-width: 140px; text-align: center; font-weight: 600;
-      background: white; padding: 0.4rem 1rem; border-radius: 12px;
-      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.6);
+      padding: 0.4rem 1rem; border-radius: 12px;
+      border: 1px solid rgba(124,92,231,0.2);
+      backdrop-filter: blur(4px);
     }
 
     .calendar-container {
       overflow-x: auto;
-      background: white;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(8px);
       border-radius: 16px;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(255,255,255,0.8);
       margin-top: 1rem;
     }
     table {
@@ -153,7 +199,7 @@
       height: 56px;
     }
     th {
-      background: #fafafa;
+      background: rgba(255,255,255,0.8);
       color: var(--text-light);
       font-weight: 600;
       position: sticky; top: 0; z-index: 3;
@@ -165,10 +211,10 @@
       text-align: left;
       padding: 0.3rem;
     }
-    .day-cell:hover { background: #f4f0ff; }
-    .day-cell.available { background: rgba(85,239,196,0.25); }
-    .day-cell.unavailable { background: rgba(255,140,148,0.25); }
-    .day-cell.by_agreement { background: rgba(249,202,36,0.25); }
+    .day-cell:hover { background: rgba(124,92,231,0.06); }
+    .day-cell.available { background: rgba(85,239,196,0.2); }
+    .day-cell.unavailable { background: rgba(255,140,148,0.2); }
+    .day-cell.by_agreement { background: rgba(249,202,36,0.2); }
 
     .slot-indicator {
       font-size: 0.65rem;
@@ -181,9 +227,10 @@
       border-left: 2px solid;
       font-weight: 500;
     }
-    .slot-indicator.available { background: #d1fae5; border-color: var(--green); color: #065f46; }
-    .slot-indicator.unavailable { background: #ffe0e0; border-color: var(--rose); color: #991b1b; }
-    .slot-indicator.by_agreement { background: #fef3c7; border-color: var(--gold); color: #92400e; }
+    .slot-indicator.available { background: rgba(85,239,196,0.3); border-color: var(--green); color: #065f46; }
+    .slot-indicator.unavailable { background: rgba(255,140,148,0.3); border-color: var(--rose); color: #991b1b; }
+    .slot-indicator.by_agreement { background: rgba(249,202,36,0.3); border-color: var(--gold); color: #92400e; }
+
     .feature-note {
       font-size: 0.6rem;
       color: var(--text-light);
@@ -194,15 +241,19 @@
       text-overflow: ellipsis;
     }
 
+    /* модальные окна с голографией */
     .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
-      backdrop-filter: blur(4px); display: flex;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(6px); display: flex;
       align-items: center; justify-content: center; z-index: 1000;
     }
     .modal {
-      background: white; border-radius: 24px; padding: 2rem;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 2rem;
       max-width: 420px; width: 90%;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+      box-shadow: 0 20px 50px rgba(124,92,231,0.15), 0 0 0 1px rgba(255,255,255,0.6) inset;
       animation: slideUp 0.25s ease-out;
     }
     @keyframes slideUp {
@@ -210,8 +261,10 @@
     }
     input, textarea, select {
       width: 100%; padding: 0.6rem; margin: 0.5rem 0;
-      border: 1px solid var(--border); border-radius: 10px;
+      border: 1px solid rgba(124,92,231,0.2); border-radius: 10px;
       font-size: 0.9rem; font-family: inherit;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(4px);
     }
     .time-row {
       display: flex; gap: 0.5rem; align-items: center;
@@ -290,6 +343,14 @@
     </div>
   </div>
 
+  <!-- Кастомный алерт -->
+  <div class="modal-overlay" id="alertModal" style="display:none;">
+    <div class="modal" style="max-width:350px; text-align:center;">
+      <p id="alertMessage"></p>
+      <button class="btn" id="alertOkBtn">ОК</button>
+    </div>
+  </div>
+
   <script>
     (function() {
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
@@ -297,6 +358,14 @@
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, teachers = [], settings = [], overrides = [];
       let currentYear, currentMonth, selectedTeacherId = '';
+
+      function showAlert(msg) {
+        document.getElementById('alertMessage').textContent = msg;
+        document.getElementById('alertModal').style.display = 'flex';
+        document.getElementById('alertOkBtn').onclick = () => {
+          document.getElementById('alertModal').style.display = 'none';
+        };
+      }
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -362,10 +431,8 @@
       function getDayStatus(dateStr) {
         const date = new Date(dateStr);
         const dayOfWeek = date.getDay();
-        // Сначала проверяем переопределение на эту дату
         const override = overrides.find(o => o.date === dateStr);
         if (override) return { ...override, source: 'override' };
-        // Затем общее правило для дня недели
         const setting = settings.find(s => s.day_of_week === dayOfWeek);
         if (setting) return { ...setting, source: 'setting' };
         return null;
@@ -414,7 +481,6 @@
         html += '</tr></tbody></table>';
         container.innerHTML = html;
 
-        // Обработчики
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', (e) => {
             if (e.target.classList.contains('slot-indicator')) return;
@@ -481,7 +547,6 @@
 
         let error;
         if (editId) {
-          // Обновление существующей записи
           if (source === 'override') {
             const { error: updateError } = await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
             error = updateError;
@@ -490,7 +555,6 @@
             error = updateError;
           }
         } else {
-          // Новая запись
           if (oneTime) {
             data.date = dateStr;
             const { error: insertError } = await _supabase.from('teacher_unavailability').insert([data]);
@@ -504,7 +568,7 @@
           }
         }
 
-        if (error) { alert('Ошибка: ' + error.message); return; }
+        if (error) { showAlert('Ошибка: ' + error.message); return; }
         document.getElementById('settingModal').style.display = 'none';
         await Promise.all([loadTeacherSettings(), loadTeacherOverrides()]);
         renderCalendar();
@@ -522,7 +586,7 @@
           const { error: deleteError } = await _supabase.from('teacher_settings').delete().eq('id', editId);
           error = deleteError;
         }
-        if (error) { alert('Ошибка: ' + error.message); return; }
+        if (error) { showAlert('Ошибка: ' + error.message); return; }
         document.getElementById('settingModal').style.display = 'none';
         await Promise.all([loadTeacherSettings(), loadTeacherOverrides()]);
         renderCalendar();
