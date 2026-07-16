@@ -81,36 +81,39 @@
       background-clip: text;
     }
 
-    .btn {
-      border: 1px solid var(--violet); padding: 0.45rem 1.2rem; border-radius: 12px;
-      font-weight: 600; cursor: pointer; font-size: 0.85rem;
-      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.3rem;
-      background: transparent; color: var(--violet);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-    }
-    .btn:hover {
-      background: linear-gradient(135deg, var(--violet), var(--teal));
-      color: white; border-color: transparent;
-      box-shadow: 0 6px 14px rgba(124,92,231,0.2);
-      transform: translateY(-1px);
-    }
-    .btn-outline { background: transparent; border: 1px solid var(--violet); color: var(--violet); }
-    .btn-outline:hover { background: var(--violet); color: white; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-
+    /* Фильтр */
     .toolbar {
       display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .teacher-filter {
+      display: flex; align-items: center; gap: 0.8rem;
+      flex: 1; min-width: 280px;
+    }
+    .search-input {
+      padding: 0.45rem 0.9rem; border-radius: 14px;
+      border: 1px solid var(--border); background: white;
+      font-size: 0.9rem; width: 180px; transition: 0.2s;
+    }
+    .search-input:focus {
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(124,92,231,0.1);
+      outline: none;
     }
     .teacher-select {
-      padding: 0.5rem 1rem; border-radius: 14px;
+      padding: 0.45rem 2rem 0.45rem 0.9rem; border-radius: 14px;
       border: 1px solid var(--border); background: white;
       font-size: 0.9rem; font-weight: 500; cursor: pointer;
-      min-width: 220px;
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 1rem center;
-      padding-right: 2.5rem;
+      background-repeat: no-repeat; background-position: right 0.8rem center;
+      background-size: 10px;
+      transition: 0.2s; flex: 1; max-width: 280px;
+    }
+    .teacher-select:focus {
+      border-color: var(--violet);
+      box-shadow: 0 0 0 3px rgba(124,92,231,0.1);
+      outline: none;
     }
 
     .month-nav {
@@ -181,6 +184,15 @@
     .slot-indicator.available { background: #d1fae5; border-color: var(--green); color: #065f46; }
     .slot-indicator.unavailable { background: #ffe0e0; border-color: var(--rose); color: #991b1b; }
     .slot-indicator.by_agreement { background: #fef3c7; border-color: var(--gold); color: #92400e; }
+    .feature-note {
+      font-size: 0.6rem;
+      color: var(--text-light);
+      margin-top: 2px;
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.35);
@@ -189,7 +201,7 @@
     }
     .modal {
       background: white; border-radius: 24px; padding: 2rem;
-      max-width: 400px; width: 90%;
+      max-width: 420px; width: 90%;
       box-shadow: 0 20px 50px rgba(0,0,0,0.12);
       animation: slideUp 0.25s ease-out;
     }
@@ -205,10 +217,18 @@
       display: flex; gap: 0.5rem; align-items: center;
     }
     .time-row input { flex: 1; }
+    .checkbox-row {
+      display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: auto; accent-color: var(--violet);
+    }
 
     @media (max-width: 600px) {
       body { padding: 0.5rem; }
       .container { padding: 1rem; }
+      .teacher-filter { flex-wrap: wrap; }
+      .search-input { width: 100%; }
     }
   </style>
 </head>
@@ -226,9 +246,12 @@
     </div>
 
     <div class="toolbar">
-      <select class="teacher-select" id="teacherSelect">
-        <option value="">-- Выберите преподавателя --</option>
-      </select>
+      <div class="teacher-filter">
+        <input type="text" class="search-input" id="teacherSearch" placeholder="Поиск...">
+        <select class="teacher-select" id="teacherSelect">
+          <option value="">-- Выберите --</option>
+        </select>
+      </div>
       <div class="month-nav">
         <button id="prevMonthBtn">◀</button>
         <span class="month-title" id="monthTitle"></span>
@@ -242,7 +265,7 @@
   <!-- Модалка настройки дня -->
   <div class="modal-overlay" id="settingModal" style="display:none;">
     <div class="modal">
-      <h2 id="settingModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Настройка дня</h2>
+      <h2 id="settingModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Настройка доступности</h2>
       <p id="settingDayInfo"></p>
       <select id="settingType">
         <option value="available">Доступен</option>
@@ -253,7 +276,12 @@
         <input type="time" id="settingStart" placeholder="Начало">
         <input type="time" id="settingEnd" placeholder="Конец">
       </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="settingOneTime">
+        <label for="settingOneTime">Только для этой даты</label>
+      </div>
       <textarea id="settingNote" rows="2" placeholder="Примечание"></textarea>
+      <input type="text" id="settingFeatures" placeholder="Особенности (например, не работает с детьми до 14 лет)">
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
         <button class="btn" id="saveSettingBtn">Сохранить</button>
         <button class="btn btn-outline" id="cancelSettingBtn">Отмена</button>
@@ -267,7 +295,7 @@
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      let currentUserEmail = null, teachers = [], settings = [];
+      let currentUserEmail = null, teachers = [], settings = [], overrides = [];
       let currentYear, currentMonth, selectedTeacherId = '';
 
       async function init() {
@@ -278,27 +306,37 @@
         currentYear = now.getFullYear();
         currentMonth = now.getMonth() + 1;
         await loadTeachers();
+        renderMonthTitle();
         renderCalendar();
       }
 
       async function loadTeachers() {
         const { data } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель');
         teachers = data || [];
+        populateSelect(teachers);
+        document.getElementById('teacherSearch').addEventListener('input', filterTeachers);
+      }
+
+      function populateSelect(list) {
         const select = document.getElementById('teacherSelect');
-        select.innerHTML = '<option value="">-- Выберите преподавателя --</option>' + 
-          teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-        select.value = '';
-        selectedTeacherId = '';
-        settings = [];
-        select.addEventListener('change', async (e) => {
+        select.innerHTML = '<option value="">-- Выберите --</option>' + 
+          list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        select.value = selectedTeacherId || '';
+        select.onchange = async (e) => {
           selectedTeacherId = e.target.value;
           if (selectedTeacherId) {
-            await loadTeacherSettings();
+            await Promise.all([loadTeacherSettings(), loadTeacherOverrides()]);
           } else {
-            settings = [];
+            settings = []; overrides = [];
           }
           renderCalendar();
-        });
+        };
+      }
+
+      function filterTeachers(e) {
+        const q = e.target.value.toLowerCase();
+        const filtered = teachers.filter(t => t.name.toLowerCase().includes(q));
+        populateSelect(filtered);
       }
 
       async function loadTeacherSettings() {
@@ -307,24 +345,46 @@
         settings = data || [];
       }
 
+      async function loadTeacherOverrides() {
+        if (!selectedTeacherId) return;
+        const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+        const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
+        const { data } = await _supabase.from('teacher_unavailability')
+          .select('*')
+          .eq('teacher_id', selectedTeacherId)
+          .gte('date', startDate)
+          .lt('date', endDate);
+        overrides = data || [];
+      }
+
       function getDayStatus(dateStr) {
         const date = new Date(dateStr);
         const dayOfWeek = date.getDay();
-        return settings.find(s => s.day_of_week === dayOfWeek) || null;
+        // Сначала проверяем переопределение на эту дату
+        const override = overrides.find(o => o.date === dateStr);
+        if (override) return { ...override, source: 'override' };
+        // Затем общее правило для дня недели
+        const setting = settings.find(s => s.day_of_week === dayOfWeek);
+        if (setting) return { ...setting, source: 'setting' };
+        return null;
+      }
+
+      function renderMonthTitle() {
+        document.getElementById('monthTitle').textContent =
+          new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
       }
 
       function renderCalendar() {
+        renderMonthTitle();
+        const container = document.getElementById('calendarContainer');
         if (!selectedTeacherId) {
-          document.getElementById('calendarContainer').innerHTML = 
-            '<p style="color:#636e72; text-align:center; padding:2rem;">Выберите преподавателя, чтобы увидеть его график доступности</p>';
+          container.innerHTML = '<p style="color:#636e72; text-align:center; padding:2rem;">Выберите преподавателя, чтобы увидеть график</p>';
           return;
         }
 
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-        document.getElementById('monthTitle').textContent =
-          new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
-
-        const container = document.getElementById('calendarContainer');
         let html = '<table><thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead><tbody><tr>';
 
         const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
@@ -334,16 +394,19 @@
 
         for (let d = 1; d <= daysInMonth; d++) {
           const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const rule = getDayStatus(dateStr);
-          const type = rule ? rule.type : '';
+          const status = getDayStatus(dateStr);
+          const type = status ? status.type : '';
           const cellClass = `day-cell ${type}`;
           let content = `<strong>${d}</strong>`;
-          if (rule) {
+          if (status) {
             const label = type === 'available' ? 'Доступен' : type === 'unavailable' ? 'Недоступен' : 'По согласованию';
-            const start = rule.start_time ? rule.start_time.substring(0,5) : '';
-            const end = rule.end_time ? rule.end_time.substring(0,5) : '';
+            const start = status.start_time ? status.start_time.substring(0,5) : '';
+            const end = status.end_time ? status.end_time.substring(0,5) : '';
             const timeStr = start && end ? `${start}–${end}` : '';
-            content += `<div class="slot-indicator ${type}" data-id="${rule.id}" data-type="${type}" data-start="${start}" data-end="${end}" data-note="${rule.note || ''}">${label}${timeStr ? ' ' + timeStr : ''}</div>`;
+            content += `<div class="slot-indicator ${type}" data-date="${dateStr}" data-id="${status.id || ''}" data-source="${status.source}" data-type="${type}" data-start="${start}" data-end="${end}" data-note="${status.note || ''}" data-features="${status.features || ''}">${label}${timeStr ? ' ' + timeStr : ''}</div>`;
+            if (status.features) {
+              content += `<div class="feature-note">${status.features}</div>`;
+            }
           }
           html += `<td class="${cellClass}" data-date="${dateStr}">${content}</td>`;
           if ((startOffset + d) % 7 === 0) html += '</tr><tr>';
@@ -361,15 +424,17 @@
         container.querySelectorAll('.slot-indicator').forEach(ind => {
           ind.addEventListener('click', (e) => {
             e.stopPropagation();
-            const date = e.target.closest('.day-cell').dataset.date;
-            const rule = {
+            const date = ind.dataset.date;
+            const existing = {
               id: ind.dataset.id,
               type: ind.dataset.type,
-              start_time: ind.dataset.start || null,
-              end_time: ind.dataset.end || null,
-              note: ind.dataset.note || ''
+              start_time: ind.dataset.start,
+              end_time: ind.dataset.end,
+              note: ind.dataset.note,
+              features: ind.dataset.features,
+              source: ind.dataset.source
             };
-            openSettingModal(date, rule);
+            openSettingModal(date, existing);
           });
         });
       }
@@ -380,11 +445,14 @@
         const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
         document.getElementById('settingDayInfo').textContent = `${dateStr} (${dayNames[dayOfWeek]})`;
         document.getElementById('settingType').value = existing ? existing.type : 'available';
-        document.getElementById('settingStart').value = existing ? existing.start_time || '' : '';
-        document.getElementById('settingEnd').value = existing ? existing.end_time || '' : '';
-        document.getElementById('settingNote').value = existing ? existing.note || '' : '';
+        document.getElementById('settingStart').value = existing ? (existing.start_time || '') : '';
+        document.getElementById('settingEnd').value = existing ? (existing.end_time || '') : '';
+        document.getElementById('settingOneTime').checked = existing ? existing.source === 'override' : false;
+        document.getElementById('settingNote').value = existing ? (existing.note || '') : '';
+        document.getElementById('settingFeatures').value = existing ? (existing.features || '') : '';
         document.getElementById('deleteSettingBtn').style.display = existing ? 'inline-block' : 'none';
         document.getElementById('settingModal').dataset.editId = existing ? existing.id : '';
+        document.getElementById('settingModal').dataset.source = existing ? existing.source : '';
         document.getElementById('settingModal').dataset.date = dateStr;
         document.getElementById('settingModal').dataset.dayOfWeek = dayOfWeek;
         document.getElementById('settingModal').style.display = 'flex';
@@ -396,43 +464,67 @@
         const type = document.getElementById('settingType').value;
         const start = document.getElementById('settingStart').value;
         const end = document.getElementById('settingEnd').value;
+        const oneTime = document.getElementById('settingOneTime').checked;
         const note = document.getElementById('settingNote').value.trim();
+        const features = document.getElementById('settingFeatures').value.trim();
         const editId = document.getElementById('settingModal').dataset.editId;
+        const source = document.getElementById('settingModal').dataset.source;
 
         const data = {
           teacher_id: selectedTeacherId,
-          day_of_week: dayOfWeek,
           type,
           start_time: start || null,
           end_time: end || null,
-          note
+          note,
+          features
         };
 
         let error;
         if (editId) {
-          const { error: updateError } = await _supabase.from('teacher_settings').update(data).eq('id', editId);
-          error = updateError;
+          // Обновление существующей записи
+          if (source === 'override') {
+            const { error: updateError } = await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
+            error = updateError;
+          } else {
+            const { error: updateError } = await _supabase.from('teacher_settings').update(data).eq('id', editId);
+            error = updateError;
+          }
         } else {
-          // upsert для избежания дубликатов
-          const { error: upsertError } = await _supabase
-            .from('teacher_settings')
-            .upsert(data, { onConflict: 'teacher_id, day_of_week' });
-          error = upsertError;
+          // Новая запись
+          if (oneTime) {
+            data.date = dateStr;
+            const { error: insertError } = await _supabase.from('teacher_unavailability').insert([data]);
+            error = insertError;
+          } else {
+            data.day_of_week = dayOfWeek;
+            const { error: upsertError } = await _supabase
+              .from('teacher_settings')
+              .upsert(data, { onConflict: 'teacher_id, day_of_week' });
+            error = upsertError;
+          }
         }
 
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('settingModal').style.display = 'none';
-        await loadTeacherSettings();
+        await Promise.all([loadTeacherSettings(), loadTeacherOverrides()]);
         renderCalendar();
       });
 
       document.getElementById('deleteSettingBtn').addEventListener('click', async () => {
         const editId = document.getElementById('settingModal').dataset.editId;
+        const source = document.getElementById('settingModal').dataset.source;
         if (!editId) return;
-        const { error } = await _supabase.from('teacher_settings').delete().eq('id', editId);
+        let error;
+        if (source === 'override') {
+          const { error: deleteError } = await _supabase.from('teacher_unavailability').delete().eq('id', editId);
+          error = deleteError;
+        } else {
+          const { error: deleteError } = await _supabase.from('teacher_settings').delete().eq('id', editId);
+          error = deleteError;
+        }
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('settingModal').style.display = 'none';
-        await loadTeacherSettings();
+        await Promise.all([loadTeacherSettings(), loadTeacherOverrides()]);
         renderCalendar();
       });
 
@@ -443,12 +535,22 @@
       document.getElementById('prevMonthBtn').addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-        renderCalendar();
+        renderMonthTitle();
+        if (selectedTeacherId) {
+          loadTeacherOverrides().then(renderCalendar);
+        } else {
+          renderCalendar();
+        }
       });
       document.getElementById('nextMonthBtn').addEventListener('click', () => {
         currentMonth++;
         if (currentMonth > 12) { currentMonth = 1; currentYear++; }
-        renderCalendar();
+        renderMonthTitle();
+        if (selectedTeacherId) {
+          loadTeacherOverrides().then(renderCalendar);
+        } else {
+          renderCalendar();
+        }
       });
 
       init();
