@@ -82,9 +82,9 @@
     }
 
     .btn {
-      border: 1px solid var(--violet); padding: 0.55rem 1.4rem; border-radius: 14px;
-      font-weight: 600; cursor: pointer; font-size: 0.9rem;
-      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.4rem;
+      border: 1px solid var(--violet); padding: 0.45rem 1.2rem; border-radius: 12px;
+      font-weight: 600; cursor: pointer; font-size: 0.85rem;
+      transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.3rem;
       background: transparent; color: var(--violet);
       box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
@@ -102,45 +102,24 @@
       display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
       margin-bottom: 2rem;
     }
-    .search-wrapper {
-      position: relative;
-      flex: 1;
-      min-width: 250px;
+    .teacher-select {
+      padding: 0.5rem 1rem; border-radius: 14px;
+      border: 1px solid var(--border); background: white;
+      font-size: 0.9rem; font-weight: 500; cursor: pointer;
+      min-width: 220px;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 1rem center;
+      padding-right: 2.5rem;
     }
-    .search-wrapper input {
-      width: 100%;
-      padding: 0.5rem 1rem;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      font-size: 0.9rem;
-    }
-    .search-results {
-      position: absolute;
-      top: 100%; left: 0; right: 0;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-      z-index: 10;
-      display: none;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-    .search-results.open { display: block; }
-    .search-item {
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .search-item:hover { background: #f4f0ff; }
 
     .month-nav {
       display: flex; align-items: center; gap: 0.5rem;
+      margin-left: auto;
     }
     .month-nav button {
       background: white; border: 1px solid var(--border);
-      padding: 0.4rem 1rem; border-radius: 12px;
+      padding: 0.4rem 0.9rem; border-radius: 12px;
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       transition: 0.2s;
     }
@@ -168,7 +147,7 @@
       padding: 0.6rem 0.3rem;
       font-size: 0.85rem;
       border: 1px solid #f0f0f0;
-      height: 50px;
+      height: 56px;
     }
     th {
       background: #fafafa;
@@ -178,15 +157,12 @@
     }
     .day-cell {
       cursor: pointer;
-      transition: 0.2s;
+      transition: background 0.2s;
       vertical-align: top;
       text-align: left;
       padding: 0.3rem;
-      position: relative;
     }
-    .day-cell:hover {
-      background: #f4f0ff;
-    }
+    .day-cell:hover { background: #f4f0ff; }
     .day-cell.available { background: rgba(85,239,196,0.25); }
     .day-cell.unavailable { background: rgba(255,140,148,0.25); }
     .day-cell.by_agreement { background: rgba(249,202,36,0.25); }
@@ -195,10 +171,12 @@
       font-size: 0.65rem;
       padding: 0.1rem 0.3rem;
       border-radius: 6px;
-      margin: 2px 0;
+      margin-top: 4px;
       white-space: nowrap;
       cursor: pointer;
+      display: inline-block;
       border-left: 2px solid;
+      font-weight: 500;
     }
     .slot-indicator.available { background: #d1fae5; border-color: var(--green); color: #065f46; }
     .slot-indicator.unavailable { background: #ffe0e0; border-color: var(--rose); color: #991b1b; }
@@ -248,10 +226,9 @@
     </div>
 
     <div class="toolbar">
-      <div class="search-wrapper" id="searchWrapper">
-        <input type="text" id="teacherSearch" placeholder="Поиск преподавателя...">
-        <div class="search-results" id="searchResults"></div>
-      </div>
+      <select class="teacher-select" id="teacherSelect">
+        <option value="">-- Выберите преподавателя --</option>
+      </select>
       <div class="month-nav">
         <button id="prevMonthBtn">◀</button>
         <span class="month-title" id="monthTitle"></span>
@@ -291,7 +268,7 @@
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, teachers = [], settings = [];
-      let currentYear, currentMonth, selectedTeacherId = null;
+      let currentYear, currentMonth, selectedTeacherId = '';
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -307,18 +284,25 @@
       async function loadTeachers() {
         const { data } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель');
         teachers = data || [];
-      }
-
-      async function selectTeacher(id) {
-        selectedTeacherId = id;
-        document.getElementById('searchResults').classList.remove('open');
-        document.getElementById('teacherSearch').value = teachers.find(t => t.id === id)?.name || '';
-        await loadTeacherSettings();
-        renderCalendar();
+        const select = document.getElementById('teacherSelect');
+        select.innerHTML = '<option value="">-- Выберите преподавателя --</option>' + 
+          teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        select.value = '';
+        selectedTeacherId = '';
+        settings = [];
+        select.addEventListener('change', async (e) => {
+          selectedTeacherId = e.target.value;
+          if (selectedTeacherId) {
+            await loadTeacherSettings();
+          } else {
+            settings = [];
+          }
+          renderCalendar();
+        });
       }
 
       async function loadTeacherSettings() {
-        if (!selectedTeacherId) { settings = []; return; }
+        if (!selectedTeacherId) return;
         const { data } = await _supabase.from('teacher_settings').select('*').eq('teacher_id', selectedTeacherId);
         settings = data || [];
       }
@@ -326,23 +310,13 @@
       function getDayStatus(dateStr) {
         const date = new Date(dateStr);
         const dayOfWeek = date.getDay();
-        const rule = settings.find(s => s.day_of_week === dayOfWeek);
-        if (rule) {
-          return {
-            type: rule.type,
-            start: rule.start_time,
-            end: rule.end_time,
-            note: rule.note,
-            id: rule.id,
-            isOverride: false
-          };
-        }
-        return { type: 'available', start: null, end: null, note: '', id: null, isOverride: false };
+        return settings.find(s => s.day_of_week === dayOfWeek) || null;
       }
 
       function renderCalendar() {
         if (!selectedTeacherId) {
-          document.getElementById('calendarContainer').innerHTML = '<p style="color:#636e72; text-align:center;">Выберите преподавателя для отображения графика</p>';
+          document.getElementById('calendarContainer').innerHTML = 
+            '<p style="color:#636e72; text-align:center; padding:2rem;">Выберите преподавателя, чтобы увидеть его график доступности</p>';
           return;
         }
 
@@ -356,46 +330,46 @@
         const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
         const startOffset = firstDay === 0 ? 6 : firstDay - 1;
 
-        for (let i = 0; i < startOffset; i++) {
-          html += '<td></td>';
-        }
+        for (let i = 0; i < startOffset; i++) html += '<td></td>';
 
         for (let d = 1; d <= daysInMonth; d++) {
           const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const status = getDayStatus(dateStr);
-          const cellClass = `day-cell ${status.type}`;
-          let cellContent = `<strong>${d}</strong>`;
-          if (status.id) {
-            const label = status.type === 'available' ? 'Доступен' : status.type === 'unavailable' ? 'Недоступен' : 'По согласованию';
-            cellContent += `<div class="slot-indicator ${status.type}" data-id="${status.id}" data-date="${dateStr}" data-type="${status.type}" data-start="${status.start || ''}" data-end="${status.end || ''}" data-note="${status.note || ''}">${label}</div>`;
+          const rule = getDayStatus(dateStr);
+          const type = rule ? rule.type : '';
+          const cellClass = `day-cell ${type}`;
+          let content = `<strong>${d}</strong>`;
+          if (rule) {
+            const label = type === 'available' ? 'Доступен' : type === 'unavailable' ? 'Недоступен' : 'По согласованию';
+            const start = rule.start_time ? rule.start_time.substring(0,5) : '';
+            const end = rule.end_time ? rule.end_time.substring(0,5) : '';
+            const timeStr = start && end ? `${start}–${end}` : '';
+            content += `<div class="slot-indicator ${type}" data-id="${rule.id}" data-type="${type}" data-start="${start}" data-end="${end}" data-note="${rule.note || ''}">${label}${timeStr ? ' ' + timeStr : ''}</div>`;
           }
-          html += `<td class="${cellClass}" data-date="${dateStr}">${cellContent}</td>`;
-
-          if ((startOffset + d) % 7 === 0) {
-            html += '</tr><tr>';
-          }
+          html += `<td class="${cellClass}" data-date="${dateStr}">${content}</td>`;
+          if ((startOffset + d) % 7 === 0) html += '</tr><tr>';
         }
         html += '</tr></tbody></table>';
         container.innerHTML = html;
 
+        // Обработчики
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', (e) => {
             if (e.target.classList.contains('slot-indicator')) return;
-            const dateStr = cell.dataset.date;
-            openSettingModal(dateStr);
+            openSettingModal(cell.dataset.date);
           });
         });
-
         container.querySelectorAll('.slot-indicator').forEach(ind => {
           ind.addEventListener('click', (e) => {
             e.stopPropagation();
-            const id = ind.dataset.id;
-            const date = ind.dataset.date;
-            const type = ind.dataset.type;
-            const start = ind.dataset.start;
-            const end = ind.dataset.end;
-            const note = ind.dataset.note;
-            openSettingModal(date, { id, type, start_time: start, end_time: end, note });
+            const date = e.target.closest('.day-cell').dataset.date;
+            const rule = {
+              id: ind.dataset.id,
+              type: ind.dataset.type,
+              start_time: ind.dataset.start || null,
+              end_time: ind.dataset.end || null,
+              note: ind.dataset.note || ''
+            };
+            openSettingModal(date, rule);
           });
         });
       }
@@ -406,9 +380,9 @@
         const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
         document.getElementById('settingDayInfo').textContent = `${dateStr} (${dayNames[dayOfWeek]})`;
         document.getElementById('settingType').value = existing ? existing.type : 'available';
-        document.getElementById('settingStart').value = existing ? (existing.start_time || '') : '';
-        document.getElementById('settingEnd').value = existing ? (existing.end_time || '') : '';
-        document.getElementById('settingNote').value = existing ? (existing.note || '') : '';
+        document.getElementById('settingStart').value = existing ? existing.start_time || '' : '';
+        document.getElementById('settingEnd').value = existing ? existing.end_time || '' : '';
+        document.getElementById('settingNote').value = existing ? existing.note || '' : '';
         document.getElementById('deleteSettingBtn').style.display = existing ? 'inline-block' : 'none';
         document.getElementById('settingModal').dataset.editId = existing ? existing.id : '';
         document.getElementById('settingModal').dataset.date = dateStr;
@@ -436,11 +410,10 @@
 
         let error;
         if (editId) {
-          // Обновление существующей записи
           const { error: updateError } = await _supabase.from('teacher_settings').update(data).eq('id', editId);
           error = updateError;
         } else {
-          // Вставка с обработкой конфликта по уникальному ключу (teacher_id, day_of_week)
+          // upsert для избежания дубликатов
           const { error: upsertError } = await _supabase
             .from('teacher_settings')
             .upsert(data, { onConflict: 'teacher_id, day_of_week' });
@@ -465,34 +438,6 @@
 
       document.getElementById('cancelSettingBtn').addEventListener('click', () => {
         document.getElementById('settingModal').style.display = 'none';
-      });
-
-      document.getElementById('teacherSearch').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const results = document.getElementById('searchResults');
-        if (query.length === 0) {
-          results.classList.remove('open');
-          return;
-        }
-        const filtered = teachers.filter(t => t.name.toLowerCase().includes(query));
-        if (filtered.length === 0) {
-          results.innerHTML = '<div class="search-item">Никого не найдено</div>';
-        } else {
-          results.innerHTML = filtered.map(t => `<div class="search-item" data-id="${t.id}">${t.name}</div>`).join('');
-        }
-        results.classList.add('open');
-      });
-
-      document.getElementById('searchResults').addEventListener('click', (e) => {
-        const item = e.target.closest('.search-item');
-        if (!item || !item.dataset.id) return;
-        selectTeacher(item.dataset.id);
-      });
-
-      document.addEventListener('click', (e) => {
-        if (!e.target.closest('#searchWrapper')) {
-          document.getElementById('searchResults').classList.remove('open');
-        }
       });
 
       document.getElementById('prevMonthBtn').addEventListener('click', () => {
