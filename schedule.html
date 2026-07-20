@@ -20,6 +20,7 @@
       --text: #2d3436;
       --text-light: #636e72;
       --border: #e0e0e0;
+      --critical: #e74c3c;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, .container, .header, .modal {
@@ -82,7 +83,7 @@
     }
 
     .btn {
-      border: none; padding: 0.5rem 1.2rem; border-radius: 14px;
+      border: none; padding: 0.45rem 1.2rem; border-radius: 12px;
       font-weight: 600; cursor: pointer; font-size: 0.85rem;
       transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.3rem;
       background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
@@ -105,20 +106,27 @@
     .btn-outline:hover { background: var(--violet); color: white; }
 
     .filters {
-      display: flex; gap: 0.8rem; flex-wrap: wrap;
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
       margin-bottom: 2rem; align-items: center;
     }
-    .filter-btn {
-      padding: 0.4rem 1.2rem; border-radius: 20px;
+    .period-btn {
+      padding: 0.35rem 0.8rem; border-radius: 16px;
       border: 1px solid var(--border); background: white;
-      cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: 0.2s;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
     }
-    .filter-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
+    .period-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
+    .role-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+    .role-btn {
+      padding: 0.3rem 0.8rem; border-radius: 16px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
+    }
+    .role-btn.active { background: var(--teal); border-color: var(--teal); color: #055b5c; }
     .emp-filter-wrap { position: relative; }
     .emp-filter-btn {
-      padding: 0.4rem 1.5rem 0.4rem 1rem; border-radius: 20px;
+      padding: 0.35rem 1.2rem 0.35rem 0.8rem; border-radius: 16px;
       border: 1px solid var(--border); background: white;
-      cursor: pointer; font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500;
       display: flex; align-items: center; gap: 0.5rem;
       transition: 0.2s; white-space: nowrap;
     }
@@ -128,7 +136,7 @@
       position: absolute; top: 100%; left: 0; margin-top: 4px;
       background: white; border: 1px solid var(--border);
       border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      z-index: 20; min-width: 220px; display: none;
+      z-index: 20; min-width: 240px; display: none;
       padding: 0.5rem; animation: fadeIn 0.2s ease;
     }
     .emp-dropdown.open { display: block; }
@@ -137,11 +145,21 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .emp-dropdown-item {
-      padding: 0.4rem 0.8rem; cursor: pointer;
-      border-radius: 8px; font-size: 0.85rem; transition: 0.1s;
+      padding: 0.3rem 0.6rem; cursor: pointer;
+      border-radius: 6px; font-size: 0.8rem; transition: 0.1s;
+      display: flex; align-items: center; gap: 0.5rem;
     }
     .emp-dropdown-item:hover { background: #f4f0ff; }
-    .emp-dropdown-item.active { background: var(--violet); color: white; }
+    .emp-dropdown-item input[type="checkbox"] { accent-color: var(--violet); }
+    .dropdown-actions {
+      display: flex; gap: 0.5rem; padding: 0.3rem 0;
+      border-bottom: 1px solid #f0f0f0; margin-bottom: 0.3rem;
+    }
+    .dropdown-actions button {
+      background: none; border: none; color: var(--violet);
+      font-size: 0.75rem; cursor: pointer; font-weight: 500;
+    }
+    .dropdown-actions button:hover { text-decoration: underline; }
 
     .schedule-container {
       overflow-x: auto;
@@ -153,7 +171,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 750px;
+      min-width: 800px;
     }
     th, td {
       text-align: center;
@@ -212,6 +230,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin: 0.5rem 0;
     }
+    .label-row input { width: 100px; margin-left: 0.5rem; }
   </style>
 </head>
 <body>
@@ -225,20 +244,32 @@
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
       <h1>График работы</h1>
-      <div class="nav-arrows">
-        <button id="prevMonthBtn">◀</button>
-        <span class="month-title" id="monthTitle"></span>
-        <button id="nextMonthBtn">▶</button>
+      <div style="display:flex; gap:0.5rem;">
+        <button id="prevMonthBtn" class="btn">◀</button>
+        <span class="month-title" id="monthTitle" style="padding:0.45rem 1rem; background:white; border-radius:12px; border:1px solid var(--border); font-weight:600;"></span>
+        <button id="nextMonthBtn" class="btn">▶</button>
       </div>
     </div>
 
     <div class="filters">
-      <button class="filter-btn active" data-period="full">Весь месяц</button>
-      <button class="filter-btn" data-period="first">1–15</button>
-      <button class="filter-btn" data-period="second">16–31</button>
+      <button class="period-btn active" data-period="full">Весь месяц</button>
+      <button class="period-btn" data-period="first">1–15</button>
+      <button class="period-btn" data-period="second">16–31</button>
+      <div class="role-filters" id="roleFilters">
+        <button class="role-btn active" data-role="all">Все</button>
+        <button class="role-btn" data-role="Управляющий">Управляющие</button>
+        <button class="role-btn" data-role="Менеджер">Менеджеры</button>
+        <button class="role-btn" data-role="Администратор">Администраторы</button>
+        <button class="role-btn" data-role="Преподаватель">Преподаватели</button>
+      </div>
       <div class="emp-filter-wrap" id="empFilterWrap">
-        <div class="emp-filter-btn" id="empFilterBtn">Сотрудники</div>
-        <div class="emp-dropdown" id="empDropdown"></div>
+        <div class="emp-filter-btn" id="empFilterBtn">Сотрудники ▾</div>
+        <div class="emp-dropdown" id="empDropdown">
+          <div class="dropdown-actions">
+            <button id="selectAllBtn">Выбрать всех</button>
+            <button id="deselectAllBtn">Снять всех</button>
+          </div>
+        </div>
       </div>
       <button class="btn" id="exportBtn">Excel</button>
     </div>
@@ -249,7 +280,7 @@
   <!-- Модалка дня -->
   <div class="modal-overlay" id="dayModal" style="display:none;">
     <div class="modal">
-      <h2 id="dayModalTitle">Статус дня</h2>
+      <h2 id="dayModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Статус дня</h2>
       <select id="dayStatus">
         <option value="working">Рабочий</option>
         <option value="dayoff">Выходной</option>
@@ -287,7 +318,8 @@
       let currentUserEmail = null, currentEmployee = null;
       let employees = [], worklog = {}, salaryParams = {};
       let currentYear, currentMonth, currentPeriod = 'full';
-      let selectedEmployeeId = null;
+      let selectedEmployeeIds = new Set();
+      let currentRoleFilter = 'all';
 
       // Инициализация
       async function init() {
@@ -300,8 +332,9 @@
         await loadEmployees();
         await loadWorklog();
         await loadSalaryParams();
-        renderFilterDropdown();
+        renderEmpDropdown();
         renderSchedule();
+        updateSelectedEmployeesDisplay();
       }
 
       async function loadEmployees() {
@@ -309,6 +342,11 @@
         employees = data || [];
         const emp = employees.find(e => e.email === currentUserEmail);
         currentEmployee = emp || null;
+        // По умолчанию выбраны все сотрудники
+        if (selectedEmployeeIds.size === 0) {
+          employees.forEach(e => selectedEmployeeIds.add(e.id));
+        }
+        applyRoleFilter(currentRoleFilter);
       }
 
       async function loadWorklog() {
@@ -330,43 +368,65 @@
         (data || []).forEach(r => { salaryParams[r.emp_id] = r; });
       }
 
-      function renderFilterDropdown() {
-        const dd = document.getElementById('empDropdown');
-        dd.innerHTML = employees.map(e => `
-          <label class="emp-dropdown-item">
-            <input type="checkbox" value="${e.id}" ${selectedEmployeeId === e.id ? 'checked' : ''} onchange="selectEmployee('${e.id}', this.checked)">
-            ${e.name} (${e.role})
-          </label>
-        `).join('');
-      }
-      window.selectEmployee = function(id, checked) {
-        if (checked) {
-          selectedEmployeeId = id;
-          document.querySelectorAll('#empDropdown input').forEach(cb => {
-            if (cb.value !== id) cb.checked = false;
-          });
+      function applyRoleFilter(role) {
+        currentRoleFilter = role;
+        if (role === 'all') {
+          selectedEmployeeIds.clear();
+          employees.forEach(e => selectedEmployeeIds.add(e.id));
         } else {
-          selectedEmployeeId = null;
+          selectedEmployeeIds.clear();
+          employees.filter(e => e.role === role).forEach(e => selectedEmployeeIds.add(e.id));
         }
+        renderEmpDropdown();
         renderSchedule();
-      };
+        updateSelectedEmployeesDisplay();
+      }
+
+      function renderEmpDropdown() {
+        const dd = document.getElementById('empDropdown');
+        // Очищаем всё кроме кнопок действий
+        dd.querySelectorAll('.emp-dropdown-item').forEach(el => el.remove());
+        employees.forEach(e => {
+          const item = document.createElement('label');
+          item.className = 'emp-dropdown-item';
+          item.innerHTML = `<input type="checkbox" value="${e.id}" ${selectedEmployeeIds.has(e.id) ? 'checked' : ''}> ${e.name} (${e.role})`;
+          item.querySelector('input').addEventListener('change', function() {
+            if (this.checked) selectedEmployeeIds.add(e.id);
+            else selectedEmployeeIds.delete(e.id);
+            currentRoleFilter = null;
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            renderSchedule();
+            updateSelectedEmployeesDisplay();
+          });
+          dd.appendChild(item);
+        });
+      }
+
+      function updateSelectedEmployeesDisplay() {
+        const btn = document.getElementById('empFilterBtn');
+        if (selectedEmployeeIds.size === employees.length) {
+          btn.textContent = 'Все сотрудники ▾';
+        } else if (selectedEmployeeIds.size === 0) {
+          btn.textContent = 'Никто не выбран ▾';
+        } else {
+          btn.textContent = `${selectedEmployeeIds.size} сотруд. ▾`;
+        }
+      }
 
       // Норма дней для графиков
       function getNormDays(role, params) {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         if (role === 'Менеджер') {
-          // график 3/3
           let count = 0;
           for (let d = 1; d <= daysInMonth; d++) if ((d - 1) % 6 < 3) count++;
           return count;
         }
         if (role === 'Администратор') {
-          // график 2/2 (по умолчанию)
           let count = 0;
           for (let d = 1; d <= daysInMonth; d++) if ((d - 1) % 4 < 2) count++;
-          return params.norm_days || count; // можно переопределить в настройках
+          return params.norm_days || count;
         }
-        return params.norm_days || 22; // для остальных
+        return params.norm_days || 22;
       }
 
       function getSalary(emp) {
@@ -435,13 +495,10 @@
         document.getElementById('monthTitle').textContent =
           new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
 
-        const filtered = selectedEmployeeId
-          ? employees.filter(e => e.id === selectedEmployeeId)
-          : employees;
-
+        const filtered = employees.filter(e => selectedEmployeeIds.has(e.id));
         const container = document.getElementById('scheduleContainer');
         if (!filtered.length) {
-          container.innerHTML = '<p style="color:#636e72; text-align:center; padding:2rem;">Выберите сотрудников</p>';
+          container.innerHTML = '<p style="color:#636e72; text-align:center; padding:2rem;">Выберите сотрудников для отображения</p>';
           return;
         }
 
@@ -451,35 +508,50 @@
         }
         html += '<th>Смен</th><th>ЗП</th></tr></thead><tbody>';
 
-        filtered.forEach(emp => {
-          let cells = '', worked = 0;
-          for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const rec = worklog[`${emp.id}_${dateStr}`] || {};
-            const status = rec.status || '';
-            if (status === 'working' && ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16))) {
-              worked++;
+        ['Управляющий','Менеджер','Администратор','Преподаватель'].forEach(role => {
+          const group = filtered.filter(e => e.role === role);
+          if (!group.length) return;
+          const roleNames = { 'Управляющий': 'Управляющие', 'Менеджер': 'Менеджеры', 'Администратор': 'Администраторы', 'Преподаватель': 'Преподаватели' };
+          html += `<tr><td colspan="${daysInMonth + 3}" style="background:#fafafa; font-weight:600; text-align:left; padding:0.5rem 1rem;">${roleNames[role]}</td></tr>`;
+          group.forEach(emp => {
+            let cells = '', worked = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+              const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+              const rec = worklog[`${emp.id}_${dateStr}`] || {};
+              const status = rec.status || '';
+              if (status === 'working' && ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16))) {
+                worked++;
+              }
+              let cellClass = 'day-cell ' + status;
+              let content = '';
+              if (status === 'working') {
+                if (emp.role === 'Менеджер') content = rec.daily_sales > 0 ? '₽' : 'Д';
+                else if (emp.role === 'Преподаватель') content = `Д<br><small>${rec.indiv||0}/${rec.group_total||0}</small>`;
+                else content = 'Д';
+              } else if (status === 'dayoff') content = 'В';
+              else if (status === 'sick') content = 'Б';
+              else if (status === 'vacation') content = 'О';
+              else if (status === 'leave') content = 'От';
+              cells += `<td class="${cellClass}" data-emp="${emp.id}" data-date="${dateStr}">${content}</td>`;
             }
-            cells += `<td class="day-cell ${status}" data-emp="${emp.id}" data-date="${dateStr}">${status === 'working' ? 'Д' : status === 'dayoff' ? 'В' : ''}</td>`;
-          }
-          const salary = getSalary(emp);
-          const isOwner = currentUserEmail === OWNER_EMAIL;
-          const displaySalary = (emp.role === 'Управляющий' && !isOwner) ? '***' : `${salary.toFixed(0)} ₽`;
-          html += `<tr>
-            <td class="employee-name" data-emp="${emp.id}">${emp.name}</td>
-            ${cells}
-            <td class="summary-cell">${worked}</td>
-            <td class="summary-cell">${displaySalary}</td>
-          </tr>`;
+            const salary = getSalary(emp);
+            const isOwner = currentUserEmail === OWNER_EMAIL;
+            const displaySalary = (emp.role === 'Управляющий' && !isOwner) ? '***' : `${salary.toFixed(0)} ₽`;
+            html += `<tr>
+              <td class="employee-name" data-emp="${emp.id}">${emp.name}</td>
+              ${cells}
+              <td class="summary-cell">${worked}</td>
+              <td class="summary-cell">${displaySalary}</td>
+            </tr>`;
+          });
         });
         html += '</tbody></table>';
         container.innerHTML = html;
 
-        // Обработчики клика по ячейке
+        // Обработчики
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', () => openDayModal(cell.dataset.emp, cell.dataset.date));
         });
-        // Клик по имени сотрудника
         container.querySelectorAll('.employee-name').forEach(el => {
           el.addEventListener('click', () => openSalaryModal(el.dataset.emp));
         });
@@ -531,8 +603,7 @@
           return;
         }
         const params = salaryParams[empId] || {};
-        let html = `<p><b>${emp.name}</b> (${emp.role})</p>`;
-        // Оклад (фиксированный для ролей с окладом)
+        let html = `<p style="font-weight:600; margin-bottom:0.5rem;">${emp.name} (${emp.role})</p>`;
         const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
         if (rates[emp.role]) {
           html += `<div class="label-row"><span>Оклад:</span><strong>${rates[emp.role]} ₽</strong></div>`;
@@ -543,9 +614,8 @@
           <option value="3/3" ${emp.role === 'Менеджер' ? 'selected' : ''}>3/3</option>
           <option value="5/2">5/2 (стандарт)</option>
         </select>`;
-        // Норма дней
+        // Норма дней (автоматически пересчитывается при изменении графика, но можно вручную)
         html += `<div class="label-row"><span>Норма дней:</span><input type="number" id="normDays" value="${params.norm_days || getNormDays(emp.role, params)}" style="width:80px;"></div>`;
-        // KPI / план
         if (emp.role === 'Менеджер' || emp.role === 'Управляющий') {
           html += `<div class="label-row"><span>План продаж:</span><input type="number" id="planAmount" value="${params.plan_amount || ''}" style="width:120px;"></div>`;
         }
@@ -602,14 +672,23 @@
         loadWorklog().then(renderSchedule);
       });
 
-      // Фильтр периода
-      document.querySelectorAll('.filter-btn').forEach(btn => {
+      // Периоды
+      document.querySelectorAll('.period-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
           this.classList.add('active');
           currentPeriod = this.dataset.period;
           renderSchedule();
         });
+      });
+
+      // Ролевые фильтры
+      document.getElementById('roleFilters').addEventListener('click', (e) => {
+        if (e.target.classList.contains('role-btn')) {
+          document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          applyRoleFilter(e.target.dataset.role);
+        }
       });
 
       // Выпадающий список сотрудников
@@ -618,6 +697,23 @@
       });
       document.addEventListener('click', (e) => {
         if (!e.target.closest('#empFilterWrap')) document.getElementById('empDropdown').classList.remove('open');
+      });
+
+      document.getElementById('selectAllBtn').addEventListener('click', () => {
+        employees.forEach(e => selectedEmployeeIds.add(e.id));
+        currentRoleFilter = null;
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        renderEmpDropdown();
+        renderSchedule();
+        updateSelectedEmployeesDisplay();
+      });
+      document.getElementById('deselectAllBtn').addEventListener('click', () => {
+        selectedEmployeeIds.clear();
+        currentRoleFilter = null;
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        renderEmpDropdown();
+        renderSchedule();
+        updateSelectedEmployeesDisplay();
       });
 
       // Экспорт
