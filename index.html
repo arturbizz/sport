@@ -108,11 +108,14 @@
     .card.tasks::before { background: linear-gradient(135deg, #55efc4, var(--teal)); }
     .card.contests::before { background: linear-gradient(135deg, #fd79a8, #e84393); }
     .card.nps::before { background: linear-gradient(135deg, var(--rose), var(--gold)); }
+    .card.budget::before { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
+    .card.admin::before { background: linear-gradient(135deg, #ff7675, #d63031); }
     .card-icon { margin-bottom: 1rem; }
     .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
     .card p { color: var(--text-secondary); font-size: 0.9rem; }
     .coming-soon { opacity: 0.7; }
     .coming-soon .card-icon { filter: grayscale(0.2); }
+    .admin-only { display: none; } /* скрыты по умолчанию */
   </style>
 </head>
 <body>
@@ -124,6 +127,7 @@
     <h1>Music Club Орёл</h1>
     <p class="subtitle">Платформа управления музыкальной школой</p>
     <div class="cards">
+      <!-- Общие разделы -->
       <a href="schedule.html" class="card schedule">
         <div class="card-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7c5ce7" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -145,26 +149,12 @@
         <h2>Расписание преподавателей</h2>
         <p>Доступность и занятость</p>
       </a>
-      <a href="employees.html" class="card employees">
-        <div class="card-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        </div>
-        <h2>Сотрудники</h2>
-        <p>Управление персоналом</p>
-      </a>
       <a href="tasks.html" class="card tasks">
         <div class="card-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2ed573" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
         </div>
         <h2>Управление задачами</h2>
         <p>Идеи и планы</p>
-      </a>
-      <a href="contests.html" class="card contests coming-soon">
-        <div class="card-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f9ca24" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-        </div>
-        <h2>Конкурсы</h2>
-        <p>Скоро открытие</p>
       </a>
       <a href="nps.html" class="card nps">
         <div class="card-icon">
@@ -173,20 +163,60 @@
         <h2>NPS / Отзывы</h2>
         <p>Сбор обратной связи</p>
       </a>
+      <a href="contests.html" class="card contests coming-soon">
+        <div class="card-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f9ca24" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+        </div>
+        <h2>Конкурсы</h2>
+        <p>Скоро открытие</p>
+      </a>
+
+      <!-- Административные разделы (видны только вам) -->
+      <a href="employees.html" class="card employees admin-only">
+        <div class="card-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h2>Сотрудники</h2>
+        <p>Управление персоналом</p>
+      </a>
+      <a href="budget.html" class="card budget admin-only">
+        <div class="card-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#6c5ce7" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+        </div>
+        <h2>Бюджет</h2>
+        <p>Расходы и платежи</p>
+      </a>
+      <a href="admin.html" class="card admin admin-only">
+        <div class="card-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d63031" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h2>Мониторинг</h2>
+        <p>Логи и активность</p>
+      </a>
     </div>
   </div>
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
+
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { window.location.href = 'login.html'; return; }
-      document.getElementById('userEmail').textContent = session.user.email;
+      const userEmail = session.user.email;
+      document.getElementById('userEmail').textContent = userEmail;
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = 'login.html';
       });
+
+      // Показываем административные карточки только для admin
+      if (userEmail === ADMIN_EMAIL) {
+        document.querySelectorAll('.admin-only').forEach(el => {
+          el.style.display = 'flex';
+        });
+      }
     })();
   </script>
 </body>
