@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Бюджет — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --violet: #7c5ce7;
+      --teal: #0fb9b1;
+      --gold: #f9ca24;
+      --rose: #ff8c94;
+      --bg: #fef9f0;
+      --surface: rgba(255,255,255,0.85);
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .header, .modal {
+      -webkit-user-select: none; user-select: none; cursor: default;
+    }
+    input, textarea, select {
+      -webkit-user-select: text; user-select: text; cursor: text;
+    }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #fef9f0 0%, #f0f7f5 100%);
+      color: var(--text);
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .music-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .note {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(124,92,231,0.08);
+      animation: floatNote 12s infinite ease-in-out;
+    }
+    .note::before { content: '♪'; }
+    .note.two::before { content: '♫'; }
+    .note.three::before { content: '♩'; }
+    @keyframes floatNote {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(8deg); opacity: 0.7; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+    }
+
+    .container {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1200px;
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .back-link { color: var(--violet); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 {
+      font-size: 2rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--violet), var(--gold), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn {
+      border: none; padding: 0.45rem 1.2rem; border-radius: 12px;
+      font-weight: 600; cursor: pointer; font-size: 0.85rem;
+      transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.3rem;
+      background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
+      color: var(--violet);
+      box-shadow: 0 4px 12px rgba(124,92,231,0.15), 0 0 0 1px rgba(124,92,231,0.1) inset;
+      backdrop-filter: blur(4px);
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, var(--violet), var(--teal));
+      color: white;
+      box-shadow: 0 8px 24px rgba(124,92,231,0.3), 0 0 0 1px rgba(255,255,255,0.2) inset;
+      transform: translateY(-2px);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--violet);
+      color: var(--violet);
+      box-shadow: none;
+    }
+    .btn-outline:hover { background: var(--violet); color: white; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.7rem 0.5rem;
+      text-align: left;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.85rem;
+    }
+    th { background: #fafafa; font-weight: 600; color: var(--text-light); }
+    td .btn { padding: 0.25rem 0.7rem; font-size: 0.75rem; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(4px); display: flex;
+      align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal {
+      background: white; border-radius: 24px; padding: 2rem;
+      max-width: 500px; width: 90%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+      animation: slideUp 0.25s ease-out;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }
+    }
+    input, textarea, select {
+      width: 100%; padding: 0.6rem; margin: 0.5rem 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit;
+    }
+    .row {
+      display: flex; gap: 0.5rem; align-items: center;
+    }
+    .row input, .row select { flex: 1; }
+
+    @media (max-width: 600px) {
+      body { padding: 0.5rem; }
+      .container { padding: 1rem; }
+      table { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="music-bg">
+    <div class="note" style="top:10%; left:5%;"></div>
+    <div class="note two" style="top:25%; right:10%;"></div>
+    <div class="note three" style="bottom:20%; left:15%;"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>Бюджет</h1>
+      <button class="btn" id="addBtn">+ Добавить расход</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Платёж</th>
+          <th>Сумма</th>
+          <th>Периодичность</th>
+          <th>След. платёж</th>
+          <th>Ссылка</th>
+          <th>Реквизиты</th>
+          <th>Примечание</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="expensesBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Модалка добавления/редактирования -->
+  <div class="modal-overlay" id="expenseModal" style="display:none;">
+    <div class="modal">
+      <h2 id="modalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Новый расход</h2>
+      <input type="text" id="name" placeholder="Название платежа">
+      <div class="row">
+        <input type="number" id="amount" placeholder="Сумма">
+        <select id="periodicity">
+          <option value="monthly">Ежемесячно</option>
+          <option value="weekly">Еженедельно</option>
+          <option value="biweekly">Раз в 2 недели</option>
+          <option value="quarterly">Ежеквартально</option>
+          <option value="yearly">Ежегодно</option>
+          <option value="daily">Ежедневно</option>
+          <option value="custom">Произвольный (дни)</option>
+          <option value="one_time">Разовый</option>
+        </select>
+      </div>
+      <input type="number" id="customDays" placeholder="Количество дней (если 'Произвольный')" style="display:none;">
+      <input type="date" id="nextPayment">
+      <input type="text" id="paymentLink" placeholder="Ссылка на оплату">
+      <textarea id="details" rows="2" placeholder="Реквизиты"></textarea>
+      <textarea id="note" rows="2" placeholder="Примечание"></textarea>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="saveBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelBtn">Отмена</button>
+        <button class="btn btn-outline" id="deleteBtn" style="display:none;">Удалить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      let currentUserEmail = null, expenses = [];
+
+      async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        if (currentUserEmail !== 'arturgalkin.ru@mail.ru') {
+          alert('Доступ запрещён');
+          window.location.href = 'index.html';
+          return;
+        }
+        await loadExpenses();
+        renderTable();
+      }
+
+      async function loadExpenses() {
+        const { data, error } = await _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true });
+        if (error) { console.error(error); return; }
+        expenses = data || [];
+      }
+
+      function renderTable() {
+        const tbody = document.getElementById('expensesBody');
+        tbody.innerHTML = expenses.map(e => {
+          const periodLabel = e.periodicity === 'custom' ? `Каждые ${e.custom_days} дн.` : 
+            { one_time:'Разово', daily:'Ежедневно', weekly:'Еженедельно', biweekly:'Раз в 2 нед.', monthly:'Ежемесячно', quarterly:'Ежеквартально', yearly:'Ежегодно' }[e.periodicity];
+          return `<tr>
+            <td>${e.name}</td>
+            <td>${e.amount.toLocaleString()} ₽</td>
+            <td>${periodLabel}</td>
+            <td>${e.next_payment_date || '—'}</td>
+            <td>${e.payment_link ? `<a href="${e.payment_link}" target="_blank">Оплатить</a>` : '—'}</td>
+            <td>${e.details || '—'}</td>
+            <td>${e.note || '—'}</td>
+            <td>
+              <button class="btn edit-btn" data-id="${e.id}">Изм.</button>
+              <button class="btn delete-btn" data-id="${e.id}" style="background:var(--rose); color:white;">Уд.</button>
+            </td>
+          </tr>`;
+        }).join('');
+
+        tbody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
+        tbody.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async () => {
+          const id = btn.dataset.id;
+          if (confirm('Удалить расход?')) {
+            await _supabase.from('expenses').delete().eq('id', id);
+            await loadExpenses();
+            renderTable();
+          }
+        }));
+      }
+
+      function openEditModal(id) {
+        const exp = expenses.find(e => e.id == id);
+        if (!exp) return;
+        document.getElementById('modalTitle').textContent = 'Редактировать расход';
+        document.getElementById('name').value = exp.name;
+        document.getElementById('amount').value = exp.amount;
+        document.getElementById('periodicity').value = exp.periodicity;
+        document.getElementById('customDays').style.display = exp.periodicity === 'custom' ? 'block' : 'none';
+        document.getElementById('customDays').value = exp.custom_days || '';
+        document.getElementById('nextPayment').value = exp.next_payment_date || '';
+        document.getElementById('paymentLink').value = exp.payment_link || '';
+        document.getElementById('details').value = exp.details || '';
+        document.getElementById('note').value = exp.note || '';
+        document.getElementById('deleteBtn').style.display = 'inline-block';
+        document.getElementById('expenseModal').dataset.editId = id;
+        document.getElementById('expenseModal').style.display = 'flex';
+      }
+
+      document.getElementById('addBtn').addEventListener('click', () => {
+        document.getElementById('modalTitle').textContent = 'Новый расход';
+        document.getElementById('name').value = '';
+        document.getElementById('amount').value = '';
+        document.getElementById('periodicity').value = 'monthly';
+        document.getElementById('customDays').style.display = 'none';
+        document.getElementById('nextPayment').value = '';
+        document.getElementById('paymentLink').value = '';
+        document.getElementById('details').value = '';
+        document.getElementById('note').value = '';
+        document.getElementById('deleteBtn').style.display = 'none';
+        delete document.getElementById('expenseModal').dataset.editId;
+        document.getElementById('expenseModal').style.display = 'flex';
+      });
+
+      document.getElementById('periodicity').addEventListener('change', function() {
+        document.getElementById('customDays').style.display = this.value === 'custom' ? 'block' : 'none';
+      });
+
+      document.getElementById('cancelBtn').addEventListener('click', () => {
+        document.getElementById('expenseModal').style.display = 'none';
+      });
+
+      document.getElementById('saveBtn').addEventListener('click', async () => {
+        const name = document.getElementById('name').value.trim();
+        const amount = parseFloat(document.getElementById('amount').value);
+        if (!name || isNaN(amount)) { alert('Заполните название и сумму'); return; }
+        const periodicity = document.getElementById('periodicity').value;
+        const customDays = periodicity === 'custom' ? parseInt(document.getElementById('customDays').value) || null : null;
+        const nextPayment = document.getElementById('nextPayment').value || null;
+        const paymentLink = document.getElementById('paymentLink').value.trim();
+        const details = document.getElementById('details').value.trim();
+        const note = document.getElementById('note').value.trim();
+        const editId = document.getElementById('expenseModal').dataset.editId;
+
+        const data = { name, amount, periodicity, custom_days: customDays, next_payment_date: nextPayment, payment_link: paymentLink, details, note };
+        let error;
+        if (editId) {
+          const { error: updateError } = await _supabase.from('expenses').update(data).eq('id', editId);
+          error = updateError;
+        } else {
+          const { error: insertError } = await _supabase.from('expenses').insert([data]);
+          error = insertError;
+        }
+        if (error) { alert('Ошибка: ' + error.message); return; }
+        document.getElementById('expenseModal').style.display = 'none';
+        await loadExpenses();
+        renderTable();
+      });
+
+      document.getElementById('deleteBtn').addEventListener('click', async () => {
+        const editId = document.getElementById('expenseModal').dataset.editId;
+        if (!editId) return;
+        if (confirm('Удалить расход?')) {
+          await _supabase.from('expenses').delete().eq('id', editId);
+          document.getElementById('expenseModal').style.display = 'none';
+          await loadExpenses();
+          renderTable();
+        }
+      });
+
+      init();
+    })();
+  </script>
+</body>
+</html>
