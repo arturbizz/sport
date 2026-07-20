@@ -114,6 +114,9 @@
       cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
     }
     .filter-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
+    .type-filter {
+      margin-left: 1rem;
+    }
 
     .summary {
       background: white;
@@ -246,6 +249,11 @@
       <button class="filter-btn active" data-filter="all">Все</button>
       <button class="filter-btn" data-filter="unpaid">Неоплаченные</button>
       <button class="filter-btn" data-filter="paid">Оплаченные</button>
+      <select id="typeFilter" class="type-filter" style="padding:0.35rem 0.9rem; border-radius:16px; border:1px solid var(--border); font-size:0.8rem;">
+        <option value="all">Все типы</option>
+        <option value="monthly">Ежемесячные</option>
+        <option value="variable">Переменные</option>
+      </select>
     </div>
 
     <div class="summary" id="summaryContainer"></div>
@@ -256,12 +264,12 @@
           <th style="width:30px;"></th>
           <th>Платёж</th>
           <th>Сумма</th>
+          <th>Тип</th>
           <th>Периодичность</th>
           <th>След. платёж</th>
           <th>Ссылка</th>
           <th>Реквизиты</th>
           <th>Примечание</th>
-          <th>Напомнить</th>
           <th></th>
         </tr>
       </thead>
@@ -276,25 +284,29 @@
       <input type="text" id="name" placeholder="Название платежа">
       <div class="row">
         <input type="number" id="amount" placeholder="Сумма">
-        <select id="periodicity">
-          <option value="monthly">Ежемесячно</option>
-          <option value="weekly">Еженедельно</option>
-          <option value="biweekly">Раз в 2 недели</option>
-          <option value="quarterly">Ежеквартально</option>
-          <option value="yearly">Ежегодно</option>
-          <option value="daily">Ежедневно</option>
-          <option value="custom">Произвольный (дни)</option>
-          <option value="one_time">Разовый</option>
+        <select id="type">
+          <option value="monthly">Ежемесячный</option>
+          <option value="variable">Переменный</option>
         </select>
       </div>
+      <select id="periodicity">
+        <option value="monthly">Ежемесячно</option>
+        <option value="weekly">Еженедельно</option>
+        <option value="biweekly">Раз в 2 недели</option>
+        <option value="quarterly">Ежеквартально</option>
+        <option value="yearly">Ежегодно</option>
+        <option value="daily">Ежедневно</option>
+        <option value="custom">Произвольный (дни)</option>
+        <option value="one_time">Разовый</option>
+      </select>
       <input type="number" id="customDays" placeholder="Количество дней (если 'Произвольный')" style="display:none;">
       <input type="date" id="nextPayment">
       <input type="text" id="paymentLink" placeholder="Ссылка на оплату">
       <textarea id="details" rows="2" placeholder="Реквизиты"></textarea>
       <textarea id="note" rows="2" placeholder="Примечание"></textarea>
-      <div class="checkbox-row">
-        <input type="checkbox" id="notifyEmail">
-        <label for="notifyEmail">Напомнить на email</label>
+      <div class="checkbox-row" id="notifyRow" style="display:none;">
+        <input type="checkbox" id="notifyEmail" checked>
+        <label for="notifyEmail">Напомнить</label>
       </div>
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
         <button class="btn" id="saveBtn">Сохранить</button>
@@ -311,6 +323,7 @@
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, expenses = [];
       let currentFilter = 'all';
+      let currentTypeFilter = 'all';
 
       function showConfetti() {
         const balloon = document.createElement('div');
@@ -352,9 +365,11 @@
       }
 
       function getFiltered() {
-        if (currentFilter === 'paid') return expenses.filter(e => e.paid);
-        if (currentFilter === 'unpaid') return expenses.filter(e => !e.paid);
-        return expenses;
+        let filtered = expenses;
+        if (currentFilter === 'paid') filtered = filtered.filter(e => e.paid);
+        else if (currentFilter === 'unpaid') filtered = filtered.filter(e => !e.paid);
+        if (currentTypeFilter !== 'all') filtered = filtered.filter(e => e.type === currentTypeFilter);
+        return filtered;
       }
 
       function renderSummary() {
@@ -372,7 +387,7 @@
         const datesHtml = sortedDates.map(d => `<div>${new Date(d).toLocaleDateString('ru')}: <b>${grouped[d].toLocaleString()} ₽</b></div>`).join('');
         document.getElementById('summaryContainer').innerHTML = `
           <div class="summary-item">
-            <div class="summary-label">Общая сумма (${currentFilter === 'paid' ? 'оплаченные' : currentFilter === 'unpaid' ? 'неоплаченные' : 'все'})</div>
+            <div class="summary-label">Общая сумма</div>
             <div class="summary-value">${total.toLocaleString()} ₽</div>
           </div>
           <div class="summary-item" style="flex:1;">
@@ -396,12 +411,12 @@
             <td><button class="check-btn" data-id="${e.id}" data-paid="${e.paid}">${e.paid ? '✅' : '⬜'}</button></td>
             <td>${e.name}</td>
             <td>${e.amount.toLocaleString()} ₽</td>
+            <td>${e.type === 'variable' ? 'Переменный' : 'Ежемесячный'}</td>
             <td>${periodLabel}</td>
             <td>${e.next_payment_date || '—'}</td>
             <td>${e.payment_link ? `<a href="${e.payment_link}" target="_blank">Оплатить</a>` : '—'}</td>
             <td>${e.details || '—'}</td>
             <td>${e.note || '—'}</td>
-            <td>${e.notify_email ? '📧' : ''}</td>
             <td>
               <button class="btn edit-btn" data-id="${e.id}">Изм.</button>
               <button class="btn delete-btn" data-id="${e.id}" style="background:var(--rose); color:white;">Уд.</button>
@@ -446,6 +461,7 @@
         document.getElementById('modalTitle').textContent = 'Редактировать расход';
         document.getElementById('name').value = exp.name;
         document.getElementById('amount').value = exp.amount;
+        document.getElementById('type').value = exp.type || 'monthly';
         document.getElementById('periodicity').value = exp.periodicity;
         document.getElementById('customDays').style.display = exp.periodicity === 'custom' ? 'block' : 'none';
         document.getElementById('customDays').value = exp.custom_days || '';
@@ -453,7 +469,8 @@
         document.getElementById('paymentLink').value = exp.payment_link || '';
         document.getElementById('details').value = exp.details || '';
         document.getElementById('note').value = exp.note || '';
-        document.getElementById('notifyEmail').checked = exp.notify_email || false;
+        document.getElementById('notifyEmail').checked = exp.notify_email !== false; // по умолчанию true
+        document.getElementById('notifyRow').style.display = exp.type === 'variable' ? 'block' : 'none';
         document.getElementById('deleteBtn').style.display = 'inline-block';
         document.getElementById('expenseModal').dataset.editId = id;
         document.getElementById('expenseModal').style.display = 'flex';
@@ -463,16 +480,25 @@
         document.getElementById('modalTitle').textContent = 'Новый расход';
         document.getElementById('name').value = '';
         document.getElementById('amount').value = '';
+        document.getElementById('type').value = 'monthly';
         document.getElementById('periodicity').value = 'monthly';
         document.getElementById('customDays').style.display = 'none';
         document.getElementById('nextPayment').value = '';
         document.getElementById('paymentLink').value = '';
         document.getElementById('details').value = '';
         document.getElementById('note').value = '';
-        document.getElementById('notifyEmail').checked = false;
+        document.getElementById('notifyEmail').checked = true;
+        document.getElementById('notifyRow').style.display = 'none';
         document.getElementById('deleteBtn').style.display = 'none';
         delete document.getElementById('expenseModal').dataset.editId;
         document.getElementById('expenseModal').style.display = 'flex';
+      });
+
+      document.getElementById('type').addEventListener('change', function() {
+        document.getElementById('notifyRow').style.display = this.value === 'variable' ? 'block' : 'none';
+        if (this.value === 'monthly') {
+          document.getElementById('notifyEmail').checked = true; // ежемесячные всегда напоминать
+        }
       });
 
       document.getElementById('periodicity').addEventListener('change', function() {
@@ -487,16 +513,17 @@
         const name = document.getElementById('name').value.trim();
         const amount = parseFloat(document.getElementById('amount').value);
         if (!name || isNaN(amount)) { alert('Заполните название и сумму'); return; }
+        const type = document.getElementById('type').value;
         const periodicity = document.getElementById('periodicity').value;
         const customDays = periodicity === 'custom' ? parseInt(document.getElementById('customDays').value) || null : null;
         const nextPayment = document.getElementById('nextPayment').value || null;
         const paymentLink = document.getElementById('paymentLink').value.trim();
         const details = document.getElementById('details').value.trim();
         const note = document.getElementById('note').value.trim();
-        const notifyEmail = document.getElementById('notifyEmail').checked;
+        const notifyEmail = type === 'variable' ? document.getElementById('notifyEmail').checked : true; // ежемесячные всегда true
         const editId = document.getElementById('expenseModal').dataset.editId;
 
-        const data = { name, amount, periodicity, custom_days: customDays, next_payment_date: nextPayment, payment_link: paymentLink, details, note, notify_email: notifyEmail };
+        const data = { name, amount, type, periodicity, custom_days: customDays, next_payment_date: nextPayment, payment_link: paymentLink, details, note, notify_email: notifyEmail };
         let error;
         if (editId) {
           const { error: updateError } = await _supabase.from('expenses').update(data).eq('id', editId);
@@ -526,6 +553,7 @@
         const data = expenses.map(e => ({
           Название: e.name,
           Сумма: e.amount,
+          Тип: e.type === 'variable' ? 'Переменный' : 'Ежемесячный',
           Периодичность: e.periodicity,
           Следующий_платёж: e.next_payment_date,
           Ссылка: e.payment_link,
@@ -546,6 +574,11 @@
           currentFilter = this.dataset.filter;
           renderAll();
         });
+      });
+
+      document.getElementById('typeFilter').addEventListener('change', function() {
+        currentTypeFilter = this.value;
+        renderAll();
       });
 
       init();
