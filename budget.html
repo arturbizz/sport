@@ -20,6 +20,7 @@
       --text: #2d3436;
       --text-light: #636e72;
       --border: #e0e0e0;
+      --critical: #e74c3c;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, .container, .header, .modal {
@@ -104,6 +105,16 @@
     }
     .btn-outline:hover { background: var(--violet); color: white; }
 
+    .filters {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.9rem; border-radius: 16px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
+    }
+    .filter-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
+
     .summary {
       background: white;
       border-radius: 16px;
@@ -147,12 +158,36 @@
     }
     th { background: #fafafa; font-weight: 600; color: var(--text-light); }
     td .btn { padding: 0.25rem 0.7rem; font-size: 0.75rem; }
-    .upcoming {
-      background: rgba(255,140,148,0.15);
+    .overdue {
+      animation: shake 0.5s infinite, glowRed 1s infinite alternate;
+      background: rgba(231,76,60,0.1);
     }
-    .upcoming td:first-child {
-      border-left: 3px solid var(--rose);
+    .overdue td:first-child { border-left: 3px solid var(--critical); }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      50% { transform: translateX(2px); }
+      75% { transform: translateX(-2px); }
+      100% { transform: translateX(0); }
     }
+    @keyframes glowRed {
+      0% { box-shadow: 0 0 3px rgba(231,76,60,0.3); }
+      100% { box-shadow: 0 0 10px rgba(231,76,60,0.6); }
+    }
+    .paid {
+      opacity: 0.7;
+      background: rgba(85,239,196,0.1);
+    }
+    .paid td { text-decoration: line-through; }
+    .check-btn {
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: var(--violet);
+      transition: 0.2s;
+      background: none;
+      border: none;
+    }
+    .check-btn:hover { color: var(--teal); }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.35);
@@ -207,11 +242,18 @@
       </div>
     </div>
 
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Все</button>
+      <button class="filter-btn" data-filter="unpaid">Неоплаченные</button>
+      <button class="filter-btn" data-filter="paid">Оплаченные</button>
+    </div>
+
     <div class="summary" id="summaryContainer"></div>
 
     <table>
       <thead>
         <tr>
+          <th style="width:30px;"></th>
           <th>Платёж</th>
           <th>Сумма</th>
           <th>Периодичность</th>
@@ -268,6 +310,28 @@
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, expenses = [];
+      let currentFilter = 'all';
+
+      // Анимация успеха (конфетти + шарик)
+      function showConfetti() {
+        const balloon = document.createElement('div');
+        balloon.className = 'balloon';
+        document.body.appendChild(balloon);
+        balloon.addEventListener('animationend', () => {
+          balloon.remove();
+          for (let i = 0; i < 50; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti-piece';
+            p.style.background = ['#7c5ce7','#0fb9b1','#f9ca24','#ff8c94'][i%4];
+            p.style.left = '50%';
+            p.style.top = '30%';
+            p.style.setProperty('--x', (Math.random()*280-140)+'px');
+            p.style.setProperty('--y', (Math.random()*-180-40)+'px');
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 900);
+          }
+        });
+      }
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -288,27 +352,28 @@
         expenses = data || [];
       }
 
-      function renderSummary() {
-        const total = expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-        const today = new Date();
-        const threeDaysLater = new Date(today);
-        threeDaysLater.setDate(today.getDate() + 3);
-        const upcoming = expenses.filter(e => e.next_payment_date && new Date(e.next_payment_date) <= threeDaysLater && new Date(e.next_payment_date) >= today);
+      function getFiltered() {
+        if (currentFilter === 'paid') return expenses.filter(e => e.paid);
+        if (currentFilter === 'unpaid') return expenses.filter(e => !e.paid);
+        return expenses;
+      }
 
+      function renderSummary() {
+        const filtered = getFiltered();
+        const total = filtered.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+        const today = new Date();
+        const upcoming = filtered.filter(e => !e.paid && e.next_payment_date && new Date(e.next_payment_date) <= new Date(today.getTime() + 3*86400000) && new Date(e.next_payment_date) >= today);
         const grouped = {};
-        expenses.forEach(e => {
-          if (!e.next_payment_date) return;
+        filtered.filter(e => !e.paid && e.next_payment_date).forEach(e => {
           const d = e.next_payment_date;
           if (!grouped[d]) grouped[d] = 0;
           grouped[d] += parseFloat(e.amount);
         });
-
         const sortedDates = Object.keys(grouped).sort();
         const datesHtml = sortedDates.map(d => `<div>${new Date(d).toLocaleDateString('ru')}: <b>${grouped[d].toLocaleString()} ₽</b></div>`).join('');
-
         document.getElementById('summaryContainer').innerHTML = `
           <div class="summary-item">
-            <div class="summary-label">Общая сумма расходов</div>
+            <div class="summary-label">Общая сумма (${currentFilter === 'paid' ? 'оплаченные' : currentFilter === 'unpaid' ? 'неоплаченные' : 'все'})</div>
             <div class="summary-value">${total.toLocaleString()} ₽</div>
           </div>
           <div class="summary-item" style="flex:1;">
@@ -321,15 +386,15 @@
 
       function renderTable() {
         const today = new Date();
-        const threeDaysLater = new Date(today);
-        threeDaysLater.setDate(today.getDate() + 3);
-
+        const filtered = getFiltered();
         const tbody = document.getElementById('expensesBody');
-        tbody.innerHTML = expenses.map(e => {
+        tbody.innerHTML = filtered.map(e => {
           const periodLabel = e.periodicity === 'custom' ? `Каждые ${e.custom_days} дн.` : 
             { one_time:'Разово', daily:'Ежедневно', weekly:'Еженедельно', biweekly:'Раз в 2 нед.', monthly:'Ежемесячно', quarterly:'Ежеквартально', yearly:'Ежегодно' }[e.periodicity];
-          const isUpcoming = e.next_payment_date && new Date(e.next_payment_date) <= threeDaysLater && new Date(e.next_payment_date) >= today;
-          return `<tr class="${isUpcoming ? 'upcoming' : ''}">
+          const isOverdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < today;
+          const rowClass = e.paid ? 'paid' : (isOverdue ? 'overdue' : '');
+          return `<tr class="${rowClass}" data-id="${e.id}">
+            <td><button class="check-btn" data-id="${e.id}" data-paid="${e.paid}">${e.paid ? '✅' : '⬜'}</button></td>
             <td>${e.name}</td>
             <td>${e.amount.toLocaleString()} ₽</td>
             <td>${periodLabel}</td>
@@ -345,11 +410,27 @@
           </tr>`;
         }).join('');
 
+        // Обработчики клика по галочке
+        tbody.querySelectorAll('.check-btn').forEach(btn => {
+          btn.addEventListener('click', async function() {
+            const id = this.dataset.id;
+            const currentPaid = this.dataset.paid === 'true';
+            const newPaid = !currentPaid;
+            const { error } = await _supabase.from('expenses').update({
+              paid: newPaid,
+              paid_at: newPaid ? new Date().toISOString() : null
+            }).eq('id', id);
+            if (error) { alert('Ошибка: ' + error.message); return; }
+            if (newPaid) showConfetti(); // анимация при оплате
+            await loadExpenses();
+            renderAll();
+          });
+        });
+
         tbody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
         tbody.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
           if (confirm('Удалить расход?')) {
-            await _supabase.from('expenses').delete().eq('id', id);
+            await _supabase.from('expenses').delete().eq('id', btn.dataset.id);
             await loadExpenses();
             renderAll();
           }
@@ -451,12 +532,23 @@
           Следующий_платёж: e.next_payment_date,
           Ссылка: e.payment_link,
           Реквизиты: e.details,
-          Примечание: e.note
+          Примечание: e.note,
+          Оплачен: e.paid ? 'Да' : 'Нет'
         }));
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Бюджет');
         XLSX.writeFile(wb, 'бюджет.xlsx');
+      });
+
+      // Фильтры
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          currentFilter = this.dataset.filter;
+          renderAll();
+        });
       });
 
       init();
