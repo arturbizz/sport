@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Бюджет — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -103,6 +104,33 @@
     }
     .btn-outline:hover { background: var(--violet); color: white; }
 
+    .summary {
+      background: white;
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      align-items: center;
+    }
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .summary-label { font-size: 0.8rem; color: var(--text-light); font-weight: 500; }
+    .summary-value { font-size: 1.2rem; font-weight: 700; color: var(--violet); }
+    .summary-dates {
+      font-size: 0.8rem;
+      color: var(--text);
+      max-height: 100px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -119,6 +147,12 @@
     }
     th { background: #fafafa; font-weight: 600; color: var(--text-light); }
     td .btn { padding: 0.25rem 0.7rem; font-size: 0.75rem; }
+    .upcoming {
+      background: rgba(255,140,148,0.15);
+    }
+    .upcoming td:first-child {
+      border-left: 3px solid var(--rose);
+    }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.35);
@@ -143,11 +177,16 @@
       display: flex; gap: 0.5rem; align-items: center;
     }
     .row input, .row select { flex: 1; }
+    .checkbox-row {
+      display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
+    }
+    .checkbox-row input[type="checkbox"] { width: auto; accent-color: var(--violet); }
 
     @media (max-width: 600px) {
       body { padding: 0.5rem; }
       .container { padding: 1rem; }
       table { font-size: 0.75rem; }
+      .summary { flex-direction: column; align-items: flex-start; }
     }
   </style>
 </head>
@@ -162,8 +201,13 @@
     <div class="header">
       <a href="index.html" class="back-link">← На главную</a>
       <h1>Бюджет</h1>
-      <button class="btn" id="addBtn">+ Добавить расход</button>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" id="exportBtn">Excel</button>
+        <button class="btn" id="addBtn">+ Добавить расход</button>
+      </div>
     </div>
+
+    <div class="summary" id="summaryContainer"></div>
 
     <table>
       <thead>
@@ -175,6 +219,7 @@
           <th>Ссылка</th>
           <th>Реквизиты</th>
           <th>Примечание</th>
+          <th>Напомнить</th>
           <th></th>
         </tr>
       </thead>
@@ -205,6 +250,10 @@
       <input type="text" id="paymentLink" placeholder="Ссылка на оплату">
       <textarea id="details" rows="2" placeholder="Реквизиты"></textarea>
       <textarea id="note" rows="2" placeholder="Примечание"></textarea>
+      <div class="checkbox-row">
+        <input type="checkbox" id="notifyEmail">
+        <label for="notifyEmail">Напомнить на email</label>
+      </div>
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
         <button class="btn" id="saveBtn">Сохранить</button>
         <button class="btn btn-outline" id="cancelBtn">Отмена</button>
@@ -230,7 +279,7 @@
           return;
         }
         await loadExpenses();
-        renderTable();
+        renderAll();
       }
 
       async function loadExpenses() {
@@ -239,12 +288,48 @@
         expenses = data || [];
       }
 
+      function renderSummary() {
+        const total = expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+        const today = new Date();
+        const threeDaysLater = new Date(today);
+        threeDaysLater.setDate(today.getDate() + 3);
+        const upcoming = expenses.filter(e => e.next_payment_date && new Date(e.next_payment_date) <= threeDaysLater && new Date(e.next_payment_date) >= today);
+
+        const grouped = {};
+        expenses.forEach(e => {
+          if (!e.next_payment_date) return;
+          const d = e.next_payment_date;
+          if (!grouped[d]) grouped[d] = 0;
+          grouped[d] += parseFloat(e.amount);
+        });
+
+        const sortedDates = Object.keys(grouped).sort();
+        const datesHtml = sortedDates.map(d => `<div>${new Date(d).toLocaleDateString('ru')}: <b>${grouped[d].toLocaleString()} ₽</b></div>`).join('');
+
+        document.getElementById('summaryContainer').innerHTML = `
+          <div class="summary-item">
+            <div class="summary-label">Общая сумма расходов</div>
+            <div class="summary-value">${total.toLocaleString()} ₽</div>
+          </div>
+          <div class="summary-item" style="flex:1;">
+            <div class="summary-label">Предстоящие платежи по датам</div>
+            <div class="summary-dates">${datesHtml || '—'}</div>
+          </div>
+          ${upcoming.length > 0 ? `<div class="summary-item"><div class="summary-label" style="color:var(--rose);">🔔 Оплатить в ближайшие 3 дня</div><div class="summary-value" style="color:var(--rose);">${upcoming.length} шт.</div></div>` : ''}
+        `;
+      }
+
       function renderTable() {
+        const today = new Date();
+        const threeDaysLater = new Date(today);
+        threeDaysLater.setDate(today.getDate() + 3);
+
         const tbody = document.getElementById('expensesBody');
         tbody.innerHTML = expenses.map(e => {
           const periodLabel = e.periodicity === 'custom' ? `Каждые ${e.custom_days} дн.` : 
             { one_time:'Разово', daily:'Ежедневно', weekly:'Еженедельно', biweekly:'Раз в 2 нед.', monthly:'Ежемесячно', quarterly:'Ежеквартально', yearly:'Ежегодно' }[e.periodicity];
-          return `<tr>
+          const isUpcoming = e.next_payment_date && new Date(e.next_payment_date) <= threeDaysLater && new Date(e.next_payment_date) >= today;
+          return `<tr class="${isUpcoming ? 'upcoming' : ''}">
             <td>${e.name}</td>
             <td>${e.amount.toLocaleString()} ₽</td>
             <td>${periodLabel}</td>
@@ -252,6 +337,7 @@
             <td>${e.payment_link ? `<a href="${e.payment_link}" target="_blank">Оплатить</a>` : '—'}</td>
             <td>${e.details || '—'}</td>
             <td>${e.note || '—'}</td>
+            <td>${e.notify_email ? '📧' : ''}</td>
             <td>
               <button class="btn edit-btn" data-id="${e.id}">Изм.</button>
               <button class="btn delete-btn" data-id="${e.id}" style="background:var(--rose); color:white;">Уд.</button>
@@ -265,9 +351,14 @@
           if (confirm('Удалить расход?')) {
             await _supabase.from('expenses').delete().eq('id', id);
             await loadExpenses();
-            renderTable();
+            renderAll();
           }
         }));
+      }
+
+      function renderAll() {
+        renderSummary();
+        renderTable();
       }
 
       function openEditModal(id) {
@@ -283,6 +374,7 @@
         document.getElementById('paymentLink').value = exp.payment_link || '';
         document.getElementById('details').value = exp.details || '';
         document.getElementById('note').value = exp.note || '';
+        document.getElementById('notifyEmail').checked = exp.notify_email || false;
         document.getElementById('deleteBtn').style.display = 'inline-block';
         document.getElementById('expenseModal').dataset.editId = id;
         document.getElementById('expenseModal').style.display = 'flex';
@@ -298,6 +390,7 @@
         document.getElementById('paymentLink').value = '';
         document.getElementById('details').value = '';
         document.getElementById('note').value = '';
+        document.getElementById('notifyEmail').checked = false;
         document.getElementById('deleteBtn').style.display = 'none';
         delete document.getElementById('expenseModal').dataset.editId;
         document.getElementById('expenseModal').style.display = 'flex';
@@ -321,9 +414,10 @@
         const paymentLink = document.getElementById('paymentLink').value.trim();
         const details = document.getElementById('details').value.trim();
         const note = document.getElementById('note').value.trim();
+        const notifyEmail = document.getElementById('notifyEmail').checked;
         const editId = document.getElementById('expenseModal').dataset.editId;
 
-        const data = { name, amount, periodicity, custom_days: customDays, next_payment_date: nextPayment, payment_link: paymentLink, details, note };
+        const data = { name, amount, periodicity, custom_days: customDays, next_payment_date: nextPayment, payment_link: paymentLink, details, note, notify_email: notifyEmail };
         let error;
         if (editId) {
           const { error: updateError } = await _supabase.from('expenses').update(data).eq('id', editId);
@@ -335,7 +429,7 @@
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('expenseModal').style.display = 'none';
         await loadExpenses();
-        renderTable();
+        renderAll();
       });
 
       document.getElementById('deleteBtn').addEventListener('click', async () => {
@@ -345,8 +439,24 @@
           await _supabase.from('expenses').delete().eq('id', editId);
           document.getElementById('expenseModal').style.display = 'none';
           await loadExpenses();
-          renderTable();
+          renderAll();
         }
+      });
+
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        const data = expenses.map(e => ({
+          Название: e.name,
+          Сумма: e.amount,
+          Периодичность: e.periodicity,
+          Следующий_платёж: e.next_payment_date,
+          Ссылка: e.payment_link,
+          Реквизиты: e.details,
+          Примечание: e.note
+        }));
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Бюджет');
+        XLSX.writeFile(wb, 'бюджет.xlsx');
       });
 
       init();
