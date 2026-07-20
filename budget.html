@@ -312,7 +312,6 @@
       let currentUserEmail = null, expenses = [];
       let currentFilter = 'all';
 
-      // Анимация успеха (конфетти + шарик)
       function showConfetti() {
         const balloon = document.createElement('div');
         balloon.className = 'balloon';
@@ -410,7 +409,6 @@
           </tr>`;
         }).join('');
 
-        // Обработчики клика по галочке
         tbody.querySelectorAll('.check-btn').forEach(btn => {
           btn.addEventListener('click', async function() {
             const id = this.dataset.id;
@@ -421,7 +419,7 @@
               paid_at: newPaid ? new Date().toISOString() : null
             }).eq('id', id);
             if (error) { alert('Ошибка: ' + error.message); return; }
-            if (newPaid) showConfetti(); // анимация при оплате
+            if (newPaid) showConfetti();
             await loadExpenses();
             renderAll();
           });
@@ -541,7 +539,6 @@
         XLSX.writeFile(wb, 'бюджет.xlsx');
       });
 
-      // Фильтры
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
