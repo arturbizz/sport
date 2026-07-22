@@ -549,7 +549,6 @@
             input.onchange = async (e) => {
               const file = e.target.files[0];
               if (!file) return;
-              // Загружаем в Supabase Storage или просто сохраняем ссылку
               const fileName = `receipts/${id}_${Date.now()}.${file.name.split('.').pop()}`;
               const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
               if (error) { await customAlert('Ошибка загрузки: ' + error.message); return; }
@@ -589,10 +588,15 @@
         const exp = expenses.find(e => e.id == pendingPayId);
         if (!exp) return;
 
-        // Создаём следующий платёж для регулярных
+        // Проверяем, не создан ли уже следующий платёж
+        const existingNext = expenses.find(e => e.previous_id == pendingPayId);
+        if (existingNext) { await customAlert('Следующий платёж уже существует'); return; }
+
+        // Создаём следующий платёж, даже если дата была пустой
         let nextId = null;
         if (exp.periodicity !== 'one_time') {
-          const nextDate = getNextPaymentDate(exp.next_payment_date, exp.periodicity, exp.custom_days);
+          const baseDate = exp.next_payment_date || new Date().toISOString().split('T')[0];
+          const nextDate = getNextPaymentDate(baseDate, exp.periodicity, exp.custom_days);
           const newExp = { ...exp, id: undefined, paid: false, next_payment_date: nextDate, previous_id: null, receipt_url: null, payment_method: '' };
           const { data: inserted } = await _supabase.from('expenses').insert([newExp]).select();
           if (inserted && inserted.length > 0) nextId = inserted[0].id;
@@ -642,7 +646,7 @@
 
       function getNextPaymentDate(currentDateStr, periodicity, customDays) {
         if (!currentDateStr) return null;
-        const current = new Date(currentDateStr);
+        const current = new Date(currentDateStr + 'T12:00:00'); // добавляем время, чтобы избежать проблем с часовым поясом
         const next = new Date(current);
         switch (periodicity) {
           case 'daily': next.setDate(current.getDate() + 1); break;
