@@ -121,15 +121,6 @@
       cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
     }
     .filter-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
-    .type-filter {
-      padding: 0.35rem 2rem 0.35rem 0.9rem; border-radius: 16px;
-      border: 1px solid var(--border); background: white;
-      font-size: 0.8rem; font-weight: 500; cursor: pointer;
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 0.6rem center;
-      width: auto; min-width: 160px;
-    }
 
     .summary {
       background: white;
@@ -150,13 +141,6 @@
     }
     .summary-label { font-size: 0.8rem; color: var(--text-light); font-weight: 500; }
     .summary-value { font-size: 1.2rem; font-weight: 700; color: var(--violet); }
-    .summary-dates {
-      font-size: 0.8rem;
-      color: var(--text);
-      max-height: 100px;
-      overflow-y: auto;
-      flex: 1;
-    }
 
     .cards-grid {
       display: grid;
@@ -318,14 +302,9 @@
     </div>
 
     <div class="filters">
-      <button class="filter-btn active" data-filter="all">Все</button>
-      <button class="filter-btn" data-filter="unpaid">Неоплаченные</button>
+      <button class="filter-btn active" data-filter="unpaid">Предстоящие</button>
       <button class="filter-btn" data-filter="paid">Оплаченные</button>
-      <select id="typeFilter" class="type-filter">
-        <option value="all">Все типы</option>
-        <option value="monthly">Ежемесячные</option>
-        <option value="variable">Переменные</option>
-      </select>
+      <button class="filter-btn" data-filter="all">Все</button>
     </div>
 
     <div class="summary" id="summaryContainer"></div>
@@ -409,11 +388,9 @@
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, expenses = [];
-      let currentFilter = 'all';
-      let currentTypeFilter = 'all';
+      let currentFilter = 'unpaid';
       let returnExpenseId = null;
 
-      // Кастомные уведомления
       function customAlert(msg) {
         return new Promise(resolve => {
           document.getElementById('alertMessage').textContent = msg;
@@ -440,7 +417,6 @@
         });
       }
 
-      // Анимация монеток
       function showCoins() {
         for (let i = 0; i < 15; i++) {
           setTimeout(() => {
@@ -477,54 +453,49 @@
         let filtered = expenses;
         if (currentFilter === 'paid') filtered = filtered.filter(e => e.paid);
         else if (currentFilter === 'unpaid') filtered = filtered.filter(e => !e.paid);
-        if (currentTypeFilter !== 'all') filtered = filtered.filter(e => e.type === currentTypeFilter);
         return filtered;
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const now = new Date();
+        const target = new Date(dateStr);
+        const diffTime = target - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays === 0) return 'Платеж сегодня';
+        if (diffDays === 1) return 'Платеж завтра';
+        if (diffDays > 1 && diffDays <= 7) return `Платеж через ${diffDays} дней`;
+        if (diffDays < 0) return `Просрочен на ${Math.abs(diffDays)} дней`;
+        return target.toLocaleDateString('ru');
       }
 
       function renderSummary() {
         const filtered = getFiltered();
         const total = filtered.reduce((sum, e) => sum + parseFloat(e.amount), 0);
-        const today = new Date();
-        const upcoming = filtered.filter(e => !e.paid && e.next_payment_date && new Date(e.next_payment_date) <= new Date(today.getTime() + 3*86400000) && new Date(e.next_payment_date) >= today);
-        const grouped = {};
-        filtered.filter(e => !e.paid && e.next_payment_date).forEach(e => {
-          const d = e.next_payment_date;
-          if (!grouped[d]) grouped[d] = [];
-          grouped[d].push(e.name + ' (' + e.amount.toLocaleString() + ' ₽)');
-        });
-        const sortedDates = Object.keys(grouped).sort();
-        const datesHtml = sortedDates.map(d => `<div><b>${new Date(d).toLocaleDateString('ru')}</b>: ${grouped[d].join(', ')}</div>`).join('');
         document.getElementById('summaryContainer').innerHTML = `
           <div class="summary-item">
-            <div class="summary-label">Общая сумма</div>
+            <div class="summary-label">Общая сумма предстоящих платежей</div>
             <div class="summary-value">${total.toLocaleString()} ₽</div>
           </div>
-          <div class="summary-item" style="flex:1;">
-            <div class="summary-label">Предстоящие платежи</div>
-            <div class="summary-dates">${datesHtml || '—'}</div>
-          </div>
-          ${upcoming.length > 0 ? `<div class="summary-item"><div class="summary-label" style="color:var(--rose);">🔔 Оплатить в ближайшие 3 дня</div><div class="summary-value" style="color:var(--rose);">${upcoming.length} шт.</div></div>` : ''}
         `;
       }
 
       function renderCards() {
-        const today = new Date();
         const filtered = getFiltered();
         const container = document.getElementById('expensesContainer');
         container.innerHTML = filtered.map(e => {
           const periodLabel = e.periodicity === 'custom' ? `Каждые ${e.custom_days} дн.` : 
             { one_time:'Разово', daily:'Ежедневно', weekly:'Еженедельно', biweekly:'Раз в 2 нед.', monthly:'Ежемесячно', quarterly:'Ежеквартально', yearly:'Ежегодно' }[e.periodicity];
-          const isOverdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < today;
+          const isOverdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < new Date();
           const cardClass = e.paid ? 'expense-card paid' : (isOverdue ? 'expense-card overdue' : 'expense-card');
           return `
           <div class="${cardClass}" data-id="${e.id}">
             <div class="card-title">${e.name}</div>
             <div class="card-amount">${e.amount.toLocaleString()} ₽</div>
+            <div class="card-date">${formatDate(e.next_payment_date)}</div>
             <div class="card-meta">
-              <span>${e.type === 'variable' ? 'Переменный' : 'Ежемесячный'}</span>
-              <span>${periodLabel}</span>
+              <span>${e.type === 'variable' ? 'Переменный' : 'Ежемесячный'} | ${periodLabel}</span>
             </div>
-            <div class="card-date">📅 ${e.next_payment_date || '—'}</div>
             ${e.payment_link ? `<a href="${e.payment_link}" target="_blank" class="btn btn-pay" style="margin-bottom:0.5rem;">Оплатить</a>` : ''}
             ${e.details ? `<div style="font-size:0.8rem; color:var(--text-light);">${e.details}</div>` : ''}
             ${e.note ? `<div style="font-size:0.8rem; font-style:italic; color:var(--text-light);">${e.note}</div>` : ''}
@@ -538,14 +509,11 @@
           </div>`;
         }).join('');
 
-        // Оплата (галочка)
         container.querySelectorAll('.check-btn').forEach(btn => {
           btn.addEventListener('click', async function() {
             const id = this.dataset.id;
             const exp = expenses.find(e => e.id == id);
             if (!exp) return;
-
-            // Создаём следующий платёж, если регулярный
             let nextId = null;
             if (exp.periodicity !== 'one_time') {
               const nextDate = getNextPaymentDate(exp.next_payment_date, exp.periodicity, exp.custom_days);
@@ -553,22 +521,18 @@
               const { data: inserted } = await _supabase.from('expenses').insert([newExp]).select();
               if (inserted) nextId = inserted[0].id;
             }
-
-            // Отмечаем текущий оплаченным, связываем со следующим
             const { error } = await _supabase.from('expenses').update({ 
               paid: true, 
               paid_at: new Date().toISOString(),
               previous_id: nextId 
             }).eq('id', id);
             if (error) { await customAlert('Ошибка: ' + error.message); return; }
-
             showCoins();
             await loadExpenses();
             renderAll();
           });
         });
 
-        // Возврат из оплаченных
         container.querySelectorAll('.return-btn').forEach(btn => {
           btn.addEventListener('click', async function() {
             returnExpenseId = this.dataset.id;
@@ -589,26 +553,20 @@
         }));
       }
 
-      // Обработчик возврата
       document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
         const comment = document.getElementById('returnComment').value.trim();
         if (!comment) { await customAlert('Введите причину возврата'); return; }
         const exp = expenses.find(e => e.id == returnExpenseId);
         if (!exp) return;
-
-        // Удаляем следующий платёж, если он был создан
         if (exp.previous_id) {
           await _supabase.from('expenses').delete().eq('id', exp.previous_id);
         }
-
-        // Возвращаем текущий в неоплаченные
         await _supabase.from('expenses').update({
           paid: false,
           paid_at: null,
           previous_id: null,
           return_comment: comment
         }).eq('id', returnExpenseId);
-
         document.getElementById('returnModal').style.display = 'none';
         await loadExpenses();
         renderAll();
@@ -757,11 +715,6 @@
           currentFilter = this.dataset.filter;
           renderAll();
         });
-      });
-
-      document.getElementById('typeFilter').addEventListener('change', function() {
-        currentTypeFilter = this.value;
-        renderAll();
       });
 
       init();
