@@ -104,6 +104,13 @@
       box-shadow: none;
     }
     .btn-outline:hover { background: var(--violet); color: white; }
+    .btn-pay {
+      background: linear-gradient(135deg, var(--gold), #ffeaa7);
+      color: #7d5a00;
+      border: none;
+      box-shadow: 0 4px 12px rgba(249,202,36,0.3);
+    }
+    .btn-pay:hover { background: var(--gold); color: #5a3e00; }
 
     .filters {
       display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
@@ -114,9 +121,6 @@
       cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
     }
     .filter-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
-    .type-filter {
-      margin-left: 1rem;
-    }
 
     .summary {
       background: white;
@@ -145,27 +149,37 @@
       flex: 1;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
       margin-top: 1rem;
+    }
+    .expense-card {
       background: white;
-      border-radius: 16px;
+      border-radius: 20px;
+      padding: 1.2rem;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+      border: 2px solid transparent;
+      transition: all 0.3s;
+      position: relative;
       overflow: hidden;
     }
-    th, td {
-      padding: 0.7rem 0.5rem;
-      text-align: left;
-      border-bottom: 1px solid #f0f0f0;
-      font-size: 0.85rem;
+    .expense-card:hover {
+      border-color: var(--violet);
+      box-shadow: 0 12px 25px rgba(124,92,231,0.1);
+      transform: translateY(-2px);
     }
-    th { background: #fafafa; font-weight: 600; color: var(--text-light); }
-    td .btn { padding: 0.25rem 0.7rem; font-size: 0.75rem; }
-    .overdue {
+    .expense-card.overdue {
       animation: shake 0.5s infinite, glowRed 1s infinite alternate;
-      background: rgba(231,76,60,0.1);
+      border-color: var(--critical);
     }
-    .overdue td:first-child { border-left: 3px solid var(--critical); }
+    .expense-card.paid {
+      opacity: 0.7;
+      background: rgba(85,239,196,0.05);
+    }
+    .expense-card.paid .card-title { text-decoration: line-through; }
+
     @keyframes shake {
       0% { transform: translateX(0); }
       25% { transform: translateX(-2px); }
@@ -177,20 +191,54 @@
       0% { box-shadow: 0 0 3px rgba(231,76,60,0.3); }
       100% { box-shadow: 0 0 10px rgba(231,76,60,0.6); }
     }
-    .paid {
-      opacity: 0.7;
-      background: rgba(85,239,196,0.1);
+
+    .card-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
     }
-    .paid td { text-decoration: line-through; }
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+    .card-amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--violet);
+    }
+    .card-date {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+    }
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
     .check-btn {
       cursor: pointer;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       color: var(--violet);
       transition: 0.2s;
       background: none;
       border: none;
+      padding: 0;
+      line-height: 1;
     }
     .check-btn:hover { color: var(--teal); }
+    .receipt-link {
+      font-size: 0.75rem;
+      color: var(--teal);
+      text-decoration: underline;
+      cursor: pointer;
+    }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.35);
@@ -220,10 +268,27 @@
     }
     .checkbox-row input[type="checkbox"] { width: auto; accent-color: var(--violet); }
 
+    /* Монетки */
+    .coin {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle at 30% 30%, #f9ca24, #e67e22);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(249,202,36,0.6);
+      animation: coinDrop 0.8s ease-out forwards;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    @keyframes coinDrop {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(80px) rotate(360deg); opacity: 0; }
+    }
+
     @media (max-width: 600px) {
       body { padding: 0.5rem; }
       .container { padding: 1rem; }
-      table { font-size: 0.75rem; }
+      .cards-grid { grid-template-columns: 1fr; }
       .summary { flex-direction: column; align-items: flex-start; }
     }
   </style>
@@ -249,7 +314,7 @@
       <button class="filter-btn active" data-filter="all">Все</button>
       <button class="filter-btn" data-filter="unpaid">Неоплаченные</button>
       <button class="filter-btn" data-filter="paid">Оплаченные</button>
-      <select id="typeFilter" class="type-filter" style="padding:0.35rem 0.9rem; border-radius:16px; border:1px solid var(--border); font-size:0.8rem;">
+      <select id="typeFilter" style="padding:0.35rem 0.9rem; border-radius:16px; border:1px solid var(--border); font-size:0.8rem; margin-left:0.5rem;">
         <option value="all">Все типы</option>
         <option value="monthly">Ежемесячные</option>
         <option value="variable">Переменные</option>
@@ -258,23 +323,7 @@
 
     <div class="summary" id="summaryContainer"></div>
 
-    <table>
-      <thead>
-        <tr>
-          <th style="width:30px;"></th>
-          <th>Платёж</th>
-          <th>Сумма</th>
-          <th>Тип</th>
-          <th>Периодичность</th>
-          <th>След. платёж</th>
-          <th>Ссылка</th>
-          <th>Реквизиты</th>
-          <th>Примечание</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="expensesBody"></tbody>
-    </table>
+    <div class="cards-grid" id="expensesContainer"></div>
   </div>
 
   <!-- Модалка добавления/редактирования -->
@@ -324,6 +373,20 @@
       let currentUserEmail = null, expenses = [];
       let currentFilter = 'all';
       let currentTypeFilter = 'all';
+
+      // Анимация монеток
+      function showCoins() {
+        for (let i = 0; i < 15; i++) {
+          setTimeout(() => {
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            coin.style.left = Math.random() * 100 + '%';
+            coin.style.top = Math.random() * 40 + '%';
+            document.body.appendChild(coin);
+            setTimeout(() => coin.remove(), 800);
+          }, i * 50);
+        }
+      }
 
       function showConfetti() {
         const balloon = document.createElement('div');
@@ -380,68 +443,96 @@
         const grouped = {};
         filtered.filter(e => !e.paid && e.next_payment_date).forEach(e => {
           const d = e.next_payment_date;
-          if (!grouped[d]) grouped[d] = 0;
-          grouped[d] += parseFloat(e.amount);
+          if (!grouped[d]) grouped[d] = [];
+          grouped[d].push(e.name + ' (' + e.amount.toLocaleString() + ' ₽)');
         });
         const sortedDates = Object.keys(grouped).sort();
-        const datesHtml = sortedDates.map(d => `<div>${new Date(d).toLocaleDateString('ru')}: <b>${grouped[d].toLocaleString()} ₽</b></div>`).join('');
+        const datesHtml = sortedDates.map(d => `<div><b>${new Date(d).toLocaleDateString('ru')}</b>: ${grouped[d].join(', ')}</div>`).join('');
         document.getElementById('summaryContainer').innerHTML = `
           <div class="summary-item">
             <div class="summary-label">Общая сумма</div>
             <div class="summary-value">${total.toLocaleString()} ₽</div>
           </div>
           <div class="summary-item" style="flex:1;">
-            <div class="summary-label">Предстоящие платежи по датам</div>
+            <div class="summary-label">Предстоящие платежи</div>
             <div class="summary-dates">${datesHtml || '—'}</div>
           </div>
           ${upcoming.length > 0 ? `<div class="summary-item"><div class="summary-label" style="color:var(--rose);">🔔 Оплатить в ближайшие 3 дня</div><div class="summary-value" style="color:var(--rose);">${upcoming.length} шт.</div></div>` : ''}
         `;
       }
 
-      function renderTable() {
+      function renderCards() {
         const today = new Date();
         const filtered = getFiltered();
-        const tbody = document.getElementById('expensesBody');
-        tbody.innerHTML = filtered.map(e => {
+        const container = document.getElementById('expensesContainer');
+        container.innerHTML = filtered.map(e => {
           const periodLabel = e.periodicity === 'custom' ? `Каждые ${e.custom_days} дн.` : 
             { one_time:'Разово', daily:'Ежедневно', weekly:'Еженедельно', biweekly:'Раз в 2 нед.', monthly:'Ежемесячно', quarterly:'Ежеквартально', yearly:'Ежегодно' }[e.periodicity];
           const isOverdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < today;
-          const rowClass = e.paid ? 'paid' : (isOverdue ? 'overdue' : '');
-          return `<tr class="${rowClass}" data-id="${e.id}">
-            <td><button class="check-btn" data-id="${e.id}" data-paid="${e.paid}">${e.paid ? '✅' : '⬜'}</button></td>
-            <td>${e.name}</td>
-            <td>${e.amount.toLocaleString()} ₽</td>
-            <td>${e.type === 'variable' ? 'Переменный' : 'Ежемесячный'}</td>
-            <td>${periodLabel}</td>
-            <td>${e.next_payment_date || '—'}</td>
-            <td>${e.payment_link ? `<a href="${e.payment_link}" target="_blank">Оплатить</a>` : '—'}</td>
-            <td>${e.details || '—'}</td>
-            <td>${e.note || '—'}</td>
-            <td>
+          const cardClass = e.paid ? 'expense-card paid' : (isOverdue ? 'expense-card overdue' : 'expense-card');
+          return `
+          <div class="${cardClass}" data-id="${e.id}">
+            <div class="card-title">${e.name}</div>
+            <div class="card-amount">${e.amount.toLocaleString()} ₽</div>
+            <div class="card-meta">
+              <span>${e.type === 'variable' ? 'Переменный' : 'Ежемесячный'}</span>
+              <span>${periodLabel}</span>
+            </div>
+            <div class="card-date">📅 ${e.next_payment_date || '—'}</div>
+            ${e.payment_link ? `<a href="${e.payment_link}" target="_blank" class="btn btn-pay" style="margin-bottom:0.5rem;">Оплатить</a>` : ''}
+            ${e.details ? `<div style="font-size:0.8rem; color:var(--text-light);">${e.details}</div>` : ''}
+            ${e.note ? `<div style="font-size:0.8rem; font-style:italic; color:var(--text-light);">${e.note}</div>` : ''}
+            ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" class="receipt-link">Чек</a>` : ''}
+            <div class="card-actions">
+              <button class="check-btn" data-id="${e.id}" data-paid="${e.paid}">${e.paid ? '✅' : '⬜'}</button>
               <button class="btn edit-btn" data-id="${e.id}">Изм.</button>
               <button class="btn delete-btn" data-id="${e.id}" style="background:var(--rose); color:white;">Уд.</button>
-            </td>
-          </tr>`;
+            </div>
+          </div>`;
         }).join('');
 
-        tbody.querySelectorAll('.check-btn').forEach(btn => {
+        container.querySelectorAll('.check-btn').forEach(btn => {
           btn.addEventListener('click', async function() {
             const id = this.dataset.id;
             const currentPaid = this.dataset.paid === 'true';
             const newPaid = !currentPaid;
+            const exp = expenses.find(e => e.id == id);
+            if (!exp) return;
+
+            // Если оплачиваем регулярный платёж — создаём следующий
+            if (newPaid && exp.periodicity !== 'one_time') {
+              const nextDate = getNextPaymentDate(exp.next_payment_date, exp.periodicity, exp.custom_days);
+              const newExpense = {
+                name: exp.name,
+                amount: exp.amount,
+                type: exp.type,
+                periodicity: exp.periodicity,
+                custom_days: exp.custom_days,
+                next_payment_date: nextDate,
+                payment_link: exp.payment_link,
+                details: exp.details,
+                note: exp.note,
+                notify_email: exp.notify_email,
+                paid: false,
+                receipt_url: null
+              };
+              await _supabase.from('expenses').insert([newExpense]);
+            }
+
+            // Отмечаем текущий как оплаченный
             const { error } = await _supabase.from('expenses').update({
               paid: newPaid,
               paid_at: newPaid ? new Date().toISOString() : null
             }).eq('id', id);
             if (error) { alert('Ошибка: ' + error.message); return; }
-            if (newPaid) showConfetti();
+            if (newPaid) { showCoins(); showConfetti(); }
             await loadExpenses();
             renderAll();
           });
         });
 
-        tbody.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
-        tbody.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async () => {
+        container.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
+        container.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async () => {
           if (confirm('Удалить расход?')) {
             await _supabase.from('expenses').delete().eq('id', btn.dataset.id);
             await loadExpenses();
@@ -450,9 +541,26 @@
         }));
       }
 
+      function getNextPaymentDate(currentDateStr, periodicity, customDays) {
+        if (!currentDateStr) return null;
+        const current = new Date(currentDateStr);
+        const next = new Date(current);
+        switch (periodicity) {
+          case 'daily': next.setDate(current.getDate() + 1); break;
+          case 'weekly': next.setDate(current.getDate() + 7); break;
+          case 'biweekly': next.setDate(current.getDate() + 14); break;
+          case 'monthly': next.setMonth(current.getMonth() + 1); break;
+          case 'quarterly': next.setMonth(current.getMonth() + 3); break;
+          case 'yearly': next.setFullYear(current.getFullYear() + 1); break;
+          case 'custom': next.setDate(current.getDate() + (customDays || 30)); break;
+          default: next.setMonth(current.getMonth() + 1);
+        }
+        return next.toISOString().split('T')[0];
+      }
+
       function renderAll() {
         renderSummary();
-        renderTable();
+        renderCards();
       }
 
       function openEditModal(id) {
@@ -469,7 +577,7 @@
         document.getElementById('paymentLink').value = exp.payment_link || '';
         document.getElementById('details').value = exp.details || '';
         document.getElementById('note').value = exp.note || '';
-        document.getElementById('notifyEmail').checked = exp.notify_email !== false; // по умолчанию true
+        document.getElementById('notifyEmail').checked = exp.notify_email !== false;
         document.getElementById('notifyRow').style.display = exp.type === 'variable' ? 'block' : 'none';
         document.getElementById('deleteBtn').style.display = 'inline-block';
         document.getElementById('expenseModal').dataset.editId = id;
@@ -496,9 +604,6 @@
 
       document.getElementById('type').addEventListener('change', function() {
         document.getElementById('notifyRow').style.display = this.value === 'variable' ? 'block' : 'none';
-        if (this.value === 'monthly') {
-          document.getElementById('notifyEmail').checked = true; // ежемесячные всегда напоминать
-        }
       });
 
       document.getElementById('periodicity').addEventListener('change', function() {
@@ -520,7 +625,7 @@
         const paymentLink = document.getElementById('paymentLink').value.trim();
         const details = document.getElementById('details').value.trim();
         const note = document.getElementById('note').value.trim();
-        const notifyEmail = type === 'variable' ? document.getElementById('notifyEmail').checked : true; // ежемесячные всегда true
+        const notifyEmail = type === 'variable' ? document.getElementById('notifyEmail').checked : true;
         const editId = document.getElementById('expenseModal').dataset.editId;
 
         const data = { name, amount, type, periodicity, custom_days: customDays, next_payment_date: nextPayment, payment_link: paymentLink, details, note, notify_email: notifyEmail };
@@ -564,25 +669,4 @@
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Бюджет');
-        XLSX.writeFile(wb, 'бюджет.xlsx');
-      });
-
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-          this.classList.add('active');
-          currentFilter = this.dataset.filter;
-          renderAll();
-        });
-      });
-
-      document.getElementById('typeFilter').addEventListener('change', function() {
-        currentTypeFilter = this.value;
-        renderAll();
-      });
-
-      init();
-    })();
-  </script>
-</body>
-</html>
+        XLSX.writeFile(wb, 'б
