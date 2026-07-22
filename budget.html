@@ -113,7 +113,7 @@
     .btn-pay:hover { background: var(--gold); color: #5a3e00; }
 
     .filters {
-      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+      display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
     }
     .filter-btn {
       padding: 0.35rem 0.9rem; border-radius: 16px;
@@ -121,6 +121,15 @@
       cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
     }
     .filter-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
+    .type-filter {
+      padding: 0.35rem 2rem 0.35rem 0.9rem; border-radius: 16px;
+      border: 1px solid var(--border); background: white;
+      font-size: 0.8rem; font-weight: 500; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23636e72' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 0.6rem center;
+      width: auto; min-width: 160px;
+    }
 
     .summary {
       background: white;
@@ -271,14 +280,12 @@
     /* Монетки */
     .coin {
       position: fixed;
-      width: 20px;
-      height: 20px;
+      width: 20px; height: 20px;
       background: radial-gradient(circle at 30% 30%, #f9ca24, #e67e22);
       border-radius: 50%;
       box-shadow: 0 0 6px rgba(249,202,36,0.6);
       animation: coinDrop 0.8s ease-out forwards;
-      z-index: 9999;
-      pointer-events: none;
+      z-index: 9999; pointer-events: none;
     }
     @keyframes coinDrop {
       0% { transform: translateY(0) rotate(0deg); opacity: 1; }
@@ -314,7 +321,7 @@
       <button class="filter-btn active" data-filter="all">Все</button>
       <button class="filter-btn" data-filter="unpaid">Неоплаченные</button>
       <button class="filter-btn" data-filter="paid">Оплаченные</button>
-      <select id="typeFilter" style="padding:0.35rem 0.9rem; border-radius:16px; border:1px solid var(--border); font-size:0.8rem; margin-left:0.5rem;">
+      <select id="typeFilter" class="type-filter">
         <option value="all">Все типы</option>
         <option value="monthly">Ежемесячные</option>
         <option value="variable">Переменные</option>
@@ -365,6 +372,37 @@
     </div>
   </div>
 
+  <!-- Кастомный алерт -->
+  <div class="modal-overlay" id="alertModal" style="display:none;">
+    <div class="modal" style="max-width:350px; text-align:center;">
+      <p id="alertMessage"></p>
+      <button class="btn" id="alertOkBtn">ОК</button>
+    </div>
+  </div>
+
+  <!-- Кастомный confirm -->
+  <div class="modal-overlay" id="confirmModal" style="display:none;">
+    <div class="modal" style="max-width:350px; text-align:center;">
+      <p id="confirmMessage"></p>
+      <div style="display:flex; gap:1rem; justify-content:center; margin-top:1rem;">
+        <button class="btn" id="confirmYesBtn">Да</button>
+        <button class="btn btn-outline" id="confirmNoBtn">Нет</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка возврата -->
+  <div class="modal-overlay" id="returnModal" style="display:none;">
+    <div class="modal">
+      <h2>Возврат в неоплаченные</h2>
+      <textarea id="returnComment" rows="2" placeholder="Причина возврата"></textarea>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="confirmReturnBtn">Вернуть</button>
+        <button class="btn btn-outline" id="cancelReturnBtn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (function() {
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
@@ -373,6 +411,34 @@
       let currentUserEmail = null, expenses = [];
       let currentFilter = 'all';
       let currentTypeFilter = 'all';
+      let returnExpenseId = null;
+
+      // Кастомные уведомления
+      function customAlert(msg) {
+        return new Promise(resolve => {
+          document.getElementById('alertMessage').textContent = msg;
+          document.getElementById('alertModal').style.display = 'flex';
+          document.getElementById('alertOkBtn').onclick = () => {
+            document.getElementById('alertModal').style.display = 'none';
+            resolve();
+          };
+        });
+      }
+
+      function customConfirm(msg) {
+        return new Promise(resolve => {
+          document.getElementById('confirmMessage').textContent = msg;
+          document.getElementById('confirmModal').style.display = 'flex';
+          document.getElementById('confirmYesBtn').onclick = () => {
+            document.getElementById('confirmModal').style.display = 'none';
+            resolve(true);
+          };
+          document.getElementById('confirmNoBtn').onclick = () => {
+            document.getElementById('confirmModal').style.display = 'none';
+            resolve(false);
+          };
+        });
+      }
 
       // Анимация монеток
       function showCoins() {
@@ -388,32 +454,12 @@
         }
       }
 
-      function showConfetti() {
-        const balloon = document.createElement('div');
-        balloon.className = 'balloon';
-        document.body.appendChild(balloon);
-        balloon.addEventListener('animationend', () => {
-          balloon.remove();
-          for (let i = 0; i < 50; i++) {
-            const p = document.createElement('div');
-            p.className = 'confetti-piece';
-            p.style.background = ['#7c5ce7','#0fb9b1','#f9ca24','#ff8c94'][i%4];
-            p.style.left = '50%';
-            p.style.top = '30%';
-            p.style.setProperty('--x', (Math.random()*280-140)+'px');
-            p.style.setProperty('--y', (Math.random()*-180-40)+'px');
-            document.body.appendChild(p);
-            setTimeout(() => p.remove(), 900);
-          }
-        });
-      }
-
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
         if (currentUserEmail !== 'arturgalkin.ru@mail.ru') {
-          alert('Доступ запрещён');
+          await customAlert('Доступ запрещён');
           window.location.href = 'index.html';
           return;
         }
@@ -484,62 +530,93 @@
             ${e.note ? `<div style="font-size:0.8rem; font-style:italic; color:var(--text-light);">${e.note}</div>` : ''}
             ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" class="receipt-link">Чек</a>` : ''}
             <div class="card-actions">
-              <button class="check-btn" data-id="${e.id}" data-paid="${e.paid}">${e.paid ? '✅' : '⬜'}</button>
+              ${!e.paid ? `<button class="check-btn" data-id="${e.id}">⬜</button>` : ''}
               <button class="btn edit-btn" data-id="${e.id}">Изм.</button>
+              ${e.paid ? `<button class="btn return-btn" data-id="${e.id}" style="background:var(--gold); color:#5a3e00;">Вернуть</button>` : ''}
               <button class="btn delete-btn" data-id="${e.id}" style="background:var(--rose); color:white;">Уд.</button>
             </div>
           </div>`;
         }).join('');
 
+        // Оплата (галочка)
         container.querySelectorAll('.check-btn').forEach(btn => {
           btn.addEventListener('click', async function() {
             const id = this.dataset.id;
-            const currentPaid = this.dataset.paid === 'true';
-            const newPaid = !currentPaid;
             const exp = expenses.find(e => e.id == id);
             if (!exp) return;
 
-            // Если оплачиваем регулярный платёж — создаём следующий
-            if (newPaid && exp.periodicity !== 'one_time') {
+            // Создаём следующий платёж, если регулярный
+            let nextId = null;
+            if (exp.periodicity !== 'one_time') {
               const nextDate = getNextPaymentDate(exp.next_payment_date, exp.periodicity, exp.custom_days);
-              const newExpense = {
-                name: exp.name,
-                amount: exp.amount,
-                type: exp.type,
-                periodicity: exp.periodicity,
-                custom_days: exp.custom_days,
-                next_payment_date: nextDate,
-                payment_link: exp.payment_link,
-                details: exp.details,
-                note: exp.note,
-                notify_email: exp.notify_email,
-                paid: false,
-                receipt_url: null
-              };
-              await _supabase.from('expenses').insert([newExpense]);
+              const newExp = { ...exp, id: undefined, paid: false, next_payment_date: nextDate, previous_id: null, receipt_url: null };
+              const { data: inserted } = await _supabase.from('expenses').insert([newExp]).select();
+              if (inserted) nextId = inserted[0].id;
             }
 
-            // Отмечаем текущий как оплаченный
-            const { error } = await _supabase.from('expenses').update({
-              paid: newPaid,
-              paid_at: newPaid ? new Date().toISOString() : null
+            // Отмечаем текущий оплаченным, связываем со следующим
+            const { error } = await _supabase.from('expenses').update({ 
+              paid: true, 
+              paid_at: new Date().toISOString(),
+              previous_id: nextId 
             }).eq('id', id);
-            if (error) { alert('Ошибка: ' + error.message); return; }
-            if (newPaid) { showCoins(); showConfetti(); }
+            if (error) { await customAlert('Ошибка: ' + error.message); return; }
+
+            showCoins();
             await loadExpenses();
             renderAll();
           });
         });
 
+        // Возврат из оплаченных
+        container.querySelectorAll('.return-btn').forEach(btn => {
+          btn.addEventListener('click', async function() {
+            returnExpenseId = this.dataset.id;
+            document.getElementById('returnComment').value = '';
+            document.getElementById('returnModal').style.display = 'flex';
+          });
+        });
+
         container.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => openEditModal(btn.dataset.id)));
         container.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', async () => {
-          if (confirm('Удалить расход?')) {
-            await _supabase.from('expenses').delete().eq('id', btn.dataset.id);
+          const id = btn.dataset.id;
+          const confirmed = await customConfirm('Удалить расход?');
+          if (confirmed) {
+            await _supabase.from('expenses').delete().eq('id', id);
             await loadExpenses();
             renderAll();
           }
         }));
       }
+
+      // Обработчик возврата
+      document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+        const comment = document.getElementById('returnComment').value.trim();
+        if (!comment) { await customAlert('Введите причину возврата'); return; }
+        const exp = expenses.find(e => e.id == returnExpenseId);
+        if (!exp) return;
+
+        // Удаляем следующий платёж, если он был создан
+        if (exp.previous_id) {
+          await _supabase.from('expenses').delete().eq('id', exp.previous_id);
+        }
+
+        // Возвращаем текущий в неоплаченные
+        await _supabase.from('expenses').update({
+          paid: false,
+          paid_at: null,
+          previous_id: null,
+          return_comment: comment
+        }).eq('id', returnExpenseId);
+
+        document.getElementById('returnModal').style.display = 'none';
+        await loadExpenses();
+        renderAll();
+      });
+
+      document.getElementById('cancelReturnBtn').addEventListener('click', () => {
+        document.getElementById('returnModal').style.display = 'none';
+      });
 
       function getNextPaymentDate(currentDateStr, periodicity, customDays) {
         if (!currentDateStr) return null;
@@ -617,7 +694,7 @@
       document.getElementById('saveBtn').addEventListener('click', async () => {
         const name = document.getElementById('name').value.trim();
         const amount = parseFloat(document.getElementById('amount').value);
-        if (!name || isNaN(amount)) { alert('Заполните название и сумму'); return; }
+        if (!name || isNaN(amount)) { await customAlert('Заполните название и сумму'); return; }
         const type = document.getElementById('type').value;
         const periodicity = document.getElementById('periodicity').value;
         const customDays = periodicity === 'custom' ? parseInt(document.getElementById('customDays').value) || null : null;
@@ -637,7 +714,7 @@
           const { error: insertError } = await _supabase.from('expenses').insert([data]);
           error = insertError;
         }
-        if (error) { alert('Ошибка: ' + error.message); return; }
+        if (error) { await customAlert('Ошибка: ' + error.message); return; }
         document.getElementById('expenseModal').style.display = 'none';
         await loadExpenses();
         renderAll();
@@ -646,7 +723,8 @@
       document.getElementById('deleteBtn').addEventListener('click', async () => {
         const editId = document.getElementById('expenseModal').dataset.editId;
         if (!editId) return;
-        if (confirm('Удалить расход?')) {
+        const confirmed = await customConfirm('Удалить расход?');
+        if (confirmed) {
           await _supabase.from('expenses').delete().eq('id', editId);
           document.getElementById('expenseModal').style.display = 'none';
           await loadExpenses();
