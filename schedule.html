@@ -168,37 +168,16 @@
       border: 1px solid var(--border);
       margin-top: 1rem;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 800px;
-    }
-    th, td {
-      text-align: center;
-      padding: 0.5rem 0.3rem;
-      font-size: 0.8rem;
-      border: 1px solid #f0f0f0;
-      height: 42px;
-    }
-    th {
-      background: #fafafa;
-      color: var(--text-light);
-      font-weight: 600;
-      position: sticky; top: 0; z-index: 3;
-    }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th, td { text-align: center; padding: 0.5rem 0.3rem; font-size: 0.8rem; border: 1px solid #f0f0f0; height: 42px; }
+    th { background: #fafafa; color: var(--text-light); font-weight: 600; position: sticky; top: 0; z-index: 3; }
     .employee-name {
-      text-align: left;
-      padding-left: 1rem;
-      font-weight: 600;
-      background: white;
-      position: sticky; left: 0; z-index: 2;
+      text-align: left; padding-left: 1rem; font-weight: 600;
+      background: white; position: sticky; left: 0; z-index: 2;
       min-width: 180px; cursor: pointer;
     }
     .employee-name:hover { color: var(--violet); }
-    .day-cell {
-      cursor: pointer;
-      transition: 0.2s;
-    }
+    .day-cell { cursor: pointer; transition: 0.2s; }
     .day-cell:hover { background: #f4f0ff; }
     .day-cell.working { background: #d1fae5; color: #065f46; font-weight: 600; }
     .day-cell.dayoff { background: #ffe0e0; color: #991b1b; }
@@ -214,7 +193,7 @@
     }
     .modal {
       background: white; border-radius: 24px; padding: 2rem;
-      max-width: 450px; width: 90%;
+      max-width: 500px; width: 90%;
       box-shadow: 0 20px 50px rgba(0,0,0,0.12);
       animation: slideUp 0.25s ease-out;
     }
@@ -231,6 +210,35 @@
       margin: 0.5rem 0;
     }
     .label-row input { width: 100px; margin-left: 0.5rem; }
+
+    /* Стили прогресс-бара */
+    .progress-container {
+      width: 100%;
+      background: #f0f0f0;
+      border-radius: 10px;
+      height: 18px;
+      margin: 0.8rem 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.3s;
+      background: linear-gradient(135deg, var(--teal), var(--violet));
+      width: 0%;
+    }
+    .stats-block {
+      background: rgba(124,92,231,0.05);
+      border-radius: 14px;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.3rem 0;
+      font-size: 0.9rem;
+    }
   </style>
 </head>
 <body>
@@ -321,7 +329,6 @@
       let selectedEmployeeIds = new Set();
       let currentRoleFilter = 'all';
 
-      // Инициализация
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
@@ -342,7 +349,6 @@
         employees = data || [];
         const emp = employees.find(e => e.email === currentUserEmail);
         currentEmployee = emp || null;
-        // По умолчанию выбраны все сотрудники
         if (selectedEmployeeIds.size === 0) {
           employees.forEach(e => selectedEmployeeIds.add(e.id));
         }
@@ -384,7 +390,6 @@
 
       function renderEmpDropdown() {
         const dd = document.getElementById('empDropdown');
-        // Очищаем всё кроме кнопок действий
         dd.querySelectorAll('.emp-dropdown-item').forEach(el => el.remove());
         employees.forEach(e => {
           const item = document.createElement('label');
@@ -413,7 +418,6 @@
         }
       }
 
-      // Норма дней для графиков
       function getNormDays(role, params) {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         if (role === 'Менеджер') {
@@ -427,6 +431,20 @@
           return params.norm_days || count;
         }
         return params.norm_days || 22;
+      }
+
+      // Выручка за выбранный период
+      function getPeriodSales(emp, period) {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        let total = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          if (period === 'first' && d > 15) continue;
+          if (period === 'second' && d < 16) continue;
+          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[`${emp.id}_${dateStr}`];
+          if (rec && rec.status === 'working') total += rec.daily_sales || 0;
+        }
+        return total;
       }
 
       function getSalary(emp) {
@@ -445,7 +463,6 @@
             }
           }
         }
-
         const params = salaryParams[emp.id] || {};
         const norm = getNormDays(emp.role, params);
         const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
@@ -548,7 +565,6 @@
         html += '</tbody></table>';
         container.innerHTML = html;
 
-        // Обработчики
         container.querySelectorAll('.day-cell').forEach(cell => {
           cell.addEventListener('click', () => openDayModal(cell.dataset.emp, cell.dataset.date));
         });
@@ -608,17 +624,39 @@
         if (rates[emp.role]) {
           html += `<div class="label-row"><span>Оклад:</span><strong>${rates[emp.role]} ₽</strong></div>`;
         }
-        // График
         html += `<select id="salaryGraph">
           <option value="2/2" ${emp.role === 'Администратор' ? 'selected' : ''}>2/2</option>
           <option value="3/3" ${emp.role === 'Менеджер' ? 'selected' : ''}>3/3</option>
           <option value="5/2">5/2 (стандарт)</option>
         </select>`;
-        // Норма дней (автоматически пересчитывается при изменении графика, но можно вручную)
         html += `<div class="label-row"><span>Норма дней:</span><input type="number" id="normDays" value="${params.norm_days || getNormDays(emp.role, params)}" style="width:80px;"></div>`;
+
+        // Статистика для менеджера и управляющего
         if (emp.role === 'Менеджер' || emp.role === 'Управляющий') {
+          const totalSales = (emp.role === 'Менеджер') ? getPeriodSales(emp, currentPeriod) : employees.filter(e=>e.role==='Менеджер').reduce((sum,m)=>sum+getPeriodSales(m, currentPeriod),0);
+          const plan = params.plan_amount || 0;
+          let statsHtml = '';
+          if (plan > 0) {
+            const percent = Math.min(100, (totalSales / plan) * 100).toFixed(1);
+            const remaining = plan - totalSales > 0 ? plan - totalSales : 0;
+            statsHtml = `
+              <div class="stats-block">
+                <div class="stats-row"><span>Выручка за период:</span><strong>${totalSales.toLocaleString()} ₽</strong></div>
+                <div class="stats-row"><span>План:</span><strong>${plan.toLocaleString()} ₽</strong></div>
+                <div class="stats-row"><span>Осталось до плана:</span><strong>${remaining.toLocaleString()} ₽</strong></div>
+                <div class="progress-container">
+                  <div class="progress-fill" style="width:${percent}%;"></div>
+                </div>
+                <div class="stats-row"><span>Выполнение:</span><strong>${percent}%</strong></div>
+              </div>
+            `;
+          } else {
+            statsHtml = `<div class="stats-block"><div class="stats-row"><span>Выручка за период:</span><strong>${totalSales.toLocaleString()} ₽</strong></div></div>`;
+          }
+          html += statsHtml;
           html += `<div class="label-row"><span>План продаж:</span><input type="number" id="planAmount" value="${params.plan_amount || ''}" style="width:120px;"></div>`;
         }
+
         if (emp.role === 'Преподаватель') {
           html += `<div class="label-row"><span>Ставка инд.:</span><input type="number" id="indivRate" value="${params.indiv_rate || 400}" style="width:80px;"></div>`;
           html += `<div class="label-row"><span>Ставка групп.:</span><input type="number" id="groupRate" value="${params.group_rate || 500}" style="width:80px;"></div>`;
@@ -660,7 +698,6 @@
 
       document.getElementById('cancelSalaryBtn').addEventListener('click', () => document.getElementById('salaryModal').style.display = 'none');
 
-      // Навигация по месяцам
       document.getElementById('prevMonthBtn').addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 1) { currentMonth = 12; currentYear--; }
@@ -672,7 +709,6 @@
         loadWorklog().then(renderSchedule);
       });
 
-      // Периоды
       document.querySelectorAll('.period-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
@@ -682,7 +718,6 @@
         });
       });
 
-      // Ролевые фильтры
       document.getElementById('roleFilters').addEventListener('click', (e) => {
         if (e.target.classList.contains('role-btn')) {
           document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
@@ -691,7 +726,6 @@
         }
       });
 
-      // Выпадающий список сотрудников
       document.getElementById('empFilterBtn').addEventListener('click', () => {
         document.getElementById('empDropdown').classList.toggle('open');
       });
@@ -716,7 +750,6 @@
         updateSelectedEmployeesDisplay();
       });
 
-      // Экспорт
       document.getElementById('exportBtn').addEventListener('click', () => {
         const table = document.querySelector('table');
         if (!table) return;
