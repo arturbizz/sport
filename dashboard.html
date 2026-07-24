@@ -6,16 +6,14 @@
   <title>Дашборд — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg-main: #f8fafc;
+      --bg: #faf8f5;
       --surface: #ffffff;
       --text: #1e293b;
       --text-light: #64748b;
-      --border: #e2e8f0;
+      --border: #e6e0d8;
       --pastel-blue: #e0f2fe;
       --pastel-blue-text: #0369a1;
       --pastel-mint: #dcfce7;
@@ -24,14 +22,14 @@
       --pastel-lavender-text: #7e22ce;
       --pastel-peach: #ffedd5;
       --pastel-peach-text: #c2410c;
-      --shadow: 0 12px 40px rgba(148, 163, 184, 0.06);
-      --radius: 20px;
-      --gap: 28px;
+      --shadow: 0 16px 48px rgba(148, 163, 184, 0.05);
+      --radius: 24px;
+      --gap: 32px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg-main);
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -44,22 +42,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.8rem 0;
+      padding: 2rem 0;
       border-right: 1px solid var(--border);
-      gap: 1.8rem;
+      gap: 2rem;
       min-height: 100vh;
       position: sticky;
       top: 0;
       z-index: 10;
       box-shadow: var(--shadow);
     }
-    .sidebar svg {
-      width: 24px;
-      height: 24px;
-      color: var(--text-light);
-      cursor: pointer;
-      transition: 0.25s;
-    }
+    .sidebar svg { width: 24px; height: 24px; color: var(--text-light); cursor: pointer; transition: 0.25s; }
     .sidebar svg:hover { color: #7c5ce7; transform: scale(1.1); }
     .sidebar .logout { margin-top: auto; color: #ef4444; }
     .sidebar .logout:hover { color: #dc2626; }
@@ -72,160 +64,67 @@
       gap: var(--gap);
       max-height: 100vh;
     }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
+    .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
     h1 {
-      font-size: 1.8rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, #7c5ce7, #f9ca24, #0fb9b1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 1.9rem; font-weight: 800;
+      background: linear-gradient(135deg, #b197fc, #f9ca24, #63b3a5);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       letter-spacing: -0.02em;
     }
-    .tabs {
-      display: flex;
-      gap: 0.3rem;
-      background: var(--surface);
-      border-radius: 18px;
-      padding: 0.3rem;
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-    }
-    .tab {
-      padding: 0.55rem 1.3rem;
-      border-radius: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      color: var(--text-light);
-      transition: 0.25s;
-      font-size: 0.85rem;
-      white-space: nowrap;
-    }
-    .tab.active {
-      background: var(--pastel-lavender);
-      color: var(--pastel-lavender-text);
-    }
+    .tabs { display: flex; gap: 0.3rem; background: var(--surface); border-radius: 18px; padding: 0.3rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
+    .tab { padding: 0.6rem 1.4rem; border-radius: 14px; font-weight: 600; cursor: pointer; background: transparent; border: none; color: var(--text-light); transition: 0.25s; font-size: 0.85rem; white-space: nowrap; }
+    .tab.active { background: var(--pastel-lavender); color: var(--pastel-lavender-text); }
     .tab:hover:not(.active) { background: #f4f0ff; }
     .btn {
-      border: none;
-      padding: 0.5rem 1.2rem;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.85rem;
-      transition: 0.25s;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: var(--surface);
-      color: #7c5ce7;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      border: none; padding: 0.5rem 1.2rem; border-radius: 14px; font-weight: 600; cursor: pointer; font-size: 0.85rem;
+      transition: 0.25s; display: inline-flex; align-items: center; gap: 0.4rem;
+      background: var(--surface); color: #7c5ce7; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
-    .btn:hover {
-      background: #f4f0ff;
-      border-color: #7c5ce7;
-      box-shadow: 0 6px 18px rgba(124,92,231,0.12);
-    }
-    .btn-primary {
-      background: var(--pastel-lavender);
-      color: var(--pastel-lavender-text);
-      border: none;
-    }
+    .btn:hover { background: #f4f0ff; border-color: #7c5ce7; box-shadow: 0 8px 20px rgba(124,92,231,0.1); }
+    .btn-primary { background: var(--pastel-lavender); color: var(--pastel-lavender-text); border: none; }
     .btn-primary:hover { background: #e9d5ff; }
-    .filters {
-      display: flex;
-      gap: 0.7rem;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+    .filters { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.5rem; }
     .filters select, .filters input {
-      padding: 0.5rem 0.9rem;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      font-size: 0.85rem;
-      color: var(--text);
-      min-width: 130px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      padding: 0.5rem 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface);
+      font-size: 0.85rem; color: var(--text); min-width: 130px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: var(--gap);
-    }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--gap); }
     .kpi-card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 1.8rem;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(241,245,249,0.8);
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-      transition: 0.25s;
+      background: var(--surface); border-radius: var(--radius); padding: 2rem;
+      box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8);
+      display: flex; flex-direction: column; gap: 0.4rem; transition: 0.25s;
     }
-    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(124,92,231,0.08); }
-    .kpi-card .label { font-size: 0.82rem; color: var(--text-light); font-weight: 500; letter-spacing: 0.01em; }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 24px 48px rgba(124,92,231,0.06); }
+    .kpi-card .label { font-size: 0.82rem; color: var(--text-light); font-weight: 500; }
     .kpi-card .value { font-size: 2rem; font-weight: 700; }
-    .widget-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: var(--gap);
-    }
+    .widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--gap); }
     .widget-card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 1.8rem;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(241,245,249,0.8);
+      background: var(--surface); border-radius: var(--radius); padding: 2rem;
+      box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8);
     }
-    .widget-card h3 {
-      font-size: 0.82rem;
-      color: var(--text-light);
-      font-weight: 600;
-      margin-bottom: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
+    .widget-card h3 { font-size: 0.82rem; color: var(--text-light); font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
     .widget-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
-    .widget-list li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.35rem 0; border-bottom: 1px solid #f9fafb; }
+    .widget-list li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #f5f0eb; }
     .widget-list li span:last-child { font-weight: 600; color: var(--text); }
     .table-card {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 1.8rem;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(241,245,249,0.8);
-      overflow-x: auto;
-      margin-top: 0.5rem;
+      background: var(--surface); border-radius: var(--radius); padding: 2rem;
+      box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); overflow-x: auto; margin-top: 0.5rem;
     }
     table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
-    th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+    th, td { text-align: left; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-light); font-weight: 600; background: #fafbfc; position: sticky; top: 0; }
     .rating-card {
-      background: linear-gradient(135deg, #fef9f0, #fff7ed);
-      border-radius: var(--radius);
-      padding: 1.8rem;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(249,202,36,0.3);
+      background: linear-gradient(135deg, #fef9f0, #fff7ed); border-radius: var(--radius); padding: 2rem;
+      box-shadow: var(--shadow); border: 1px solid rgba(249,202,36,0.3);
     }
-    .rating-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0; border-bottom: 1px solid #fef3c7; }
+    .rating-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid #fef3c7; }
     .rating-pos { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
     .rating-pos.gold { background: #f9ca24; color: #7c5c00; }
     .rating-pos.silver { background: #e2e8f0; color: #475569; }
     .rating-pos.bronze { background: #fed7aa; color: #9a3412; }
     .rating-pos.default { background: #f1f5f9; color: #64748b; }
     .progress-container { width: 100%; background: #f0f0f0; border-radius: 10px; height: 14px; margin: 0.5rem 0; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 10px; transition: width 0.4s; background: linear-gradient(135deg, #0fb9b1, #7c5ce7); }
+    .progress-fill { height: 100%; border-radius: 10px; transition: width 0.4s; background: linear-gradient(135deg, #63b3a5, #b197fc); }
     .payout-status { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
     .payout-status.paid { background: var(--pastel-mint); color: var(--pastel-mint-text); }
     .payout-status.partial { background: var(--pastel-peach); color: var(--pastel-peach-text); }
@@ -240,545 +139,643 @@
   </style>
 </head>
 <body>
-  <div class="sidebar">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="homeBtn"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    <svg class="logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="logoutBtn"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-  </div>
-  <div class="main">
-    <div class="header">
-      <h1>Дашборд</h1>
-      <div class="tabs" id="tabBar">
-        <button class="tab active" data-tab="finance">Финансы</button>
-        <button class="tab" data-tab="salary">ЗП педагоги</button>
-        <button class="tab" data-tab="staff">ЗП сотрудники</button>
-        <button class="tab" data-tab="compare">Сравнение</button>
-      </div>
+<div class="sidebar">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="homeBtn"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+  <svg class="logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="logoutBtn"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+</div>
+<div class="main">
+  <div class="header">
+    <h1>Дашборд</h1>
+    <div class="tabs" id="tabBar">
+      <button class="tab active" data-tab="finance">Финансы</button>
+      <button class="tab" data-tab="salary">ЗП педагоги</button>
+      <button class="tab" data-tab="staff">ЗП сотрудники</button>
+      <button class="tab" data-tab="leads">Лиды</button>
+      <button class="tab" data-tab="compare">Сравнение</button>
     </div>
-    <div id="tabContent"></div>
   </div>
-  <script>
-    (function() {
-      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
-      let currentUserEmail = null;
-      let financeData = [], salaryData = [], employees = [], worklog = {}, salaryParams = {}, expensesData = [];
-      let activeTab = 'finance';
-      const filterState = {
-        finance: { dateFrom: '', dateTo: '', type: '', cat: '', man: '', acc: '', payType: '', showRaw: false },
-        salary: { name: '', subj: '', showSkipped: false, period: 'full' },
-        staff: { quickMonth: null },
-        compare: { period1From: '', period1To: '', period2From: '', period2To: '' }
-      };
+  <div id="tabContent"></div>
+</div>
+<script>
+  (function() {
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
+    let currentUserEmail, financeData=[], salaryData=[], employees=[], worklog={}, salaryParams={}, expensesData=[], leadsData=[];
+    let activeTab = 'finance';
+    const filterState = {
+      finance: { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false },
+      salary: { name:'', subj:'', showSkipped:false, period:'full' },
+      staff: { period:'full' },
+      leads: {},
+      compare: { period1From:'', period1To:'', period2From:'', period2To:'' }
+    };
 
-      function toISODate(d) { const p=d.split('.'); return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:d; }
+    function toISODate(d) { const p=d.split('.'); return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:d; }
 
-      async function init() {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
-        currentUserEmail = session.user.email;
-        await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(), loadSalaryParams(), loadExpenses()]);
+    async function init() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
+      currentUserEmail = session.user.email;
+      await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(), loadSalaryParams(), loadExpenses(), loadLeads()]);
+      const now = new Date();
+      filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+      const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+      filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      renderTab();
+    }
+
+    async function loadFinance() { const { data } = await _supabase.from('crm_finance').select('*'); financeData = data || []; }
+    async function loadSalary() { const { data } = await _supabase.from('teacher_salary').select('*'); salaryData = data || []; }
+    async function loadEmployees() { const { data } = await _supabase.from('employees').select('*'); employees = data || []; }
+    async function loadWorklog() {
+      const now = new Date(); const y = now.getFullYear(), m = now.getMonth()+1;
+      const start = `${y}-${String(m).padStart(2,'0')}-01`;
+      const nextM = m===12?1:m+1; const nextY = m===12?y+1:y;
+      const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
+      const { data } = await _supabase.from('worklog').select('*').gte('date',start).lt('date',end);
+      worklog = {}; (data||[]).forEach(r=>{ worklog[`${r.emp_id}_${r.date}`] = r; });
+    }
+    async function loadSalaryParams() {
+      const now = new Date(); const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const { data } = await _supabase.from('salary_params').select('*').eq('month', monthStr);
+      salaryParams = {}; (data||[]).forEach(r=>{ salaryParams[r.emp_id] = r; });
+    }
+    async function loadExpenses() { const { data } = await _supabase.from('expenses').select('*').eq('paid', false); expensesData = data || []; }
+    async function loadLeads() { const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false }); leadsData = data || []; }
+
+    function renderTab() {
+      const content = document.getElementById('tabContent');
+      switch (activeTab) {
+        case 'finance': content.innerHTML = financeHTML(); setupFinanceListeners(); renderFinance(); break;
+        case 'salary': content.innerHTML = salaryHTML(); setupSalaryListeners(); renderSalary(); break;
+        case 'staff': content.innerHTML = staffHTML(); setupStaffListeners(); renderStaff(); break;
+        case 'leads': content.innerHTML = leadsHTML(); setupLeadsListeners(); renderLeads(); break;
+        case 'compare': content.innerHTML = compareHTML(); setupCompareListeners(); renderCompare(); break;
+      }
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+    }
+
+    // ==================== ФИНАНСЫ ====================
+    function financeHTML() {
+      const f = filterState.finance;
+      const types = [...new Set(financeData.map(d=>d.operation_type).filter(Boolean))].sort();
+      const cats = [...new Set(financeData.map(d=>d.category).filter(Boolean))].sort();
+      const mans = [...new Set(financeData.map(d=>d.manager).filter(Boolean))].sort();
+      const accs = [...new Set(financeData.map(d=>d.account).filter(Boolean))].sort();
+      const payTypes = [...new Set(financeData.map(d=>d.payment_type).filter(Boolean))].sort();
+      return `
+        <div class="filters">
+          <button class="btn" id="currentMonthBtn">Текущий месяц</button>
+          <input type="date" id="finDateFrom" value="${f.dateFrom||''}">
+          <input type="date" id="finDateTo" value="${f.dateTo||''}">
+          <select id="finType"><option value="">Все типы</option>${types.map(t=>`<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
+          <select id="finCat"><option value="">Все статьи</option>${cats.map(c=>`<option ${f.cat===c?'selected':''}>${c}</option>`).join('')}</select>
+          <select id="finAcc"><option value="">Все счета</option>${accs.map(a=>`<option ${f.acc===a?'selected':''}>${a}</option>`).join('')}</select>
+          <select id="finPayType"><option value="">Все типы платежа</option>${payTypes.map(p=>`<option ${f.payType===p?'selected':''}>${p}</option>`).join('')}</select>
+          <select id="finMan"><option value="">Все менеджеры</option>${mans.map(m=>`<option ${f.man===m?'selected':''}>${m}</option>`).join('')}</select>
+          <button class="btn" id="uploadFinanceBtn">Загрузить отчёт</button>
+          <button class="btn" id="toggleRawFinBtn">${f.showRaw?'Скрыть':'Показать'} данные</button>
+        </div>
+        <div class="kpi-grid" id="finKPI"></div>
+        <div class="widget-grid" id="finWidgets">
+          <div class="widget-card" id="upcomingExpenses" style="grid-column: span 2;"></div>
+        </div>
+        <div class="table-card" id="finRawTable" style="display:${f.showRaw?'block':'none'};">
+          <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Тип платежа</th><th>Менеджер</th></tr></thead><tbody id="finTableBody"></tbody></table>
+        </div>`;
+    }
+
+    function setupFinanceListeners() {
+      document.getElementById('currentMonthBtn').addEventListener('click', ()=>{
         const now = new Date();
         filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
         const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
         filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-        renderTab();
-      }
-
-      async function loadFinance() { const { data } = await _supabase.from('crm_finance').select('*'); financeData = data || []; }
-      async function loadSalary() { const { data } = await _supabase.from('teacher_salary').select('*'); salaryData = data || []; }
-      async function loadEmployees() { const { data } = await _supabase.from('employees').select('*'); employees = data || []; }
-      async function loadWorklog() {
-        const now = new Date(); const y = now.getFullYear(), m = now.getMonth()+1;
-        const start = `${y}-${String(m).padStart(2,'0')}-01`;
-        const nextM = m===12?1:m+1; const nextY = m===12?y+1:y;
-        const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
-        const { data } = await _supabase.from('worklog').select('*').gte('date',start).lt('date',end);
-        worklog = {}; (data||[]).forEach(r=>{ worklog[`${r.emp_id}_${r.date}`] = r; });
-      }
-      async function loadSalaryParams() {
-        const now = new Date(); const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-        const { data } = await _supabase.from('salary_params').select('*').eq('month', monthStr);
-        salaryParams = {}; (data||[]).forEach(r=>{ salaryParams[r.emp_id] = r; });
-      }
-      async function loadExpenses() {
-        const { data } = await _supabase.from('expenses').select('*').eq('paid', false);
-        expensesData = data || [];
-      }
-
-      function getFinanceFiltered() {
-        let d = financeData;
-        const f = filterState.finance;
-        if (f.dateFrom) d = d.filter(r => r.operation_date >= f.dateFrom);
-        if (f.dateTo) d = d.filter(r => r.operation_date <= f.dateTo);
-        if (f.type) d = d.filter(r => r.operation_type === f.type);
-        if (f.cat) d = d.filter(r => r.category === f.cat);
-        if (f.man) d = d.filter(r => r.manager === f.man);
-        if (f.acc) d = d.filter(r => r.account === f.acc);
-        if (f.payType) d = d.filter(r => r.payment_type === f.payType);
-        return d;
-      }
-
-      function getSalaryFiltered() {
-        let d = salaryData;
-        const f = filterState.salary;
-        if (!f.showSkipped) d = d.filter(r => !r.skipped);
-        if (f.name) d = d.filter(r => r.teacher_name === f.name);
-        if (f.subj) d = d.filter(r => r.subject === f.subj);
-        if (f.period !== 'full') d = d.filter(r => r.period === f.period);
-        return d;
-      }
-
-      function renderTab() {
-        const content = document.getElementById('tabContent');
-        switch (activeTab) {
-          case 'finance': content.innerHTML = financeHTML(); setupFinanceListeners(); renderFinance(); break;
-          case 'salary': content.innerHTML = salaryHTML(); setupSalaryListeners(); renderSalary(); break;
-          case 'staff': content.innerHTML = staffHTML(); setupStaffListeners(); renderStaff(); break;
-          case 'compare': content.innerHTML = compareHTML(); setupCompareListeners(); renderCompare(); break;
-        }
-        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
-      }
-
-      function financeHTML() {
-        const f = filterState.finance;
-        const types = [...new Set(financeData.map(d=>d.operation_type).filter(Boolean))].sort();
-        const cats = [...new Set(financeData.map(d=>d.category).filter(Boolean))].sort();
-        const mans = [...new Set(financeData.map(d=>d.manager).filter(Boolean))].sort();
-        const accs = [...new Set(financeData.map(d=>d.account).filter(Boolean))].sort();
-        const payTypes = [...new Set(financeData.map(d=>d.payment_type).filter(Boolean))].sort();
-        return `
-          <div class="filters">
-            <button class="btn" id="currentMonthBtn">Текущий месяц</button>
-            <input type="date" id="finDateFrom" value="${f.dateFrom||''}">
-            <input type="date" id="finDateTo" value="${f.dateTo||''}">
-            <select id="finType"><option value="">Все типы</option>${types.map(t=>`<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
-            <select id="finCat"><option value="">Все статьи</option>${cats.map(c=>`<option ${f.cat===c?'selected':''}>${c}</option>`).join('')}</select>
-            <select id="finAcc"><option value="">Все счета</option>${accs.map(a=>`<option ${f.acc===a?'selected':''}>${a}</option>`).join('')}</select>
-            <select id="finPayType"><option value="">Все типы платежа</option>${payTypes.map(p=>`<option ${f.payType===p?'selected':''}>${p}</option>`).join('')}</select>
-            <select id="finMan"><option value="">Все менеджеры</option>${mans.map(m=>`<option ${f.man===m?'selected':''}>${m}</option>`).join('')}</select>
-            <button class="btn" id="uploadFinanceBtn">Загрузить отчёт</button>
-            <button class="btn" id="toggleRawFinBtn">${f.showRaw?'Скрыть':'Показать'} данные</button>
-          </div>
-          <div class="kpi-grid" id="finKPI"></div>
-          <div class="widget-card" id="upcomingExpenses"></div>
-          <div class="widget-grid" id="finWidgets"></div>
-          <div class="table-card" id="finRawTable" style="display:${f.showRaw?'block':'none'};">
-            <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Тип платежа</th><th>Менеджер</th></tr></thead><tbody id="finTableBody"></tbody></table>
-          </div>`;
-      }
-
-      function setupFinanceListeners() {
-        document.getElementById('currentMonthBtn').addEventListener('click', ()=>{
-          const now = new Date();
-          const y = now.getFullYear(), m = now.getMonth()+1;
-          filterState.finance.dateFrom = `${y}-${String(m).padStart(2,'0')}-01`;
-          const lastDay = new Date(y, m, 0).getDate();
-          filterState.finance.dateTo = `${y}-${String(m).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-          document.getElementById('finDateFrom').value = filterState.finance.dateFrom;
-          document.getElementById('finDateTo').value = filterState.finance.dateTo;
+        document.getElementById('finDateFrom').value = filterState.finance.dateFrom;
+        document.getElementById('finDateTo').value = filterState.finance.dateTo;
+        renderFinance();
+      });
+      document.getElementById('uploadFinanceBtn').addEventListener('click', uploadFinance);
+      document.getElementById('toggleRawFinBtn').addEventListener('click', ()=>{
+        filterState.finance.showRaw = !filterState.finance.showRaw;
+        document.getElementById('finRawTable').style.display = filterState.finance.showRaw?'block':'none';
+        document.getElementById('toggleRawFinBtn').textContent = (filterState.finance.showRaw?'Скрыть':'Показать')+' данные';
+      });
+      ['finDateFrom','finDateTo','finType','finCat','finAcc','finPayType','finMan'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('change', ()=>{
+          filterState.finance.dateFrom = document.getElementById('finDateFrom')?.value||'';
+          filterState.finance.dateTo = document.getElementById('finDateTo')?.value||'';
+          filterState.finance.type = document.getElementById('finType')?.value||'';
+          filterState.finance.cat = document.getElementById('finCat')?.value||'';
+          filterState.finance.acc = document.getElementById('finAcc')?.value||'';
+          filterState.finance.payType = document.getElementById('finPayType')?.value||'';
+          filterState.finance.man = document.getElementById('finMan')?.value||'';
           renderFinance();
         });
-        document.getElementById('uploadFinanceBtn').addEventListener('click', uploadFinance);
-        document.getElementById('toggleRawFinBtn').addEventListener('click', ()=>{
-          filterState.finance.showRaw = !filterState.finance.showRaw;
-          document.getElementById('finRawTable').style.display = filterState.finance.showRaw?'block':'none';
-          document.getElementById('toggleRawFinBtn').textContent = (filterState.finance.showRaw?'Скрыть':'Показать')+' данные';
-        });
-        ['finDateFrom','finDateTo','finType','finCat','finAcc','finPayType','finMan'].forEach(id=>{
-          const el = document.getElementById(id);
-          if(el) el.addEventListener('change', ()=>{
-            filterState.finance.dateFrom = document.getElementById('finDateFrom')?.value||'';
-            filterState.finance.dateTo = document.getElementById('finDateTo')?.value||'';
-            filterState.finance.type = document.getElementById('finType')?.value||'';
-            filterState.finance.cat = document.getElementById('finCat')?.value||'';
-            filterState.finance.acc = document.getElementById('finAcc')?.value||'';
-            filterState.finance.payType = document.getElementById('finPayType')?.value||'';
-            filterState.finance.man = document.getElementById('finMan')?.value||'';
-            renderFinance();
-          });
-        });
-      }
+      });
+    }
 
-      function uploadFinance() {
-        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
-        input.onchange = async (e) => {
-          const file = e.target.files[0]; if(!file) return;
-          const reader = new FileReader();
-          reader.onload = async (ev) => {
-            const data = new Uint8Array(ev.target.result);
-            const wb = XLSX.read(data, {type:'array'});
-            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-            const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата'));
-            if(headerIdx===-1) { alert('Не найден заголовок'); return; }
-            const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
-            const dateIdx = headers.findIndex(h=>h.startsWith('дата'));
-            const typeIdx = headers.findIndex(h=>h.startsWith('тип'));
-            const amountIdx = headers.findIndex(h=>h.startsWith('сумма'));
-            const catIdx = headers.findIndex(h=>h.startsWith('статья'));
-            const accIdx = headers.findIndex(h=>h.includes('счет')||h.includes('касса'));
-            const payTypeIdx = headers.findIndex(h=>h.includes('тип платежа'));
-            const manIdx = headers.findIndex(h=>h.includes('менеджер'));
-            const parsed = [];
-            for(let i=headerIdx+1; i<rows.length; i++){
-              const cols=rows[i]; if(!cols) continue;
-              const amt = parseFloat(String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.'));
-              if(isNaN(amt)) continue;
-              parsed.push({
-                operation_date: toISODate(String(cols[dateIdx]||'').trim()),
-                operation_type: String(cols[typeIdx]||'').trim(),
-                amount: amt,
-                category: String(cols[catIdx]||'').trim(),
-                account: accIdx!==-1 ? String(cols[accIdx]||'').trim() : '',
-                payment_type: payTypeIdx!==-1 ? String(cols[payTypeIdx]||'').trim() : '',
-                manager: String(cols[manIdx]||'').trim()
-              });
-            }
-            await _supabase.from('crm_finance').delete().neq('id',0);
-            await _supabase.from('crm_finance').insert(parsed);
-            await loadFinance();
-            renderFinance();
-          };
-          reader.readAsArrayBuffer(file);
+    function uploadFinance() {
+      const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+      input.onchange = async (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, {type:'array'});
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+          const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата'));
+          if(headerIdx===-1) { alert('Не найден заголовок'); return; }
+          const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
+          const dateIdx = headers.findIndex(h=>h.startsWith('дата'));
+          const typeIdx = headers.findIndex(h=>h.startsWith('тип'));
+          const amountIdx = headers.findIndex(h=>h.startsWith('сумма'));
+          const catIdx = headers.findIndex(h=>h.startsWith('статья'));
+          const accIdx = headers.findIndex(h=>h.includes('счет')||h.includes('касса'));
+          const payTypeIdx = headers.findIndex(h=>h.includes('тип платежа'));
+          const manIdx = headers.findIndex(h=>h.includes('менеджер'));
+          const parsed = [];
+          for(let i=headerIdx+1; i<rows.length; i++){
+            const cols=rows[i]; if(!cols) continue;
+            const amt = parseFloat(String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.'));
+            if(isNaN(amt)) continue;
+            parsed.push({
+              operation_date: toISODate(String(cols[dateIdx]||'').trim()),
+              operation_type: String(cols[typeIdx]||'').trim(),
+              amount: amt,
+              category: String(cols[catIdx]||'').trim(),
+              account: accIdx!==-1 ? String(cols[accIdx]||'').trim() : '',
+              payment_type: payTypeIdx!==-1 ? String(cols[payTypeIdx]||'').trim() : '',
+              manager: String(cols[manIdx]||'').trim()
+            });
+          }
+          await _supabase.from('crm_finance').delete().neq('id',0);
+          await _supabase.from('crm_finance').insert(parsed);
+          await loadFinance();
+          renderFinance();
         };
-        input.click();
-      }
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    }
 
-      function renderFinance() {
-        const data = getFinanceFiltered();
-        const income = data.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t)));
-        const expense = data.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t)));
-        const ti = income.reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        const te = expense.reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        document.getElementById('finKPI').innerHTML = `
-          <div class="kpi-card"><span class="label">Доходы</span><span class="value">${ti.toLocaleString()} ₽</span></div>
-          <div class="kpi-card"><span class="label">Расходы</span><span class="value">${te.toLocaleString()} ₽</span></div>
-          <div class="kpi-card"><span class="label">Прибыль</span><span class="value">${(ti-te).toLocaleString()} ₽</span></div>
-          <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
-        const now = new Date();
-        const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-        const currentMonthEnd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()).padStart(2,'0')}`;
-        const upcoming = expensesData.filter(e => e.next_payment_date && e.next_payment_date >= currentMonthStart && e.next_payment_date <= currentMonthEnd);
-        const overdue = upcoming.filter(e => new Date(e.next_payment_date) < new Date());
-        const upcomingTotal = upcoming.reduce((s,e)=>s+parseFloat(e.amount),0);
-        document.getElementById('upcomingExpenses').innerHTML = `
-          <h3>Предстоящие расходы в этом месяце</h3>
-          ${upcoming.length===0 ? '<p style="color:var(--text-light);">Нет предстоящих платежей</p>' : `
-            <div style="margin-bottom:1rem;"><strong>Общая сумма: ${upcomingTotal.toLocaleString()} ₽</strong></div>
-            <ul class="widget-list">
-              ${upcoming.map(e=>`<li><span>${e.name} ${new Date(e.next_payment_date)<new Date()?'<span class="badge-overdue">Просрочен</span>':''}</span><span>${parseFloat(e.amount).toLocaleString()} ₽ (${e.next_payment_date})</span></li>`).join('')}
-            </ul>`}`;
-        const group = (arr,key)=>{
-          const m={}; arr.forEach(r=>{const k=r[key]||'—'; m[k]=(m[k]||0)+parseFloat(r.amount||0);});
-          return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
-        };
-        document.getElementById('finWidgets').innerHTML = `
-          <div class="widget-card"><h3>Расходы по статьям</h3><ul class="widget-list">${group(expense,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Доходы по статьям</h3><ul class="widget-list">${group(income,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Доходы по менеджерам</h3><ul class="widget-list">${group(income,'manager').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Расходы по счетам</h3><ul class="widget-list">${group(expense,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Доходы по счетам</h3><ul class="widget-list">${group(income,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Расходы по типам платежа</h3><ul class="widget-list">${group(expense,'payment_type').slice(0,6).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Доходы по типам платежа</h3><ul class="widget-list">${group(income,'payment_type').slice(0,6).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>`;
-        document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
-      }
+    function renderFinance() {
+      const data = getFinanceFiltered();
+      const income = data.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t)));
+      const expense = data.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t)));
+      const ti = income.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const te = expense.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      document.getElementById('finKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Доходы</span><span class="value">${ti.toLocaleString()} ₽</span></div>
+        <div class="kpi-card"><span class="label">Расходы</span><span class="value">${te.toLocaleString()} ₽</span></div>
+        <div class="kpi-card"><span class="label">Прибыль</span><span class="value">${(ti-te).toLocaleString()} ₽</span></div>
+        <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
+      const now = new Date();
+      const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+      const currentMonthEnd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()).padStart(2,'0')}`;
+      const upcoming = expensesData.filter(e => e.next_payment_date >= currentMonthStart && e.next_payment_date <= currentMonthEnd);
+      const upcomingTotal = upcoming.reduce((s,e)=>s+parseFloat(e.amount),0);
+      document.getElementById('upcomingExpenses').innerHTML = `
+        <h3>Предстоящие расходы в этом месяце</h3>
+        ${upcoming.length===0 ? '<p style="color:var(--text-light);">Нет предстоящих платежей</p>' : `
+          <div style="margin-bottom:1rem;"><strong>Общая сумма: ${upcomingTotal.toLocaleString()} ₽</strong></div>
+          <ul class="widget-list">
+            ${upcoming.map(e=>`<li><span>${e.name} ${new Date(e.next_payment_date)<new Date()?'<span class="badge-overdue">Просрочен</span>':''}</span><span>${parseFloat(e.amount).toLocaleString()} ₽ (${e.next_payment_date})</span></li>`).join('')}
+          </ul>`}`;
+      const group = (arr,key)=>{
+        const m={}; arr.forEach(r=>{const k=r[key]||'—'; m[k]=(m[k]||0)+parseFloat(r.amount||0);});
+        return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
+      };
+      document.getElementById('finWidgets').innerHTML += `
+        <div class="widget-card"><h3>Расходы по статьям</h3><ul class="widget-list">${group(expense,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Доходы по статьям</h3><ul class="widget-list">${group(income,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Доходы по менеджерам</h3><ul class="widget-list">${group(income,'manager').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Расходы по счетам</h3><ul class="widget-list">${group(expense,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Доходы по счетам</h3><ul class="widget-list">${group(income,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Расходы по типам платежа</h3><ul class="widget-list">${group(expense,'payment_type').slice(0,6).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Доходы по типам платежа</h3><ul class="widget-list">${group(income,'payment_type').slice(0,6).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>`;
+      document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
+    }
 
-      function salaryHTML() {
-        const f = filterState.salary;
-        const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
-        const subjects = [...new Set(salaryData.map(d=>d.subject).filter(Boolean))].sort();
-        return `
-          <div class="filters">
-            <button class="btn ${f.period==='full'?'btn-primary':''}" id="salPeriodFull">Весь месяц</button>
-            <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="salPeriod1">1–15</button>
-            <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="salPeriod2">16–31</button>
-            <select id="salName"><option value="">Все педагоги</option>${names.map(n=>`<option ${f.name===n?'selected':''}>${n}</option>`).join('')}</select>
-            <select id="salSubj"><option value="">Все предметы</option>${subjects.map(s=>`<option ${f.subj===s?'selected':''}>${s}</option>`).join('')}</select>
-            <button class="btn" id="uploadSalaryBtn1">Загрузить 1–15</button>
-            <button class="btn" id="uploadSalaryBtn2">Загрузить 16–31</button>
-            <button class="btn" id="uploadSalaryBtnFull">Загрузить общий</button>
-            <button class="btn" id="toggleSkippedBtn">${f.showSkipped?'Скрыть':'Показать'} пропущенные</button>
-          </div>
-          <div class="kpi-grid" id="salKPI"></div>
-          <div class="widget-grid" id="salWidgets"></div>
-          <div class="rating-card" id="salRating"></div>
-          <div class="widget-grid" id="salPayoutWidgets"></div>
-          <div class="table-card" id="salRawTable" style="display:block;">
-            <table><thead><tr><th>Педагог</th><th>Предмет</th><th>Тип</th><th>Ставка</th><th>Кол-во</th><th>Сумма</th><th>Период</th></tr></thead><tbody id="salTableBody"></tbody></table>
-          </div>`;
-      }
+    function getFinanceFiltered() {
+      let d = financeData;
+      const f = filterState.finance;
+      if (f.dateFrom) d = d.filter(r => r.operation_date >= f.dateFrom);
+      if (f.dateTo) d = d.filter(r => r.operation_date <= f.dateTo);
+      if (f.type) d = d.filter(r => r.operation_type === f.type);
+      if (f.cat) d = d.filter(r => r.category === f.cat);
+      if (f.man) d = d.filter(r => r.manager === f.man);
+      if (f.acc) d = d.filter(r => r.account === f.acc);
+      if (f.payType) d = d.filter(r => r.payment_type === f.payType);
+      return d;
+    }
 
-      function setupSalaryListeners() {
-        ['salPeriodFull','salPeriod1','salPeriod2'].forEach((id,i)=>{
-          document.getElementById(id).addEventListener('click', ()=>{
-            filterState.salary.period = ['full','1-15','16-31'][i];
-            document.querySelectorAll('#tabContent .filters .btn').forEach(b=>b.classList.remove('btn-primary'));
-            document.getElementById(id).classList.add('btn-primary');
-            renderSalary();
-          });
-        });
-        document.getElementById('toggleSkippedBtn').addEventListener('click', ()=>{
-          filterState.salary.showSkipped = !filterState.salary.showSkipped;
-          document.getElementById('toggleSkippedBtn').textContent = (filterState.salary.showSkipped?'Скрыть':'Показать')+' пропущенные';
+    // ==================== ЗП ПЕДАГОГОВ ====================
+    function salaryHTML() {
+      const f = filterState.salary;
+      const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
+      const subjects = [...new Set(salaryData.map(d=>d.subject).filter(Boolean))].sort();
+      return `
+        <div class="filters">
+          <button class="btn ${f.period==='full'?'btn-primary':''}" id="salPeriodFull">Весь месяц</button>
+          <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="salPeriod1">1–15</button>
+          <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="salPeriod2">16–31</button>
+          <select id="salName"><option value="">Все педагоги</option>${names.map(n=>`<option ${f.name===n?'selected':''}>${n}</option>`).join('')}</select>
+          <select id="salSubj"><option value="">Все предметы</option>${subjects.map(s=>`<option ${f.subj===s?'selected':''}>${s}</option>`).join('')}</select>
+          <button class="btn" id="uploadSalaryBtn1">Загрузить 1–15</button>
+          <button class="btn" id="uploadSalaryBtn2">Загрузить 16–31</button>
+          <button class="btn" id="uploadSalaryBtnFull">Загрузить общий</button>
+          <button class="btn" id="toggleSkippedBtn">${f.showSkipped?'Скрыть':'Показать'} пропущенные</button>
+        </div>
+        <div class="kpi-grid" id="salKPI"></div>
+        <div class="widget-grid" id="salWidgets"></div>
+        <div class="rating-card" id="salRating"></div>
+        <div class="widget-grid" id="salPayoutWidgets"></div>
+        <div class="table-card" id="salRawTable" style="display:block;">
+          <table><thead><tr><th>Педагог</th><th>Предмет</th><th>Тип</th><th>Ставка</th><th>Кол-во</th><th>Сумма</th><th>Период</th></tr></thead><tbody id="salTableBody"></tbody></table>
+        </div>`;
+    }
+
+    function setupSalaryListeners() {
+      ['salPeriodFull','salPeriod1','salPeriod2'].forEach((id,i)=>{
+        document.getElementById(id).addEventListener('click', ()=>{
+          filterState.salary.period = ['full','1-15','16-31'][i];
+          document.querySelectorAll('#tabContent .filters .btn').forEach(b=>b.classList.remove('btn-primary'));
+          document.getElementById(id).classList.add('btn-primary');
           renderSalary();
         });
-        ['salName','salSubj'].forEach(id=>{
-          document.getElementById(id).addEventListener('change', ()=>{
-            filterState.salary.name = document.getElementById('salName')?.value||'';
-            filterState.salary.subj = document.getElementById('salSubj')?.value||'';
-            renderSalary();
-          });
+      });
+      document.getElementById('toggleSkippedBtn').addEventListener('click', ()=>{
+        filterState.salary.showSkipped = !filterState.salary.showSkipped;
+        document.getElementById('toggleSkippedBtn').textContent = (filterState.salary.showSkipped?'Скрыть':'Показать')+' пропущенные';
+        renderSalary();
+      });
+      ['salName','salSubj'].forEach(id=>{
+        document.getElementById(id).addEventListener('change', ()=>{
+          filterState.salary.name = document.getElementById('salName')?.value||'';
+          filterState.salary.subj = document.getElementById('salSubj')?.value||'';
+          renderSalary();
         });
-        document.getElementById('uploadSalaryBtn1').addEventListener('click', ()=>uploadSalary('1-15'));
-        document.getElementById('uploadSalaryBtn2').addEventListener('click', ()=>uploadSalary('16-31'));
-        document.getElementById('uploadSalaryBtnFull').addEventListener('click', ()=>uploadSalary('full'));
-      }
+      });
+      document.getElementById('uploadSalaryBtn1').addEventListener('click', ()=>uploadSalary('1-15'));
+      document.getElementById('uploadSalaryBtn2').addEventListener('click', ()=>uploadSalary('16-31'));
+      document.getElementById('uploadSalaryBtnFull').addEventListener('click', ()=>uploadSalary('full'));
+    }
 
-      function uploadSalary(period) {
-        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
-        input.onchange = async (e) => {
-          const file = e.target.files[0]; if(!file) return;
-          const reader = new FileReader();
-          reader.onload = async (ev) => {
-            const data = new Uint8Array(ev.target.result);
-            const wb = XLSX.read(data, {type:'array'});
-            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-            const parsed = [];
-            let currentTeacher = '';
-            for(let i=0; i<rows.length; i++){
-              const row = rows[i]; if(!row || row.length<2) continue;
-              const line = row.join(' ').trim();
-              if(line.startsWith('Выписка по зарплате -')){
-                currentTeacher = line.replace('Выписка по зарплате -','').split('За период')[0].trim();
-              } else if(row.length>=5 && row[0]!=='Предмет' && row[0]!=='Орел' && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
-                const subject = String(row[0]||'').trim();
-                const lessonType = String(row[1]||'').trim();
-                const rate = parseFloat(String(row[2]||'0').replace(',','.'))||0;
-                const qty = parseInt(String(row[3]||'0').replace(' шт.',''))||0;
-                const amount = parseFloat(String(row[4]||'0').replace(',','.').replace(/\s/g,''))||0;
-                if(qty>0||amount>0) parsed.push({ teacher_name: currentTeacher, subject, lesson_type: lessonType, rate, quantity: qty, amount, skipped: false, period });
-              } else if(line.startsWith('Пропущенные записи')){
-                const qty = parseInt(String(row[4]||'0').replace(' шт.',''))||0;
-                parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true, period });
-              }
+    async function uploadSalary(period) {
+      const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+      input.onchange = async (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, {type:'array'});
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+          const parsed = [];
+          let currentTeacher = '';
+          for(let i=0; i<rows.length; i++){
+            const row = rows[i]; if(!row || row.length<2) continue;
+            const line = row.join(' ').trim();
+            if(line.startsWith('Выписка по зарплате -')){
+              currentTeacher = line.replace('Выписка по зарплате -','').split('За период')[0].trim();
+            } else if(row.length>=5 && row[0]!=='Предмет' && row[0]!=='Орел' && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
+              const subject = String(row[0]||'').trim();
+              const lessonType = String(row[1]||'').trim();
+              const rate = parseFloat(String(row[2]||'0').replace(',','.'))||0;
+              const qty = parseInt(String(row[3]||'0').replace(' шт.',''))||0;
+              const amount = parseFloat(String(row[4]||'0').replace(',','.').replace(/\s/g,''))||0;
+              if(qty>0||amount>0) parsed.push({ teacher_name: currentTeacher, subject, lesson_type: lessonType, rate, quantity: qty, amount, skipped: false, period });
+            } else if(line.startsWith('Пропущенные записи')){
+              const qty = parseInt(String(row[4]||'0').replace(' шт.',''))||0;
+              parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true, period });
             }
-            if(period === 'full') await _supabase.from('teacher_salary').delete().neq('id',0);
-            await _supabase.from('teacher_salary').insert(parsed);
-            await loadSalary();
-            renderSalary();
-          };
-          reader.readAsArrayBuffer(file);
+          }
+          if(period === 'full') {
+            await _supabase.from('teacher_salary').delete().neq('id',0);
+          } else {
+            await _supabase.from('teacher_salary').delete().eq('period', period);
+          }
+          await _supabase.from('teacher_salary').insert(parsed);
+          await loadSalary();
+          renderSalary();
         };
-        input.click();
-      }
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    }
 
-      function getTeacherPayouts() {
-        const payouts = {};
-        const salaryRelated = financeData.filter(r=>{
-          const cat = (r.category||'').toLowerCase();
-          return cat.includes('зп')||cat.includes('зарплат')||cat.includes('педагог');
-        });
-        const teachers = [...new Set(salaryData.map(d=>d.teacher_name))];
-        salaryRelated.forEach(r=>{
-          const amount = parseFloat(r.amount||0);
-          const cat = (r.category||'').toLowerCase();
-          let matched = null;
-          for(const t of teachers) if(cat.includes(t.toLowerCase())){ matched=t; break; }
-          if(!matched && teachers.length && cat.includes('педагог')) matched='общая';
-          if(matched && amount>0){
-            if(!payouts[matched]) payouts[matched]={total:0,items:[]};
-            payouts[matched].total += amount;
-            payouts[matched].items.push({date:r.operation_date, amount, category:r.category});
-          }
-        });
-        return payouts;
-      }
-
-      function renderSalary() {
-        const data = getSalaryFiltered();
-        const total = data.reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        const teachers = [...new Set(data.map(r=>r.teacher_name))];
-        const totalLessons = data.reduce((s,r)=>s+(r.quantity||0),0);
-        const indivLessons = data.filter(r=>(r.lesson_type||'').toLowerCase().includes('индив')).reduce((s,r)=>s+(r.quantity||0),0);
-        const groupLessons = data.filter(r=>(r.lesson_type||'').toLowerCase().includes('групп')).reduce((s,r)=>s+(r.quantity||0),0);
-        document.getElementById('salKPI').innerHTML = `
-          <div class="kpi-card"><span class="label">Фонд оплаты</span><span class="value">${total.toLocaleString()} ₽</span></div>
-          <div class="kpi-card"><span class="label">Педагогов</span><span class="value">${teachers.length}</span></div>
-          <div class="kpi-card"><span class="label">Всего уроков</span><span class="value">${totalLessons}</span></div>
-          <div class="kpi-card"><span class="label">Инд. / Групп.</span><span class="value">${indivLessons} / ${groupLessons}</span></div>`;
-        const byTeacher={}, byTeacherIndiv={}, byTeacherGroup={};
-        data.forEach(r=>{
-          byTeacher[r.teacher_name]=(byTeacher[r.teacher_name]||0)+parseFloat(r.amount||0);
-          if((r.lesson_type||'').toLowerCase().includes('индив')) byTeacherIndiv[r.teacher_name]=(byTeacherIndiv[r.teacher_name]||0)+parseFloat(r.amount||0);
-          if((r.lesson_type||'').toLowerCase().includes('групп')) byTeacherGroup[r.teacher_name]=(byTeacherGroup[r.teacher_name]||0)+parseFloat(r.amount||0);
-        });
-        const bySubject = {};
-        data.forEach(r=>{ bySubject[r.subject]=(bySubject[r.subject]||0)+parseFloat(r.amount||0); });
-        document.getElementById('salWidgets').innerHTML = `
-          <div class="widget-card"><h3>По педагогам (всего)</h3><ul class="widget-list">${Object.entries(byTeacher).sort(([,a],[,b])=>b-a).slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Индивидуальные</h3><ul class="widget-list">${Object.entries(byTeacherIndiv).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>Групповые</h3><ul class="widget-list">${Object.entries(byTeacherGroup).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
-          <div class="widget-card"><h3>По предметам</h3><ul class="widget-list">${Object.entries(bySubject).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>`;
-        const ratingData = teachers.map(name=>{
-          const indivQty=data.filter(r=>r.teacher_name===name&&(r.lesson_type||'').toLowerCase().includes('индив')).reduce((s,r)=>s+(r.quantity||0),0);
-          const groupQty=data.filter(r=>r.teacher_name===name&&(r.lesson_type||'').toLowerCase().includes('групп')).reduce((s,r)=>s+(r.quantity||0),0);
-          return {name, indivQty, groupQty, score: indivQty+groupQty*2, totalEarned: byTeacher[name]||0};
-        }).sort((a,b)=>b.score-a.score);
-        document.getElementById('salRating').innerHTML = `<h3 style="margin-bottom:1rem;">Рейтинг преподавателей <small style="color:var(--text-light); font-weight:400;">(групповые ×2)</small></h3>${ratingData.map((r,i)=>{
-          let cls='default', medal=i+1;
-          if(i===0){ cls='gold'; medal='1'; }else if(i===1){ cls='silver'; medal='2'; }else if(i===2){ cls='bronze'; medal='3'; }
-          return `<div class="rating-row"><div class="rating-pos ${cls}">${medal}</div><div style="flex:1;"><strong>${r.name}</strong><br><small style="color:var(--text-light);">Инд: ${r.indivQty} | Групп: ${r.groupQty} | Баллы: ${r.score}</small></div><div style="font-weight:700;">${r.totalEarned.toLocaleString()} ₽</div></div>`;
-        }).join('')}`;
-        const payouts = getTeacherPayouts();
-        document.getElementById('salPayoutWidgets').innerHTML = teachers.map(name=>{
-          const accrued = byTeacher[name]||0;
-          const paid = payouts[name]?.total||0;
-          const remaining = accrued - paid;
-          let statusClass='unpaid', statusText='Не выплачено';
-          if(paid>=accrued && accrued>0){ statusClass='paid'; statusText='Выплачено'; }
-          else if(paid>0 && paid<accrued){ statusClass='partial'; statusText='Частично'; }
-          return `<div class="widget-card"><h3>${name}</h3>
-            <div style="display:flex;justify-content:space-between;"><span>Начислено:</span><strong>${accrued.toLocaleString()} ₽</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span>Выплачено:</span><strong>${paid.toLocaleString()} ₽</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span>Остаток:</span><strong style="color:${remaining>0?'#c2410c':'#15803d'};">${remaining.toLocaleString()} ₽</strong></div>
-            <span class="payout-status ${statusClass}">${statusText}</span>
-            ${paid>0?`<div class="progress-container"><div class="progress-fill" style="width:${Math.min(100,(paid/accrued*100))}%;"></div></div>`:''}
-          </div>`;
-        }).join('');
-        document.getElementById('salTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.period||'full'}</td></tr>`).join('');
-      }
-
-      function staffHTML() {
-        return `
-          <div class="kpi-grid" id="staffKPI"></div>
-          <div class="widget-grid" id="staffWidgets"></div>
-          <div class="table-card" id="staffRawTable" style="display:block;">
-            <table><thead><tr><th>Сотрудник</th><th>Роль</th><th>Смен</th><th>Базовая ЗП</th><th>Бонус</th><th>Итого</th></tr></thead><tbody id="staffTableBody"></tbody></table>
-          </div>`;
-      }
-
-      function setupStaffListeners() { /* можно добавить переключение месяцев позже */ }
-
-      function renderStaff() {
-        const staffEmps = employees.filter(e=>['Управляющий','Менеджер','Администратор'].includes(e.role));
-        const now = new Date(); const y=now.getFullYear(), m=now.getMonth()+1;
-        const daysInMonth = new Date(y, m, 0).getDate();
-        const results = staffEmps.map(emp=>{
-          let worked=0, sales=0;
-          for(let d=1; d<=daysInMonth; d++){
-            const key = `${emp.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const rec = worklog[key];
-            if(!rec||rec.status!=='working') continue;
-            worked++;
-            if(emp.role==='Менеджер') sales += rec.daily_sales||0;
-          }
-          const params = salaryParams[emp.id]||{};
-          const rates = {'Менеджер':20000,'Администратор':25000,'Управляющий':50000};
-          const normDays = emp.role==='Менеджер'?Math.round(daysInMonth*0.5):(params.norm_days||22);
-          const dailyRate = (rates[emp.role]||0)/Math.max(normDays,1);
-          let base = dailyRate*worked, bonus=0;
-          if(emp.role==='Менеджер'){
-            const plan = params.plan_amount||0;
-            bonus = sales*((plan>0&&sales>=plan)?7:5)/100;
-          } else if(emp.role==='Администратор'){
-            const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
-              for(let d=1; d<=daysInMonth; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
-              return sum;
-            },0);
-            bonus = ms*0.01;
-          } else if(emp.role==='Управляющий'){
-            const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
-              for(let d=1; d<=daysInMonth; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
-              return sum;
-            },0);
-            bonus = (params.plan_amount>0&&ms>=params.plan_amount)?ms*0.01:0;
-          }
-          return { emp, worked, base, bonus, total:base+bonus, sales };
-        });
-        document.getElementById('staffKPI').innerHTML = `
-          <div class="kpi-card"><span class="label">Фонд оплаты (staff)</span><span class="value">${results.reduce((s,r)=>s+r.total,0).toLocaleString()} ₽</span></div>
-          <div class="kpi-card"><span class="label">Сотрудников</span><span class="value">${results.length}</span></div>
-          <div class="kpi-card"><span class="label">Всего смен</span><span class="value">${results.reduce((s,r)=>s+r.worked,0)}</span></div>`;
-        document.getElementById('staffWidgets').innerHTML = results.map(r=>`
-          <div class="widget-card"><h3>${r.emp.name} (${r.emp.role})</h3>
-            <div style="display:flex;justify-content:space-between;"><span>Смен:</span><strong>${r.worked}</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span>Базовая:</span><strong>${r.base.toFixed(0)} ₽</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span>Бонус:</span><strong>${r.bonus.toFixed(0)} ₽</strong></div>
-            <div style="display:flex;justify-content:space-between;font-size:1.1rem;margin-top:0.5rem;"><span>Итого:</span><strong style="color:#7c5ce7;">${r.total.toFixed(0)} ₽</strong></div>
-            ${r.emp.role==='Менеджер'?`<div style="display:flex;justify-content:space-between;"><span>Продажи:</span><strong>${r.sales.toLocaleString()} ₽</strong></div>`:''}
-          </div>`).join('');
-        document.getElementById('staffTableBody').innerHTML = results.map(r=>`<tr><td>${r.emp.name}</td><td>${r.emp.role}</td><td>${r.worked}</td><td>${r.base.toFixed(0)} ₽</td><td>${r.bonus.toFixed(0)} ₽</td><td><strong>${r.total.toFixed(0)} ₽</strong></td></tr>`).join('');
-      }
-
-      function compareHTML() {
-        const f = filterState.compare;
-        return `
-          <div class="filters">
-            <div><strong>Период 1</strong><br><input type="date" id="cmpP1From" value="${f.period1From||''}"> <input type="date" id="cmpP1To" value="${f.period1To||''}"></div>
-            <div><strong>Период 2</strong><br><input type="date" id="cmpP2From" value="${f.period2From||''}"> <input type="date" id="cmpP2To" value="${f.period2To||''}"></div>
-            <button class="btn btn-primary" id="cmpApplyBtn">Сравнить</button>
-          </div>
-          <div class="kpi-grid" id="cmpKPI"></div>
-          <div class="widget-grid" id="cmpWidgets"></div>`;
-      }
-
-      function setupCompareListeners() {
-        document.getElementById('cmpApplyBtn').addEventListener('click', ()=>{
-          filterState.compare.period1From = document.getElementById('cmpP1From')?.value||'';
-          filterState.compare.period1To = document.getElementById('cmpP1To')?.value||'';
-          filterState.compare.period2From = document.getElementById('cmpP2From')?.value||'';
-          filterState.compare.period2To = document.getElementById('cmpP2To')?.value||'';
-          renderCompare();
-        });
-      }
-
-      function renderCompare() {
-        const f = filterState.compare;
-        if(!f.period1From||!f.period1To||!f.period2From||!f.period2To) {
-          document.getElementById('cmpKPI').innerHTML = '<p>Выберите оба периода</p>';
-          return;
-        }
-        const p1 = financeData.filter(r=>r.operation_date>=f.period1From && r.operation_date<=f.period1To);
-        const p2 = financeData.filter(r=>r.operation_date>=f.period2From && r.operation_date<=f.period2To);
-        const inc1 = p1.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        const exp1 = p1.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        const inc2 = p2.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        const exp2 = p2.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        const prof1=inc1-exp1, prof2=inc2-exp2;
-        const delta = (v1,v2)=>v1===0?(v2>0?'+∞':'0%'):(((v2-v1)/Math.abs(v1)*100).toFixed(1)>0?'+':'')+((v2-v1)/Math.abs(v1)*100).toFixed(1)+'%';
-        document.getElementById('cmpKPI').innerHTML = `
-          <div class="kpi-card"><span class="label">Доходы П1 / П2</span><span class="value">${inc1.toLocaleString()} / ${inc2.toLocaleString()} ₽</span><span>${delta(inc1,inc2)}</span></div>
-          <div class="kpi-card"><span class="label">Расходы П1 / П2</span><span class="value">${exp1.toLocaleString()} / ${exp2.toLocaleString()} ₽</span><span>${delta(exp1,exp2)}</span></div>
-          <div class="kpi-card"><span class="label">Прибыль П1 / П2</span><span class="value">${prof1.toLocaleString()} / ${prof2.toLocaleString()} ₽</span><span>${delta(prof1,prof2)}</span></div>
-          <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${inc1?((prof1)/inc1*100).toFixed(1):0}% / ${inc2?((prof2)/inc2*100).toFixed(1):0}%</span></div>`;
-        const tNames = [...new Set(salaryData.map(d=>d.teacher_name))];
-        const teachComp = tNames.map(name=>{
-          const s1 = salaryData.filter(r=>r.teacher_name===name).reduce((s,r)=>s+parseFloat(r.amount||0),0);
-          return {name, amount:s1};
-        }).sort((a,b)=>b.amount-a.amount).slice(0,8);
-        document.getElementById('cmpWidgets').innerHTML = `
-          <div class="widget-card"><h3>Топ педагогов (общий)</h3><ul class="widget-list">${teachComp.map(t=>`<li><span>${t.name}</span><span>${t.amount.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
-          <div class="widget-card"><h3>Сводка</h3><ul class="widget-list">
-            <li><span>Период 1:</span><span>${f.period1From} – ${f.period1To}</span></li>
-            <li><span>Период 2:</span><span>${f.period2From} – ${f.period2To}</span></li>
-            <li><span>Доходы Δ:</span><span>${delta(inc1,inc2)}</span></li>
-            <li><span>Расходы Δ:</span><span>${delta(exp1,exp2)}</span></li>
-            <li><span>Прибыль Δ:</span><span>${delta(prof1,prof2)}</span></li>
-          </ul></div>`;
-      }
-
-      document.getElementById('tabBar').addEventListener('click', (e)=>{
-        if(e.target.classList.contains('tab')){
-          activeTab = e.target.dataset.tab;
-          renderTab();
+    function getTeacherPayouts() {
+      const payouts = {};
+      const salaryRelated = financeData.filter(r=>{
+        const cat = (r.category||'').toLowerCase();
+        return cat.includes('зп')||cat.includes('зарплат')||cat.includes('педагог');
+      });
+      const teachers = [...new Set(salaryData.map(d=>d.teacher_name))];
+      salaryRelated.forEach(r=>{
+        const amount = parseFloat(r.amount||0);
+        const cat = (r.category||'').toLowerCase();
+        let matched = null;
+        for(const t of teachers) if(cat.includes(t.toLowerCase())){ matched=t; break; }
+        if(!matched && teachers.length && cat.includes('педагог')) matched='общая';
+        if(matched && amount>0){
+          if(!payouts[matched]) payouts[matched]={total:0,items:[]};
+          payouts[matched].total += amount;
+          payouts[matched].items.push({date:r.operation_date, amount, category:r.category});
         }
       });
-      document.getElementById('homeBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
-      document.getElementById('logoutBtn').addEventListener('click', async ()=>{ await _supabase.auth.signOut(); window.location.href='login.html'; });
+      return payouts;
+    }
 
-      init();
-    })();
-  </script>
+    function renderSalary() {
+      const data = getSalaryFiltered();
+      const total = data.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const teachers = [...new Set(data.map(r=>r.teacher_name))];
+      const totalLessons = data.reduce((s,r)=>s+(r.quantity||0),0);
+      const indivLessons = data.filter(r=>(r.lesson_type||'').toLowerCase().includes('индив')).reduce((s,r)=>s+(r.quantity||0),0);
+      const groupLessons = data.filter(r=>(r.lesson_type||'').toLowerCase().includes('групп')).reduce((s,r)=>s+(r.quantity||0),0);
+      document.getElementById('salKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Фонд оплаты</span><span class="value">${total.toLocaleString()} ₽</span></div>
+        <div class="kpi-card"><span class="label">Педагогов</span><span class="value">${teachers.length}</span></div>
+        <div class="kpi-card"><span class="label">Всего уроков</span><span class="value">${totalLessons}</span></div>
+        <div class="kpi-card"><span class="label">Инд. / Групп.</span><span class="value">${indivLessons} / ${groupLessons}</span></div>`;
+      const byTeacher={}, byTeacherIndiv={}, byTeacherGroup={};
+      data.forEach(r=>{
+        byTeacher[r.teacher_name]=(byTeacher[r.teacher_name]||0)+parseFloat(r.amount||0);
+        if((r.lesson_type||'').toLowerCase().includes('индив')) byTeacherIndiv[r.teacher_name]=(byTeacherIndiv[r.teacher_name]||0)+parseFloat(r.amount||0);
+        if((r.lesson_type||'').toLowerCase().includes('групп')) byTeacherGroup[r.teacher_name]=(byTeacherGroup[r.teacher_name]||0)+parseFloat(r.amount||0);
+      });
+      const bySubject = {};
+      data.forEach(r=>{ bySubject[r.subject]=(bySubject[r.subject]||0)+parseFloat(r.amount||0); });
+      document.getElementById('salWidgets').innerHTML = `
+        <div class="widget-card"><h3>По педагогам (всего)</h3><ul class="widget-list">${Object.entries(byTeacher).sort(([,a],[,b])=>b-a).slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Индивидуальные</h3><ul class="widget-list">${Object.entries(byTeacherIndiv).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>Групповые</h3><ul class="widget-list">${Object.entries(byTeacherGroup).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>
+        <div class="widget-card"><h3>По предметам</h3><ul class="widget-list">${Object.entries(bySubject).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul></div>`;
+      const ratingData = teachers.map(name=>{
+        const indivQty=data.filter(r=>r.teacher_name===name&&(r.lesson_type||'').toLowerCase().includes('индив')).reduce((s,r)=>s+(r.quantity||0),0);
+        const groupQty=data.filter(r=>r.teacher_name===name&&(r.lesson_type||'').toLowerCase().includes('групп')).reduce((s,r)=>s+(r.quantity||0),0);
+        return {name, indivQty, groupQty, score: indivQty+groupQty*2, totalEarned: byTeacher[name]||0};
+      }).sort((a,b)=>b.score-a.score);
+      document.getElementById('salRating').innerHTML = `<h3 style="margin-bottom:1rem;">Рейтинг преподавателей <small style="color:var(--text-light); font-weight:400;">(групповые ×2)</small></h3>${ratingData.map((r,i)=>{
+        let cls='default', medal=i+1;
+        if(i===0){ cls='gold'; medal='1'; }else if(i===1){ cls='silver'; medal='2'; }else if(i===2){ cls='bronze'; medal='3'; }
+        return `<div class="rating-row"><div class="rating-pos ${cls}">${medal}</div><div style="flex:1;"><strong>${r.name}</strong><br><small style="color:var(--text-light);">Инд: ${r.indivQty} | Групп: ${r.groupQty} | Баллы: ${r.score}</small></div><div style="font-weight:700;">${r.totalEarned.toLocaleString()} ₽</div></div>`;
+      }).join('')}`;
+      const payouts = getTeacherPayouts();
+      document.getElementById('salPayoutWidgets').innerHTML = teachers.map(name=>{
+        const accrued = byTeacher[name]||0;
+        const paid = payouts[name]?.total||0;
+        const remaining = accrued - paid;
+        let statusClass='unpaid', statusText='Не выплачено';
+        if(paid>=accrued && accrued>0){ statusClass='paid'; statusText='Выплачено'; }
+        else if(paid>0 && paid<accrued){ statusClass='partial'; statusText='Частично'; }
+        return `<div class="widget-card"><h3>${name}</h3>
+          <div style="display:flex;justify-content:space-between;"><span>Начислено:</span><strong>${accrued.toLocaleString()} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Выплачено:</span><strong>${paid.toLocaleString()} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Остаток:</span><strong style="color:${remaining>0?'#c2410c':'#15803d'};">${remaining.toLocaleString()} ₽</strong></div>
+          <span class="payout-status ${statusClass}">${statusText}</span>
+          ${paid>0?`<div class="progress-container"><div class="progress-fill" style="width:${Math.min(100,(paid/accrued*100))}%;"></div></div>`:''}
+        </div>`;
+      }).join('');
+      document.getElementById('salTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.period||'full'}</td></tr>`).join('');
+    }
+
+    function getSalaryFiltered() {
+      let d = salaryData;
+      const f = filterState.salary;
+      if (!f.showSkipped) d = d.filter(r => !r.skipped);
+      if (f.name) d = d.filter(r => r.teacher_name === f.name);
+      if (f.subj) d = d.filter(r => r.subject === f.subj);
+      if (f.period !== 'full') d = d.filter(r => r.period === f.period);
+      return d;
+    }
+
+    // ==================== ЗП СОТРУДНИКОВ ====================
+    function staffHTML() {
+      const f = filterState.staff;
+      return `
+        <div class="filters">
+          <button class="btn ${f.period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
+          <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
+          <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
+        </div>
+        <div class="kpi-grid" id="staffKPI"></div>
+        <div class="widget-grid" id="staffWidgets"></div>
+        <div class="table-card" id="staffRawTable" style="display:block;">
+          <table><thead><tr><th>Сотрудник</th><th>Роль</th><th>Смен</th><th>Базовая ЗП</th><th>Бонус</th><th>Итого</th></tr></thead><tbody id="staffTableBody"></tbody></table>
+        </div>`;
+    }
+
+    function setupStaffListeners() {
+      ['staffPeriodFull','staffPeriod1','staffPeriod2'].forEach((id,i)=>{
+        document.getElementById(id).addEventListener('click', ()=>{
+          filterState.staff.period = ['full','1-15','16-31'][i];
+          document.querySelectorAll('#tabContent .filters .btn').forEach(b=>b.classList.remove('btn-primary'));
+          document.getElementById(id).classList.add('btn-primary');
+          renderStaff();
+        });
+      });
+    }
+
+    function renderStaff() {
+      const period = filterState.staff.period;
+      const now = new Date(); const y=now.getFullYear(), m=now.getMonth()+1;
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const dayRange = period==='1-15' ? [1,15] : period==='16-31' ? [16, daysInMonth] : [1, daysInMonth];
+      const staffEmps = employees.filter(e=>['Управляющий','Менеджер','Администратор'].includes(e.role));
+      const results = staffEmps.map(emp=>{
+        let worked=0, sales=0;
+        for(let d=dayRange[0]; d<=dayRange[1]; d++){
+          const key = `${emp.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[key];
+          if(!rec||rec.status!=='working') continue;
+          worked++;
+          if(emp.role==='Менеджер') sales += rec.daily_sales||0;
+        }
+        const params = salaryParams[emp.id]||{};
+        const rates = {'Менеджер':20000,'Администратор':25000,'Управляющий':50000};
+        const normDays = emp.role==='Менеджер'?Math.round(daysInMonth*0.5):(params.norm_days||22);
+        const dailyRate = (rates[emp.role]||0)/Math.max(normDays,1);
+        let base = dailyRate*worked, bonus=0;
+        if(emp.role==='Менеджер'){
+          const plan = params.plan_amount||0;
+          bonus = sales*((plan>0&&sales>=plan)?7:5)/100;
+        } else if(emp.role==='Администратор'){
+          const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
+            for(let d=dayRange[0]; d<=dayRange[1]; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
+            return sum;
+          },0);
+          bonus = ms*0.01;
+        } else if(emp.role==='Управляющий'){
+          const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
+            for(let d=dayRange[0]; d<=dayRange[1]; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
+            return sum;
+          },0);
+          bonus = (params.plan_amount>0&&ms>=params.plan_amount)?ms*0.01:0;
+        }
+        return { emp, worked, base, bonus, total:base+bonus, sales };
+      });
+      document.getElementById('staffKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Фонд оплаты</span><span class="value">${results.reduce((s,r)=>s+r.total,0).toLocaleString()} ₽</span></div>
+        <div class="kpi-card"><span class="label">Сотрудников</span><span class="value">${results.length}</span></div>
+        <div class="kpi-card"><span class="label">Всего смен</span><span class="value">${results.reduce((s,r)=>s+r.worked,0)}</span></div>`;
+      document.getElementById('staffWidgets').innerHTML = results.map(r=>`
+        <div class="widget-card"><h3>${r.emp.name} (${r.emp.role})</h3>
+          <div style="display:flex;justify-content:space-between;"><span>Смен:</span><strong>${r.worked}</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Базовая:</span><strong>${r.base.toFixed(0)} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Бонус:</span><strong>${r.bonus.toFixed(0)} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:1.1rem;margin-top:0.5rem;"><span>Итого:</span><strong style="color:#7c5ce7;">${r.total.toFixed(0)} ₽</strong></div>
+          ${r.emp.role==='Менеджер'?`<div style="display:flex;justify-content:space-between;"><span>Продажи:</span><strong>${r.sales.toLocaleString()} ₽</strong></div>`:''}
+        </div>`).join('');
+      document.getElementById('staffTableBody').innerHTML = results.map(r=>`<tr><td>${r.emp.name}</td><td>${r.emp.role}</td><td>${r.worked}</td><td>${r.base.toFixed(0)} ₽</td><td>${r.bonus.toFixed(0)} ₽</td><td><strong>${r.total.toFixed(0)} ₽</strong></td></tr>`).join('');
+    }
+
+    // ==================== ЛИДЫ ====================
+    function leadsHTML() {
+      return `
+        <div class="filters">
+          <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
+        </div>
+        <div class="kpi-grid" id="leadsKPI"></div>
+        <div class="table-card" id="leadsTable" style="display:block;">
+          <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Статус</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
+        </div>`;
+    }
+
+    function setupLeadsListeners() {
+      document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads);
+    }
+
+    async function uploadLeads() {
+      const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+      input.onchange = async (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, {type:'array'});
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+          const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата добавления'));
+          if(headerIdx===-1) { alert('Не найден заголовок'); return; }
+          const headers = rows[headerIdx].map(h=>String(h).trim());
+          const dateIdx = headers.findIndex(h=>h.toLowerCase().includes('дата добавления'));
+          const nameIdx = headers.findIndex(h=>h.toLowerCase().includes('наименование'));
+          const stageIdx = headers.findIndex(h=>h.toLowerCase().includes('этап'));
+          const sourceIdx = headers.findIndex(h=>h.toLowerCase().includes('источник'));
+          const parsed = [];
+          for(let i=headerIdx+1; i<rows.length; i++){
+            const cols=rows[i]; if(!cols || cols.length<2) continue;
+            const name = String(cols[nameIdx]||'').trim();
+            const isDuplicate = /8\.\s*Дубль/.test(name);
+            const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+            parsed.push({
+              date_added: cols[dateIdx] ? new Date(cols[dateIdx]).toISOString() : null,
+              name,
+              stage: String(cols[stageIdx]||'').trim(),
+              source: String(cols[sourceIdx]||'').trim(),
+              is_duplicate: isDuplicate,
+              is_bad_contact: isBadContact
+            });
+          }
+          await _supabase.from('leads').delete().neq('id',0);
+          await _supabase.from('leads').insert(parsed);
+          await loadLeads();
+          renderLeads();
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    }
+
+    function renderLeads() {
+      const allLeads = leadsData;
+      const badContacts = allLeads.filter(l=>l.is_bad_contact).length;
+      const duplicates = allLeads.filter(l=>l.is_duplicate).length;
+      const cleanLeads = allLeads.filter(l=>!l.is_duplicate && !l.is_bad_contact).length;
+      document.getElementById('leadsKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Всего лидов (чистых)</span><span class="value">${cleanLeads}</span></div>
+        <div class="kpi-card"><span class="label">Дублей</span><span class="value">${duplicates}</span></div>
+        <div class="kpi-card"><span class="label">Некорректные контакты</span><span class="value">${badContacts}</span></div>`;
+      document.getElementById('leadsTableBody').innerHTML = allLeads.map(l=>{
+        let status = '';
+        if(l.is_duplicate) status = '<span class="badge-overdue">Дубль</span>';
+        if(l.is_bad_contact) status = '<span class="badge-overdue">Некорр. контакты</span>';
+        return `<tr><td>${l.date_added ? new Date(l.date_added).toLocaleDateString('ru') : ''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${status}</td></tr>`;
+      }).join('');
+    }
+
+    // ==================== СРАВНЕНИЕ ====================
+    function compareHTML() {
+      const f = filterState.compare;
+      return `
+        <div class="filters">
+          <div><strong>Период 1</strong><br><input type="date" id="cmpP1From" value="${f.period1From||''}"> <input type="date" id="cmpP1To" value="${f.period1To||''}"></div>
+          <div><strong>Период 2</strong><br><input type="date" id="cmpP2From" value="${f.period2From||''}"> <input type="date" id="cmpP2To" value="${f.period2To||''}"></div>
+          <button class="btn btn-primary" id="cmpApplyBtn">Сравнить</button>
+        </div>
+        <div class="kpi-grid" id="cmpKPI"></div>
+        <div class="widget-grid" id="cmpWidgets"></div>`;
+    }
+
+    function setupCompareListeners() {
+      document.getElementById('cmpApplyBtn').addEventListener('click', ()=>{
+        filterState.compare.period1From = document.getElementById('cmpP1From')?.value||'';
+        filterState.compare.period1To = document.getElementById('cmpP1To')?.value||'';
+        filterState.compare.period2From = document.getElementById('cmpP2From')?.value||'';
+        filterState.compare.period2To = document.getElementById('cmpP2To')?.value||'';
+        renderCompare();
+      });
+    }
+
+    function renderCompare() {
+      const f = filterState.compare;
+      if(!f.period1From||!f.period1To||!f.period2From||!f.period2To) {
+        document.getElementById('cmpKPI').innerHTML = '<p>Выберите оба периода</p>';
+        return;
+      }
+      const p1 = financeData.filter(r=>r.operation_date>=f.period1From && r.operation_date<=f.period1To);
+      const p2 = financeData.filter(r=>r.operation_date>=f.period2From && r.operation_date<=f.period2To);
+      const inc1 = p1.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const exp1 = p1.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const inc2 = p2.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const exp2 = p2.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const prof1=inc1-exp1, prof2=inc2-exp2;
+      const delta = (v1,v2)=>v1===0?(v2>0?'+∞':'0%'):(((v2-v1)/Math.abs(v1)*100).toFixed(1)>0?'+':'')+((v2-v1)/Math.abs(v1)*100).toFixed(1)+'%';
+      document.getElementById('cmpKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Доходы П1 / П2</span><span class="value">${inc1.toLocaleString()} / ${inc2.toLocaleString()} ₽</span><span>${delta(inc1,inc2)}</span></div>
+        <div class="kpi-card"><span class="label">Расходы П1 / П2</span><span class="value">${exp1.toLocaleString()} / ${exp2.toLocaleString()} ₽</span><span>${delta(exp1,exp2)}</span></div>
+        <div class="kpi-card"><span class="label">Прибыль П1 / П2</span><span class="value">${prof1.toLocaleString()} / ${prof2.toLocaleString()} ₽</span><span>${delta(prof1,prof2)}</span></div>
+        <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${inc1?((prof1)/inc1*100).toFixed(1):0}% / ${inc2?((prof2)/inc2*100).toFixed(1):0}%</span></div>`;
+      const tNames = [...new Set(salaryData.map(d=>d.teacher_name))];
+      const teachComp = tNames.map(name=>{
+        const s1 = salaryData.filter(r=>r.teacher_name===name).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+        return {name, amount:s1};
+      }).sort((a,b)=>b.amount-a.amount).slice(0,8);
+      document.getElementById('cmpWidgets').innerHTML = `
+        <div class="widget-card"><h3>Топ педагогов (общий)</h3><ul class="widget-list">${teachComp.map(t=>`<li><span>${t.name}</span><span>${t.amount.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+        <div class="widget-card"><h3>Сводка</h3><ul class="widget-list">
+          <li><span>Период 1:</span><span>${f.period1From} – ${f.period1To}</span></li>
+          <li><span>Период 2:</span><span>${f.period2From} – ${f.period2To}</span></li>
+          <li><span>Доходы Δ:</span><span>${delta(inc1,inc2)}</span></li>
+          <li><span>Расходы Δ:</span><span>${delta(exp1,exp2)}</span></li>
+          <li><span>Прибыль Δ:</span><span>${delta(prof1,prof2)}</span></li>
+        </ul></div>`;
+    }
+
+    document.getElementById('tabBar').addEventListener('click', (e)=>{
+      if(e.target.classList.contains('tab')){
+        activeTab = e.target.dataset.tab;
+        renderTab();
+      }
+    });
+    document.getElementById('homeBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
+    document.getElementById('logoutBtn').addEventListener('click', async ()=>{ await _supabase.auth.signOut(); window.location.href='login.html'; });
+
+    init();
+  })();
+</script>
 </body>
 </html>
