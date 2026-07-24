@@ -98,6 +98,22 @@
         .kpi-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
         .kpi-label { font-size:13px; font-weight:500; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; }
         .kpi-value { font-size:34px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary); line-height:1; }
+        .widget-row {
+            display:grid; grid-template-columns:repeat(auto-fit, minmax(400px,1fr)); gap:var(--space-6);
+        }
+        .widget-card {
+            background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
+            border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
+            position:relative; height:fit-content;
+        }
+        .widget-card:hover { transform:translateY(-1px); box-shadow:var(--shadow-lg); }
+        .widget-title {
+            font-size:13px; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em;
+            margin-bottom:var(--space-5); display:flex; align-items:center; gap:var(--space-2);
+        }
+        .widget-list { list-style:none; display:flex; flex-direction:column; gap:var(--space-3); }
+        .widget-list li { display:flex; justify-content:space-between; align-items:center; font-size:15px; padding:var(--space-2) 0; border-bottom:1px solid rgba(0,0,0,0.03); }
+        .widget-list li span:last-child { font-weight:550; color:var(--text-primary); }
         .table-container {
             background:var(--surface); border-radius:var(--radius-xl); border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden;
         }
@@ -106,12 +122,11 @@
         td { padding:var(--space-4) var(--space-6); border-bottom:1px solid rgba(0,0,0,0.03); color:var(--text-primary); }
         tr:last-child td { border-bottom:none; }
         tr:hover td { background:rgba(0,0,0,0.01); }
-        .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:12px; font-weight:550; background:#FEF3C7; color:#D97706; }
-        .badge.red { background:#FEE2E2; color:#DC2626; }
         @media(max-width:900px) {
             .sidebar{display:none}
             .main{margin-left:0;padding:var(--space-4)}
             .kpi-row{grid-template-columns:repeat(2,1fr)}
+            .widget-row{grid-template-columns:1fr}
         }
     </style>
 </head>
@@ -134,6 +149,10 @@
         <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
     </div>
     <div class="kpi-row" id="leadsKPI"></div>
+    <div class="widget-row">
+        <div class="widget-card" id="stageWidget"><div class="widget-title">По этапам</div><div id="stageContent"></div></div>
+        <div class="widget-card" id="sourceWidget"><div class="widget-title">По источникам</div><div id="sourceContent"></div></div>
+    </div>
     <div class="table-container">
         <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Статус</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
     </div>
@@ -146,16 +165,17 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
-    let leadsData = [];
+    let leadsData = [], financeData = [];
 
     async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
-        await loadLeads();
-        renderLeads();
+        await Promise.all([loadLeads(), loadFinance()]);
+        renderAll();
     }
 
     async function loadLeads() { const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false }); leadsData = data || []; }
+    async function loadFinance() { const { data } = await _supabase.from('crm_finance').select('*'); financeData = data || []; }
 
     function setupLeadsListeners() { document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads); }
 
@@ -229,7 +249,7 @@
                     return;
                 }
                 await loadLeads();
-                renderLeads();
+                renderAll();
                 alert('Лиды загружены (' + parsed.length + ' записей)');
             };
             reader.readAsArrayBuffer(file);
@@ -237,38 +257,69 @@
         input.click();
     }
 
-    function renderLeads() {
-        const all = leadsData;
-        const hasFlags = all.length > 0 && all[0].hasOwnProperty('is_duplicate');
-        let clean = 0, dup = 0, bad = 0;
-        all.forEach(l => {
-            let isDup, isBad;
-            if (hasFlags) {
-                isDup = l.is_duplicate;
-                isBad = l.is_bad_contact;
-            } else {
-                isDup = /8\.\s*Дубль/.test(l.name);
-                isBad = /13\.\s*Некорректные\s*контакты/.test(l.name);
-            }
-            if (isDup) dup++;
-            else if (isBad) bad++;
-            else clean++;
+    function renderAll() {
+        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact); // чистые лиды
+        const total = all.length;
+        const successStage = all.filter(l => l.stage.includes('ПУ состоялся'));
+        const successCount = successStage.length;
+        const conversion = total > 0 ? (successCount / total * 100).toFixed(1) : 0;
+        const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
+        const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
+
+        // Связь с финансами: ищем доходы, где клиент совпадает с именем лида (для успешных)
+        const clientMap = new Map();
+        financeData.forEach(f => {
+            const clientName = (f.client || '').trim();
+            if (clientName) clientMap.set(clientName.toLowerCase(), (clientMap.get(clientName.toLowerCase()) || 0) + parseFloat(f.amount||0));
         });
+        let revenue = 0;
+        let salesCount = 0;
+        successStage.forEach(l => {
+            const key = l.name.trim().toLowerCase();
+            if (clientMap.has(key)) {
+                revenue += clientMap.get(key);
+                salesCount++;
+            }
+        });
+        const avgCheck = salesCount > 0 ? (revenue / salesCount).toFixed(0) : 0;
+        const salesConversion = total > 0 ? (salesCount / total * 100).toFixed(1) : 0;
+
         document.getElementById('leadsKPI').innerHTML = `
-            <div class="kpi-card"><span class="kpi-label">Чистых</span><span class="kpi-value">${clean}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Дублей</span><span class="kpi-value">${dup}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Некорр.</span><span class="kpi-value">${bad}</span></div>`;
-        document.getElementById('leadsTableBody').innerHTML = all.map(l=>{
-            let status = '';
-            const isDup = hasFlags ? l.is_duplicate : /8\.\s*Дубль/.test(l.name);
-            const isBad = hasFlags ? l.is_bad_contact : /13\.\s*Некорректные\s*контакты/.test(l.name);
-            if (isDup) status = '<span class="badge">Дубль</span>';
-            if (isBad) status = '<span class="badge red">Некорр. контакты</span>';
-            return `<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${status}</td></tr>`;
-        }).join('');
-        if (!hasFlags) {
-            alert('Внимание: колонки is_duplicate и is_bad_contact отсутствуют в таблице leads. Данные отображаются на основе текста имени. Выполните SQL для добавления колонок, чтобы сохранять статус постоянно.');
-        }
+            <div class="kpi-card"><span class="kpi-label">Всего лидов</span><span class="kpi-value">${total}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Успешных (ПУ)</span><span class="kpi-value">${successCount}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Конверсия в ПУ</span><span class="kpi-value">${conversion}%</span></div>
+            <div class="kpi-card"><span class="kpi-label">Не разобрано</span><span class="kpi-value">${notProcessed}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Отказы до ПУ</span><span class="kpi-value">${rejectBefore}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Выручка по лидам</span><span class="kpi-value">${revenue.toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Продаж</span><span class="kpi-value">${salesCount}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Средний чек</span><span class="kpi-value">${avgCheck} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Конв. в продажу</span><span class="kpi-value">${salesConversion}%</span></div>
+        `;
+
+        // По этапам
+        const stageGroups = {};
+        all.forEach(l => {
+            const s = l.stage || '—';
+            stageGroups[s] = (stageGroups[s] || 0) + 1;
+        });
+        const stageSorted = Object.entries(stageGroups).sort((a,b) => b[1] - a[1]);
+        document.getElementById('stageContent').innerHTML = `<table>${stageSorted.map(([s,c]) => `<tr><td>${s}</td><td>${c}</td></tr>`).join('')}</table>`;
+
+        // По источникам
+        const sourceGroups = {};
+        all.forEach(l => {
+            const src = l.source || 'Не указан';
+            if (!sourceGroups[src]) sourceGroups[src] = { total: 0, success: 0 };
+            sourceGroups[src].total++;
+            if (l.stage.includes('ПУ состоялся')) sourceGroups[src].success++;
+        });
+        const sourceSorted = Object.entries(sourceGroups).sort((a,b) => b[1].total - a[1].total);
+        document.getElementById('sourceContent').innerHTML = `<table><thead><tr><th>Источник</th><th>Всего</th><th>Успешных</th><th>Конв.</th></tr></thead><tbody>
+            ${sourceSorted.map(([src, data]) => `<tr><td>${src}</td><td>${data.total}</td><td>${data.success}</td><td>${data.total>0?(data.success/data.total*100).toFixed(1):0}%</td></tr>`).join('')}
+        </tbody></table>`;
+
+        // Таблица лидов
+        document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
     }
 
     document.getElementById('homeSidebarBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
