@@ -318,6 +318,10 @@
                 const payTypeIdx = headers.findIndex(h=>h.includes('тип платежа'));
                 let manIdx = headers.findIndex(h=>h.includes('менеджер (фамилия имя)') || h.includes('менеджер(фамилия имя)'));
                 if (manIdx === -1) manIdx = headers.findIndex(h=>h.includes('менеджер') && !h.includes('ответственный'));
+
+                // НОВОЕ: парсим столбец «Клиент»
+                const clientIdx = headers.findIndex(h=>h === 'клиент' || h.startsWith('клиент'));
+
                 const parsed = [];
                 for(let i=headerIdx+1; i<rows.length; i++){
                     const cols=rows[i]; if(!cols) continue;
@@ -330,7 +334,8 @@
                         category: String(cols[catIdx]||'').trim(),
                         account: accIdx!==-1 ? String(cols[accIdx]||'').trim() : '',
                         payment_type: payTypeIdx!==-1 ? String(cols[payTypeIdx]||'').trim() : '',
-                        manager: manIdx!==-1 ? String(cols[manIdx]||'').trim() : ''
+                        manager: manIdx!==-1 ? String(cols[manIdx]||'').trim() : '',
+                        client: clientIdx!==-1 ? String(cols[clientIdx]||'').trim() : ''
                     });
                 }
                 await _supabase.from('crm_finance').delete().neq('id',0);
