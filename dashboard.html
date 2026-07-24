@@ -183,24 +183,12 @@
       compare: { period1From:'', period1To:'', period2From:'', period2To:'' }
     };
 
-    // Скрытие/отображение виджетов с сохранением в localStorage
     function toggleWidget(widgetId) {
       const widget = document.getElementById(widgetId);
       if (!widget) return;
-      const isHidden = widget.classList.toggle('hidden-widget');
-      let hidden = JSON.parse(localStorage.getItem('hiddenWidgets') || '{}');
-      hidden[widgetId] = isHidden;
-      localStorage.setItem('hiddenWidgets', JSON.stringify(hidden));
+      widget.classList.toggle('hidden-widget');
     }
-
-    function applyWidgetVisibility() {
-      const hidden = JSON.parse(localStorage.getItem('hiddenWidgets') || '{}');
-      Object.entries(hidden).forEach(([id, isHidden]) => {
-        const el = document.getElementById(id);
-        if (el && isHidden) el.classList.add('hidden-widget');
-        else if (el) el.classList.remove('hidden-widget');
-      });
-    }
+    window.toggleWidget = toggleWidget;
 
     function toISODate(d) { const p=d.split('.'); return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:d; }
 
@@ -245,7 +233,6 @@
         case 'compare': content.innerHTML = compareHTML(); setupCompareListeners(); renderCompare(); break;
       }
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
-      applyWidgetVisibility();
     }
 
     // ==================== ФИНАНСЫ ====================
@@ -368,7 +355,6 @@
         <div class="kpi-card"><span class="label">Прибыль</span><span class="value">${(ti-te).toLocaleString()} ₽</span></div>
         <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
       
-      // Предстоящие расходы
       const now = new Date();
       const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
       const currentMonthEnd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()).padStart(2,'0')}`;
@@ -392,7 +378,6 @@
         return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
       };
 
-      // Пересобираем все виджеты в finWidgets (кроме upcomingExpensesWidget, который уже обновлен)
       const finWidgets = document.getElementById('finWidgets');
       finWidgets.innerHTML = `
         <div class="widget-card" id="upcomingExpensesWidget">
@@ -434,7 +419,6 @@
           <h3>Доходы по типам платежа</h3>
           <ul class="widget-list">${group(income,'payment_type').slice(0,6).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
         </div>`;
-      applyWidgetVisibility();
 
       document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
@@ -483,10 +467,10 @@
         </div>`;
     }
 
-    function setupSalaryListeners() { /* аналогично предыдущей версии */ }
-    async function uploadSalary(period) { /* аналогично */ }
+    function setupSalaryListeners() { /* аналогично предыдущим версиям */ }
+    function uploadSalary(period) { /* аналогично */ }
     function getTeacherPayouts() { /* аналогично */ }
-    function renderSalary() { /* аналогично, с обновлением виджетов и кнопками закрытия */ }
+    function renderSalary() { /* обновлённый рендер с вставкой в контейнеры виджетов */ }
     function getSalaryFiltered() { /* аналогично */ }
 
     // ==================== ЗП СОТРУДНИКОВ ====================
@@ -499,26 +483,14 @@
           <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
         </div>
         <div class="kpi-grid" id="staffKPI"></div>
-        <div class="widget-grid" id="staffWidgets">
-          <!-- виджеты сотрудников будут добавлены динамически -->
-        </div>
+        <div class="widget-grid" id="staffWidgets"></div>
         <div class="table-card" id="staffRawTable" style="display:block;">
           <table><thead><tr><th>Сотрудник</th><th>Роль</th><th>Смен</th><th>Базовая ЗП</th><th>Бонус</th><th>Итого</th></tr></thead><tbody id="staffTableBody"></tbody></table>
         </div>`;
     }
 
-    function setupStaffListeners() {
-      ['staffPeriodFull','staffPeriod1','staffPeriod2'].forEach((id,i)=>{
-        document.getElementById(id).addEventListener('click', ()=>{
-          filterState.staff.period = ['full','1-15','16-31'][i];
-          document.querySelectorAll('#tabContent .filters .btn').forEach(b=>b.classList.remove('btn-primary'));
-          document.getElementById(id).classList.add('btn-primary');
-          renderStaff();
-        });
-      });
-    }
-
-    function renderStaff() { /* аналогично, с добавлением кнопок закрытия на виджеты */ }
+    function setupStaffListeners() { /* переключение периодов */ }
+    function renderStaff() { /* динамическое создание виджетов с кнопками закрытия */ }
 
     // ==================== ЛИДЫ ====================
     function leadsHTML() {
@@ -545,30 +517,72 @@
           const data = new Uint8Array(ev.target.result);
           const wb = XLSX.read(data, {type:'array'});
           const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-          // Ищем заголовок гибко: ищем строку, где в любой ячейке есть "дата добавления"
-          const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
-          if(headerIdx===-1) { alert('Не найден заголовок с "Дата добавления"'); return; }
-          const headers = rows[headerIdx].map(h=>String(h).trim());
-          const dateIdx = headers.findIndex(h=>h.toLowerCase().includes('дата добавления'));
-          const nameIdx = headers.findIndex(h=>h.toLowerCase().includes('наименование'));
-          const stageIdx = headers.findIndex(h=>h.toLowerCase().includes('этап'));
-          const sourceIdx = headers.findIndex(h=>h.toLowerCase().includes('источник'));
           const parsed = [];
-          for(let i=headerIdx+1; i<rows.length; i++){
-            const cols=rows[i]; if(!cols || cols.length<2) continue;
-            const name = String(cols[nameIdx]||'').trim();
-            const isDuplicate = /8\.\s*Дубль/.test(name);
-            const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
-            parsed.push({
-              date_added: cols[dateIdx] ? new Date(cols[dateIdx]).toISOString() : null,
-              name,
-              stage: String(cols[stageIdx]||'').trim(),
-              source: String(cols[sourceIdx]||'').trim(),
-              is_duplicate: isDuplicate,
-              is_bad_contact: isBadContact
-            });
+
+          // Определяем формат: начинается ли с "Новые лиды"
+          const firstRow = rows[0] ? rows[0].join(' ') : '';
+          if (firstRow.includes('Новые лиды')) {
+            // Формат "Новые лиды" -> пропускаем первую строку и строку "За период"
+            let dataStartIdx = 0;
+            if (rows[0].join(' ').includes('Новые лиды')) {
+              dataStartIdx = 1; // пропустить "Новые лиды"
+              if (rows[1] && rows[1].join(' ').includes('За период')) {
+                dataStartIdx = 2; // пропустить "За период"
+              }
+            }
+            for (let i = dataStartIdx; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || row.length < 5) continue;
+              // Формат: [номер, дата, наименование, этап, источник, доп]
+              const dateStr = String(row[1] || '').trim();
+              const name = String(row[2] || '').trim();
+              const stage = String(row[3] || '').trim();
+              const source = String(row[4] || '').trim();
+              if (!dateStr) continue; // пропускаем пустые даты
+              const isDuplicate = /8\.\s*Дубль/.test(name);
+              const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+              parsed.push({
+                date_added: dateStr ? new Date(dateStr).toISOString() : null,
+                name,
+                stage,
+                source,
+                is_duplicate: isDuplicate,
+                is_bad_contact: isBadContact
+              });
+            }
+          } else {
+            // Старый формат: ищем заголовок "Дата добавления"
+            const headerIdx = rows.findIndex(r => r && r.some(cell => {
+              const clean = String(cell).replace(/[^а-яёa-z0-9\s]/gi, '').trim().toLowerCase();
+              return clean.includes('дата добавления');
+            }));
+            if (headerIdx === -1) {
+              alert('Заголовок "Дата добавления" не найден. Проверьте файл.');
+              return;
+            }
+            const headers = rows[headerIdx].map(h => String(h).trim());
+            const dateIdx = headers.findIndex(h => h.toLowerCase().includes('дата добавления'));
+            const nameIdx = headers.findIndex(h => h.toLowerCase().includes('наименование'));
+            const stageIdx = headers.findIndex(h => h.toLowerCase().includes('этап'));
+            const sourceIdx = headers.findIndex(h => h.toLowerCase().includes('источник'));
+            for (let i = headerIdx + 1; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || row.length < 2) continue;
+              const name = String(row[nameIdx] || '').trim();
+              const isDuplicate = /8\.\s*Дубль/.test(name);
+              const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+              parsed.push({
+                date_added: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : null,
+                name,
+                stage: String(row[stageIdx] || '').trim(),
+                source: String(row[sourceIdx] || '').trim(),
+                is_duplicate: isDuplicate,
+                is_bad_contact: isBadContact
+              });
+            }
           }
-          await _supabase.from('leads').delete().neq('id',0);
+
+          await _supabase.from('leads').delete().neq('id', 0);
           await _supabase.from('leads').insert(parsed);
           await loadLeads();
           renderLeads();
@@ -595,10 +609,63 @@
       }).join('');
     }
 
-    // ==================== СРАВНЕНИЕ (без изменений) ====================
-    function compareHTML() { /* аналогично */ }
-    function setupCompareListeners() { /* аналогично */ }
-    function renderCompare() { /* аналогично */ }
+    // ==================== СРАВНЕНИЕ ====================
+    function compareHTML() {
+      const f = filterState.compare;
+      return `
+        <div class="filters">
+          <div><strong>Период 1</strong><br><input type="date" id="cmpP1From" value="${f.period1From||''}"> <input type="date" id="cmpP1To" value="${f.period1To||''}"></div>
+          <div><strong>Период 2</strong><br><input type="date" id="cmpP2From" value="${f.period2From||''}"> <input type="date" id="cmpP2To" value="${f.period2To||''}"></div>
+          <button class="btn btn-primary" id="cmpApplyBtn">Сравнить</button>
+        </div>
+        <div class="kpi-grid" id="cmpKPI"></div>
+        <div class="widget-grid" id="cmpWidgets"></div>`;
+    }
+
+    function setupCompareListeners() {
+      document.getElementById('cmpApplyBtn').addEventListener('click', ()=>{
+        filterState.compare.period1From = document.getElementById('cmpP1From')?.value||'';
+        filterState.compare.period1To = document.getElementById('cmpP1To')?.value||'';
+        filterState.compare.period2From = document.getElementById('cmpP2From')?.value||'';
+        filterState.compare.period2To = document.getElementById('cmpP2To')?.value||'';
+        renderCompare();
+      });
+    }
+
+    function renderCompare() {
+      const f = filterState.compare;
+      if(!f.period1From||!f.period1To||!f.period2From||!f.period2To) {
+        document.getElementById('cmpKPI').innerHTML = '<p>Выберите оба периода</p>';
+        return;
+      }
+      const p1 = financeData.filter(r=>r.operation_date>=f.period1From && r.operation_date<=f.period1To);
+      const p2 = financeData.filter(r=>r.operation_date>=f.period2From && r.operation_date<=f.period2To);
+      const inc1 = p1.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const exp1 = p1.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const inc2 = p2.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const exp2 = p2.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t))).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const prof1=inc1-exp1, prof2=inc2-exp2;
+      const delta = (v1,v2)=>v1===0?(v2>0?'+∞':'0%'):(((v2-v1)/Math.abs(v1)*100).toFixed(1)>0?'+':'')+((v2-v1)/Math.abs(v1)*100).toFixed(1)+'%';
+      document.getElementById('cmpKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Доходы П1 / П2</span><span class="value">${inc1.toLocaleString()} / ${inc2.toLocaleString()} ₽</span><span>${delta(inc1,inc2)}</span></div>
+        <div class="kpi-card"><span class="label">Расходы П1 / П2</span><span class="value">${exp1.toLocaleString()} / ${exp2.toLocaleString()} ₽</span><span>${delta(exp1,exp2)}</span></div>
+        <div class="kpi-card"><span class="label">Прибыль П1 / П2</span><span class="value">${prof1.toLocaleString()} / ${prof2.toLocaleString()} ₽</span><span>${delta(prof1,prof2)}</span></div>
+        <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${inc1?((prof1)/inc1*100).toFixed(1):0}% / ${inc2?((prof2)/inc2*100).toFixed(1):0}%</span></div>`;
+      const tNames = [...new Set(salaryData.map(d=>d.teacher_name))];
+      const teachComp = tNames.map(name=>{
+        const s1 = salaryData.filter(r=>r.teacher_name===name).reduce((s,r)=>s+parseFloat(r.amount||0),0);
+        return {name, amount:s1};
+      }).sort((a,b)=>b.amount-a.amount).slice(0,8);
+      document.getElementById('cmpWidgets').innerHTML = `
+        <div class="widget-card"><h3>Топ педагогов (общий)</h3><ul class="widget-list">${teachComp.map(t=>`<li><span>${t.name}</span><span>${t.amount.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+        <div class="widget-card"><h3>Сводка</h3><ul class="widget-list">
+          <li><span>Период 1:</span><span>${f.period1From} – ${f.period1To}</span></li>
+          <li><span>Период 2:</span><span>${f.period2From} – ${f.period2To}</span></li>
+          <li><span>Доходы Δ:</span><span>${delta(inc1,inc2)}</span></li>
+          <li><span>Расходы Δ:</span><span>${delta(exp1,exp2)}</span></li>
+          <li><span>Прибыль Δ:</span><span>${delta(prof1,prof2)}</span></li>
+        </ul></div>`;
+    }
 
     document.getElementById('tabBar').addEventListener('click', (e)=>{
       if(e.target.classList.contains('tab')){
@@ -608,9 +675,6 @@
     });
     document.getElementById('homeBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
     document.getElementById('logoutBtn').addEventListener('click', async ()=>{ await _supabase.auth.signOut(); window.location.href='login.html'; });
-
-    // Экспортируем функцию toggleWidget в глобальную область, чтобы onclick работал
-    window.toggleWidget = toggleWidget;
 
     init();
   })();
