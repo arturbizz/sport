@@ -11,7 +11,7 @@
         :root {
             --bg: #F8F9FC;
             --surface: #ffffff;
-            --border: rgba(0, 0, 0, 0.04);
+            --border: rgba(0,0,0,0.04);
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.02),0 1px 2px rgba(0,0,0,0.03);
             --shadow-md: 0 4px 12px rgba(0,0,0,0.04),0 2px 4px rgba(0,0,0,0.02);
             --shadow-lg: 0 12px 32px rgba(0,0,0,0.06),0 4px 8px rgba(0,0,0,0.03);
@@ -20,19 +20,8 @@
             --text-tertiary: #94A3B8;
             --accent: #7C3AED;
             --accent-light: #EDE9FE;
-            --radius-xl: 24px;
-            --radius-lg: 20px;
-            --radius-md: 16px;
-            --radius-sm: 12px;
-            --radius-xs: 8px;
-            --space-2: 8px;
-            --space-3: 12px;
-            --space-4: 16px;
-            --space-5: 20px;
-            --space-6: 24px;
-            --space-8: 32px;
-            --space-10: 40px;
-            --space-12: 48px;
+            --radius-xl: 24px; --radius-lg: 20px; --radius-md: 16px; --radius-sm: 12px; --radius-xs: 8px;
+            --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
             --sidebar-width: 80px;
             --transition-base: 250ms cubic-bezier(0.2,0.8,0.2,1);
         }
@@ -51,9 +40,7 @@
             overflow-x:hidden;
         }
         input,select,textarea { cursor:default; caret-color:transparent; }
-        .ambient-blob {
-            position:fixed; border-radius:50%; filter:blur(120px); opacity:0.07; pointer-events:none; z-index:0;
-        }
+        .ambient-blob { position:fixed; border-radius:50%; filter:blur(120px); opacity:0.07; pointer-events:none; z-index:0; }
         .ambient-blob.top-right { width:600px; height:600px; background:#7C3AED; top:-200px; right:-200px; }
         .ambient-blob.bottom-left { width:500px; height:500px; background:#2563EB; bottom:-150px; left:-150px; }
         .sidebar {
@@ -191,7 +178,6 @@
         <button class="tab active" data-tab="finance">Финансы</button>
         <button class="tab" data-tab="salary">ЗП педагоги</button>
         <button class="tab" data-tab="staff">ЗП сотрудники</button>
-        <button class="tab" data-tab="leads">Лиды</button>
         <button class="tab" data-tab="compare">Сравнение</button>
     </div>
     <div class="content-area" id="tabContent"></div>
@@ -204,7 +190,7 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
-    let currentUserEmail, financeData=[], salaryData=[], employees=[], worklog={}, salaryParams={}, expensesData=[], leadsData=[];
+    let currentUserEmail, financeData=[], salaryData=[], employees=[], worklog={}, salaryParams={}, expensesData=[];
     let activeTab = 'finance';
     let staffYear = new Date().getFullYear();
     let staffMonth = new Date().getMonth() + 1;
@@ -214,7 +200,6 @@
         finance: { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false },
         salary: { name:'', subj:'', showSkipped:false, period:'full' },
         staff: { period:'full' },
-        leads: {},
         compare: { period1From:'', period1To:'', period2From:'', period2To:'' }
     };
 
@@ -224,7 +209,7 @@
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
         currentUserEmail = session.user.email;
-        await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(staffYear, staffMonth), loadSalaryParams(), loadExpenses(), loadLeads()]);
+        await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(staffYear, staffMonth), loadSalaryParams(), loadExpenses()]);
         const now = new Date();
         filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
         const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
@@ -248,7 +233,6 @@
         salaryParams = {}; (data||[]).forEach(r=>{ salaryParams[r.emp_id] = r; });
     }
     async function loadExpenses() { const { data } = await _supabase.from('expenses').select('*').eq('paid', false); expensesData = data || []; }
-    async function loadLeads() { const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false }); leadsData = data || []; }
 
     function renderTab() {
         const content = document.getElementById('tabContent');
@@ -256,13 +240,12 @@
             case 'finance': content.innerHTML = financeHTML(); setupFinanceListeners(); renderFinance(); break;
             case 'salary': content.innerHTML = salaryHTML(); setupSalaryListeners(); renderSalary(); break;
             case 'staff': content.innerHTML = staffHTML(); setupStaffListeners(); renderStaff(); break;
-            case 'leads': content.innerHTML = leadsHTML(); setupLeadsListeners(); renderLeads(); break;
             case 'compare': content.innerHTML = compareHTML(); setupCompareListeners(); renderCompare(); break;
         }
         document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
     }
 
-    // ==================== ФИНАНСЫ (с диагностикой менеджера) ====================
+    // ==================== ФИНАНСЫ ====================
     function financeHTML() {
         const f = filterState.finance;
         const types = [...new Set(financeData.map(d=>d.operation_type).filter(Boolean))].sort();
@@ -335,14 +318,6 @@
                 const payTypeIdx = headers.findIndex(h=>h.includes('тип платежа'));
                 let manIdx = headers.findIndex(h=>h.includes('менеджер (фамилия имя)') || h.includes('менеджер(фамилия имя)'));
                 if (manIdx === -1) manIdx = headers.findIndex(h=>h.includes('менеджер') && !h.includes('ответственный'));
-                
-                // ДИАГНОСТИКА
-                if (manIdx !== -1) {
-                    alert('✅ Столбец менеджера определён как: «' + headers[manIdx] + '» (индекс ' + manIdx + ')');
-                } else {
-                    alert('⚠️ Столбец менеджера не найден! Проверьте заголовки файла. Менеджер будет пустым.');
-                }
-
                 const parsed = [];
                 for(let i=headerIdx+1; i<rows.length; i++){
                     const cols=rows[i]; if(!cols) continue;
@@ -409,7 +384,7 @@
         document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
 
-    // ==================== ЗП ПЕДАГОГОВ (исправлена подсветка) ====================
+    // ==================== ЗП ПЕДАГОГОВ ====================
     function salaryHTML() {
         const f = filterState.salary;
         const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
@@ -701,103 +676,6 @@
                 ${r.emp.role==='Менеджер'?`<div style="display:flex;justify-content:space-between;"><span>Продажи:</span><strong>${r.sales.toLocaleString()} ₽</strong></div>`:''}
             </div>`).join('');
         document.getElementById('staffTableBody').innerHTML = results.map(r=>`<tr><td>${r.emp.name}</td><td>${r.emp.role}</td><td>${r.worked}</td><td>${r.base.toFixed(0)} ₽</td><td>${r.bonus.toFixed(0)} ₽</td><td><strong>${r.total.toFixed(0)} ₽</strong></td></tr>`).join('');
-    }
-
-    // ==================== ЛИДЫ ====================
-    function leadsHTML() {
-        return `
-        <div class="filters-row">
-            <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
-        </div>
-        <div class="kpi-row" id="leadsKPI"></div>
-        <div class="table-container">
-            <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Статус</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
-        </div>`;
-    }
-
-    function setupLeadsListeners() { document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads); }
-
-    async function uploadLeads() {
-        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
-        input.onchange = async (e) => {
-            const file = e.target.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = async (ev) => {
-                const data = new Uint8Array(ev.target.result);
-                const wb = XLSX.read(data, {type:'array'});
-                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                const parsed = [];
-                const firstRow = rows[0] ? rows[0].join(' ') : '';
-                if (firstRow.toLowerCase().includes('новые лиды')) {
-                    let dataStartIdx = 0;
-                    for (let i = 0; i < rows.length; i++) {
-                        const rowStr = rows[i] ? rows[i].join(' ') : '';
-                        if (rowStr.toLowerCase().includes('новые лиды')) continue;
-                        if (rowStr.toLowerCase().includes('за период')) { dataStartIdx = i + 1; break; }
-                    }
-                    for (let i = dataStartIdx; i < rows.length; i++) {
-                        const row = rows[i];
-                        if (!row || row.length < 4) continue;
-                        const dateStr = String(row[1] || '').trim();
-                        const name = String(row[2] || '').trim();
-                        const stage = String(row[3] || '').trim();
-                        const source = String(row[4] || '').trim();
-                        if (!dateStr) continue;
-                        const parts = dateStr.split(' ');
-                        const datePart = parts[0];
-                        const timePart = parts[1] || '00:00';
-                        const [day, month, year] = datePart.split('.').map(Number);
-                        const [hours, minutes] = timePart.split(':').map(Number);
-                        const validDate = new Date(year, month - 1, day, hours || 0, minutes || 0);
-                        const isDuplicate = /8\.\s*Дубль/.test(name);
-                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
-                        parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDuplicate, is_bad_contact: isBadContact });
-                    }
-                } else {
-                    const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
-                    if (headerIdx === -1) { alert('Не удалось определить формат файла.'); return; }
-                    const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
-                    const dateIdx = headers.findIndex(h => h.includes('дата добавления'));
-                    const nameIdx = headers.findIndex(h => h.includes('наименование'));
-                    const stageIdx = headers.findIndex(h => h.includes('этап'));
-                    const sourceIdx = headers.findIndex(h => h.includes('источник'));
-                    for (let i = headerIdx + 1; i < rows.length; i++) {
-                        const row = rows[i]; if (!row || row.length < 2) continue;
-                        const name = String(row[nameIdx] || '').trim();
-                        const isDuplicate = /8\.\s*Дубль/.test(name);
-                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
-                        parsed.push({
-                            date_added: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : null,
-                            name,
-                            stage: String(row[stageIdx] || '').trim(),
-                            source: String(row[sourceIdx] || '').trim(),
-                            is_duplicate: isDuplicate,
-                            is_bad_contact: isBadContact
-                        });
-                    }
-                }
-                if (parsed.length === 0) {
-                    alert('Файл прочитан, но не найдено ни одной записи. Проверьте столбцы.');
-                    return;
-                }
-                await _supabase.from('leads').delete().neq('id', 0);
-                await _supabase.from('leads').insert(parsed);
-                await loadLeads();
-                renderLeads();
-                alert('Лиды загружены (' + parsed.length + ' записей)');
-            };
-            reader.readAsArrayBuffer(file);
-        };
-        input.click();
-    }
-
-    function renderLeads() {
-        const all = leadsData;
-        document.getElementById('leadsKPI').innerHTML = `
-            <div class="kpi-card"><span class="kpi-label">Чистых</span><span class="kpi-value">${all.filter(l=>!l.is_duplicate&&!l.is_bad_contact).length}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Дублей</span><span class="kpi-value">${all.filter(l=>l.is_duplicate).length}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Некорр.</span><span class="kpi-value">${all.filter(l=>l.is_bad_contact).length}</span></div>`;
-        document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
     }
 
     // ==================== СРАВНЕНИЕ ====================
