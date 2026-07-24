@@ -28,6 +28,12 @@
       --shadow: 0 12px 40px rgba(140,152,164,0.06);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .header, .modal, .kpi-card, .chart-card, .table-card, .sidebar {
+      -webkit-user-select: none; user-select: none; cursor: default;
+    }
+    input, textarea, select {
+      -webkit-user-select: text; user-select: text; cursor: text;
+    }
     body {
       font-family: 'Inter', system-ui, sans-serif;
       background: var(--bg-main);
@@ -36,7 +42,6 @@
       display: flex;
       -webkit-font-smoothing: antialiased;
     }
-    /* Сайдбар */
     .sidebar {
       width: 70px;
       background: var(--surface);
@@ -68,7 +73,6 @@
       -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
 
-    /* Кнопки */
     .btn {
       border: none; padding: 0.5rem 1.2rem; border-radius: 12px;
       font-weight: 600; cursor: pointer; font-size: 0.85rem;
@@ -80,7 +84,6 @@
     .btn-primary { background: var(--pastel-blue); border: none; }
     .btn-primary:hover { filter: brightness(0.95); }
 
-    /* Фильтры */
     .filters {
       display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;
     }
@@ -90,7 +93,6 @@
       font-size: 0.85rem; color: var(--text-dark); min-width: 140px;
     }
 
-    /* Карточки KPI */
     .kpi-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;
     }
@@ -102,16 +104,19 @@
     }
     .kpi-card .label { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
     .kpi-card .value { font-size: 2rem; font-weight: 700; color: var(--text-dark); }
+    .kpi-card .change { font-size: 0.8rem; font-weight: 500; }
+    .kpi-card .change.pos { color: var(--pastel-green-text); }
+    .kpi-card .change.neg { color: #b91c1c; }
     .kpi-icon {
       width: 40px; height: 40px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+      display: flex; align-items: center; justify-content: center;
     }
     .kpi-icon.blue { background: var(--pastel-blue); color: var(--pastel-blue-text); }
     .kpi-icon.green { background: var(--pastel-green); color: var(--pastel-green-text); }
     .kpi-icon.purple { background: var(--pastel-purple); color: var(--pastel-purple-text); }
     .kpi-icon.orange { background: var(--pastel-orange); color: var(--pastel-orange-text); }
+    .kpi-icon svg { width: 20px; height: 20px; }
 
-    /* Графики */
     .chart-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
     }
@@ -122,7 +127,6 @@
     }
     .chart-card canvas { max-height: 300px; }
 
-    /* Таблица */
     .table-card {
       background: var(--surface); border-radius: 20px;
       padding: 1.5rem; box-shadow: var(--shadow);
@@ -164,10 +168,26 @@
     </div>
 
     <div class="kpi-grid">
-      <div class="kpi-card"><span class="label">Выручка</span><span class="value" id="kpiRevenue">0 ₽</span><div class="kpi-icon blue">💰</div></div>
-      <div class="kpi-card"><span class="label">Расходы</span><span class="value" id="kpiExpense">0 ₽</span><div class="kpi-icon orange">📤</div></div>
-      <div class="kpi-card"><span class="label">Прибыль</span><span class="value" id="kpiProfit">0 ₽</span><div class="kpi-icon green">📈</div></div>
-      <div class="kpi-card"><span class="label">Средний чек</span><span class="value" id="kpiAvg">0 ₽</span><div class="kpi-icon purple">🧾</div></div>
+      <div class="kpi-card">
+        <span class="label">Выручка</span>
+        <span class="value" id="kpiRevenue">0 ₽</span>
+        <div class="kpi-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Расходы</span>
+        <span class="value" id="kpiExpense">0 ₽</span>
+        <div class="kpi-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Прибыль</span>
+        <span class="value" id="kpiProfit">0 ₽</span>
+        <div class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Средний чек</span>
+        <span class="value" id="kpiAvg">0 ₽</span>
+        <div class="kpi-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+      </div>
     </div>
 
     <div class="chart-grid">
@@ -194,6 +214,10 @@
         currentUserEmail = session.user.email;
         await loadFromSupabase();
         setupFilters();
+        // По умолчанию ставим фильтр на текущий месяц
+        const now = new Date();
+        document.getElementById('dateFrom').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        document.getElementById('dateTo').value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
         renderAll();
       }
 
@@ -296,7 +320,9 @@
             const parsed = [];
             for (let i = headerIdx+1; i < rows.length; i++) {
               const cols = rows[i]; if (!cols) continue;
-              const amt = parseFloat(String(cols[amountIdx]||'').replace(',','.').replace(/\s/g,''));
+              // Исправляем парсинг суммы: убираем пробелы, меняем запятую на точку
+              const rawAmount = String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.');
+              const amt = parseFloat(rawAmount);
               if (isNaN(amt)) continue;
               parsed.push({
                 operation_date: String(cols[dateIdx]||'').trim(),
@@ -309,6 +335,7 @@
             await _supabase.from('crm_finance').delete().neq('id',0);
             await _supabase.from('crm_finance').insert(parsed);
             await loadFromSupabase();
+            setupFilters();
             renderAll();
           };
           reader.readAsArrayBuffer(file);
