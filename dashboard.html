@@ -4,19 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>Дашборд · Music Club Орёл</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-    </script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #F8F9FC;
             --surface: #ffffff;
             --border: rgba(0, 0, 0, 0.04);
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.03);
-            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02);
-            --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.03);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.02);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,0.06), 0 4px 8px rgba(0,0,0,0.03);
             --text-primary: #1E293B;
             --text-secondary: #64748B;
             --text-tertiary: #94A3B8;
@@ -36,952 +34,699 @@
             --space-10: 40px;
             --space-12: 48px;
             --sidebar-width: 80px;
-            --topbar-height: 64px;
-            --transition-base: 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+            --transition-base: 250ms cubic-bezier(0.2,0.8,0.2,1);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text-primary);
-            display: flex;
-            min-height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            cursor: default;
-            letter-spacing: -0.01em;
-            position: relative;
-            overflow-x: hidden;
+            font-family:'Inter',system-ui,-apple-system,sans-serif;
+            background:var(--bg);
+            color:var(--text-primary);
+            display:flex;
+            min-height:100vh;
+            -webkit-font-smoothing:antialiased;
+            letter-spacing:-0.01em;
+            cursor:default;
+            caret-color:transparent;
+            position:relative;
+            overflow-x:hidden;
         }
-
-        /* Ambient light blobs */
+        input,select,textarea { cursor:text; caret-color:auto; }
         .ambient-blob {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.07;
-            pointer-events: none;
-            z-index: 0;
+            position:fixed; border-radius:50%; filter:blur(120px); opacity:0.07; pointer-events:none; z-index:0;
         }
-        .ambient-blob.top-right {
-            width: 600px;
-            height: 600px;
-            background: #7C3AED;
-            top: -200px;
-            right: -200px;
-        }
-        .ambient-blob.bottom-left {
-            width: 500px;
-            height: 500px;
-            background: #2563EB;
-            bottom: -150px;
-            left: -150px;
-        }
-
-        /* Sidebar */
+        .ambient-blob.top-right { width:600px; height:600px; background:#7C3AED; top:-200px; right:-200px; }
+        .ambient-blob.bottom-left { width:500px; height:500px; background:#2563EB; bottom:-150px; left:-150px; }
         .sidebar {
-            width: var(--sidebar-width);
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: var(--space-8) 0;
-            gap: var(--space-10);
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            z-index: 20;
-            box-shadow: var(--shadow-sm);
+            width:var(--sidebar-width);
+            background:rgba(255,255,255,0.7);
+            backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            border-right:1px solid var(--border);
+            display:flex; flex-direction:column; align-items:center; padding:var(--space-8) 0; gap:var(--space-10);
+            position:fixed; top:0; bottom:0; z-index:20; box-shadow:var(--shadow-sm);
         }
-
         .sidebar-icon {
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: var(--radius-md);
-            color: var(--text-tertiary);
-            transition: all var(--transition-base);
-            cursor: pointer;
-            position: relative;
+            width:44px; height:44px; display:flex; align-items:center; justify-content:center;
+            border-radius:var(--radius-md); color:var(--text-tertiary); transition:all var(--transition-base); cursor:pointer; position:relative;
         }
-
-        .sidebar-icon.active {
-            background: var(--accent-light);
-            color: var(--accent);
-        }
-        .sidebar-icon:hover {
-            background: rgba(0, 0, 0, 0.03);
-            color: var(--text-primary);
-        }
-        .sidebar-icon.active:hover {
-            background: var(--accent-light);
-            color: var(--accent);
-        }
-        .sidebar-icon.logout {
-            margin-top: auto;
-            color: #ef4444;
-        }
-        .sidebar-icon.logout:hover {
-            background: rgba(239, 68, 68, 0.08);
-        }
-
-        /* Main area */
+        .sidebar-icon.active { background:var(--accent-light); color:var(--accent); }
+        .sidebar-icon:hover { background:rgba(0,0,0,0.03); color:var(--text-primary); }
+        .sidebar-icon.active:hover { background:var(--accent-light); color:var(--accent); }
+        .sidebar-icon.logout { margin-top:auto; color:#ef4444; }
+        .sidebar-icon.logout:hover { background:rgba(239,68,68,0.08); }
         .main {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            padding: var(--space-10);
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-10);
-            max-width: 1600px;
-            width: 100%;
-            position: relative;
-            z-index: 1;
-            padding-top: var(--space-8);
+            flex:1; margin-left:var(--sidebar-width); padding:var(--space-10); display:flex; flex-direction:column; gap:var(--space-10);
+            max-width:1600px; width:100%; position:relative; z-index:1; padding-top:var(--space-8);
         }
-
-        /* Top bar */
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: var(--space-6);
-            flex-wrap: wrap;
-        }
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-        }
+        .topbar { display:flex; justify-content:space-between; align-items:center; gap:var(--space-6); flex-wrap:wrap; }
+        .topbar-left { display:flex; align-items:center; gap:var(--space-3); }
         .topbar-left h1 {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            color: var(--text-primary);
-            background: linear-gradient(135deg, #7C3AED, #2563EB);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size:28px; font-weight:700; letter-spacing:-0.03em; color:var(--text-primary);
+            background:linear-gradient(135deg,#7C3AED,#2563EB);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
         }
-        .topbar-right {
-            display: flex;
-            gap: var(--space-3);
-            align-items: center;
-        }
+        .topbar-right { display:flex; gap:var(--space-3); align-items:center; }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2);
-            padding: 10px 20px;
-            border-radius: var(--radius-sm);
-            font-weight: 550;
-            font-size: 14px;
-            letter-spacing: -0.01em;
-            cursor: pointer;
-            transition: all var(--transition-base);
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            box-shadow: var(--shadow-sm);
-            white-space: nowrap;
+            display:inline-flex; align-items:center; gap:var(--space-2); padding:10px 20px; border-radius:var(--radius-sm);
+            font-weight:550; font-size:14px; letter-spacing:-0.01em; cursor:pointer;
+            transition:all var(--transition-base); background:var(--surface); border:1px solid var(--border); color:var(--text-primary);
+            box-shadow:var(--shadow-sm); white-space:nowrap;
         }
-        .btn:hover {
-            background: #f8fafc;
-            border-color: rgba(0, 0, 0, 0.08);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
-        }
-        .btn-primary {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
-        }
-        .btn-primary:hover {
-            background: #6D28D9;
-            border-color: #6D28D9;
-            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.35);
-            transform: translateY(-1px);
-        }
-        .btn-ghost {
-            background: transparent;
-            border: none;
-            box-shadow: none;
-            color: var(--text-secondary);
-        }
-        .btn-ghost:hover {
-            background: rgba(0, 0, 0, 0.03);
-            box-shadow: none;
-            transform: none;
-        }
-
-        /* Tabs */
+        .btn:hover { background:#f8fafc; border-color:rgba(0,0,0,0.08); box-shadow:var(--shadow-md); transform:translateY(-1px); }
+        .btn-primary { background:var(--accent); border-color:var(--accent); color:white; box-shadow:0 4px 12px rgba(124,58,237,0.25); }
+        .btn-primary:hover { background:#6D28D9; border-color:#6D28D9; box-shadow:0 8px 20px rgba(124,58,237,0.35); }
         .tabs {
-            display: flex;
-            gap: var(--space-2);
-            background: var(--surface);
-            border-radius: var(--radius-md);
-            padding: 4px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            align-self: flex-start;
+            display:flex; gap:var(--space-2); background:var(--surface); border-radius:var(--radius-md); padding:4px;
+            border:1px solid var(--border); box-shadow:var(--shadow-sm); align-self:flex-start;
         }
         .tab {
-            padding: 8px 18px;
-            border-radius: var(--radius-xs);
-            font-weight: 550;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all var(--transition-base);
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            white-space: nowrap;
+            padding:8px 18px; border-radius:var(--radius-xs); font-weight:550; font-size:14px; cursor:pointer;
+            transition:all var(--transition-base); border:none; background:transparent; color:var(--text-secondary); white-space:nowrap;
         }
-        .tab.active {
-            background: var(--accent-light);
-            color: var(--accent);
+        .tab.active { background:var(--accent-light); color:var(--accent); }
+        .tab:hover:not(.active) { background:rgba(0,0,0,0.02); color:var(--text-primary); }
+        .content-area { display:flex; flex-direction:column; gap:var(--space-10); width:100%; }
+        .filters-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); }
+        .filter-select,.filter-input {
+            padding:9px 14px; border-radius:var(--radius-xs); border:1px solid var(--border); background:var(--surface);
+            font-size:14px; color:var(--text-primary); min-width:130px; box-shadow:var(--shadow-sm); transition:all var(--transition-base);
         }
-        .tab:hover:not(.active) {
-            background: rgba(0, 0, 0, 0.02);
-            color: var(--text-primary);
-        }
-
-        /* Content grid */
-        .content-area {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-10);
-            width: 100%;
-        }
-
-        /* Filters row */
-        .filters-row {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--space-3);
-        }
-        .filter-select,
-        .filter-input {
-            padding: 9px 14px;
-            border-radius: var(--radius-xs);
-            border: 1px solid var(--border);
-            background: var(--surface);
-            font-size: 14px;
-            color: var(--text-primary);
-            min-width: 130px;
-            box-shadow: var(--shadow-sm);
-            transition: all var(--transition-base);
-        }
-        .filter-select:hover,
-        .filter-input:hover {
-            border-color: rgba(0, 0, 0, 0.1);
-        }
-
-        /* KPI cards row */
-        .kpi-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--space-6);
-        }
+        .filter-select:hover,.filter-input:hover { border-color:rgba(0,0,0,0.1); }
+        .kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:var(--space-6); }
         .kpi-card {
-            background: var(--surface);
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            transition: all var(--transition-base);
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-            position: relative;
-            overflow: hidden;
+            background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
+            border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
+            display:flex; flex-direction:column; gap:var(--space-3); position:relative; overflow:hidden;
         }
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-        .kpi-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .kpi-value {
-            font-size: 34px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: var(--text-primary);
-            line-height: 1;
-        }
-        .kpi-trend {
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .kpi-trend.positive {
-            color: #059669;
-        }
-        .kpi-trend.negative {
-            color: #DC2626;
-        }
-
-        /* Widget cards */
+        .kpi-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+        .kpi-label { font-size:13px; font-weight:500; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; }
+        .kpi-value { font-size:34px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary); line-height:1; }
         .widget-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: var(--space-6);
+            display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:var(--space-6);
+            align-items:start; grid-auto-rows:min-content;
         }
         .widget-card {
-            background: var(--surface);
-            border-radius: var(--radius-xl);
-            padding: var(--space-6);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            transition: all var(--transition-base);
-            position: relative;
+            background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
+            border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
+            position:relative; height:fit-content;
         }
-        .widget-card:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
-        }
+        .widget-card:hover { transform:translateY(-1px); box-shadow:var(--shadow-lg); }
         .widget-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            margin-bottom: var(--space-5);
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
+            font-size:13px; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em;
+            margin-bottom:var(--space-5); display:flex; align-items:center; gap:var(--space-2);
         }
-        .widget-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-3);
-        }
-        .widget-list li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 15px;
-            padding: var(--space-2) 0;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-            transition: background 0.15s;
-        }
-        .widget-list li:hover {
-            background: rgba(0, 0, 0, 0.01);
-            border-radius: 4px;
-            padding-left: 4px;
-            padding-right: 4px;
-        }
-        .widget-list li span:last-child {
-            font-weight: 550;
-            color: var(--text-primary);
-        }
-        .empty-message {
-            color: var(--text-tertiary);
-            font-size: 14px;
-            padding: var(--space-4) 0;
-            text-align: center;
-        }
-
-        /* Table style */
+        .widget-list { list-style:none; display:flex; flex-direction:column; gap:var(--space-3); }
+        .widget-list li { display:flex; justify-content:space-between; align-items:center; font-size:15px; padding:var(--space-2) 0; border-bottom:1px solid rgba(0,0,0,0.03); }
+        .widget-list li span:last-child { font-weight:550; color:var(--text-primary); }
+        .empty-message { color:var(--text-tertiary); font-size:14px; padding:var(--space-4) 0; text-align:center; }
         .table-container {
-            background: var(--surface);
-            border-radius: var(--radius-xl);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
-            overflow: hidden;
+            background:var(--surface); border-radius:var(--radius-xl); border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        th {
-            text-align: left;
-            padding: var(--space-4) var(--space-6);
-            font-weight: 550;
-            color: var(--text-tertiary);
-            background: rgba(248, 250, 252, 0.6);
-            border-bottom: 1px solid var(--border);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        td {
-            padding: var(--space-4) var(--space-6);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-            color: var(--text-primary);
-        }
-        tr:last-child td {
-            border-bottom: none;
-        }
-        tr:hover td {
-            background: rgba(0, 0, 0, 0.01);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 100px;
-            font-size: 12px;
-            font-weight: 550;
-            background: #FEF3C7;
-            color: #D97706;
-        }
-        .badge.red {
-            background: #FEE2E2;
-            color: #DC2626;
-        }
-
-        .close-btn {
-            position: absolute;
-            top: 12px;
-            right: 16px;
-            background: none;
-            border: none;
-            color: var(--text-tertiary);
-            cursor: pointer;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-            font-size: 16px;
-        }
-        .close-btn:hover {
-            opacity: 1;
-            color: #ef4444;
-        }
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 900px) {
-            .sidebar {
-                display: none;
-            }
-            .main {
-                margin-left: 0;
-                padding: var(--space-4);
-            }
-            .kpi-row {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .widget-row {
-                grid-template-columns: 1fr;
-            }
+        table { width:100%; border-collapse:collapse; font-size:14px; }
+        th { text-align:left; padding:var(--space-4) var(--space-6); font-weight:550; color:var(--text-tertiary); background:rgba(248,250,252,0.6); border-bottom:1px solid var(--border); font-size:12px; text-transform:uppercase; letter-spacing:0.04em; }
+        td { padding:var(--space-4) var(--space-6); border-bottom:1px solid rgba(0,0,0,0.03); color:var(--text-primary); }
+        tr:last-child td { border-bottom:none; }
+        tr:hover td { background:rgba(0,0,0,0.01); }
+        .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:12px; font-weight:550; background:#FEF3C7; color:#D97706; }
+        .badge.red { background:#FEE2E2; color:#DC2626; }
+        .close-btn { position:absolute; top:12px; right:16px; background:none; border:none; color:var(--text-tertiary); cursor:pointer; opacity:0.5; font-size:16px; }
+        .close-btn:hover { opacity:1; color:#ef4444; }
+        .hidden { display:none!important; }
+        @media(max-width:900px) {
+            .sidebar{display:none}
+            .main{margin-left:0;padding:var(--space-4)}
+            .kpi-row{grid-template-columns:repeat(2,1fr)}
+            .widget-row{grid-template-columns:1fr}
         }
     </style>
 </head>
 <body>
-    <div class="ambient-blob top-right"></div>
-    <div class="ambient-blob bottom-left"></div>
-
-    <aside class="sidebar">
-        <div class="sidebar-icon active" id="homeSidebarBtn" title="Главная">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+<div class="ambient-blob top-right"></div>
+<div class="ambient-blob bottom-left"></div>
+<aside class="sidebar">
+    <div class="sidebar-icon active" id="homeSidebarBtn" title="Главная">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="sidebar-icon logout" id="logoutSidebarBtn" title="Выйти">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
+</aside>
+<main class="main">
+    <div class="topbar">
+        <div class="topbar-left"><h1>Дашборд</h1></div>
+        <div class="topbar-right">
+            <button class="btn" id="showAllWidgetsBtn">Показать всё</button>
+            <button class="btn" id="resetFiltersGlobalBtn">Сбросить</button>
         </div>
-        <div class="sidebar-icon logout" id="logoutSidebarBtn" title="Выйти">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+    </div>
+    <div class="tabs" id="tabBar">
+        <button class="tab active" data-tab="finance">Финансы</button>
+        <button class="tab" data-tab="salary">ЗП педагоги</button>
+        <button class="tab" data-tab="staff">ЗП сотрудники</button>
+        <button class="tab" data-tab="leads">Лиды</button>
+        <button class="tab" data-tab="compare">Сравнение</button>
+    </div>
+    <div class="content-area" id="tabContent"></div>
+</main>
+
+<script>
+(function() {
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
+
+    let currentUserEmail, financeData=[], salaryData=[], employees=[], worklog={}, salaryParams={}, expensesData=[], leadsData=[];
+    let activeTab = 'finance';
+    const filterState = {
+        finance: { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false },
+        salary: { name:'', subj:'', showSkipped:false, period:'full' },
+        staff: { period:'full' },
+        leads: {},
+        compare: { period1From:'', period1To:'', period2From:'', period2To:'' }
+    };
+
+    function toISODate(d) { const p=d.split('.'); return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:d; }
+
+    async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
+        currentUserEmail = session.user.email;
+        await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(), loadSalaryParams(), loadExpenses(), loadLeads()]);
+        const now = new Date();
+        filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+        const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+        filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+        renderTab();
+    }
+
+    async function loadFinance() { const { data } = await _supabase.from('crm_finance').select('*'); financeData = data || []; }
+    async function loadSalary() { const { data } = await _supabase.from('teacher_salary').select('*'); salaryData = data || []; }
+    async function loadEmployees() { const { data } = await _supabase.from('employees').select('*'); employees = data || []; }
+    async function loadWorklog() {
+        const now = new Date(); const y = now.getFullYear(), m = now.getMonth()+1;
+        const start = `${y}-${String(m).padStart(2,'0')}-01`;
+        const nextM = m===12?1:m+1; const nextY = m===12?y+1:y;
+        const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
+        const { data } = await _supabase.from('worklog').select('*').gte('date',start).lt('date',end);
+        worklog = {}; (data||[]).forEach(r=>{ worklog[`${r.emp_id}_${r.date}`] = r; });
+    }
+    async function loadSalaryParams() {
+        const now = new Date(); const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        const { data } = await _supabase.from('salary_params').select('*').eq('month', monthStr);
+        salaryParams = {}; (data||[]).forEach(r=>{ salaryParams[r.emp_id] = r; });
+    }
+    async function loadExpenses() { const { data } = await _supabase.from('expenses').select('*').eq('paid', false); expensesData = data || []; }
+    async function loadLeads() { const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false }); leadsData = data || []; }
+
+    function renderTab() {
+        const content = document.getElementById('tabContent');
+        switch (activeTab) {
+            case 'finance': content.innerHTML = financeHTML(); setupFinanceListeners(); renderFinance(); break;
+            case 'salary': content.innerHTML = salaryHTML(); setupSalaryListeners(); renderSalary(); break;
+            case 'staff': content.innerHTML = staffHTML(); setupStaffListeners(); renderStaff(); break;
+            case 'leads': content.innerHTML = leadsHTML(); setupLeadsListeners(); renderLeads(); break;
+            case 'compare': content.innerHTML = compareHTML(); setupCompareListeners(); renderCompare(); break;
+        }
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+    }
+
+    // ---------------------- ФИНАНСЫ ----------------------
+    function financeHTML() {
+        const f = filterState.finance;
+        const types = [...new Set(financeData.map(d=>d.operation_type).filter(Boolean))].sort();
+        const cats = [...new Set(financeData.map(d=>d.category).filter(Boolean))].sort();
+        const mans = [...new Set(financeData.map(d=>d.manager).filter(Boolean))].sort();
+        const accs = [...new Set(financeData.map(d=>d.account).filter(Boolean))].sort();
+        const payTypes = [...new Set(financeData.map(d=>d.payment_type).filter(Boolean))].sort();
+        return `
+        <div class="filters-row">
+            <button class="btn" id="currentMonthBtn">Текущий месяц</button>
+            <input type="date" class="filter-input" id="finDateFrom" value="${f.dateFrom||''}">
+            <input type="date" class="filter-input" id="finDateTo" value="${f.dateTo||''}">
+            <select class="filter-select" id="finType"><option value="">Все типы</option>${types.map(t=>`<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
+            <select class="filter-select" id="finCat"><option value="">Все статьи</option>${cats.map(c=>`<option ${f.cat===c?'selected':''}>${c}</option>`).join('')}</select>
+            <select class="filter-select" id="finAcc"><option value="">Все счета</option>${accs.map(a=>`<option ${f.acc===a?'selected':''}>${a}</option>`).join('')}</select>
+            <select class="filter-select" id="finPayType"><option value="">Тип платежа</option>${payTypes.map(p=>`<option ${f.payType===p?'selected':''}>${p}</option>`).join('')}</select>
+            <select class="filter-select" id="finMan"><option value="">Менеджер</option>${mans.map(m=>`<option ${f.man===m?'selected':''}>${m}</option>`).join('')}</select>
+            <button class="btn" id="uploadFinanceBtn">Загрузить Excel</button>
+            <button class="btn" id="toggleRawFinBtn">${f.showRaw?'Скрыть':'Показать'} таблицу</button>
         </div>
-    </aside>
+        <div class="kpi-row" id="finKPI"></div>
+        <div class="widget-row" id="finWidgets"></div>
+        <div class="table-container" id="finRawTable" style="display:${f.showRaw?'block':'none'};">
+            <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Платеж</th><th>Менеджер</th></tr></thead><tbody id="finTableBody"></tbody></table>
+        </div>`;
+    }
 
-    <main class="main">
-        <div class="topbar">
-            <div class="topbar-left">
-                <h1>Дашборд</h1>
-            </div>
-            <div class="topbar-right">
-                <button class="btn" id="showAllWidgetsBtn">Показать всё</button>
-                <button class="btn" id="resetFiltersGlobalBtn">Сбросить</button>
-            </div>
-        </div>
+    function setupFinanceListeners() {
+        document.getElementById('currentMonthBtn').addEventListener('click', ()=>{
+            const now = new Date();
+            filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+            const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+            filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+            document.getElementById('finDateFrom').value = filterState.finance.dateFrom;
+            document.getElementById('finDateTo').value = filterState.finance.dateTo;
+            renderFinance();
+        });
+        document.getElementById('uploadFinanceBtn').addEventListener('click', uploadFinance);
+        document.getElementById('toggleRawFinBtn').addEventListener('click', ()=>{
+            filterState.finance.showRaw = !filterState.finance.showRaw;
+            document.getElementById('finRawTable').style.display = filterState.finance.showRaw?'block':'none';
+            document.getElementById('toggleRawFinBtn').textContent = (filterState.finance.showRaw?'Скрыть':'Показать')+' таблицу';
+        });
+        ['finDateFrom','finDateTo','finType','finCat','finAcc','finPayType','finMan'].forEach(id=>{
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('change', ()=>{
+                filterState.finance[id==='finDateFrom'?'dateFrom':id==='finDateTo'?'dateTo':id==='finType'?'type':id==='finCat'?'cat':id==='finAcc'?'acc':id==='finPayType'?'payType':'man'] = el.value;
+                renderFinance();
+            });
+        });
+    }
 
-        <div class="tabs" id="tabBar">
-            <button class="tab active" data-tab="finance">Финансы</button>
-            <button class="tab" data-tab="salary">ЗП педагоги</button>
-            <button class="tab" data-tab="staff">ЗП сотрудники</button>
-            <button class="tab" data-tab="leads">Лиды</button>
-            <button class="tab" data-tab="compare">Сравнение</button>
-        </div>
-
-        <div class="content-area" id="tabContent"></div>
-    </main>
-
-    <script>
-        (function() {
-            const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-            const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
-
-            let currentUserEmail, financeData = [],
-                salaryData = [],
-                employees = [],
-                worklog = {},
-                salaryParams = {},
-                expensesData = [],
-                leadsData = [];
-            let activeTab = 'finance';
-
-            const filterState = {
-                finance: { dateFrom: '', dateTo: '', type: '', cat: '', man: '', acc: '', payType: '',
-                showRaw: false },
-                salary: { name: '', subj: '', showSkipped: false, period: 'full' },
-                staff: { period: 'full' },
-                leads: {},
-                compare: { period1From: '', period1To: '', period2From: '', period2To: '' }
+    function uploadFinance() {
+        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+        input.onchange = async (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, {type:'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+                const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата'));
+                if(headerIdx===-1) { alert('Не найден заголовок'); return; }
+                const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
+                const dateIdx = headers.findIndex(h=>h.startsWith('дата'));
+                const typeIdx = headers.findIndex(h=>h.startsWith('тип'));
+                const amountIdx = headers.findIndex(h=>h.startsWith('сумма'));
+                const catIdx = headers.findIndex(h=>h.startsWith('статья'));
+                const accIdx = headers.findIndex(h=>h.includes('счет')||h.includes('касса'));
+                const payTypeIdx = headers.findIndex(h=>h.includes('тип платежа'));
+                // Ищем менеджер (фамилия имя)
+                const manIdx = headers.findIndex(h=>h.includes('менеджер') || h.includes('фамилия имя'));
+                const parsed = [];
+                for(let i=headerIdx+1; i<rows.length; i++){
+                    const cols=rows[i]; if(!cols) continue;
+                    const amt = parseFloat(String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.'));
+                    if(isNaN(amt)) continue;
+                    parsed.push({
+                        operation_date: toISODate(String(cols[dateIdx]||'').trim()),
+                        operation_type: String(cols[typeIdx]||'').trim(),
+                        amount: amt,
+                        category: String(cols[catIdx]||'').trim(),
+                        account: accIdx!==-1 ? String(cols[accIdx]||'').trim() : '',
+                        payment_type: payTypeIdx!==-1 ? String(cols[payTypeIdx]||'').trim() : '',
+                        manager: manIdx!==-1 ? String(cols[manIdx]||'').trim() : ''
+                    });
+                }
+                await _supabase.from('crm_finance').delete().neq('id',0);
+                await _supabase.from('crm_finance').insert(parsed);
+                await loadFinance();
+                renderFinance();
             };
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
 
-            function toISODate(d) { const p = d.split('.'); return p.length === 3 ?
-                    `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : d; }
+    function getFinanceFiltered() {
+        let d = financeData;
+        const f = filterState.finance;
+        if (f.dateFrom) d = d.filter(r => r.operation_date >= f.dateFrom);
+        if (f.dateTo) d = d.filter(r => r.operation_date <= f.dateTo);
+        if (f.type) d = d.filter(r => r.operation_type === f.type);
+        if (f.cat) d = d.filter(r => r.category === f.cat);
+        if (f.man) d = d.filter(r => r.manager === f.man);
+        if (f.acc) d = d.filter(r => r.account === f.acc);
+        if (f.payType) d = d.filter(r => r.payment_type === f.payType);
+        return d;
+    }
 
-            async function init() {
-                const { data: { session } } = await _supabase.auth.getSession();
-                if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href =
-                        'login.html'; return; }
-                currentUserEmail = session.user.email;
-                await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(),
-                    loadSalaryParams(), loadExpenses(), loadLeads()
-                ]);
-                const now = new Date();
-                filterState.finance.dateFrom =
-                    `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                filterState.finance.dateTo =
-                    `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-                renderTab();
-            }
+    function renderFinance() {
+        const data = getFinanceFiltered();
+        const income = data.filter(r=>['доход','продажа'].some(t=>(r.operation_type||'').toLowerCase().includes(t)));
+        const expense = data.filter(r=>['расход','выплата','инкассация','возврат'].some(t=>(r.operation_type||'').toLowerCase().includes(t)));
+        const ti = income.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+        const te = expense.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+        document.getElementById('finKPI').innerHTML = `
+            <div class="kpi-card"><span class="kpi-label">Доходы</span><span class="kpi-value">${ti.toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Расходы</span><span class="kpi-value">${te.toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Прибыль</span><span class="kpi-value">${(ti-te).toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Маржинальность</span><span class="kpi-value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
+        const group = (arr,key)=>{
+            const m={}; arr.forEach(r=>{const k=r[key]||'—'; m[k]=(m[k]||0)+parseFloat(r.amount||0);});
+            return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
+        };
+        let widgetsHtml = `
+            <div class="widget-card"><div class="widget-title">Расходы по статьям</div><ul class="widget-list">${group(expense,'category').slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
+            <div class="widget-card"><div class="widget-title">Доходы по статьям</div><ul class="widget-list">${group(income,'category').slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
+            <div class="widget-card"><div class="widget-title">Доходы по менеджерам</div><ul class="widget-list">${group(income,'manager').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
+            <div class="widget-card"><div class="widget-title">Расходы по счетам</div><ul class="widget-list">${group(expense,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
+            <div class="widget-card"><div class="widget-title">Доходы по счетам</div><ul class="widget-list">${group(income,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
+        `;
+        document.getElementById('finWidgets').innerHTML = widgetsHtml;
+        document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
+    }
 
-            async function loadFinance() { const { data } = await _supabase.from('crm_finance').select(
-                    '*'); financeData = data || []; }
-            async function loadSalary() { const { data } = await _supabase.from('teacher_salary').select(
-                    '*'); salaryData = data || []; }
-            async function loadEmployees() { const { data } = await _supabase.from('employees').select(
-                '*'); employees = data || []; }
-            async function loadWorklog() {
-                const now = new Date();
-                const y = now.getFullYear(),
-                    m = now.getMonth() + 1;
-                const start = `${y}-${String(m).padStart(2,'0')}-01`;
-                const nextM = m === 12 ? 1 : m + 1;
-                const nextY = m === 12 ? y + 1 : y;
-                const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
-                const { data } = await _supabase.from('worklog').select('*').gte('date', start).lt('date',
-                    end);
-                worklog = {};
-                (data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
-            }
-            async function loadSalaryParams() {
-                const now = new Date();
-                const monthStr =
-                `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-                const { data } = await _supabase.from('salary_params').select('*').eq('month', monthStr);
-                salaryParams = {};
-                (data || []).forEach(r => { salaryParams[r.emp_id] = r; });
-            }
-            async function loadExpenses() { const { data } = await _supabase.from('expenses').select('*').eq(
-                    'paid', false);
-                expensesData = data || []; }
-            async function loadLeads() { const { data } = await _supabase.from('leads').select('*').order(
-                    'date_added', { ascending: false });
-                leadsData = data || []; }
+    // ---------------------- ЗП ПЕДАГОГОВ ----------------------
+    function salaryHTML() {
+        const f = filterState.salary;
+        const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
+        const subjects = [...new Set(salaryData.map(d=>d.subject).filter(Boolean))].sort();
+        return `
+        <div class="filters-row">
+            <button class="btn ${f.period==='full'?'btn-primary':''}" id="salPeriodFull">Весь месяц</button>
+            <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="salPeriod1">1–15</button>
+            <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="salPeriod2">16–31</button>
+            <select class="filter-select" id="salName"><option value="">Все педагоги</option>${names.map(n=>`<option ${f.name===n?'selected':''}>${n}</option>`).join('')}</select>
+            <select class="filter-select" id="salSubj"><option value="">Все предметы</option>${subjects.map(s=>`<option ${f.subj===s?'selected':''}>${s}</option>`).join('')}</select>
+            <button class="btn" id="uploadSalaryBtn1">Загрузить 1–15</button>
+            <button class="btn" id="uploadSalaryBtn2">Загрузить 16–31</button>
+            <button class="btn" id="uploadSalaryBtnFull">Загрузить общий</button>
+            <button class="btn" id="toggleSkippedBtn">${f.showSkipped?'Скрыть':'Показать'} пропущенные</button>
+        </div>
+        <div class="kpi-row" id="salKPI"></div>
+        <div class="widget-row" id="salWidgets">
+            <div class="widget-card" id="teacherTotalWidget"><div class="widget-title">По педагогам</div><div id="teacherTotalContent"></div></div>
+            <div class="widget-card" id="teacherIndivWidget"><div class="widget-title">Индивидуальные</div><div id="teacherIndivContent"></div></div>
+            <div class="widget-card" id="teacherGroupWidget"><div class="widget-title">Групповые</div><div id="teacherGroupContent"></div></div>
+            <div class="widget-card" id="teacherSubjectWidget"><div class="widget-title">По предметам</div><div id="teacherSubjectContent"></div></div>
+        </div>
+        <div class="widget-row" id="salPayoutWidgets"></div>
+        <div class="table-container">
+            <table><thead><tr><th>Педагог</th><th>Предмет</th><th>Тип</th><th>Ставка</th><th>Кол-во</th><th>Сумма</th><th>Период</th></tr></thead><tbody id="salTableBody"></tbody></table>
+        </div>`;
+    }
 
-            function renderTab() {
-                const content = document.getElementById('tabContent');
-                switch (activeTab) {
-                    case 'finance':
-                        content.innerHTML = financeHTML();
-                        setupFinanceListeners();
-                        renderFinance();
-                        break;
-                    case 'salary':
-                        content.innerHTML = salaryHTML();
-                        setupSalaryListeners();
-                        renderSalary();
-                        break;
-                    case 'staff':
-                        content.innerHTML = staffHTML();
-                        setupStaffListeners();
-                        renderStaff();
-                        break;
-                    case 'leads':
-                        content.innerHTML = leadsHTML();
-                        setupLeadsListeners();
-                        renderLeads();
-                        break;
-                    case 'compare':
-                        content.innerHTML = compareHTML();
-                        setupCompareListeners();
-                        renderCompare();
-                        break;
-                }
-                document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset
-                    .tab === activeTab));
-            }
-
-            // ---------------------- ФИНАНСЫ ----------------------
-            function financeHTML() {
-                const f = filterState.finance;
-                const types = [...new Set(financeData.map(d => d.operation_type).filter(Boolean))].sort();
-                const cats = [...new Set(financeData.map(d => d.category).filter(Boolean))].sort();
-                const mans = [...new Set(financeData.map(d => d.manager).filter(Boolean))].sort();
-                const accs = [...new Set(financeData.map(d => d.account).filter(Boolean))].sort();
-                const payTypes = [...new Set(financeData.map(d => d.payment_type).filter(Boolean))].sort();
-                return `
-                <div class="filters-row">
-                    <button class="btn" id="currentMonthBtn">Текущий месяц</button>
-                    <input type="date" class="filter-input" id="finDateFrom" value="${f.dateFrom||''}">
-                    <input type="date" class="filter-input" id="finDateTo" value="${f.dateTo||''}">
-                    <select class="filter-select" id="finType"><option value="">Все типы</option>${types.map(t=>`<option ${f.type===t?'selected':''}>${t}</option>`).join('')}</select>
-                    <select class="filter-select" id="finCat"><option value="">Все статьи</option>${cats.map(c=>`<option ${f.cat===c?'selected':''}>${c}</option>`).join('')}</select>
-                    <select class="filter-select" id="finAcc"><option value="">Все счета</option>${accs.map(a=>`<option ${f.acc===a?'selected':''}>${a}</option>`).join('')}</select>
-                    <select class="filter-select" id="finPayType"><option value="">Тип платежа</option>${payTypes.map(p=>`<option ${f.payType===p?'selected':''}>${p}</option>`).join('')}</select>
-                    <select class="filter-select" id="finMan"><option value="">Менеджер</option>${mans.map(m=>`<option ${f.man===m?'selected':''}>${m}</option>`).join('')}</select>
-                    <button class="btn" id="uploadFinanceBtn">Загрузить Excel</button>
-                </div>
-                <div class="kpi-row" id="finKPI"></div>
-                <div class="widget-row" id="finWidgets"></div>
-                <div class="table-container" id="finRawTable" style="display:${f.showRaw?'block':'none'};">
-                    <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Платеж</th><th>Менеджер</th></tr></thead><tbody id="finTableBody"></tbody></table>
-                </div>`;
-            }
-
-            function setupFinanceListeners() {
-                document.getElementById('currentMonthBtn').addEventListener('click', () => {
-                    const now = new Date();
-                    filterState.finance.dateFrom =
-                        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                    filterState.finance.dateTo =
-                        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-                    document.getElementById('finDateFrom').value = filterState.finance.dateFrom;
-                    document.getElementById('finDateTo').value = filterState.finance.dateTo;
-                    renderFinance();
-                });
-                document.getElementById('uploadFinanceBtn').addEventListener('click', uploadFinance);
-                ['finDateFrom', 'finDateTo', 'finType', 'finCat', 'finAcc', 'finPayType', 'finMan'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.addEventListener('change', () => {
-                        filterState.finance[id === 'finDateFrom' ? 'dateFrom' : id ===
-                            'finDateTo' ? 'dateTo' : id === 'finType' ? 'type' : id ===
-                            'finCat' ? 'cat' : id === 'finAcc' ? 'acc' : id ===
-                            'finPayType' ? 'payType' : 'man'
-                        ] = el.value;
-                        renderFinance();
-                    });
-                });
-            }
-
-            function uploadFinance() {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.xlsx';
-                input.onchange = async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = async (ev) => {
-                        const data = new Uint8Array(ev.target.result);
-                        const wb = XLSX.read(data, { type: 'array' });
-                        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
-                        const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата'));
-                        if (headerIdx === -1) { alert('Не найден заголовок'); return; }
-                        const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
-                        const dateIdx = headers.findIndex(h => h.startsWith('дата'));
-                        const typeIdx = headers.findIndex(h => h.startsWith('тип'));
-                        const amountIdx = headers.findIndex(h => h.startsWith('сумма'));
-                        const catIdx = headers.findIndex(h => h.startsWith('статья'));
-                        const accIdx = headers.findIndex(h => h.includes('счет') || h.includes('касса'));
-                        const payTypeIdx = headers.findIndex(h => h.includes('тип платежа'));
-                        const manIdx = headers.findIndex(h => h.includes('менеджер'));
-                        const parsed = [];
-                        for (let i = headerIdx + 1; i < rows.length; i++) {
-                            const cols = rows[i];
-                            if (!cols) continue;
-                            const amt = parseFloat(String(cols[amountIdx] || '0').replace(/\s/g, '').replace(',',
-                                '.'));
-                            if (isNaN(amt)) continue;
-                            parsed.push({
-                                operation_date: toISODate(String(cols[dateIdx] || '').trim()),
-                                operation_type: String(cols[typeIdx] || '').trim(),
-                                amount: amt,
-                                category: String(cols[catIdx] || '').trim(),
-                                account: accIdx !== -1 ? String(cols[accIdx] || '').trim() : '',
-                                payment_type: payTypeIdx !== -1 ? String(cols[payTypeIdx] || '').trim() :
-                                    '',
-                                manager: String(cols[manIdx] || '').trim()
-                            });
-                        }
-                        await _supabase.from('crm_finance').delete().neq('id', 0);
-                        await _supabase.from('crm_finance').insert(parsed);
-                        await loadFinance();
-                        renderFinance();
-                    };
-                    reader.readAsArrayBuffer(file);
-                };
-                input.click();
-            }
-
-            function getFinanceFiltered() {
-                let d = financeData;
-                const f = filterState.finance;
-                if (f.dateFrom) d = d.filter(r => r.operation_date >= f.dateFrom);
-                if (f.dateTo) d = d.filter(r => r.operation_date <= f.dateTo);
-                if (f.type) d = d.filter(r => r.operation_type === f.type);
-                if (f.cat) d = d.filter(r => r.category === f.cat);
-                if (f.man) d = d.filter(r => r.manager === f.man);
-                if (f.acc) d = d.filter(r => r.account === f.acc);
-                if (f.payType) d = d.filter(r => r.payment_type === f.payType);
-                return d;
-            }
-
-            function renderFinance() {
-                const data = getFinanceFiltered();
-                const income = data.filter(r => ['доход', 'продажа'].some(t => (r.operation_type || '').toLowerCase()
-                    .includes(t)));
-                const expense = data.filter(r => ['расход', 'выплата', 'инкассация', 'возврат'].some(t => (r
-                    .operation_type || '').toLowerCase().includes(t)));
-                const ti = income.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
-                const te = expense.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
-                document.getElementById('finKPI').innerHTML = `
-                    <div class="kpi-card"><span class="kpi-label">Доходы</span><span class="kpi-value">${ti.toLocaleString()} ₽</span><span class="kpi-trend positive">↑ 0%</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Расходы</span><span class="kpi-value">${te.toLocaleString()} ₽</span><span class="kpi-trend negative">↓ 0%</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Прибыль</span><span class="kpi-value">${(ti-te).toLocaleString()} ₽</span><span class="kpi-trend">за период</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Маржинальность</span><span class="kpi-value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
-
-                const group = (arr, key) => {
-                    const m = {};
-                    arr.forEach(r => { const k = r[key] || '—';
-                        m[k] = (m[k] || 0) + parseFloat(r.amount || 0); });
-                    return Object.entries(m).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a);
-                };
-
-                let widgetsHtml = '';
-                widgetsHtml += `
-                    <div class="widget-card"><div class="widget-title">Расходы по статьям</div><ul class="widget-list">${group(expense,'category').slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
-                    <div class="widget-card"><div class="widget-title">Доходы по статьям</div><ul class="widget-list">${group(income,'category').slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
-                    <div class="widget-card"><div class="widget-title">Доходы по менеджерам</div><ul class="widget-list">${group(income,'manager').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
-                    <div class="widget-card"><div class="widget-title">Расходы по счетам</div><ul class="widget-list">${group(expense,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
-                    <div class="widget-card"><div class="widget-title">Доходы по счетам</div><ul class="widget-list">${group(income,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li class="empty-message">Нет данных</li>'}</ul></div>
-                `;
-                document.getElementById('finWidgets').innerHTML = widgetsHtml;
-                document.getElementById('finTableBody').innerHTML = data.slice(0, 60).map(r =>
-                    `<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`
-                    ).join('');
-            }
-
-            // ---------------------- ЗП ПЕДАГОГОВ (кратко) ----------------------
-            function salaryHTML() {
-                const f = filterState.salary;
-                const names = [...new Set(salaryData.map(d => d.teacher_name).filter(Boolean))].sort();
-                const subjects = [...new Set(salaryData.map(d => d.subject).filter(Boolean))].sort();
-                return `
-                <div class="filters-row">
-                    <button class="btn ${f.period==='full'?'btn-primary':''}" id="salPeriodFull">Весь месяц</button>
-                    <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="salPeriod1">1–15</button>
-                    <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="salPeriod2">16–31</button>
-                    <select class="filter-select" id="salName"><option value="">Все педагоги</option>${names.map(n=>`<option ${f.name===n?'selected':''}>${n}</option>`).join('')}</select>
-                    <select class="filter-select" id="salSubj"><option value="">Все предметы</option>${subjects.map(s=>`<option ${f.subj===s?'selected':''}>${s}</option>`).join('')}</select>
-                    <button class="btn" id="uploadSalaryBtn1">1–15</button>
-                    <button class="btn" id="uploadSalaryBtn2">16–31</button>
-                    <button class="btn" id="uploadSalaryBtnFull">Общий</button>
-                </div>
-                <div class="kpi-row" id="salKPI"></div>
-                <div class="widget-row" id="salWidgets">
-                    <div class="widget-card" id="teacherTotalWidget"><div class="widget-title">По педагогам</div><div id="teacherTotalContent"></div></div>
-                    <div class="widget-card" id="teacherIndivWidget"><div class="widget-title">Индивидуальные</div><div id="teacherIndivContent"></div></div>
-                    <div class="widget-card" id="teacherGroupWidget"><div class="widget-title">Групповые</div><div id="teacherGroupContent"></div></div>
-                    <div class="widget-card" id="teacherSubjectWidget"><div class="widget-title">По предметам</div><div id="teacherSubjectContent"></div></div>
-                </div>
-                <div class="widget-row" id="salPayoutWidgets"></div>
-                <div class="table-container">
-                    <table><thead><tr><th>Педагог</th><th>Предмет</th><th>Тип</th><th>Ставка</th><th>Кол-во</th><th>Сумма</th><th>Период</th></tr></thead><tbody id="salTableBody"></tbody></table>
-                </div>`;
-            }
-
-            function setupSalaryListeners() {
-                ['salPeriodFull', 'salPeriod1', 'salPeriod2'].forEach((id, i) => {
-                    document.getElementById(id).addEventListener('click', () => {
-                        filterState.salary.period = ['full', '1-15', '16-31'][i];
-                        renderSalary();
-                    });
-                });
-                ['salName', 'salSubj'].forEach(id => {
-                    document.getElementById(id).addEventListener('change', () => {
-                        filterState.salary.name = document.getElementById('salName')?.value || '';
-                        filterState.salary.subj = document.getElementById('salSubj')?.value || '';
-                        renderSalary();
-                    });
-                });
-                document.getElementById('uploadSalaryBtn1').addEventListener('click', () => uploadSalary('1-15'));
-                document.getElementById('uploadSalaryBtn2').addEventListener('click', () => uploadSalary('16-31'));
-                document.getElementById('uploadSalaryBtnFull').addEventListener('click', () => uploadSalary('full'));
-            }
-
-            async function uploadSalary(period) { /* идентично предыдущей исправленной версии */ }
-
-            function getSalaryFiltered() {
-                let d = salaryData;
-                const f = filterState.salary;
-                if (!f.showSkipped) d = d.filter(r => !r.skipped);
-                if (f.name) d = d.filter(r => r.teacher_name === f.name);
-                if (f.subj) d = d.filter(r => r.subject === f.subj);
-                if (f.period !== 'full') d = d.filter(r => r.period === f.period);
-                return d;
-            }
-
-            function renderSalary() {
-                const data = getSalaryFiltered();
-                const total = data.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
-                const teachers = [...new Set(data.map(r => r.teacher_name))];
-                const totalLessons = data.reduce((s, r) => s + (r.quantity || 0), 0);
-                document.getElementById('salKPI').innerHTML = `
-                    <div class="kpi-card"><span class="kpi-label">Фонд оплаты</span><span class="kpi-value">${total.toLocaleString()} ₽</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Педагогов</span><span class="kpi-value">${teachers.length}</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Уроков</span><span class="kpi-value">${totalLessons}</span></div>`;
-                // виджеты заполняются аналогично предыдущей версии
-                document.getElementById('salTableBody').innerHTML = data.slice(0, 60).map(r =>
-                    `<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.period||'full'}</td></tr>`
-                    ).join('');
-            }
-
-            // ---------------------- ЗП СОТРУДНИКОВ ----------------------
-            function staffHTML() {
-                const f = filterState.staff;
-                return `
-                <div class="filters-row">
-                    <button class="btn ${f.period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
-                    <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
-                    <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
-                </div>
-                <div class="kpi-row" id="staffKPI"></div>
-                <div class="widget-row" id="staffWidgets"></div>
-                <div class="table-container">
-                    <table><thead><tr><th>Сотрудник</th><th>Роль</th><th>Смен</th><th>Базовая</th><th>Бонус</th><th>Итого</th></tr></thead><tbody id="staffTableBody"></tbody></table>
-                </div>`;
-            }
-
-            function setupStaffListeners() {
-                ['staffPeriodFull', 'staffPeriod1', 'staffPeriod2'].forEach((id, i) => {
-                    document.getElementById(id).addEventListener('click', () => {
-                        filterState.staff.period = ['full', '1-15', '16-31'][i];
-                        renderStaff();
-                    });
-                });
-            }
-
-            function renderStaff() { /* расчет из worklog как раньше, отрисовка */ }
-
-            // ---------------------- ЛИДЫ ----------------------
-            function leadsHTML() {
-                return `
-                <div class="filters-row">
-                    <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
-                </div>
-                <div class="kpi-row" id="leadsKPI"></div>
-                <div class="table-container">
-                    <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Статус</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
-                </div>`;
-            }
-
-            function setupLeadsListeners() { document.getElementById('uploadLeadsBtn').addEventListener('click',
-                    uploadLeads); }
-
-            async function uploadLeads() { /* исправленная функция с определением формата */ }
-
-            function renderLeads() {
-                const all = leadsData;
-                document.getElementById('leadsKPI').innerHTML = `
-                    <div class="kpi-card"><span class="kpi-label">Чистых</span><span class="kpi-value">${all.filter(l=>!l.is_duplicate&&!l.is_bad_contact).length}</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Дублей</span><span class="kpi-value">${all.filter(l=>l.is_duplicate).length}</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Некорр.</span><span class="kpi-value">${all.filter(l=>l.is_bad_contact).length}</span></div>`;
-                document.getElementById('leadsTableBody').innerHTML = all.map(l =>
-                    `<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`
-                    ).join('');
-            }
-
-            // ---------------------- СРАВНЕНИЕ ----------------------
-            function compareHTML() {
-                const f = filterState.compare;
-                return `
-                <div class="filters-row">
-                    <input type="date" class="filter-input" id="cmpP1From" value="${f.period1From||''}">
-                    <input type="date" class="filter-input" id="cmpP1To" value="${f.period1To||''}">
-                    <input type="date" class="filter-input" id="cmpP2From" value="${f.period2From||''}">
-                    <input type="date" class="filter-input" id="cmpP2To" value="${f.period2To||''}">
-                    <button class="btn btn-primary" id="cmpApplyBtn">Сравнить</button>
-                </div>
-                <div class="kpi-row" id="cmpKPI"></div>
-                <div class="widget-row" id="cmpWidgets"></div>`;
-            }
-
-            function setupCompareListeners() {
-                document.getElementById('cmpApplyBtn').addEventListener('click', () => {
-                    filterState.compare.period1From = document.getElementById('cmpP1From')?.value || '';
-                    filterState.compare.period1To = document.getElementById('cmpP1To')?.value || '';
-                    filterState.compare.period2From = document.getElementById('cmpP2From')?.value || '';
-                    filterState.compare.period2To = document.getElementById('cmpP2To')?.value || '';
-                    renderCompare();
-                });
-            }
-
-            function renderCompare() { /* расчет сравнения периодов */ }
-
-            // Глобальные обработчики
-            document.getElementById('tabBar').addEventListener('click', (e) => {
-                if (e.target.classList.contains('tab')) {
-                    activeTab = e.target.dataset.tab;
-                    renderTab();
-                }
+    function setupSalaryListeners() {
+        ['salPeriodFull','salPeriod1','salPeriod2'].forEach((id,i)=>{
+            document.getElementById(id).addEventListener('click', ()=>{
+                filterState.salary.period = ['full','1-15','16-31'][i];
+                renderSalary();
             });
-            document.getElementById('homeSidebarBtn').addEventListener('click', () => { window.location.href =
-                    'index.html'; });
-            document.getElementById('logoutSidebarBtn').addEventListener('click', async () => { await _supabase.auth
-                    .signOut();
-                window.location.href = 'login.html'; });
-            document.getElementById('showAllWidgetsBtn').addEventListener('click', () => {
-                document.querySelectorAll('.widget-card').forEach(w => w.classList.remove('hidden'));
+        });
+        ['salName','salSubj'].forEach(id=>{
+            document.getElementById(id).addEventListener('change', ()=>{
+                filterState.salary.name = document.getElementById('salName')?.value||'';
+                filterState.salary.subj = document.getElementById('salSubj')?.value||'';
+                renderSalary();
             });
-            document.getElementById('resetFiltersGlobalBtn').addEventListener('click', () => {
-                if (activeTab === 'finance') {
-                    filterState.finance = { dateFrom: '', dateTo: '', type: '', cat: '', man: '', acc: '',
-                        payType: '', showRaw: false };
-                    const now = new Date();
-                    filterState.finance.dateFrom =
-                        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-                    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                    filterState.finance.dateTo =
-                        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-                    renderFinance();
-                } else if (activeTab === 'salary') {
-                    filterState.salary = { name: '', subj: '', showSkipped: false, period: 'full' };
-                    renderSalary();
-                } else if (activeTab === 'staff') {
-                    filterState.staff = { period: 'full' };
-                    renderStaff();
-                }
-            });
+        });
+        document.getElementById('uploadSalaryBtn1').addEventListener('click', ()=>uploadSalary('1-15'));
+        document.getElementById('uploadSalaryBtn2').addEventListener('click', ()=>uploadSalary('16-31'));
+        document.getElementById('uploadSalaryBtnFull').addEventListener('click', ()=>uploadSalary('full'));
+        document.getElementById('toggleSkippedBtn').addEventListener('click', ()=>{
+            filterState.salary.showSkipped = !filterState.salary.showSkipped;
+            document.getElementById('toggleSkippedBtn').textContent = (filterState.salary.showSkipped?'Скрыть':'Показать')+' пропущенные';
+            renderSalary();
+        });
+    }
 
-            init();
-        })();
-    </script>
+    async function uploadSalary(period) {
+        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+        input.onchange = async (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, {type:'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+                const parsed = [];
+                let currentTeacher = '';
+                for(let i=0; i<rows.length; i++){
+                    const row = rows[i]; if(!row || row.length<2) continue;
+                    const line = row.join(' ').trim();
+                    if(line.startsWith('Выписка по зарплате -')){
+                        currentTeacher = line.replace('Выписка по зарплате -','').split('За период')[0].trim();
+                    } else if(row.length>=5 && row[0]!=='Предмет' && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
+                        const subject = String(row[0]||'').trim();
+                        const lessonType = String(row[1]||'').trim();
+                        const rate = parseFloat(String(row[2]||'0').replace(',','.'))||0;
+                        const qty = parseInt(String(row[3]||'0').replace(' шт.',''))||0;
+                        const amount = parseFloat(String(row[4]||'0').replace(',','.').replace(/\s/g,''))||0;
+                        if(qty>0||amount>0) parsed.push({ teacher_name: currentTeacher, subject, lesson_type: lessonType, rate, quantity: qty, amount, skipped: false, period });
+                    } else if(line.startsWith('Пропущенные записи')){
+                        const qty = parseInt(String(row[4]||'0').replace(' шт.',''))||0;
+                        parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true, period });
+                    }
+                }
+                if(period === 'full') {
+                    await _supabase.from('teacher_salary').delete().neq('id',0);
+                } else {
+                    await _supabase.from('teacher_salary').delete().eq('period', period);
+                }
+                await _supabase.from('teacher_salary').insert(parsed);
+                await loadSalary();
+                renderSalary();
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
+
+    function getSalaryFiltered() {
+        let d = salaryData;
+        const f = filterState.salary;
+        if (!f.showSkipped) d = d.filter(r => !r.skipped);
+        if (f.name) d = d.filter(r => r.teacher_name === f.name);
+        if (f.subj) d = d.filter(r => r.subject === f.subj);
+        if (f.period !== 'full') d = d.filter(r => r.period === f.period);
+        return d;
+    }
+
+    function renderSalary() {
+        const data = getSalaryFiltered();
+        const total = data.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+        const teachers = [...new Set(data.map(r=>r.teacher_name))];
+        const totalLessons = data.reduce((s,r)=>s+(r.quantity||0),0);
+        document.getElementById('salKPI').innerHTML = `
+            <div class="kpi-card"><span class="kpi-label">Фонд оплаты</span><span class="kpi-value">${total.toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Педагогов</span><span class="kpi-value">${teachers.length}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Уроков</span><span class="kpi-value">${totalLessons}</span></div>`;
+        // Остальная детализация аналогична предыдущей версии (заполнение виджетов)
+        document.getElementById('salTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.period||'full'}</td></tr>`).join('');
+    }
+
+    // ---------------------- ЗП СОТРУДНИКОВ ----------------------
+    function staffHTML() {
+        const f = filterState.staff;
+        return `
+        <div class="filters-row">
+            <button class="btn ${f.period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
+            <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
+            <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
+        </div>
+        <div class="kpi-row" id="staffKPI"></div>
+        <div class="widget-row" id="staffWidgets"></div>
+        <div class="table-container">
+            <table><thead><tr><th>Сотрудник</th><th>Роль</th><th>Смен</th><th>Базовая</th><th>Бонус</th><th>Итого</th></tr></thead><tbody id="staffTableBody"></tbody></table>
+        </div>`;
+    }
+
+    function setupStaffListeners() {
+        ['staffPeriodFull','staffPeriod1','staffPeriod2'].forEach((id,i)=>{
+            document.getElementById(id).addEventListener('click', ()=>{
+                filterState.staff.period = ['full','1-15','16-31'][i];
+                renderStaff();
+            });
+        });
+    }
+
+    function renderStaff() {
+        const period = filterState.staff.period;
+        const now = new Date(); const y=now.getFullYear(), m=now.getMonth()+1;
+        const daysInMonth = new Date(y, m, 0).getDate();
+        const dayRange = period==='1-15'?[1,15]: period==='16-31'?[16,daysInMonth]:[1,daysInMonth];
+        const staffEmps = employees.filter(e=>['Управляющий','Менеджер','Администратор'].includes(e.role));
+        const results = staffEmps.map(emp=>{
+            let worked=0, sales=0;
+            for(let d=dayRange[0]; d<=dayRange[1]; d++){
+                const key = `${emp.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const rec = worklog[key];
+                if(!rec||rec.status!=='working') continue;
+                worked++;
+                if(emp.role==='Менеджер') sales += rec.daily_sales||0;
+            }
+            const params = salaryParams[emp.id]||{};
+            const rates = {'Менеджер':20000,'Администратор':25000,'Управляющий':50000};
+            const normDays = emp.role==='Менеджер'?Math.round(daysInMonth*0.5):(params.norm_days||22);
+            const dailyRate = (rates[emp.role]||0)/Math.max(normDays,1);
+            let base = dailyRate*worked, bonus=0;
+            if(emp.role==='Менеджер'){
+                const plan = params.plan_amount||0;
+                bonus = sales*((plan>0&&sales>=plan)?7:5)/100;
+            } else if(emp.role==='Администратор'){
+                const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
+                    for(let d=dayRange[0]; d<=dayRange[1]; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
+                    return sum;
+                },0);
+                bonus = ms*0.01;
+            } else if(emp.role==='Управляющий'){
+                const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
+                    for(let d=dayRange[0]; d<=dayRange[1]; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
+                    return sum;
+                },0);
+                bonus = (params.plan_amount>0&&ms>=params.plan_amount)?ms*0.01:0;
+            }
+            return { emp, worked, base, bonus, total:base+bonus, sales };
+        });
+        document.getElementById('staffKPI').innerHTML = `
+            <div class="kpi-card"><span class="kpi-label">Фонд оплаты</span><span class="kpi-value">${results.reduce((s,r)=>s+r.total,0).toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Сотрудников</span><span class="kpi-value">${results.length}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Смен</span><span class="kpi-value">${results.reduce((s,r)=>s+r.worked,0)}</span></div>`;
+        document.getElementById('staffWidgets').innerHTML = results.map(r=>`
+            <div class="widget-card"><div class="widget-title">${r.emp.name} (${r.emp.role})</div>
+                <div style="display:flex;justify-content:space-between;"><span>Смен:</span><strong>${r.worked}</strong></div>
+                <div style="display:flex;justify-content:space-between;"><span>Базовая:</span><strong>${r.base.toFixed(0)} ₽</strong></div>
+                <div style="display:flex;justify-content:space-between;"><span>Бонус:</span><strong>${r.bonus.toFixed(0)} ₽</strong></div>
+                <div style="display:flex;justify-content:space-between;font-size:1.1rem;margin-top:0.5rem;"><span>Итого:</span><strong style="color:var(--accent);">${r.total.toFixed(0)} ₽</strong></div>
+                ${r.emp.role==='Менеджер'?`<div style="display:flex;justify-content:space-between;"><span>Продажи:</span><strong>${r.sales.toLocaleString()} ₽</strong></div>`:''}
+            </div>`).join('');
+        document.getElementById('staffTableBody').innerHTML = results.map(r=>`<tr><td>${r.emp.name}</td><td>${r.emp.role}</td><td>${r.worked}</td><td>${r.base.toFixed(0)} ₽</td><td>${r.bonus.toFixed(0)} ₽</td><td><strong>${r.total.toFixed(0)} ₽</strong></td></tr>`).join('');
+    }
+
+    // ---------------------- ЛИДЫ ----------------------
+    function leadsHTML() {
+        return `
+        <div class="filters-row">
+            <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
+        </div>
+        <div class="kpi-row" id="leadsKPI"></div>
+        <div class="table-container">
+            <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Статус</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
+        </div>`;
+    }
+
+    function setupLeadsListeners() { document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads); }
+
+    async function uploadLeads() {
+        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+        input.onchange = async (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, {type:'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+                const parsed = [];
+                const firstRowStr = rows[0] ? rows[0].join(' ').toLowerCase() : '';
+                if (firstRowStr.includes('новые лиды')) {
+                    let dataStartIdx = 0;
+                    if (rows[0].join(' ').toLowerCase().includes('новые лиды')) {
+                        dataStartIdx = 1;
+                        if (rows[1] && rows[1].join(' ').toLowerCase().includes('за период')) dataStartIdx = 2;
+                    }
+                    for (let i = dataStartIdx; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length < 5) continue;
+                        const dateStr = String(row[1] || '').trim();
+                        const name = String(row[2] || '').trim();
+                        const stage = String(row[3] || '').trim();
+                        const source = String(row[4] || '').trim();
+                        if (!dateStr) continue;
+                        const parts = dateStr.split(' ');
+                        const datePart = parts[0];
+                        const timePart = parts[1] || '00:00';
+                        const [day, month, year] = datePart.split('.').map(Number);
+                        const [hours, minutes] = timePart.split(':').map(Number);
+                        const validDate = new Date(year, month-1, day, hours||0, minutes||0);
+                        const isDuplicate = /8\.\s*Дубль/.test(name);
+                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+                        parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDuplicate, is_bad_contact: isBadContact });
+                    }
+                } else {
+                    const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
+                    if (headerIdx === -1) { alert('Не удалось определить формат файла.'); return; }
+                    const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
+                    const dateIdx = headers.findIndex(h=>h.includes('дата добавления'));
+                    const nameIdx = headers.findIndex(h=>h.includes('наименование'));
+                    const stageIdx = headers.findIndex(h=>h.includes('этап'));
+                    const sourceIdx = headers.findIndex(h=>h.includes('источник'));
+                    for (let i=headerIdx+1; i<rows.length; i++) {
+                        const row = rows[i]; if(!row || row.length<2) continue;
+                        const name = String(row[nameIdx]||'').trim();
+                        const isDuplicate = /8\.\s*Дубль/.test(name);
+                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+                        parsed.push({ date_added: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : null, name, stage: String(row[stageIdx]||'').trim(), source: String(row[sourceIdx]||'').trim(), is_duplicate: isDuplicate, is_bad_contact: isBadContact });
+                    }
+                }
+                await _supabase.from('leads').delete().neq('id',0);
+                if (parsed.length > 0) await _supabase.from('leads').insert(parsed);
+                await loadLeads();
+                renderLeads();
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
+
+    function renderLeads() {
+        const all = leadsData;
+        document.getElementById('leadsKPI').innerHTML = `
+            <div class="kpi-card"><span class="kpi-label">Чистых</span><span class="kpi-value">${all.filter(l=>!l.is_duplicate&&!l.is_bad_contact).length}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Дублей</span><span class="kpi-value">${all.filter(l=>l.is_duplicate).length}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Некорр.</span><span class="kpi-value">${all.filter(l=>l.is_bad_contact).length}</span></div>`;
+        document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
+    }
+
+    // ---------------------- СРАВНЕНИЕ ----------------------
+    function compareHTML() {
+        const f = filterState.compare;
+        return `
+        <div class="filters-row">
+            <input type="date" class="filter-input" id="cmpP1From" value="${f.period1From||''}">
+            <input type="date" class="filter-input" id="cmpP1To" value="${f.period1To||''}">
+            <input type="date" class="filter-input" id="cmpP2From" value="${f.period2From||''}">
+            <input type="date" class="filter-input" id="cmpP2To" value="${f.period2To||''}">
+            <button class="btn btn-primary" id="cmpApplyBtn">Сравнить</button>
+        </div>
+        <div class="kpi-row" id="cmpKPI"></div>
+        <div class="widget-row" id="cmpWidgets"></div>`;
+    }
+
+    function setupCompareListeners() {
+        document.getElementById('cmpApplyBtn').addEventListener('click', ()=>{
+            filterState.compare.period1From = document.getElementById('cmpP1From')?.value||'';
+            filterState.compare.period1To = document.getElementById('cmpP1To')?.value||'';
+            filterState.compare.period2From = document.getElementById('cmpP2From')?.value||'';
+            filterState.compare.period2To = document.getElementById('cmpP2To')?.value||'';
+            renderCompare();
+        });
+    }
+
+    function renderCompare() { /* расчёт сравнения */ }
+
+    // Глобальные обработчики
+    document.getElementById('tabBar').addEventListener('click', (e)=>{
+        if(e.target.classList.contains('tab')){
+            activeTab = e.target.dataset.tab;
+            renderTab();
+        }
+    });
+    document.getElementById('homeSidebarBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
+    document.getElementById('logoutSidebarBtn').addEventListener('click', async ()=>{ await _supabase.auth.signOut(); window.location.href='login.html'; });
+    document.getElementById('showAllWidgetsBtn').addEventListener('click', ()=>{
+        document.querySelectorAll('.widget-card').forEach(w=>w.classList.remove('hidden'));
+    });
+    document.getElementById('resetFiltersGlobalBtn').addEventListener('click', ()=>{
+        if (activeTab === 'finance') {
+            filterState.finance = { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false };
+            const now = new Date();
+            filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+            const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+            filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+            renderFinance();
+        } else if (activeTab === 'salary') {
+            filterState.salary = { name:'', subj:'', showSkipped:false, period:'full' };
+            renderSalary();
+        } else if (activeTab === 'staff') {
+            filterState.staff = { period:'full' };
+            renderStaff();
+        }
+    });
+
+    init();
+})();
+</script>
 </body>
 </html>
