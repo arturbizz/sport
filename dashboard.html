@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Дашборд — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --surface: #ffffff;
+      --text-dark: #334155;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --pastel-blue: #e0f2fe;
+      --pastel-blue-text: #0369a1;
+      --pastel-green: #dcfce7;
+      --pastel-green-text: #15803d;
+      --pastel-purple: #f3e8ff;
+      --pastel-purple-text: #7e22ce;
+      --pastel-orange: #ffedd5;
+      --pastel-orange-text: #c2410c;
+      --shadow: 0 12px 40px rgba(140,152,164,0.06);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-main);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Сайдбар */
+    .sidebar {
+      width: 70px;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 0;
+      border-right: 1px solid var(--border);
+      gap: 1.5rem;
+      min-height: 100vh;
+    }
+    .sidebar svg {
+      width: 24px; height: 24px;
+      color: var(--text-light); cursor: pointer; transition: 0.2s;
+    }
+    .sidebar svg:hover { color: var(--pastel-blue-text); }
+    .sidebar .logout { margin-top: auto; }
+
+    .main {
+      flex: 1; padding: 1.5rem 2rem; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 1.5rem;
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;
+    }
+    h1 {
+      font-size: 1.6rem; font-weight: 700;
+      background: linear-gradient(135deg, #7c5ce7, #0fb9b1);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    /* Кнопки */
+    .btn {
+      border: none; padding: 0.5rem 1.2rem; border-radius: 12px;
+      font-weight: 600; cursor: pointer; font-size: 0.85rem;
+      background: var(--surface); color: var(--pastel-blue-text);
+      border: 1px solid var(--border); transition: 0.2s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn:hover { background: var(--pastel-blue); }
+    .btn-primary { background: var(--pastel-blue); border: none; }
+    .btn-primary:hover { filter: brightness(0.95); }
+
+    /* Фильтры */
+    .filters {
+      display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;
+    }
+    .filters select, .filters input {
+      padding: 0.45rem 0.9rem; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface);
+      font-size: 0.85rem; color: var(--text-dark); min-width: 140px;
+    }
+
+    /* Карточки KPI */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;
+    }
+    .kpi-card {
+      background: var(--surface); border-radius: 20px;
+      padding: 1.5rem; box-shadow: var(--shadow);
+      border: 1px solid rgba(241,245,249,0.8);
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .kpi-card .label { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
+    .kpi-card .value { font-size: 2rem; font-weight: 700; color: var(--text-dark); }
+    .kpi-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+    }
+    .kpi-icon.blue { background: var(--pastel-blue); color: var(--pastel-blue-text); }
+    .kpi-icon.green { background: var(--pastel-green); color: var(--pastel-green-text); }
+    .kpi-icon.purple { background: var(--pastel-purple); color: var(--pastel-purple-text); }
+    .kpi-icon.orange { background: var(--pastel-orange); color: var(--pastel-orange-text); }
+
+    /* Графики */
+    .chart-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+    }
+    .chart-card {
+      background: var(--surface); border-radius: 20px;
+      padding: 1.5rem; box-shadow: var(--shadow);
+      border: 1px solid rgba(241,245,249,0.8);
+    }
+    .chart-card canvas { max-height: 300px; }
+
+    /* Таблица */
+    .table-card {
+      background: var(--surface); border-radius: 20px;
+      padding: 1.5rem; box-shadow: var(--shadow);
+      border: 1px solid rgba(241,245,249,0.8); overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-light); font-weight: 600; }
+    tbody tr:hover { background: rgba(241,245,249,0.5); }
+
+    @media (max-width: 800px) {
+      .chart-grid { grid-template-columns: 1fr; }
+      .main { padding: 1rem; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <svg class="logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="logoutBtn" style="cursor:pointer;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+  </div>
+
+  <div class="main">
+    <div class="header">
+      <h1>Дашборд</h1>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" id="exportBtn">Excel</button>
+        <button class="btn btn-primary" id="uploadBtn">Загрузить отчёт</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <input type="date" id="dateFrom"> <input type="date" id="dateTo">
+      <select id="managerFilter"><option value="">Все менеджеры</option></select>
+      <select id="categoryFilter"><option value="">Все статьи</option></select>
+      <select id="typeFilter"><option value="">Все типы</option></select>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><span class="label">Выручка</span><span class="value" id="kpiRevenue">0 ₽</span><div class="kpi-icon blue">💰</div></div>
+      <div class="kpi-card"><span class="label">Расходы</span><span class="value" id="kpiExpense">0 ₽</span><div class="kpi-icon orange">📤</div></div>
+      <div class="kpi-card"><span class="label">Прибыль</span><span class="value" id="kpiProfit">0 ₽</span><div class="kpi-icon green">📈</div></div>
+      <div class="kpi-card"><span class="label">Средний чек</span><span class="value" id="kpiAvg">0 ₽</span><div class="kpi-icon purple">🧾</div></div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card"><canvas id="chartRevenue"></canvas></div>
+      <div class="chart-card"><canvas id="chartManagers"></canvas></div>
+    </div>
+
+    <div class="table-card">
+      <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Менеджер</th></tr></thead><tbody id="tableBody"></tbody></table>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      let currentUserEmail = null, allData = [];
+      let charts = {};
+
+      async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session || session.user.email !== 'arturgalkin.ru@mail.ru') { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        await loadFromSupabase();
+        setupFilters();
+        renderAll();
+      }
+
+      async function loadFromSupabase() {
+        const { data, error } = await _supabase.from('crm_finance').select('*');
+        if (error) { console.error(error); return; }
+        allData = data || [];
+      }
+
+      function setupFilters() {
+        const managers = [...new Set(allData.map(d => d.manager).filter(Boolean))].sort();
+        const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
+        const types = [...new Set(allData.map(d => d.operation_type).filter(Boolean))].sort();
+        const fill = (id, items) => {
+          const sel = document.getElementById(id);
+          sel.innerHTML = sel.options[0].outerHTML + items.map(i => `<option>${i}</option>`).join('');
+        };
+        fill('managerFilter', managers);
+        fill('categoryFilter', categories);
+        fill('typeFilter', types);
+      }
+
+      function getFiltered() {
+        let d = allData;
+        const from = document.getElementById('dateFrom').value;
+        const to = document.getElementById('dateTo').value;
+        if (from) d = d.filter(r => r.operation_date >= from);
+        if (to) d = d.filter(r => r.operation_date <= to);
+        const m = document.getElementById('managerFilter').value;
+        if (m) d = d.filter(r => r.manager === m);
+        const c = document.getElementById('categoryFilter').value;
+        if (c) d = d.filter(r => r.category === c);
+        const t = document.getElementById('typeFilter').value;
+        if (t) d = d.filter(r => r.operation_type === t);
+        return d;
+      }
+
+      function renderAll() {
+        const data = getFiltered();
+        renderKPI(data);
+        renderCharts(data);
+        renderTable(data);
+      }
+
+      function renderKPI(data) {
+        const income = data.filter(r => r.operation_type?.startsWith('Доход'));
+        const expense = data.filter(r => r.operation_type?.startsWith('Расход'));
+        const totalIncome = income.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+        const totalExpense = expense.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+        document.getElementById('kpiRevenue').textContent = totalIncome.toLocaleString() + ' ₽';
+        document.getElementById('kpiExpense').textContent = totalExpense.toLocaleString() + ' ₽';
+        document.getElementById('kpiProfit').textContent = (totalIncome - totalExpense).toLocaleString() + ' ₽';
+        document.getElementById('kpiAvg').textContent = income.length ? (totalIncome / income.length).toFixed(0).toLocaleString() + ' ₽' : '0 ₽';
+      }
+
+      function renderCharts(data) {
+        const income = data.filter(r => r.operation_type?.startsWith('Доход'));
+        const byDate = {};
+        income.forEach(r => { const d = r.operation_date; byDate[d] = (byDate[d]||0) + parseFloat(r.amount||0); });
+        const sorted = Object.keys(byDate).sort();
+        const labels = sorted, values = sorted.map(k => byDate[k]);
+
+        if (charts.revenue) charts.revenue.destroy();
+        charts.revenue = new Chart(document.getElementById('chartRevenue'), {
+          type: 'line', data: { labels, datasets: [{ label:'Выручка', data:values, borderColor:'#7c5ce7', tension:0.3, fill:true, backgroundColor:'rgba(124,92,231,0.05)' }] }
+        });
+
+        const byManager = {};
+        income.forEach(r => { const m = r.manager || '—'; byManager[m] = (byManager[m]||0) + parseFloat(r.amount||0); });
+        const mgrs = Object.keys(byManager);
+        if (charts.managers) charts.managers.destroy();
+        charts.managers = new Chart(document.getElementById('chartManagers'), {
+          type: 'bar', data: { labels: mgrs, datasets: [{ label:'По менеджерам', data: mgrs.map(m=>byManager[m]), backgroundColor:'#a0e7e5' }] }
+        });
+      }
+
+      function renderTable(data) {
+        document.getElementById('tableBody').innerHTML = data.slice(0,50).map(r => `
+          <tr><td>${r.operation_date||''}</td><td>${r.operation_type||''}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category||''}</td><td>${r.manager||''}</td></tr>
+        `).join('');
+      }
+
+      document.getElementById('uploadBtn').addEventListener('click', () => {
+        const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx';
+        input.onchange = async (e) => {
+          const file = e.target.files[0]; if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async (ev) => {
+            const data = new Uint8Array(ev.target.result);
+            const wb = XLSX.read(data, {type:'array'});
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+            const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата'));
+            if (headerIdx === -1) { alert('Не найден заголовок'); return; }
+            const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
+            const dateIdx = headers.findIndex(h => h.startsWith('дата'));
+            const typeIdx = headers.findIndex(h => h.startsWith('тип'));
+            const amountIdx = headers.findIndex(h => h.startsWith('сумма'));
+            const catIdx = headers.findIndex(h => h.startsWith('статья'));
+            const manIdx = headers.findIndex(h => h.startsWith('менеджер'));
+            const parsed = [];
+            for (let i = headerIdx+1; i < rows.length; i++) {
+              const cols = rows[i]; if (!cols) continue;
+              const amt = parseFloat(String(cols[amountIdx]||'').replace(',','.').replace(/\s/g,''));
+              if (isNaN(amt)) continue;
+              parsed.push({
+                operation_date: String(cols[dateIdx]||'').trim(),
+                operation_type: String(cols[typeIdx]||'').trim(),
+                amount: amt,
+                category: String(cols[catIdx]||'').trim(),
+                manager: String(cols[manIdx]||'').trim()
+              });
+            }
+            await _supabase.from('crm_finance').delete().neq('id',0);
+            await _supabase.from('crm_finance').insert(parsed);
+            await loadFromSupabase();
+            renderAll();
+          };
+          reader.readAsArrayBuffer(file);
+        };
+        input.click();
+      });
+
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        const data = getFiltered().map(r => ({ Дата:r.operation_date, Тип:r.operation_type, Сумма:r.amount, Статья:r.category, Менеджер:r.manager }));
+        const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Дашборд'); XLSX.writeFile(wb, 'дашборд.xlsx');
+      });
+
+      document.querySelectorAll('.filters select, .filters input').forEach(el => el.addEventListener('change', renderAll));
+      document.getElementById('logoutBtn').addEventListener('click', async () => { await _supabase.auth.signOut(); window.location.href = 'login.html'; });
+
+      init();
+    })();
+  </script>
+</body>
+</html>
