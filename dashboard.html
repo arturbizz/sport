@@ -25,6 +25,7 @@
       --shadow: 0 16px 48px rgba(148, 163, 184, 0.05);
       --radius: 24px;
       --gap: 32px;
+      --max-width: 1440px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -65,6 +66,8 @@
       flex-direction: column;
       gap: var(--gap);
       max-height: 100vh;
+      max-width: var(--max-width);
+      margin: 0 auto;
     }
     .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
     h1 {
@@ -92,16 +95,16 @@
     }
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--gap); }
     .kpi-card {
-      background: var(--surface); border-radius: var(--radius); padding: 2rem;
+      background: var(--surface); border-radius: var(--radius); padding: 1.8rem;
       box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8);
       display: flex; flex-direction: column; gap: 0.4rem; transition: 0.25s;
     }
     .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 24px 48px rgba(124,92,231,0.06); }
     .kpi-card .label { font-size: 0.82rem; color: var(--text-light); font-weight: 500; }
     .kpi-card .value { font-size: 2rem; font-weight: 700; }
-    .widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--gap); }
+    .widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--gap); }
     .widget-card {
-      background: var(--surface); border-radius: var(--radius); padding: 2rem;
+      background: var(--surface); border-radius: var(--radius); padding: 1.8rem;
       box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8);
       position: relative; transition: 0.3s;
       border-left: 4px solid transparent;
@@ -112,14 +115,14 @@
     .widget-list li { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.4rem 0; border-bottom: 1px solid #f5f0eb; }
     .widget-list li span:last-child { font-weight: 600; color: var(--text); }
     .table-card {
-      background: var(--surface); border-radius: var(--radius); padding: 2rem;
+      background: var(--surface); border-radius: var(--radius); padding: 1.8rem;
       box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); overflow-x: auto; margin-top: 0.5rem;
     }
     table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
     th, td { text-align: left; padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-light); font-weight: 600; background: #fafbfc; position: sticky; top: 0; }
     .rating-card {
-      background: linear-gradient(135deg, #fef9f0, #fff7ed); border-radius: var(--radius); padding: 2rem;
+      background: linear-gradient(135deg, #fef9f0, #fff7ed); border-radius: var(--radius); padding: 1.8rem;
       box-shadow: var(--shadow); border: 1px solid rgba(249,202,36,0.3);
     }
     .rating-row { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid #fef3c7; }
@@ -141,6 +144,7 @@
     }
     .widget-close:hover { opacity: 1; color: #ef4444; }
     .hidden-widget { display: none; }
+    .toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     @media (max-width: 900px) {
       .main { padding: 1.2rem; }
       .sidebar { display: none; }
@@ -183,12 +187,45 @@
       compare: { period1From:'', period1To:'', period2From:'', period2To:'' }
     };
 
+    const hiddenWidgets = new Set(); // вместо localStorage
+
     function toggleWidget(widgetId) {
       const widget = document.getElementById(widgetId);
       if (!widget) return;
       widget.classList.toggle('hidden-widget');
     }
+    function resetWidgets() {
+      document.querySelectorAll('.widget-card.hidden-widget').forEach(w => w.classList.remove('hidden-widget'));
+    }
+    function resetFilters(tab) {
+      if (tab === 'finance') {
+        filterState.finance = { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false };
+        const now = new Date();
+        filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+        const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+        filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+        renderFinance();
+      } else if (tab === 'salary') {
+        filterState.salary = { name:'', subj:'', showSkipped:false, period:'full' };
+        renderSalary();
+      } else if (tab === 'staff') {
+        filterState.staff = { period:'full' };
+        renderStaff();
+      }
+      // обновить поля ввода
+      if (document.getElementById('finDateFrom')) {
+        document.getElementById('finDateFrom').value = filterState.finance.dateFrom;
+        document.getElementById('finDateTo').value = filterState.finance.dateTo;
+        document.getElementById('finType').value = '';
+        document.getElementById('finCat').value = '';
+        document.getElementById('finAcc').value = '';
+        document.getElementById('finPayType').value = '';
+        document.getElementById('finMan').value = '';
+      }
+    }
+
     window.toggleWidget = toggleWidget;
+    window.resetWidgets = resetWidgets;
 
     function toISODate(d) { const p=d.split('.'); return p.length===3?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:d; }
 
@@ -197,10 +234,7 @@
       if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
       currentUserEmail = session.user.email;
       await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(), loadSalaryParams(), loadExpenses(), loadLeads()]);
-      const now = new Date();
-      filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-      const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-      filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+      resetFilters('finance');
       renderTab();
     }
 
@@ -244,6 +278,10 @@
       const accs = [...new Set(financeData.map(d=>d.account).filter(Boolean))].sort();
       const payTypes = [...new Set(financeData.map(d=>d.payment_type).filter(Boolean))].sort();
       return `
+        <div class="toolbar">
+          <button class="btn" id="resetFiltersBtn">Сбросить фильтры</button>
+          <button class="btn" id="resetWidgetsBtn">Показать все виджеты</button>
+        </div>
         <div class="filters">
           <button class="btn" id="currentMonthBtn">Текущий месяц</button>
           <input type="date" id="finDateFrom" value="${f.dateFrom||''}">
@@ -269,6 +307,8 @@
     }
 
     function setupFinanceListeners() {
+      document.getElementById('resetFiltersBtn').addEventListener('click', () => resetFilters('finance'));
+      document.getElementById('resetWidgetsBtn').addEventListener('click', resetWidgets);
       document.getElementById('currentMonthBtn').addEventListener('click', ()=>{
         const now = new Date();
         filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
@@ -354,72 +394,67 @@
         <div class="kpi-card"><span class="label">Расходы</span><span class="value">${te.toLocaleString()} ₽</span></div>
         <div class="kpi-card"><span class="label">Прибыль</span><span class="value">${(ti-te).toLocaleString()} ₽</span></div>
         <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
-      
-      const now = new Date();
-      const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-      const currentMonthEnd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()).padStart(2,'0')}`;
-      const upcoming = expensesData.filter(e => e.next_payment_date >= currentMonthStart && e.next_payment_date <= currentMonthEnd);
-      const upcomingTotal = upcoming.reduce((s,e)=>s+parseFloat(e.amount),0);
-      const upcomingEl = document.getElementById('upcomingExpenses');
-      if (upcoming.length === 0) {
-        document.getElementById('upcomingExpensesWidget').classList.add('hidden-widget');
-      } else {
-        document.getElementById('upcomingExpensesWidget').classList.remove('hidden-widget');
-        upcomingEl.innerHTML = `
-          <h3>Предстоящие расходы</h3>
-          <div style="margin-bottom:1rem;"><strong>Общая сумма: ${upcomingTotal.toLocaleString()} ₽</strong></div>
-          <ul class="widget-list">
-            ${upcoming.map(e=>`<li><span>${e.name} ${new Date(e.next_payment_date)<new Date()?'<span class="badge-overdue">Просрочен</span>':''}</span><span>${parseFloat(e.amount).toLocaleString()} ₽ (${e.next_payment_date})</span></li>`).join('')}
-          </ul>`;
-      }
+
+      // Умное скрытие виджетов в зависимости от типа фильтра
+      const typeFilter = filterState.finance.type.toLowerCase();
+      const showIncome = !typeFilter || ['доход','продажа'].some(t=>typeFilter.includes(t));
+      const showExpense = !typeFilter || ['расход','выплата','инкассация','возврат'].some(t=>typeFilter.includes(t));
 
       const group = (arr,key)=>{
         const m={}; arr.forEach(r=>{const k=r[key]||'—'; m[k]=(m[k]||0)+parseFloat(r.amount||0);});
         return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
       };
 
-      const finWidgets = document.getElementById('finWidgets');
-      finWidgets.innerHTML = `
+      let widgetsHtml = '';
+      if (showExpense) {
+        widgetsHtml += `
+          <div class="widget-card" id="expenseByCategoryWidget">
+            <button class="widget-close" onclick="toggleWidget('expenseByCategoryWidget')">✕</button>
+            <h3>Расходы по статьям</h3>
+            <ul class="widget-list">${group(expense,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
+          </div>
+          <div class="widget-card" id="expenseByAccountWidget">
+            <button class="widget-close" onclick="toggleWidget('expenseByAccountWidget')">✕</button>
+            <h3>Расходы по счетам</h3>
+            <ul class="widget-list">${group(expense,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
+          </div>`;
+      }
+      if (showIncome) {
+        widgetsHtml += `
+          <div class="widget-card" id="incomeByCategoryWidget">
+            <button class="widget-close" onclick="toggleWidget('incomeByCategoryWidget')">✕</button>
+            <h3>Доходы по статьям</h3>
+            <ul class="widget-list">${group(income,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
+          </div>
+          <div class="widget-card" id="incomeByManagerWidget">
+            <button class="widget-close" onclick="toggleWidget('incomeByManagerWidget')">✕</button>
+            <h3>Доходы по менеджерам</h3>
+            <ul class="widget-list">${group(income,'manager').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
+          </div>
+          <div class="widget-card" id="incomeByAccountWidget">
+            <button class="widget-close" onclick="toggleWidget('incomeByAccountWidget')">✕</button>
+            <h3>Доходы по счетам</h3>
+            <ul class="widget-list">${group(income,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
+          </div>`;
+      }
+
+      // Предстоящие расходы
+      const now = new Date();
+      const currentMonthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+      const currentMonthEnd = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()).padStart(2,'0')}`;
+      const upcoming = expensesData.filter(e => e.next_payment_date >= currentMonthStart && e.next_payment_date <= currentMonthEnd);
+      const upcomingTotal = upcoming.reduce((s,e)=>s+parseFloat(e.amount),0);
+      const upcomingHtml = upcoming.length === 0 ? '' : `
         <div class="widget-card" id="upcomingExpensesWidget">
           <button class="widget-close" onclick="toggleWidget('upcomingExpensesWidget')">✕</button>
-          <div id="upcomingExpenses">${upcoming.length === 0 ? '' : upcomingEl.innerHTML}</div>
-        </div>
-        <div class="widget-card" id="expenseByCategoryWidget">
-          <button class="widget-close" onclick="toggleWidget('expenseByCategoryWidget')">✕</button>
-          <h3>Расходы по статьям</h3>
-          <ul class="widget-list">${group(expense,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
-        </div>
-        <div class="widget-card" id="incomeByCategoryWidget">
-          <button class="widget-close" onclick="toggleWidget('incomeByCategoryWidget')">✕</button>
-          <h3>Доходы по статьям</h3>
-          <ul class="widget-list">${group(income,'category').slice(0,12).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
-        </div>
-        <div class="widget-card" id="incomeByManagerWidget">
-          <button class="widget-close" onclick="toggleWidget('incomeByManagerWidget')">✕</button>
-          <h3>Доходы по менеджерам</h3>
-          <ul class="widget-list">${group(income,'manager').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
-        </div>
-        <div class="widget-card" id="expenseByAccountWidget">
-          <button class="widget-close" onclick="toggleWidget('expenseByAccountWidget')">✕</button>
-          <h3>Расходы по счетам</h3>
-          <ul class="widget-list">${group(expense,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
-        </div>
-        <div class="widget-card" id="incomeByAccountWidget">
-          <button class="widget-close" onclick="toggleWidget('incomeByAccountWidget')">✕</button>
-          <h3>Доходы по счетам</h3>
-          <ul class="widget-list">${group(income,'account').slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
-        </div>
-        <div class="widget-card" id="expenseByPayTypeWidget">
-          <button class="widget-close" onclick="toggleWidget('expenseByPayTypeWidget')">✕</button>
-          <h3>Расходы по типам платежа</h3>
-          <ul class="widget-list">${group(expense,'payment_type').slice(0,6).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
-        </div>
-        <div class="widget-card" id="incomeByPayTypeWidget">
-          <button class="widget-close" onclick="toggleWidget('incomeByPayTypeWidget')">✕</button>
-          <h3>Доходы по типам платежа</h3>
-          <ul class="widget-list">${group(income,'payment_type').slice(0,6).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>
+          <h3>Предстоящие расходы</h3>
+          <div style="margin-bottom:1rem;"><strong>Общая сумма: ${upcomingTotal.toLocaleString()} ₽</strong></div>
+          <ul class="widget-list">
+            ${upcoming.map(e=>`<li><span>${e.name} ${new Date(e.next_payment_date)<now?'<span class="badge-overdue">Просрочен</span>':''}</span><span>${parseFloat(e.amount).toLocaleString()} ₽ (${e.next_payment_date})</span></li>`).join('')}
+          </ul>
         </div>`;
 
+      document.getElementById('finWidgets').innerHTML = upcomingHtml + widgetsHtml;
       document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
 
@@ -442,6 +477,9 @@
       const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
       const subjects = [...new Set(salaryData.map(d=>d.subject).filter(Boolean))].sort();
       return `
+        <div class="toolbar">
+          <button class="btn" id="resetSalaryFiltersBtn">Сбросить фильтры</button>
+        </div>
         <div class="filters">
           <button class="btn ${f.period==='full'?'btn-primary':''}" id="salPeriodFull">Весь месяц</button>
           <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="salPeriod1">1–15</button>
@@ -467,16 +505,167 @@
         </div>`;
     }
 
-    function setupSalaryListeners() { /* аналогично предыдущим версиям */ }
-    function uploadSalary(period) { /* аналогично */ }
-    function getTeacherPayouts() { /* аналогично */ }
-    function renderSalary() { /* обновлённый рендер с вставкой в контейнеры виджетов */ }
-    function getSalaryFiltered() { /* аналогично */ }
+    function setupSalaryListeners() {
+      document.getElementById('resetSalaryFiltersBtn').addEventListener('click', () => resetFilters('salary'));
+      ['salPeriodFull','salPeriod1','salPeriod2'].forEach((id,i)=>{
+        document.getElementById(id).addEventListener('click', ()=>{
+          filterState.salary.period = ['full','1-15','16-31'][i];
+          renderSalary();
+        });
+      });
+      document.getElementById('toggleSkippedBtn').addEventListener('click', ()=>{
+        filterState.salary.showSkipped = !filterState.salary.showSkipped;
+        document.getElementById('toggleSkippedBtn').textContent = (filterState.salary.showSkipped?'Скрыть':'Показать')+' пропущенные';
+        renderSalary();
+      });
+      ['salName','salSubj'].forEach(id=>{
+        document.getElementById(id).addEventListener('change', ()=>{
+          filterState.salary.name = document.getElementById('salName')?.value||'';
+          filterState.salary.subj = document.getElementById('salSubj')?.value||'';
+          renderSalary();
+        });
+      });
+      document.getElementById('uploadSalaryBtn1').addEventListener('click', ()=>uploadSalary('1-15'));
+      document.getElementById('uploadSalaryBtn2').addEventListener('click', ()=>uploadSalary('16-31'));
+      document.getElementById('uploadSalaryBtnFull').addEventListener('click', ()=>uploadSalary('full'));
+    }
+
+    async function uploadSalary(period) {
+      const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+      input.onchange = async (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const data = new Uint8Array(ev.target.result);
+          const wb = XLSX.read(data, {type:'array'});
+          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+          const parsed = [];
+          let currentTeacher = '';
+          for(let i=0; i<rows.length; i++){
+            const row = rows[i]; if(!row || row.length<2) continue;
+            const line = row.join(' ').trim();
+            if(line.startsWith('Выписка по зарплате -')){
+              currentTeacher = line.replace('Выписка по зарплате -','').split('За период')[0].trim();
+            } else if(row.length>=5 && row[0]!=='Предмет' && row[0]!=='Орел' && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
+              const subject = String(row[0]||'').trim();
+              const lessonType = String(row[1]||'').trim();
+              const rate = parseFloat(String(row[2]||'0').replace(',','.'))||0;
+              const qty = parseInt(String(row[3]||'0').replace(' шт.',''))||0;
+              const amount = parseFloat(String(row[4]||'0').replace(',','.').replace(/\s/g,''))||0;
+              if(qty>0||amount>0) parsed.push({ teacher_name: currentTeacher, subject, lesson_type: lessonType, rate, quantity: qty, amount, skipped: false, period });
+            } else if(line.startsWith('Пропущенные записи')){
+              const qty = parseInt(String(row[4]||'0').replace(' шт.',''))||0;
+              parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true, period });
+            }
+          }
+          if(period === 'full') {
+            await _supabase.from('teacher_salary').delete().neq('id',0);
+          } else {
+            await _supabase.from('teacher_salary').delete().eq('period', period);
+          }
+          await _supabase.from('teacher_salary').insert(parsed);
+          await loadSalary();
+          renderSalary();
+        };
+        reader.readAsArrayBuffer(file);
+      };
+      input.click();
+    }
+
+    function getTeacherPayouts() {
+      const payouts = {};
+      const salaryRelated = financeData.filter(r=>{
+        const cat = (r.category||'').toLowerCase();
+        return cat.includes('зп')||cat.includes('зарплат')||cat.includes('педагог');
+      });
+      const teachers = [...new Set(salaryData.map(d=>d.teacher_name))];
+      salaryRelated.forEach(r=>{
+        const amount = parseFloat(r.amount||0);
+        const cat = (r.category||'').toLowerCase();
+        let matched = null;
+        for(const t of teachers) if(cat.includes(t.toLowerCase())){ matched=t; break; }
+        if(!matched && teachers.length && cat.includes('педагог')) matched='общая';
+        if(matched && amount>0){
+          if(!payouts[matched]) payouts[matched]={total:0,items:[]};
+          payouts[matched].total += amount;
+          payouts[matched].items.push({date:r.operation_date, amount, category:r.category});
+        }
+      });
+      return payouts;
+    }
+
+    function getSalaryFiltered() {
+      let d = salaryData;
+      const f = filterState.salary;
+      if (!f.showSkipped) d = d.filter(r => !r.skipped);
+      if (f.name) d = d.filter(r => r.teacher_name === f.name);
+      if (f.subj) d = d.filter(r => r.subject === f.subj);
+      if (f.period !== 'full') d = d.filter(r => r.period === f.period);
+      return d;
+    }
+
+    function renderSalary() {
+      const data = getSalaryFiltered();
+      const total = data.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+      const teachers = [...new Set(data.map(r=>r.teacher_name))];
+      const totalLessons = data.reduce((s,r)=>s+(r.quantity||0),0);
+      const indivLessons = data.filter(r=>(r.lesson_type||'').toLowerCase().includes('индив')).reduce((s,r)=>s+(r.quantity||0),0);
+      const groupLessons = data.filter(r=>(r.lesson_type||'').toLowerCase().includes('групп')).reduce((s,r)=>s+(r.quantity||0),0);
+      document.getElementById('salKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Фонд оплаты</span><span class="value">${total.toLocaleString()} ₽</span></div>
+        <div class="kpi-card"><span class="label">Педагогов</span><span class="value">${teachers.length}</span></div>
+        <div class="kpi-card"><span class="label">Всего уроков</span><span class="value">${totalLessons}</span></div>
+        <div class="kpi-card"><span class="label">Инд. / Групп.</span><span class="value">${indivLessons} / ${groupLessons}</span></div>`;
+      const byTeacher={}, byTeacherIndiv={}, byTeacherGroup={};
+      data.forEach(r=>{
+        byTeacher[r.teacher_name]=(byTeacher[r.teacher_name]||0)+parseFloat(r.amount||0);
+        if((r.lesson_type||'').toLowerCase().includes('индив')) byTeacherIndiv[r.teacher_name]=(byTeacherIndiv[r.teacher_name]||0)+parseFloat(r.amount||0);
+        if((r.lesson_type||'').toLowerCase().includes('групп')) byTeacherGroup[r.teacher_name]=(byTeacherGroup[r.teacher_name]||0)+parseFloat(r.amount||0);
+      });
+      const bySubject = {};
+      data.forEach(r=>{ bySubject[r.subject]=(bySubject[r.subject]||0)+parseFloat(r.amount||0); });
+      document.getElementById('teacherTotalContent').innerHTML = `<ul class="widget-list">${Object.entries(byTeacher).sort(([,a],[,b])=>b-a).slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>`;
+      document.getElementById('teacherIndivContent').innerHTML = `<ul class="widget-list">${Object.entries(byTeacherIndiv).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>`;
+      document.getElementById('teacherGroupContent').innerHTML = `<ul class="widget-list">${Object.entries(byTeacherGroup).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>`;
+      document.getElementById('teacherSubjectContent').innerHTML = `<ul class="widget-list">${Object.entries(bySubject).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')||'<li>Нет данных</li>'}</ul>`;
+
+      const ratingData = teachers.map(name=>{
+        const indivQty=data.filter(r=>r.teacher_name===name&&(r.lesson_type||'').toLowerCase().includes('индив')).reduce((s,r)=>s+(r.quantity||0),0);
+        const groupQty=data.filter(r=>r.teacher_name===name&&(r.lesson_type||'').toLowerCase().includes('групп')).reduce((s,r)=>s+(r.quantity||0),0);
+        return {name, indivQty, groupQty, score: indivQty+groupQty*2, totalEarned: byTeacher[name]||0};
+      }).sort((a,b)=>b.score-a.score);
+      document.getElementById('salRating').innerHTML = `<h3 style="margin-bottom:1rem;">Рейтинг преподавателей <small style="color:var(--text-light); font-weight:400;">(групповые ×2)</small></h3>${ratingData.map((r,i)=>{
+        let cls='default', medal=i+1;
+        if(i===0){ cls='gold'; medal='1'; }else if(i===1){ cls='silver'; medal='2'; }else if(i===2){ cls='bronze'; medal='3'; }
+        return `<div class="rating-row"><div class="rating-pos ${cls}">${medal}</div><div style="flex:1;"><strong>${r.name}</strong><br><small style="color:var(--text-light);">Инд: ${r.indivQty} | Групп: ${r.groupQty} | Баллы: ${r.score}</small></div><div style="font-weight:700;">${r.totalEarned.toLocaleString()} ₽</div></div>`;
+      }).join('')}`;
+
+      const payouts = getTeacherPayouts();
+      document.getElementById('salPayoutWidgets').innerHTML = teachers.map(name=>{
+        const accrued = byTeacher[name]||0;
+        const paid = payouts[name]?.total||0;
+        const remaining = accrued - paid;
+        let statusClass='unpaid', statusText='Не выплачено';
+        if(paid>=accrued && accrued>0){ statusClass='paid'; statusText='Выплачено'; }
+        else if(paid>0 && paid<accrued){ statusClass='partial'; statusText='Частично'; }
+        return `<div class="widget-card"><h3>${name}</h3>
+          <div style="display:flex;justify-content:space-between;"><span>Начислено:</span><strong>${accrued.toLocaleString()} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Выплачено:</span><strong>${paid.toLocaleString()} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Остаток:</span><strong style="color:${remaining>0?'#c2410c':'#15803d'};">${remaining.toLocaleString()} ₽</strong></div>
+          <span class="payout-status ${statusClass}">${statusText}</span>
+          ${paid>0?`<div class="progress-container"><div class="progress-fill" style="width:${Math.min(100,(paid/accrued*100))}%;"></div></div>`:''}
+        </div>`;
+      }).join('');
+      document.getElementById('salTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.period||'full'}</td></tr>`).join('');
+    }
 
     // ==================== ЗП СОТРУДНИКОВ ====================
     function staffHTML() {
       const f = filterState.staff;
       return `
+        <div class="toolbar">
+          <button class="btn" id="resetStaffFiltersBtn">Сбросить фильтры</button>
+        </div>
         <div class="filters">
           <button class="btn ${f.period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
           <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
@@ -489,8 +678,70 @@
         </div>`;
     }
 
-    function setupStaffListeners() { /* переключение периодов */ }
-    function renderStaff() { /* динамическое создание виджетов с кнопками закрытия */ }
+    function setupStaffListeners() {
+      document.getElementById('resetStaffFiltersBtn').addEventListener('click', () => resetFilters('staff'));
+      ['staffPeriodFull','staffPeriod1','staffPeriod2'].forEach((id,i)=>{
+        document.getElementById(id).addEventListener('click', ()=>{
+          filterState.staff.period = ['full','1-15','16-31'][i];
+          document.querySelectorAll('#tabContent .filters .btn').forEach(b=>b.classList.remove('btn-primary'));
+          document.getElementById(id).classList.add('btn-primary');
+          renderStaff();
+        });
+      });
+    }
+
+    function renderStaff() {
+      const period = filterState.staff.period;
+      const now = new Date(); const y=now.getFullYear(), m=now.getMonth()+1;
+      const daysInMonth = new Date(y, m, 0).getDate();
+      const dayRange = period==='1-15' ? [1,15] : period==='16-31' ? [16, daysInMonth] : [1, daysInMonth];
+      const staffEmps = employees.filter(e=>['Управляющий','Менеджер','Администратор'].includes(e.role));
+      const results = staffEmps.map(emp=>{
+        let worked=0, sales=0;
+        for(let d=dayRange[0]; d<=dayRange[1]; d++){
+          const key = `${emp.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[key];
+          if(!rec||rec.status!=='working') continue;
+          worked++;
+          if(emp.role==='Менеджер') sales += rec.daily_sales||0;
+        }
+        const params = salaryParams[emp.id]||{};
+        const rates = {'Менеджер':20000,'Администратор':25000,'Управляющий':50000};
+        const normDays = emp.role==='Менеджер'?Math.round(daysInMonth*0.5):(params.norm_days||22);
+        const dailyRate = (rates[emp.role]||0)/Math.max(normDays,1);
+        let base = dailyRate*worked, bonus=0;
+        if(emp.role==='Менеджер'){
+          const plan = params.plan_amount||0;
+          bonus = sales*((plan>0&&sales>=plan)?7:5)/100;
+        } else if(emp.role==='Администратор'){
+          const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
+            for(let d=dayRange[0]; d<=dayRange[1]; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
+            return sum;
+          },0);
+          bonus = ms*0.01;
+        } else if(emp.role==='Управляющий'){
+          const ms = employees.filter(e=>e.role==='Менеджер').reduce((sum,man)=>{
+            for(let d=dayRange[0]; d<=dayRange[1]; d++){ const key=`${man.id}_${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const rec=worklog[key]; if(rec&&rec.status==='working') sum+=rec.daily_sales||0; }
+            return sum;
+          },0);
+          bonus = (params.plan_amount>0&&ms>=params.plan_amount)?ms*0.01:0;
+        }
+        return { emp, worked, base, bonus, total:base+bonus, sales };
+      });
+      document.getElementById('staffKPI').innerHTML = `
+        <div class="kpi-card"><span class="label">Фонд оплаты</span><span class="value">${results.reduce((s,r)=>s+r.total,0).toLocaleString()} ₽</span></div>
+        <div class="kpi-card"><span class="label">Сотрудников</span><span class="value">${results.length}</span></div>
+        <div class="kpi-card"><span class="label">Всего смен</span><span class="value">${results.reduce((s,r)=>s+r.worked,0)}</span></div>`;
+      document.getElementById('staffWidgets').innerHTML = results.map(r=>`
+        <div class="widget-card"><h3>${r.emp.name} (${r.emp.role})</h3>
+          <div style="display:flex;justify-content:space-between;"><span>Смен:</span><strong>${r.worked}</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Базовая:</span><strong>${r.base.toFixed(0)} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;"><span>Бонус:</span><strong>${r.bonus.toFixed(0)} ₽</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:1.1rem;margin-top:0.5rem;"><span>Итого:</span><strong style="color:#7c5ce7;">${r.total.toFixed(0)} ₽</strong></div>
+          ${r.emp.role==='Менеджер'?`<div style="display:flex;justify-content:space-between;"><span>Продажи:</span><strong>${r.sales.toLocaleString()} ₽</strong></div>`:''}
+        </div>`).join('');
+      document.getElementById('staffTableBody').innerHTML = results.map(r=>`<tr><td>${r.emp.name}</td><td>${r.emp.role}</td><td>${r.worked}</td><td>${r.base.toFixed(0)} ₽</td><td>${r.bonus.toFixed(0)} ₽</td><td><strong>${r.total.toFixed(0)} ₽</strong></td></tr>`).join('');
+    }
 
     // ==================== ЛИДЫ ====================
     function leadsHTML() {
@@ -519,30 +770,34 @@
           const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
           const parsed = [];
 
-          // Определяем формат: начинается ли с "Новые лиды"
-          const firstRow = rows[0] ? rows[0].join(' ') : '';
-          if (firstRow.includes('Новые лиды')) {
-            // Формат "Новые лиды" -> пропускаем первую строку и строку "За период"
+          // Определяем формат: начинается с "Новые лиды"
+          if (rows[0] && rows[0].join(' ').includes('Новые лиды')) {
             let dataStartIdx = 0;
             if (rows[0].join(' ').includes('Новые лиды')) {
-              dataStartIdx = 1; // пропустить "Новые лиды"
+              dataStartIdx = 1;
               if (rows[1] && rows[1].join(' ').includes('За период')) {
-                dataStartIdx = 2; // пропустить "За период"
+                dataStartIdx = 2;
               }
             }
             for (let i = dataStartIdx; i < rows.length; i++) {
               const row = rows[i];
               if (!row || row.length < 5) continue;
-              // Формат: [номер, дата, наименование, этап, источник, доп]
               const dateStr = String(row[1] || '').trim();
               const name = String(row[2] || '').trim();
               const stage = String(row[3] || '').trim();
               const source = String(row[4] || '').trim();
-              if (!dateStr) continue; // пропускаем пустые даты
+              if (!dateStr) continue;
+              // Ручной парсинг даты DD.MM.YYYY HH:MM
+              const parts = dateStr.split(' ');
+              const datePart = parts[0];
+              const timePart = parts[1] || '00:00';
+              const [day, month, year] = datePart.split('.').map(Number);
+              const [hours, minutes] = timePart.split(':').map(Number);
+              const validDate = new Date(year, month-1, day, hours||0, minutes||0);
               const isDuplicate = /8\.\s*Дубль/.test(name);
               const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
               parsed.push({
-                date_added: dateStr ? new Date(dateStr).toISOString() : null,
+                date_added: validDate.toISOString(),
                 name,
                 stage,
                 source,
@@ -551,39 +806,34 @@
               });
             }
           } else {
-            // Старый формат: ищем заголовок "Дата добавления"
-            const headerIdx = rows.findIndex(r => r && r.some(cell => {
-              const clean = String(cell).replace(/[^а-яёa-z0-9\s]/gi, '').trim().toLowerCase();
-              return clean.includes('дата добавления');
-            }));
-            if (headerIdx === -1) {
-              alert('Заголовок "Дата добавления" не найден. Проверьте файл.');
-              return;
-            }
-            const headers = rows[headerIdx].map(h => String(h).trim());
-            const dateIdx = headers.findIndex(h => h.toLowerCase().includes('дата добавления'));
-            const nameIdx = headers.findIndex(h => h.toLowerCase().includes('наименование'));
-            const stageIdx = headers.findIndex(h => h.toLowerCase().includes('этап'));
-            const sourceIdx = headers.findIndex(h => h.toLowerCase().includes('источник'));
-            for (let i = headerIdx + 1; i < rows.length; i++) {
-              const row = rows[i];
-              if (!row || row.length < 2) continue;
-              const name = String(row[nameIdx] || '').trim();
+            // Старый формат
+            const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
+            if (headerIdx === -1) { alert('Заголовок не найден'); return; }
+            const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
+            const dateIdx = headers.findIndex(h=>h.includes('дата добавления'));
+            const nameIdx = headers.findIndex(h=>h.includes('наименование'));
+            const stageIdx = headers.findIndex(h=>h.includes('этап'));
+            const sourceIdx = headers.findIndex(h=>h.includes('источник'));
+            for (let i=headerIdx+1; i<rows.length; i++){
+              const row = rows[i]; if(!row || row.length<2) continue;
+              const name = String(row[nameIdx]||'').trim();
               const isDuplicate = /8\.\s*Дубль/.test(name);
               const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
               parsed.push({
                 date_added: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : null,
                 name,
-                stage: String(row[stageIdx] || '').trim(),
-                source: String(row[sourceIdx] || '').trim(),
+                stage: String(row[stageIdx]||'').trim(),
+                source: String(row[sourceIdx]||'').trim(),
                 is_duplicate: isDuplicate,
                 is_bad_contact: isBadContact
               });
             }
           }
 
-          await _supabase.from('leads').delete().neq('id', 0);
-          await _supabase.from('leads').insert(parsed);
+          await _supabase.from('leads').delete().neq('id',0);
+          if (parsed.length > 0) {
+            await _supabase.from('leads').insert(parsed);
+          }
           await loadLeads();
           renderLeads();
         };
