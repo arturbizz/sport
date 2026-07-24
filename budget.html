@@ -581,35 +581,75 @@
         }));
       }
 
-      // Подтверждение оплаты
+      // ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ
       document.getElementById('confirmPayBtn').addEventListener('click', async () => {
         const method = document.getElementById('payMethodSelect').value;
         if (!method) { await customAlert('Выберите способ оплаты'); return; }
         const exp = expenses.find(e => e.id == pendingPayId);
         if (!exp) return;
 
-        // Проверяем, не создан ли уже следующий платёж
-        const existingNext = expenses.find(e => e.previous_id == pendingPayId);
-        if (existingNext) { await customAlert('Следующий платёж уже существует'); return; }
-
-        // Создаём следующий платёж, даже если дата была пустой
-        let nextId = null;
-        if (exp.periodicity !== 'one_time') {
-          const baseDate = exp.next_payment_date || new Date().toISOString().split('T')[0];
-          const nextDate = getNextPaymentDate(baseDate, exp.periodicity, exp.custom_days);
-          const newExp = { ...exp, id: undefined, paid: false, next_payment_date: nextDate, previous_id: null, receipt_url: null, payment_method: '' };
-          const { data: inserted } = await _supabase.from('expenses').insert([newExp]).select();
-          if (inserted && inserted.length > 0) nextId = inserted[0].id;
+        // Для разовых платежей просто помечаем оплаченным
+        if (exp.periodicity === 'one_time') {
+          const { error } = await _supabase.from('expenses').update({ 
+            paid: true, 
+            paid_at: new Date().toISOString(),
+            payment_method: method
+          }).eq('id', pendingPayId);
+          if (error) { await customAlert('Ошибка: ' + error.message); return; }
+          document.getElementById('payMethodModal').style.display = 'none';
+          showCoins();
+          await loadExpenses();
+          renderAll();
+          return;
         }
 
-        // Отмечаем текущий оплаченным
-        const { error } = await _supabase.from('expenses').update({ 
+        // Рассчитываем дату следующего платежа
+        const baseDate = exp.next_payment_date || new Date().toISOString().split('T')[0];
+        const nextDate = getNextPaymentDate(baseDate, exp.periodicity, exp.custom_days);
+        if (!nextDate) {
+          await customAlert('Не удалось рассчитать дату следующего платежа');
+          return;
+        }
+
+        // Создаём новый расход (следующий период)
+        const newExp = {
+          name: exp.name,
+          amount: exp.amount,
+          type: exp.type,
+          periodicity: exp.periodicity,
+          custom_days: exp.custom_days,
+          next_payment_date: nextDate,
+          payment_link: exp.payment_link,
+          details: exp.details,
+          note: exp.note,
+          notify_email: exp.notify_email,
+          paid: false,
+          paid_at: null,
+          previous_id: null,
+          receipt_url: null,
+          return_comment: null,
+          payment_method: ''
+        };
+
+        const { data: inserted, error: insertError } = await _supabase.from('expenses').insert([newExp]).select();
+        if (insertError) {
+          await customAlert('Ошибка создания следующего платежа: ' + insertError.message);
+          return;
+        }
+        const nextId = inserted && inserted.length > 0 ? inserted[0].id : null;
+
+        // Помечаем текущий оплаченным и связываем с новым
+        const { error: updateError } = await _supabase.from('expenses').update({ 
           paid: true, 
           paid_at: new Date().toISOString(),
           previous_id: nextId,
           payment_method: method
         }).eq('id', pendingPayId);
-        if (error) { await customAlert('Ошибка: ' + error.message); return; }
+
+        if (updateError) {
+          await customAlert('Ошибка при обновлении статуса: ' + updateError.message);
+          return;
+        }
 
         document.getElementById('payMethodModal').style.display = 'none';
         showCoins();
@@ -621,6 +661,7 @@
         document.getElementById('payMethodModal').style.display = 'none';
       });
 
+      // Возврат (без изменений)
       document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
         const comment = document.getElementById('returnComment').value.trim();
         if (!comment) { await customAlert('Введите причину возврата'); return; }
@@ -646,7 +687,7 @@
 
       function getNextPaymentDate(currentDateStr, periodicity, customDays) {
         if (!currentDateStr) return null;
-        const current = new Date(currentDateStr + 'T12:00:00'); // добавляем время, чтобы избежать проблем с часовым поясом
+        const current = new Date(currentDateStr + 'T12:00:00');
         const next = new Date(current);
         switch (periodicity) {
           case 'daily': next.setDate(current.getDate() + 1); break;
