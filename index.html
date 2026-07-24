@@ -30,77 +30,32 @@
       align-items: center;
       padding: 2rem;
     }
-    .container {
-      width: 100%;
-      max-width: 900px;
-      position: relative;
-    }
-    .user-bar {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
+    .container { width: 100%; max-width: 900px; position: relative; }
+    .user-bar { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
     .user-bar span { font-weight: 500; color: var(--text-secondary); }
-    .btn-logout {
-      background: none;
-      border: 1px solid var(--border);
-      padding: 0.4rem 1rem;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 500;
-    }
+    .btn-logout { background: none; border: 1px solid var(--border); padding: 0.4rem 1rem; border-radius: 10px; cursor: pointer; font-weight: 500; }
     .btn-logout:hover { background: #f4f0ff; }
     h1 {
-      text-align: center;
-      font-size: 2.5rem;
-      font-weight: 800;
+      text-align: center; font-size: 2.5rem; font-weight: 800;
       background: linear-gradient(135deg, var(--violet), var(--gold), var(--teal));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 0.5rem;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 0.5rem;
     }
     .subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 3rem; }
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
     .card {
-      background: var(--surface);
-      border-radius: 24px;
-      padding: 2rem;
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
-      border: 1px solid var(--border);
-      transition: all 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+      background: var(--surface); border-radius: 24px; padding: 2rem;
+      text-decoration: none; color: inherit;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid var(--border);
+      transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; text-align: center;
+      position: relative; overflow: hidden;
     }
     .card::before {
-      content: '';
-      position: absolute;
-      top: -20px; right: -20px;
-      width: 80px; height: 80px;
-      border-radius: 50%;
-      opacity: 0.1;
-      transition: all 0.3s ease;
+      content: ''; position: absolute; top: -20px; right: -20px;
+      width: 80px; height: 80px; border-radius: 50%; opacity: 0.1; transition: all 0.3s ease;
     }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 40px rgba(124,92,231,0.1);
-    }
-    .card:hover::before {
-      width: 120px; height: 120px;
-      opacity: 0.2;
-    }
+    .card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(124,92,231,0.1); }
+    .card:hover::before { width: 120px; height: 120px; opacity: 0.2; }
     .card.schedule::before { background: linear-gradient(135deg, var(--violet), var(--rose)); }
     .card.vacations::before { background: linear-gradient(135deg, var(--teal), #a0e7e5); }
     .card.teachers::before { background: linear-gradient(135deg, var(--gold), #ffeaa7); }
@@ -110,12 +65,13 @@
     .card.nps::before { background: linear-gradient(135deg, var(--rose), var(--gold)); }
     .card.budget::before { background: linear-gradient(135deg, #a29bfe, #6c5ce7); }
     .card.admin::before { background: linear-gradient(135deg, #ff7675, #d63031); }
+    .card.dashboard::before { background: linear-gradient(135deg, #74b9ff, #0984e3); }
     .card-icon { margin-bottom: 1rem; }
     .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
     .card p { color: var(--text-secondary); font-size: 0.9rem; }
     .coming-soon { opacity: 0.7; }
     .coming-soon .card-icon { filter: grayscale(0.2); }
-    .admin-only { display: none; } /* скрыты по умолчанию */
+    .admin-only { display: none; }
   </style>
 </head>
 <body>
@@ -127,7 +83,6 @@
     <h1>Music Club Орёл</h1>
     <p class="subtitle">Платформа управления музыкальной школой</p>
     <div class="cards">
-      <!-- Общие разделы -->
       <a href="schedule.html" class="card schedule">
         <div class="card-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7c5ce7" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -192,6 +147,13 @@
         </div>
         <h2>Мониторинг</h2>
         <p>Логи и активность</p>
+      </a>
+      <a href="dashboard.html" class="card dashboard admin-only">
+        <div class="card-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0984e3" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </div>
+        <h2>Дашборд</h2>
+        <p>Аналитика и финансы</p>
       </a>
     </div>
   </div>
