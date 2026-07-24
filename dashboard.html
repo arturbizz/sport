@@ -28,7 +28,7 @@
       --shadow: 0 12px 40px rgba(140,152,164,0.06);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, .container, .header, .modal, .kpi-card, .chart-card, .table-card, .sidebar {
+    body, .container, .header, .modal, .kpi-card, .chart-card, .table-card, .sidebar, .widget-card {
       -webkit-user-select: none; user-select: none; cursor: default;
     }
     input, textarea, select {
@@ -43,15 +43,10 @@
       -webkit-font-smoothing: antialiased;
     }
     .sidebar {
-      width: 70px;
-      background: var(--surface);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1.5rem 0;
-      border-right: 1px solid var(--border);
-      gap: 1.5rem;
-      min-height: 100vh;
+      width: 70px; background: var(--surface);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 1.5rem 0; border-right: 1px solid var(--border);
+      gap: 1.5rem; min-height: 100vh;
     }
     .sidebar svg { width: 24px; height: 24px; color: var(--text-light); cursor: pointer; transition: 0.2s; }
     .sidebar svg:hover { color: var(--pastel-blue-text); }
@@ -69,10 +64,26 @@
     .filters { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
     .filters select, .filters input { padding: 0.45rem 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); font-size: 0.85rem; color: var(--text-dark); min-width: 140px; }
 
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-    .kpi-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); display: flex; flex-direction: column; gap: 0.5rem; }
+    .widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+    .widget-card {
+      background: var(--surface); border-radius: 20px;
+      padding: 1.5rem; box-shadow: var(--shadow);
+      border: 1px solid rgba(241,245,249,0.8);
+    }
+    .widget-card h3 { font-size: 0.85rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.8rem; }
+    .widget-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+    .widget-list li { display: flex; justify-content: space-between; font-size: 0.85rem; }
+    .widget-list li span:last-child { font-weight: 600; color: var(--text-dark); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }
+    .kpi-card {
+      background: var(--surface); border-radius: 20px;
+      padding: 1.5rem; box-shadow: var(--shadow);
+      border: 1px solid rgba(241,245,249,0.8);
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
     .kpi-card .label { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
-    .kpi-card .value { font-size: 2rem; font-weight: 700; color: var(--text-dark); }
+    .kpi-card .value { font-size: 1.8rem; font-weight: 700; color: var(--text-dark); }
     .kpi-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
     .kpi-icon.blue { background: var(--pastel-blue); color: var(--pastel-blue-text); }
     .kpi-icon.green { background: var(--pastel-green); color: var(--pastel-green-text); }
@@ -84,7 +95,7 @@
     .chart-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); }
     .chart-card canvas { max-height: 300px; }
 
-    .table-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); overflow-x: auto; }
+    .table-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); overflow-x: auto; display: none; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-light); font-weight: 600; }
@@ -111,25 +122,34 @@
 
     <div class="filters">
       <input type="date" id="dateFrom"> <input type="date" id="dateTo">
-      <select id="managerFilter"><option value="">Все менеджеры</option></select>
-      <select id="categoryFilter"><option value="">Все статьи</option></select>
       <select id="typeFilter"><option value="">Все типы</option></select>
+      <select id="categoryFilter"><option value="">Все статьи</option></select>
+      <select id="accountFilter"><option value="">Все счета</option></select>
+      <select id="managerFilter"><option value="">Все менеджеры</option></select>
+      <button class="btn" id="toggleRawBtn">Показать исходные данные</button>
     </div>
 
     <div class="kpi-grid">
-      <div class="kpi-card"><span class="label">Выручка</span><span class="value" id="kpiRevenue">0 ₽</span><div class="kpi-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
-      <div class="kpi-card"><span class="label">Расходы</span><span class="value" id="kpiExpense">0 ₽</span><div class="kpi-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div></div>
-      <div class="kpi-card"><span class="label">Прибыль</span><span class="value" id="kpiProfit">0 ₽</span><div class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
-      <div class="kpi-card"><span class="label">Средний чек</span><span class="value" id="kpiAvg">0 ₽</span><div class="kpi-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div></div>
+      <div class="kpi-card"><span class="label">Доходы</span><span class="value" id="kpiRevenue">0 ₽</span><div class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
+      <div class="kpi-card"><span class="label">Расходы</span><span class="value" id="kpiExpense">0 ₽</span><div class="kpi-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></div></div>
+      <div class="kpi-card"><span class="label">Прибыль</span><span class="value" id="kpiProfit">0 ₽</span><div class="kpi-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div></div>
+      <div class="kpi-card"><span class="label">Маржинальность</span><span class="value" id="kpiMargin">0%</span><div class="kpi-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div></div>
+    </div>
+
+    <div class="widget-grid">
+      <div class="widget-card"><h3>Расходы по статьям</h3><ul class="widget-list" id="expenseByCategory"></ul></div>
+      <div class="widget-card"><h3>Доходы по типам</h3><ul class="widget-list" id="incomeByType"></ul></div>
+      <div class="widget-card"><h3>Расходы по счетам</h3><ul class="widget-list" id="expenseByAccount"></ul></div>
+      <div class="widget-card"><h3>Доходы по счетам</h3><ul class="widget-list" id="incomeByAccount"></ul></div>
     </div>
 
     <div class="chart-grid">
       <div class="chart-card"><canvas id="chartRevenue"></canvas></div>
-      <div class="chart-card"><canvas id="chartManagers"></canvas></div>
+      <div class="chart-card"><canvas id="chartExpense"></canvas></div>
     </div>
 
-    <div class="table-card">
-      <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Менеджер</th></tr></thead><tbody id="tableBody"></tbody></table>
+    <div class="table-card" id="rawTable">
+      <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Менеджер</th></tr></thead><tbody id="tableBody"></tbody></table>
     </div>
   </div>
 
@@ -141,13 +161,10 @@
       let currentUserEmail = null, allData = [];
       let charts = {};
 
-      function toISODate(ddMMyyyy) {
-        const parts = ddMMyyyy.split('.');
-        if (parts.length === 3) {
-          return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-        }
-        return ddMMyyyy; // если уже в нужном формате
-      }
+      const EXPENSE_TYPES = ['расход','выплата','инкассация','возврат'];
+      const INCOME_TYPES = ['доход','продажа'];
+
+      function toISODate(ddMMyyyy) { const p=ddMMyyyy.split('.'); return p.length===3 ? `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : ddMMyyyy; }
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -168,77 +185,80 @@
       }
 
       function setupFilters() {
-        const managers = [...new Set(allData.map(d => d.manager).filter(Boolean))].sort();
-        const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
         const types = [...new Set(allData.map(d => d.operation_type).filter(Boolean))].sort();
+        const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
+        const accounts = [...new Set(allData.map(d => d.account).filter(Boolean))].sort();
+        const managers = [...new Set(allData.map(d => d.manager).filter(Boolean))].sort();
         const fill = (id, items) => {
           const sel = document.getElementById(id);
           sel.innerHTML = sel.options[0].outerHTML + items.map(i => `<option>${i}</option>`).join('');
         };
-        fill('managerFilter', managers);
-        fill('categoryFilter', categories);
-        fill('typeFilter', types);
+        fill('typeFilter', types); fill('categoryFilter', categories); fill('accountFilter', accounts); fill('managerFilter', managers);
       }
 
       function getFiltered() {
         let d = allData;
-        const from = document.getElementById('dateFrom').value;
-        const to = document.getElementById('dateTo').value;
+        const from = document.getElementById('dateFrom').value, to = document.getElementById('dateTo').value;
         if (from) d = d.filter(r => r.operation_date >= from);
         if (to) d = d.filter(r => r.operation_date <= to);
-        const m = document.getElementById('managerFilter').value;
-        if (m) d = d.filter(r => r.manager === m);
-        const c = document.getElementById('categoryFilter').value;
-        if (c) d = d.filter(r => r.category === c);
-        const t = document.getElementById('typeFilter').value;
-        if (t) d = d.filter(r => r.operation_type === t);
+        const type = document.getElementById('typeFilter').value, cat = document.getElementById('categoryFilter').value;
+        const acc = document.getElementById('accountFilter').value, man = document.getElementById('managerFilter').value;
+        if (type) d = d.filter(r => r.operation_type === type);
+        if (cat) d = d.filter(r => r.category === cat);
+        if (acc) d = d.filter(r => r.account === acc);
+        if (man) d = d.filter(r => r.manager === man);
         return d;
       }
+
+      function isExpense(r) { return r.operation_type && EXPENSE_TYPES.some(t => r.operation_type.toLowerCase().includes(t)); }
+      function isIncome(r) { return r.operation_type && INCOME_TYPES.some(t => r.operation_type.toLowerCase().includes(t)); }
 
       function renderAll() {
         const data = getFiltered();
         renderKPI(data);
+        renderWidgets(data);
         renderCharts(data);
         renderTable(data);
       }
 
       function renderKPI(data) {
-        const income = data.filter(r => r.operation_type?.startsWith('Доход'));
-        const expense = data.filter(r => r.operation_type?.startsWith('Расход'));
-        const totalIncome = income.reduce((s,r) => s + parseFloat(r.amount||0), 0);
-        const totalExpense = expense.reduce((s,r) => s + parseFloat(r.amount||0), 0);
-        document.getElementById('kpiRevenue').textContent = totalIncome.toLocaleString() + ' ₽';
-        document.getElementById('kpiExpense').textContent = totalExpense.toLocaleString() + ' ₽';
-        document.getElementById('kpiProfit').textContent = (totalIncome - totalExpense).toLocaleString() + ' ₽';
-        document.getElementById('kpiAvg').textContent = income.length ? (totalIncome / income.length).toFixed(0).toLocaleString() + ' ₽' : '0 ₽';
+        const income = data.filter(isIncome), expense = data.filter(isExpense);
+        const ti = income.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+        const te = expense.reduce((s,r)=>s+parseFloat(r.amount||0),0);
+        document.getElementById('kpiRevenue').textContent = ti.toLocaleString() + ' ₽';
+        document.getElementById('kpiExpense').textContent = te.toLocaleString() + ' ₽';
+        document.getElementById('kpiProfit').textContent = (ti - te).toLocaleString() + ' ₽';
+        document.getElementById('kpiMargin').textContent = ti ? ((ti - te) / ti * 100).toFixed(1) + '%' : '0%';
+      }
+
+      function renderWidgets(data) {
+        const expense = data.filter(isExpense), income = data.filter(isIncome);
+        const group = (arr, key) => { const m={}; arr.forEach(r=>{ const k=r[key]||'—'; m[k]=(m[k]||0)+parseFloat(r.amount||0); }); return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a); };
+        document.getElementById('expenseByCategory').innerHTML = group(expense,'category').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
+        document.getElementById('incomeByType').innerHTML = group(income,'operation_type').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
+        document.getElementById('expenseByAccount').innerHTML = group(expense,'account').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
+        document.getElementById('incomeByAccount').innerHTML = group(income,'account').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
       }
 
       function renderCharts(data) {
-        const income = data.filter(r => r.operation_type?.startsWith('Доход'));
-        const byDate = {};
-        income.forEach(r => { const d = r.operation_date; byDate[d] = (byDate[d]||0) + parseFloat(r.amount||0); });
-        const sorted = Object.keys(byDate).sort();
-        const labels = sorted, values = sorted.map(k => byDate[k]);
-
+        const income = data.filter(isIncome), expense = data.filter(isExpense);
+        const groupByDate = (arr) => { const m={}; arr.forEach(r=>{ const d=r.operation_date; m[d]=(m[d]||0)+parseFloat(r.amount||0); }); const s=Object.keys(m).sort(); return { labels:s, values:s.map(k=>m[k]) }; };
+        const ri = groupByDate(income), re = groupByDate(expense);
         if (charts.revenue) charts.revenue.destroy();
-        charts.revenue = new Chart(document.getElementById('chartRevenue'), {
-          type: 'line', data: { labels, datasets: [{ label:'Выручка', data:values, borderColor:'#7c5ce7', tension:0.3, fill:true, backgroundColor:'rgba(124,92,231,0.05)' }] }
-        });
-
-        const byManager = {};
-        income.forEach(r => { const m = r.manager || '—'; byManager[m] = (byManager[m]||0) + parseFloat(r.amount||0); });
-        const mgrs = Object.keys(byManager);
-        if (charts.managers) charts.managers.destroy();
-        charts.managers = new Chart(document.getElementById('chartManagers'), {
-          type: 'bar', data: { labels: mgrs, datasets: [{ label:'По менеджерам', data: mgrs.map(m=>byManager[m]), backgroundColor:'#a0e7e5' }] }
-        });
+        charts.revenue = new Chart(document.getElementById('chartRevenue'), { type:'line', data:{ labels:ri.labels, datasets:[{ label:'Доходы', data:ri.values, borderColor:'#10b981', tension:0.3 }] } });
+        if (charts.expense) charts.expense.destroy();
+        charts.expense = new Chart(document.getElementById('chartExpense'), { type:'line', data:{ labels:re.labels, datasets:[{ label:'Расходы', data:re.values, borderColor:'#f97316', tension:0.3 }] } });
       }
 
       function renderTable(data) {
-        document.getElementById('tableBody').innerHTML = data.slice(0,50).map(r => `
-          <tr><td>${r.operation_date||''}</td><td>${r.operation_type||''}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category||''}</td><td>${r.manager||''}</td></tr>
-        `).join('');
+        document.getElementById('tableBody').innerHTML = data.slice(0,50).map(r => `<tr><td>${r.operation_date||''}</td><td>${r.operation_type||''}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category||''}</td><td>${r.account||''}</td><td>${r.manager||''}</td></tr>`).join('');
       }
+
+      document.getElementById('toggleRawBtn').addEventListener('click', function() {
+        const table = document.getElementById('rawTable');
+        table.style.display = table.style.display === 'none' ? 'block' : 'none';
+        this.textContent = table.style.display === 'block' ? 'Скрыть исходные данные' : 'Показать исходные данные';
+      });
 
       document.getElementById('uploadBtn').addEventListener('click', () => {
         const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx';
@@ -256,21 +276,20 @@
             const typeIdx = headers.findIndex(h => h.startsWith('тип'));
             const amountIdx = headers.findIndex(h => h.startsWith('сумма'));
             const catIdx = headers.findIndex(h => h.startsWith('статья'));
-            const manIdx = headers.findIndex(h => h.startsWith('менеджер'));
+            const accIdx = headers.findIndex(h => h.includes('счет')||h.includes('касса'));
+            const manIdx = headers.findIndex(h => h.includes('менеджер'));
             const parsed = [];
             for (let i = headerIdx+1; i < rows.length; i++) {
               const cols = rows[i]; if (!cols) continue;
               const rawAmount = String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.');
               const amt = parseFloat(rawAmount);
               if (isNaN(amt)) continue;
-              // Конвертируем дату из ДД.ММ.ГГГГ в ГГГГ-ММ-ДД
-              const rawDate = String(cols[dateIdx]||'').trim();
-              const isoDate = toISODate(rawDate);
               parsed.push({
-                operation_date: isoDate,
+                operation_date: toISODate(String(cols[dateIdx]||'').trim()),
                 operation_type: String(cols[typeIdx]||'').trim(),
                 amount: amt,
                 category: String(cols[catIdx]||'').trim(),
+                account: String(cols[accIdx]||'').trim(),
                 manager: String(cols[manIdx]||'').trim()
               });
             }
@@ -286,7 +305,7 @@
       });
 
       document.getElementById('exportBtn').addEventListener('click', () => {
-        const data = getFiltered().map(r => ({ Дата:r.operation_date, Тип:r.operation_type, Сумма:r.amount, Статья:r.category, Менеджер:r.manager }));
+        const data = getFiltered().map(r => ({ Дата:r.operation_date, Тип:r.operation_type, Сумма:r.amount, Статья:r.category, Счет:r.account, Менеджер:r.manager }));
         const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Дашборд'); XLSX.writeFile(wb, 'дашборд.xlsx');
       });
