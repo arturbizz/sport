@@ -111,9 +111,6 @@
             font-size:13px; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em;
             margin-bottom:var(--space-5); display:flex; align-items:center; gap:var(--space-2);
         }
-        .widget-list { list-style:none; display:flex; flex-direction:column; gap:var(--space-3); }
-        .widget-list li { display:flex; justify-content:space-between; align-items:center; font-size:15px; padding:var(--space-2) 0; border-bottom:1px solid rgba(0,0,0,0.03); }
-        .widget-list li span:last-child { font-weight:550; color:var(--text-primary); }
         .table-container {
             background:var(--surface); border-radius:var(--radius-xl); border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden;
         }
@@ -122,6 +119,7 @@
         td { padding:var(--space-4) var(--space-6); border-bottom:1px solid rgba(0,0,0,0.03); color:var(--text-primary); }
         tr:last-child td { border-bottom:none; }
         tr:hover td { background:rgba(0,0,0,0.01); }
+        .gradient-li { transition: background 0.2s; }
         @media(max-width:900px) {
             .sidebar{display:none}
             .main{margin-left:0;padding:var(--space-4)}
@@ -166,6 +164,19 @@
     const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
     let leadsData = [], financeData = [];
+
+    function applyGradientColors(tableElement, values) {
+        if (!tableElement || !values || values.length === 0) return;
+        const maxVal = Math.max(...values);
+        const minVal = Math.min(...values);
+        const rows = tableElement.querySelectorAll('tr');
+        rows.forEach((row, index) => {
+            const val = values[index] || 0;
+            let ratio = maxVal === minVal ? 0.5 : (val - minVal) / (maxVal - minVal);
+            const hue = ratio * 120;
+            row.style.backgroundColor = `hsla(${hue}, 40%, 85%, 0.2)`;
+        });
+    }
 
     async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -303,7 +314,12 @@
             stageGroups[s] = (stageGroups[s] || 0) + 1;
         });
         const stageSorted = Object.entries(stageGroups).sort((a,b) => b[1] - a[1]);
+        const stageValues = stageSorted.map(([_, c]) => c);
         document.getElementById('stageContent').innerHTML = `<table>${stageSorted.map(([s,c]) => `<tr><td>${s}</td><td>${c}</td></tr>`).join('')}</table>`;
+        setTimeout(() => {
+            const stageTable = document.querySelector('#stageContent table');
+            if (stageTable) applyGradientColors(stageTable, stageValues);
+        }, 0);
 
         // По источникам
         const sourceGroups = {};
@@ -314,9 +330,14 @@
             if (l.stage.includes('ПУ состоялся')) sourceGroups[src].success++;
         });
         const sourceSorted = Object.entries(sourceGroups).sort((a,b) => b[1].total - a[1].total);
+        const sourceValues = sourceSorted.map(([_, data]) => data.total);
         document.getElementById('sourceContent').innerHTML = `<table><thead><tr><th>Источник</th><th>Всего</th><th>Успешных</th><th>Конв.</th></tr></thead><tbody>
             ${sourceSorted.map(([src, data]) => `<tr><td>${src}</td><td>${data.total}</td><td>${data.success}</td><td>${data.total>0?(data.success/data.total*100).toFixed(1):0}%</td></tr>`).join('')}
         </tbody></table>`;
+        setTimeout(() => {
+            const sourceTable = document.querySelector('#sourceContent table tbody');
+            if (sourceTable) applyGradientColors(sourceTable, sourceValues);
+        }, 0);
 
         // Таблица лидов
         document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
