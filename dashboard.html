@@ -104,9 +104,6 @@
     }
     .kpi-card .label { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
     .kpi-card .value { font-size: 2rem; font-weight: 700; color: var(--text-dark); }
-    .kpi-card .change { font-size: 0.8rem; font-weight: 500; }
-    .kpi-card .change.pos { color: var(--pastel-green-text); }
-    .kpi-card .change.neg { color: #b91c1c; }
     .kpi-icon {
       width: 40px; height: 40px; border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
@@ -214,7 +211,6 @@
         currentUserEmail = session.user.email;
         await loadFromSupabase();
         setupFilters();
-        // По умолчанию ставим фильтр на текущий месяц
         const now = new Date();
         document.getElementById('dateFrom').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
         document.getElementById('dateTo').value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -320,7 +316,6 @@
             const parsed = [];
             for (let i = headerIdx+1; i < rows.length; i++) {
               const cols = rows[i]; if (!cols) continue;
-              // Исправляем парсинг суммы: убираем пробелы, меняем запятую на точку
               const rawAmount = String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.');
               const amt = parseFloat(rawAmount);
               if (isNaN(amt)) continue;
@@ -332,8 +327,10 @@
                 manager: String(cols[manIdx]||'').trim()
               });
             }
+            // Очищаем старые данные и вставляем новые
             await _supabase.from('crm_finance').delete().neq('id',0);
             await _supabase.from('crm_finance').insert(parsed);
+            // Обновляем данные и фильтры
             await loadFromSupabase();
             setupFilters();
             renderAll();
