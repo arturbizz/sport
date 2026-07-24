@@ -181,5 +181,87 @@
       }
     })();
   </script>
+<!-- Агент Нота -->
+<script>
+(function() {
+  const GEMINI_API_KEY = 'AQ.Ab8RN6IgKkm0K_yTDNTtlvVjG0k5-Bxw6yTSRZgfcscUkrfGUQ';
+  const SYSTEM_PROMPT = `Ты – Агент Нота, весёлый и добрый AI-помощник музыкальной школы "Music Club Орёл".
+Твоя задача – помогать сотрудникам разбираться в платформе управления школой: дашборд, график работы, зарплаты, финансы, лиды, задачи, отпуска, бюджет и т.д.
+Ты общаешься дружелюбно, иногда вставляешь музыкальные метафоры, но всегда даёшь точные и полезные ответы.
+Ниже – описание всей системы.
+
+## Общая структура платформы
+- Единая точка входа: страница index.html с карточками разделов.
+- Авторизация через Supabase Auth. Доступ к административным разделам только у admin: arturgalkin.ru@mail.ru.
+
+## Дашборд (dashboard.html)
+- Вкладки: Финансы, ЗП педагоги, ЗП сотрудники, Лиды, Сравнение.
+- Финансы: загрузка Excel из CRM. Доходы – "Доход", "Продажа". Расходы – "Расход", "Выплата".
+- Кнопка "Текущий месяц", виджеты скрываются/показываются в зависимости от фильтра.
+- Предстоящие расходы – из таблицы expenses.
+- ЗП педагоги: загрузка ведомостей по периодам, фильтры.
+- ЗП сотрудники: расчёт из графика работы (worklog).
+- Лиды: загрузка Excel, автоматическое выделение дублей и некорректных контактов.
+- Сравнение периодов.
+
+## График работы (schedule.html)
+- Календарь, статусы дней, ввод выручки и уроков.
+
+## Бюджет (budget.html)
+- Управление регулярными платежами, автоматическое создание следующего при оплате.
+
+## Задачи (tasks.html)
+- Задачи и идеи, назначение, статусы, приоритеты.
+
+## Клиенты NPS (nps.html)
+- Загрузка Excel с клиентами, фильтр по дате.
+
+Твоя задача – понятно объяснять функционал, помогать находить нужные кнопки и интерпретировать данные.`;
+  let memory = localStorage.getItem('agent_nota_memory') || '';
+  function saveMemory(t) { memory += '\n' + t; localStorage.setItem('agent_nota_memory', memory); }
+  function clearMemory() { memory = ''; localStorage.removeItem('agent_nota_memory'); }
+  async function askGemini(q) {
+    const prompt = `${SYSTEM_PROMPT}\n\nДоп. знания:\n${memory}\n\nВопрос: ${q}\nОтвет:`;
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.7,maxOutputTokens:600}})
+    });
+    if(!resp.ok) return 'Ой, кажется, мой мозг ненадолго отключился...';
+    const d = await resp.json();
+    return d?.candidates?.[0]?.content?.parts?.[0]?.text || '...';
+  }
+  const style = document.createElement('style');
+  style.textContent = `#agent-nota-container{position:fixed;bottom:24px;right:24px;z-index:10000;font-family:'Inter',sans-serif}#agent-nota-icon{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#7c5ce7,#f9ca24);box-shadow:0 4px 15px rgba(124,92,231,0.4);display:flex;align-items:center;justify-content:center;cursor:pointer;animation:float 3s ease-in-out infinite;transition:transform .2s;font-size:32px;color:#fff;user-select:none}#agent-nota-icon:hover{transform:scale(1.1)}@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}#agent-nota-chat{position:absolute;bottom:80px;right:0;width:360px;max-height:520px;background:#fff;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.15);display:flex;flex-direction:column;overflow:hidden;transition:all .3s;transform-origin:bottom right;border:1px solid #e2e8f0}.chat-hidden{transform:scale(.8);opacity:0;pointer-events:none}.chat-visible{transform:scale(1);opacity:1;pointer-events:auto}#agent-nota-header{background:linear-gradient(135deg,#7c5ce7,#f9ca24);padding:12px 16px;color:#fff;font-weight:700;display:flex;align-items:center;gap:8px;border-radius:20px 20px 0 0}#agent-nota-messages{flex:1;padding:12px;overflow-y:auto;max-height:350px;background:#fafafa;font-size:14px;display:flex;flex-direction:column;gap:8px}.message{padding:8px 12px;border-radius:18px;max-width:85%;word-wrap:break-word;line-height:1.4}.message.user{align-self:flex-end;background:#e0f2fe;color:#0369a1}.message.bot{align-self:flex-start;background:#f3e8ff;color:#7e22ce}#agent-nota-input-area{display:flex;border-top:1px solid #e2e8f0;padding:8px;background:#fff}#agent-nota-input{flex:1;border:1px solid #e2e8f0;border-radius:20px;padding:8px 12px;outline:none;font-size:14px}#agent-nota-send{background:none;border:none;color:#7c5ce7;font-size:20px;cursor:pointer;margin-left:8px}`;
+  document.head.appendChild(style);
+  const container = document.createElement('div');
+  container.id = 'agent-nota-container';
+  container.innerHTML = `<div id="agent-nota-icon" title="Агент Нота">🎵</div><div id="agent-nota-chat" class="chat-hidden"><div id="agent-nota-header">🎵 Агент Нота</div><div id="agent-nota-messages"></div><div id="agent-nota-input-area"><input id="agent-nota-input" placeholder="Спроси меня о платформе..."><button id="agent-nota-send">➤</button></div></div>`;
+  document.body.appendChild(container);
+  const icon = document.getElementById('agent-nota-icon');
+  const chat = document.getElementById('agent-nota-chat');
+  const messages = document.getElementById('agent-nota-messages');
+  const input = document.getElementById('agent-nota-input');
+  const sendBtn = document.getElementById('agent-nota-send');
+  let open = false;
+  icon.addEventListener('click',()=>{ open=!open; chat.className=open?'chat-visible':'chat-hidden'; if(open)input.focus(); });
+  function addMessage(t,s){ const d=document.createElement('div'); d.className=`message ${s}`; d.textContent=t; messages.appendChild(d); messages.scrollTop=messages.scrollHeight; }
+  async function sendMessage(){
+    const q=input.value.trim(); if(!q)return; input.value=''; addMessage(q,'user');
+    if(q.startsWith('!запомни:')){ saveMemory(q.replace('!запомни:','').trim()); addMessage('✅ Запомнила! Буду знать.','bot'); return; }
+    if(q.startsWith('!исправь:')){ saveMemory(q.replace('!исправь:','').trim()); addMessage('✅ Принято! Учту.','bot'); return; }
+    if(q==='!забудь всё'){ clearMemory(); addMessage('🧹 Память очищена.','bot'); return; }
+    addMessage('Думаю...','bot'); const think = messages.lastChild;
+    try{
+      const ans = await askGemini(q);
+      messages.removeChild(think);
+      const b = document.createElement('div'); b.className='message bot'; messages.appendChild(b);
+      let i=0; function t(){ if(i<ans.length){ b.textContent+=ans.charAt(i); i++; messages.scrollTop=messages.scrollHeight; setTimeout(t,30); } } t();
+    }catch(e){ messages.removeChild(think); addMessage('Упс! Техническая заминка.','bot'); }
+  }
+  sendBtn.addEventListener('click',sendMessage);
+  input.addEventListener('keypress',e=>{ if(e.key==='Enter') sendMessage(); });
+  if(!localStorage.getItem('nota_hello')){ setTimeout(()=>{ addMessage('Привет! Я Агент Нота 🎵. Чем могу помочь?','bot'); localStorage.setItem('nota_hello','1'); },500); }
+})();
+</script>
 </body>
 </html>
