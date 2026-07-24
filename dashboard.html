@@ -11,7 +11,7 @@
         :root {
             --bg: #F8F9FC;
             --surface: #ffffff;
-            --border: rgba(0,0,0,0.04);
+            --border: rgba(0, 0, 0, 0.04);
             --shadow-sm: 0 1px 3px rgba(0,0,0,0.02),0 1px 2px rgba(0,0,0,0.03);
             --shadow-md: 0 4px 12px rgba(0,0,0,0.04),0 2px 4px rgba(0,0,0,0.02);
             --shadow-lg: 0 12px 32px rgba(0,0,0,0.06),0 4px 8px rgba(0,0,0,0.03);
@@ -354,6 +354,7 @@
                 await _supabase.from('crm_finance').insert(parsed);
                 await loadFinance();
                 renderFinance();
+                alert('Финансовый отчёт загружен (' + parsed.length + ' записей)');
             };
             reader.readAsArrayBuffer(file);
         };
@@ -424,6 +425,7 @@
             <div class="widget-card" id="teacherGroupWidget"><div class="widget-title">Групповые</div><div id="teacherGroupContent"></div></div>
             <div class="widget-card" id="teacherSubjectWidget"><div class="widget-title">По предметам</div><div id="teacherSubjectContent"></div></div>
         </div>
+        <div class="rating-card" id="salRating"></div>
         <div class="widget-row" id="salPayoutWidgets"></div>
         <div class="table-container">
             <table><thead><tr><th>Педагог</th><th>Предмет</th><th>Тип</th><th>Ставка</th><th>Кол-во</th><th>Сумма</th><th>Период</th></tr></thead><tbody id="salTableBody"></tbody></table>
@@ -431,12 +433,27 @@
     }
 
     function setupSalaryListeners() {
-        ['salPeriodFull','salPeriod1','salPeriod2'].forEach((id,i)=>{
-            document.getElementById(id).addEventListener('click', ()=>{
-                filterState.salary.period = ['full','1-15','16-31'][i];
-                renderSalary();
-            });
+        document.getElementById('salPeriodFull').addEventListener('click', function() {
+            filterState.salary.period = 'full';
+            updateSalaryPeriodButtons('salPeriodFull');
+            renderSalary();
         });
+        document.getElementById('salPeriod1').addEventListener('click', function() {
+            filterState.salary.period = '1-15';
+            updateSalaryPeriodButtons('salPeriod1');
+            renderSalary();
+        });
+        document.getElementById('salPeriod2').addEventListener('click', function() {
+            filterState.salary.period = '16-31';
+            updateSalaryPeriodButtons('salPeriod2');
+            renderSalary();
+        });
+        function updateSalaryPeriodButtons(activeId) {
+            ['salPeriodFull', 'salPeriod1', 'salPeriod2'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.classList.toggle('btn-primary', id === activeId);
+            });
+        }
         ['salName','salSubj'].forEach(id=>{
             document.getElementById(id).addEventListener('change', ()=>{
                 filterState.salary.name = document.getElementById('salName')?.value||'';
@@ -702,7 +719,6 @@
                 const wb = XLSX.read(data, {type:'array'});
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
                 const parsed = [];
-                // Определяем формат: начинается с "Новые лиды"
                 const firstRow = rows[0] ? rows[0].join(' ') : '';
                 if (firstRow.toLowerCase().includes('новые лиды')) {
                     let dataStartIdx = 0;
@@ -730,7 +746,6 @@
                         parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDuplicate, is_bad_contact: isBadContact });
                     }
                 } else {
-                    // Старый формат (Дата добавления)
                     const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
                     if (headerIdx === -1) { alert('Не удалось определить формат файла.'); return; }
                     const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
@@ -754,13 +769,14 @@
                     }
                 }
                 if (parsed.length === 0) {
-                    alert('Не удалось извлечь ни одной записи. Проверьте структуру файла.');
+                    alert('Файл прочитан, но не найдено ни одной записи. Проверьте столбцы.');
                     return;
                 }
                 await _supabase.from('leads').delete().neq('id', 0);
                 await _supabase.from('leads').insert(parsed);
                 await loadLeads();
                 renderLeads();
+                alert('Лиды загружены (' + parsed.length + ' записей)');
             };
             reader.readAsArrayBuffer(file);
         };
@@ -836,7 +852,6 @@
             </ul></div>`;
     }
 
-    // Глобальные обработчики
     document.getElementById('tabBar').addEventListener('click', (e)=>{
         if(e.target.classList.contains('tab')){
             activeTab = e.target.dataset.tab;
