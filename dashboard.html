@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Дашборд — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,16 +35,12 @@
     }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: var(--bg-main);
-      color: var(--text-dark);
-      min-height: 100vh;
-      display: flex;
-      -webkit-font-smoothing: antialiased;
+      background: var(--bg-main); color: var(--text-dark);
+      min-height: 100vh; display: flex; -webkit-font-smoothing: antialiased;
     }
     .sidebar {
-      width: 70px; background: var(--surface);
-      display: flex; flex-direction: column; align-items: center;
-      padding: 1.5rem 0; border-right: 1px solid var(--border);
+      width: 70px; background: var(--surface); display: flex; flex-direction: column;
+      align-items: center; padding: 1.5rem 0; border-right: 1px solid var(--border);
       gap: 1.5rem; min-height: 100vh;
     }
     .sidebar svg { width: 24px; height: 24px; color: var(--text-light); cursor: pointer; transition: 0.2s; }
@@ -56,101 +51,56 @@
     .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
     h1 { font-size: 1.6rem; font-weight: 700; background: linear-gradient(135deg, #7c5ce7, #0fb9b1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
+    .tabs { display: flex; gap: 0.5rem; }
+    .tab { padding: 0.5rem 1.5rem; border-radius: 12px; font-weight: 600; cursor: pointer; background: var(--surface); border: 1px solid var(--border); color: var(--text-light); transition: 0.2s; }
+    .tab.active { background: var(--pastel-blue); color: var(--pastel-blue-text); border-color: var(--pastel-blue); }
+
     .btn { border: none; padding: 0.5rem 1.2rem; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.85rem; background: var(--surface); color: var(--pastel-blue-text); border: 1px solid var(--border); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.4rem; }
     .btn:hover { background: var(--pastel-blue); }
     .btn-primary { background: var(--pastel-blue); border: none; }
-    .btn-primary:hover { filter: brightness(0.95); }
 
     .filters { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
     .filters select, .filters input { padding: 0.45rem 0.9rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); font-size: 0.85rem; color: var(--text-dark); min-width: 140px; }
 
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .kpi-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); display: flex; flex-direction: column; gap: 0.5rem; }
+    .kpi-card .label { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
+    .kpi-card .value { font-size: 2rem; font-weight: 700; color: var(--text-dark); }
+    .kpi-card .change { font-size: 0.8rem; }
+    .kpi-card .change.pos { color: var(--pastel-green-text); }
+    .kpi-card .change.neg { color: #b91c1c; }
+
     .widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
-    .widget-card {
-      background: var(--surface); border-radius: 20px;
-      padding: 1.5rem; box-shadow: var(--shadow);
-      border: 1px solid rgba(241,245,249,0.8);
-    }
+    .widget-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); }
     .widget-card h3 { font-size: 0.85rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.8rem; }
     .widget-list { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
     .widget-list li { display: flex; justify-content: space-between; font-size: 0.85rem; }
     .widget-list li span:last-child { font-weight: 600; color: var(--text-dark); }
 
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }
-    .kpi-card {
-      background: var(--surface); border-radius: 20px;
-      padding: 1.5rem; box-shadow: var(--shadow);
-      border: 1px solid rgba(241,245,249,0.8);
-      display: flex; flex-direction: column; gap: 0.5rem;
-    }
-    .kpi-card .label { font-size: 0.85rem; color: var(--text-light); font-weight: 500; }
-    .kpi-card .value { font-size: 1.8rem; font-weight: 700; color: var(--text-dark); }
-    .kpi-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-    .kpi-icon.blue { background: var(--pastel-blue); color: var(--pastel-blue-text); }
-    .kpi-icon.green { background: var(--pastel-green); color: var(--pastel-green-text); }
-    .kpi-icon.purple { background: var(--pastel-purple); color: var(--pastel-purple-text); }
-    .kpi-icon.orange { background: var(--pastel-orange); color: var(--pastel-orange-text); }
-    .kpi-icon svg { width: 20px; height: 20px; }
-
-    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-    .chart-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); }
-    .chart-card canvas { max-height: 300px; }
-
     .table-card { background: var(--surface); border-radius: 20px; padding: 1.5rem; box-shadow: var(--shadow); border: 1px solid rgba(241,245,249,0.8); overflow-x: auto; display: none; }
     table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     th, td { text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid var(--border); }
     th { color: var(--text-light); font-weight: 600; }
-    tbody tr:hover { background: rgba(241,245,249,0.5); }
 
-    @media (max-width: 800px) { .chart-grid { grid-template-columns: 1fr; } .main { padding: 1rem; } .sidebar { display: none; } }
+    @media (max-width: 800px) { .main { padding: 1rem; } .sidebar { display: none; } }
   </style>
 </head>
 <body>
   <div class="sidebar">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    <svg class="logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="logoutBtn" style="cursor:pointer;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <svg class="logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="logoutBtn"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
   </div>
 
   <div class="main">
     <div class="header">
       <h1>Дашборд</h1>
-      <div style="display:flex; gap:0.5rem;">
-        <button class="btn" id="exportBtn">Excel</button>
-        <button class="btn btn-primary" id="uploadBtn">Загрузить отчёт</button>
+      <div class="tabs">
+        <div class="tab active" data-tab="finance">Финансы</div>
+        <div class="tab" data-tab="salary">Зарплата педагогов</div>
       </div>
     </div>
 
-    <div class="filters">
-      <input type="date" id="dateFrom"> <input type="date" id="dateTo">
-      <select id="typeFilter"><option value="">Все типы</option></select>
-      <select id="categoryFilter"><option value="">Все статьи</option></select>
-      <select id="accountFilter"><option value="">Все счета</option></select>
-      <select id="managerFilter"><option value="">Все менеджеры</option></select>
-      <button class="btn" id="toggleRawBtn">Показать исходные данные</button>
-    </div>
-
-    <div class="kpi-grid">
-      <div class="kpi-card"><span class="label">Доходы</span><span class="value" id="kpiRevenue">0 ₽</span><div class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div></div>
-      <div class="kpi-card"><span class="label">Расходы</span><span class="value" id="kpiExpense">0 ₽</span><div class="kpi-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg></div></div>
-      <div class="kpi-card"><span class="label">Прибыль</span><span class="value" id="kpiProfit">0 ₽</span><div class="kpi-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></div></div>
-      <div class="kpi-card"><span class="label">Маржинальность</span><span class="value" id="kpiMargin">0%</span><div class="kpi-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div></div>
-    </div>
-
-    <div class="widget-grid">
-      <div class="widget-card"><h3>Расходы по статьям</h3><ul class="widget-list" id="expenseByCategory"></ul></div>
-      <div class="widget-card"><h3>Доходы по типам</h3><ul class="widget-list" id="incomeByType"></ul></div>
-      <div class="widget-card"><h3>Расходы по счетам</h3><ul class="widget-list" id="expenseByAccount"></ul></div>
-      <div class="widget-card"><h3>Доходы по счетам</h3><ul class="widget-list" id="incomeByAccount"></ul></div>
-    </div>
-
-    <div class="chart-grid">
-      <div class="chart-card"><canvas id="chartRevenue"></canvas></div>
-      <div class="chart-card"><canvas id="chartExpense"></canvas></div>
-    </div>
-
-    <div class="table-card" id="rawTable">
-      <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Менеджер</th></tr></thead><tbody id="tableBody"></tbody></table>
-    </div>
+    <div id="tabContent"></div>
   </div>
 
   <script>
@@ -158,51 +108,38 @@
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      let currentUserEmail = null, allData = [];
-      let charts = {};
+      let currentUserEmail = null, financeData = [], salaryData = [];
+      let activeTab = 'finance';
 
       const EXPENSE_TYPES = ['расход','выплата','инкассация','возврат'];
       const INCOME_TYPES = ['доход','продажа'];
 
-      function toISODate(ddMMyyyy) { const p=ddMMyyyy.split('.'); return p.length===3 ? `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : ddMMyyyy; }
+      function toISODate(d) { const p=d.split('.'); return p.length===3 ? `${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}` : d; }
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session || session.user.email !== 'arturgalkin.ru@mail.ru') { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
-        await loadFromSupabase();
-        setupFilters();
-        const now = new Date();
-        document.getElementById('dateFrom').value = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        document.getElementById('dateTo').value = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-        renderAll();
+        await Promise.all([loadFinance(), loadSalary()]);
+        renderTab();
       }
 
-      async function loadFromSupabase() {
-        const { data, error } = await _supabase.from('crm_finance').select('*');
-        if (error) { console.error(error); return; }
-        allData = data || [];
+      async function loadFinance() {
+        const { data } = await _supabase.from('crm_finance').select('*');
+        financeData = data || [];
+      }
+      async function loadSalary() {
+        const { data } = await _supabase.from('teacher_salary').select('*');
+        salaryData = data || [];
       }
 
-      function setupFilters() {
-        const types = [...new Set(allData.map(d => d.operation_type).filter(Boolean))].sort();
-        const categories = [...new Set(allData.map(d => d.category).filter(Boolean))].sort();
-        const accounts = [...new Set(allData.map(d => d.account).filter(Boolean))].sort();
-        const managers = [...new Set(allData.map(d => d.manager).filter(Boolean))].sort();
-        const fill = (id, items) => {
-          const sel = document.getElementById(id);
-          sel.innerHTML = sel.options[0].outerHTML + items.map(i => `<option>${i}</option>`).join('');
-        };
-        fill('typeFilter', types); fill('categoryFilter', categories); fill('accountFilter', accounts); fill('managerFilter', managers);
-      }
-
-      function getFiltered() {
-        let d = allData;
-        const from = document.getElementById('dateFrom').value, to = document.getElementById('dateTo').value;
+      function getFinanceFilters() {
+        let d = financeData;
+        const from = document.getElementById('finDateFrom')?.value, to = document.getElementById('finDateTo')?.value;
         if (from) d = d.filter(r => r.operation_date >= from);
         if (to) d = d.filter(r => r.operation_date <= to);
-        const type = document.getElementById('typeFilter').value, cat = document.getElementById('categoryFilter').value;
-        const acc = document.getElementById('accountFilter').value, man = document.getElementById('managerFilter').value;
+        const type = document.getElementById('finType')?.value, cat = document.getElementById('finCat')?.value;
+        const acc = document.getElementById('finAcc')?.value, man = document.getElementById('finMan')?.value;
         if (type) d = d.filter(r => r.operation_type === type);
         if (cat) d = d.filter(r => r.category === cat);
         if (acc) d = d.filter(r => r.account === acc);
@@ -210,57 +147,63 @@
         return d;
       }
 
-      function isExpense(r) { return r.operation_type && EXPENSE_TYPES.some(t => r.operation_type.toLowerCase().includes(t)); }
-      function isIncome(r) { return r.operation_type && INCOME_TYPES.some(t => r.operation_type.toLowerCase().includes(t)); }
-
-      function renderAll() {
-        const data = getFiltered();
-        renderKPI(data);
-        renderWidgets(data);
-        renderCharts(data);
-        renderTable(data);
+      function getSalaryFilters() {
+        let d = salaryData;
+        const name = document.getElementById('salName')?.value, subj = document.getElementById('salSubj')?.value;
+        if (name) d = d.filter(r => r.teacher_name === name);
+        if (subj) d = d.filter(r => r.subject === subj);
+        return d;
       }
 
-      function renderKPI(data) {
-        const income = data.filter(isIncome), expense = data.filter(isExpense);
-        const ti = income.reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        const te = expense.reduce((s,r)=>s+parseFloat(r.amount||0),0);
-        document.getElementById('kpiRevenue').textContent = ti.toLocaleString() + ' ₽';
-        document.getElementById('kpiExpense').textContent = te.toLocaleString() + ' ₽';
-        document.getElementById('kpiProfit').textContent = (ti - te).toLocaleString() + ' ₽';
-        document.getElementById('kpiMargin').textContent = ti ? ((ti - te) / ti * 100).toFixed(1) + '%' : '0%';
+      function renderTab() {
+        const content = document.getElementById('tabContent');
+        if (activeTab === 'finance') {
+          content.innerHTML = financeHTML();
+          setupFinanceFilters();
+          renderFinance();
+        } else {
+          content.innerHTML = salaryHTML();
+          setupSalaryFilters();
+          renderSalary();
+        }
+        document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
       }
 
-      function renderWidgets(data) {
-        const expense = data.filter(isExpense), income = data.filter(isIncome);
-        const group = (arr, key) => { const m={}; arr.forEach(r=>{ const k=r[key]||'—'; m[k]=(m[k]||0)+parseFloat(r.amount||0); }); return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a); };
-        document.getElementById('expenseByCategory').innerHTML = group(expense,'category').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
-        document.getElementById('incomeByType').innerHTML = group(income,'operation_type').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
-        document.getElementById('expenseByAccount').innerHTML = group(expense,'account').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
-        document.getElementById('incomeByAccount').innerHTML = group(income,'account').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('');
+      // ------------------ FINANCE ------------------
+      function financeHTML() {
+        return `
+          <div class="filters">
+            <input type="date" id="finDateFrom"> <input type="date" id="finDateTo">
+            <select id="finType"><option value="">Все типы</option></select>
+            <select id="finCat"><option value="">Все статьи</option></select>
+            <select id="finAcc"><option value="">Все счета</option></select>
+            <select id="finMan"><option value="">Все менеджеры</option></select>
+            <button class="btn" id="uploadFinanceBtn">Загрузить отчёт</button>
+            <button class="btn" id="toggleRawFinBtn">Показать исходные данные</button>
+          </div>
+          <div class="kpi-grid" id="finKPI"></div>
+          <div class="widget-grid" id="finWidgets"></div>
+          <div class="table-card" id="finRawTable"><table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Менеджер</th></tr></thead><tbody id="finTableBody"></tbody></table></div>
+        `;
       }
 
-      function renderCharts(data) {
-        const income = data.filter(isIncome), expense = data.filter(isExpense);
-        const groupByDate = (arr) => { const m={}; arr.forEach(r=>{ const d=r.operation_date; m[d]=(m[d]||0)+parseFloat(r.amount||0); }); const s=Object.keys(m).sort(); return { labels:s, values:s.map(k=>m[k]) }; };
-        const ri = groupByDate(income), re = groupByDate(expense);
-        if (charts.revenue) charts.revenue.destroy();
-        charts.revenue = new Chart(document.getElementById('chartRevenue'), { type:'line', data:{ labels:ri.labels, datasets:[{ label:'Доходы', data:ri.values, borderColor:'#10b981', tension:0.3 }] } });
-        if (charts.expense) charts.expense.destroy();
-        charts.expense = new Chart(document.getElementById('chartExpense'), { type:'line', data:{ labels:re.labels, datasets:[{ label:'Расходы', data:re.values, borderColor:'#f97316', tension:0.3 }] } });
+      function setupFinanceFilters() {
+        const types = [...new Set(financeData.map(d => d.operation_type).filter(Boolean))].sort();
+        const cats = [...new Set(financeData.map(d => d.category).filter(Boolean))].sort();
+        const accs = [...new Set(financeData.map(d => d.account).filter(Boolean))].sort();
+        const mans = [...new Set(financeData.map(d => d.manager).filter(Boolean))].sort();
+        const fill = (id, items) => { const s=document.getElementById(id); s.innerHTML = s.options[0].outerHTML + items.map(i => `<option>${i}</option>`).join(''); };
+        fill('finType', types); fill('finCat', cats); fill('finAcc', accs); fill('finMan', mans);
+
+        document.getElementById('uploadFinanceBtn').addEventListener('click', uploadFinance);
+        document.getElementById('toggleRawFinBtn').addEventListener('click', () => {
+          const t = document.getElementById('finRawTable');
+          t.style.display = t.style.display === 'block' ? 'none' : 'block';
+        });
+        document.querySelectorAll('#finDateFrom, #finDateTo, #finType, #finCat, #finAcc, #finMan').forEach(el => el.addEventListener('change', renderFinance));
       }
 
-      function renderTable(data) {
-        document.getElementById('tableBody').innerHTML = data.slice(0,50).map(r => `<tr><td>${r.operation_date||''}</td><td>${r.operation_type||''}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category||''}</td><td>${r.account||''}</td><td>${r.manager||''}</td></tr>`).join('');
-      }
-
-      document.getElementById('toggleRawBtn').addEventListener('click', function() {
-        const table = document.getElementById('rawTable');
-        table.style.display = table.style.display === 'none' ? 'block' : 'none';
-        this.textContent = table.style.display === 'block' ? 'Скрыть исходные данные' : 'Показать исходные данные';
-      });
-
-      document.getElementById('uploadBtn').addEventListener('click', () => {
+      function uploadFinance() {
         const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx';
         input.onchange = async (e) => {
           const file = e.target.files[0]; if (!file) return;
@@ -281,36 +224,143 @@
             const parsed = [];
             for (let i = headerIdx+1; i < rows.length; i++) {
               const cols = rows[i]; if (!cols) continue;
-              const rawAmount = String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.');
-              const amt = parseFloat(rawAmount);
+              const amt = parseFloat(String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.'));
               if (isNaN(amt)) continue;
               parsed.push({
                 operation_date: toISODate(String(cols[dateIdx]||'').trim()),
                 operation_type: String(cols[typeIdx]||'').trim(),
-                amount: amt,
-                category: String(cols[catIdx]||'').trim(),
-                account: String(cols[accIdx]||'').trim(),
-                manager: String(cols[manIdx]||'').trim()
+                amount: amt, category: String(cols[catIdx]||'').trim(),
+                account: String(cols[accIdx]||'').trim(), manager: String(cols[manIdx]||'').trim()
               });
             }
             await _supabase.from('crm_finance').delete().neq('id',0);
             await _supabase.from('crm_finance').insert(parsed);
-            await loadFromSupabase();
-            setupFilters();
-            renderAll();
+            await loadFinance(); setupFinanceFilters(); renderFinance();
           };
           reader.readAsArrayBuffer(file);
         };
         input.click();
-      });
+      }
 
-      document.getElementById('exportBtn').addEventListener('click', () => {
-        const data = getFiltered().map(r => ({ Дата:r.operation_date, Тип:r.operation_type, Сумма:r.amount, Статья:r.category, Счет:r.account, Менеджер:r.manager }));
-        const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Дашборд'); XLSX.writeFile(wb, 'дашборд.xlsx');
-      });
+      function renderFinance() {
+        const data = getFinanceFilters();
+        const income = data.filter(r => INCOME_TYPES.some(t => (r.operation_type||'').toLowerCase().includes(t)));
+        const expense = data.filter(r => EXPENSE_TYPES.some(t => (r.operation_type||'').toLowerCase().includes(t)));
+        const ti = income.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+        const te = expense.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+        document.getElementById('finKPI').innerHTML = `
+          <div class="kpi-card"><span class="label">Доходы</span><span class="value">${ti.toLocaleString()} ₽</span></div>
+          <div class="kpi-card"><span class="label">Расходы</span><span class="value">${te.toLocaleString()} ₽</span></div>
+          <div class="kpi-card"><span class="label">Прибыль</span><span class="value">${(ti-te).toLocaleString()} ₽</span></div>
+          <div class="kpi-card"><span class="label">Маржинальность</span><span class="value">${ti ? ((ti-te)/ti*100).toFixed(1) : 0}%</span></div>
+        `;
+        const group = (arr, key) => { const m={}; arr.forEach(r => { const k=r[key]||'—'; m[k]=(m[k]||0)+parseFloat(r.amount||0); }); return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a); };
+        document.getElementById('finWidgets').innerHTML = `
+          <div class="widget-card"><h3>Расходы по статьям</h3><ul class="widget-list">${group(expense,'category').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+          <div class="widget-card"><h3>Доходы по типам</h3><ul class="widget-list">${group(income,'operation_type').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+          <div class="widget-card"><h3>Расходы по счетам</h3><ul class="widget-list">${group(expense,'account').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+          <div class="widget-card"><h3>Доходы по счетам</h3><ul class="widget-list">${group(income,'account').map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+        `;
+        document.getElementById('finTableBody').innerHTML = data.slice(0,50).map(r => `<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account}</td><td>${r.manager}</td></tr>`).join('');
+      }
 
-      document.querySelectorAll('.filters select, .filters input').forEach(el => el.addEventListener('change', renderAll));
+      // ------------------ SALARY ------------------
+      function salaryHTML() {
+        return `
+          <div class="filters">
+            <select id="salName"><option value="">Все педагоги</option></select>
+            <select id="salSubj"><option value="">Все предметы</option></select>
+            <button class="btn" id="uploadSalaryBtn">Загрузить ведомость</button>
+            <button class="btn" id="toggleSkippedBtn">Показать пропущенные</button>
+          </div>
+          <div class="kpi-grid" id="salKPI"></div>
+          <div class="widget-grid" id="salWidgets"></div>
+          <div class="table-card" id="salRawTable"><table><thead><tr><th>Педагог</th><th>Предмет</th><th>Тип</th><th>Ставка</th><th>Кол-во</th><th>Сумма</th></tr></thead><tbody id="salTableBody"></tbody></table></div>
+        `;
+      }
+
+      function setupSalaryFilters() {
+        const names = [...new Set(salaryData.map(d => d.teacher_name).filter(Boolean))].sort();
+        const subjects = [...new Set(salaryData.map(d => d.subject).filter(Boolean))].sort();
+        const fill = (id, items) => { const s=document.getElementById(id); s.innerHTML = s.options[0].outerHTML + items.map(i => `<option>${i}</option>`).join(''); };
+        fill('salName', names); fill('salSubj', subjects);
+
+        document.getElementById('uploadSalaryBtn').addEventListener('click', uploadSalary);
+        document.getElementById('toggleSkippedBtn').addEventListener('click', () => {
+          const btn = document.getElementById('toggleSkippedBtn');
+          btn.dataset.showSkipped = btn.dataset.showSkipped === '1' ? '0' : '1';
+          renderSalary();
+        });
+        document.querySelectorAll('#salName, #salSubj').forEach(el => el.addEventListener('change', renderSalary));
+      }
+
+      function uploadSalary() {
+        const input = document.createElement('input'); input.type = 'file'; input.accept = '.xlsx';
+        input.onchange = async (e) => {
+          const file = e.target.files[0]; if (!file) return;
+          const reader = new FileReader();
+          reader.onload = async (ev) => {
+            const data = new Uint8Array(ev.target.result);
+            const wb = XLSX.read(data, {type:'array'});
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+            const parsed = [];
+            let currentTeacher = '';
+            for (let i = 0; i < rows.length; i++) {
+              const row = rows[i]; if (!row || row.length < 2) continue;
+              const line = row.join(' ').trim();
+              if (line.startsWith('Выписка по зарплате -')) {
+                currentTeacher = line.replace('Выписка по зарплате -', '').split('За период')[0].trim();
+              } else if (row.length >= 5 && row[0] !== 'Предмет' && row[0] !== 'Орел' && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')) {
+                const subject = String(row[0]||'').trim();
+                const lessonType = String(row[1]||'').trim();
+                const rate = parseFloat(String(row[2]||'0').replace(',','.')) || 0;
+                const qty = parseInt(String(row[3]||'0').replace(' шт.','')) || 0;
+                const amount = parseFloat(String(row[4]||'0').replace(',','.').replace(/\s/g,'')) || 0;
+                if (qty > 0 || amount > 0) {
+                  parsed.push({ teacher_name: currentTeacher, subject, lesson_type: lessonType, rate, quantity: qty, amount, skipped: false });
+                }
+              } else if (line.startsWith('Пропущенные записи')) {
+                const dates = line.replace('Пропущенные записи','').trim();
+                const qty = parseInt(String(row[4]||'0').replace(' шт.','')) || 0;
+                parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true });
+              }
+            }
+            await _supabase.from('teacher_salary').delete().neq('id',0);
+            await _supabase.from('teacher_salary').insert(parsed);
+            await loadSalary(); setupSalaryFilters(); renderSalary();
+          };
+          reader.readAsArrayBuffer(file);
+        };
+        input.click();
+      }
+
+      function renderSalary() {
+        const showSkipped = document.getElementById('toggleSkippedBtn')?.dataset.showSkipped === '1';
+        let data = getSalaryFilters();
+        if (!showSkipped) data = data.filter(r => !r.skipped);
+        const total = data.reduce((s,r) => s + parseFloat(r.amount||0), 0);
+        const teachers = [...new Set(data.map(r => r.teacher_name))];
+        document.getElementById('salKPI').innerHTML = `
+          <div class="kpi-card"><span class="label">Фонд оплаты</span><span class="value">${total.toLocaleString()} ₽</span></div>
+          <div class="kpi-card"><span class="label">Педагогов</span><span class="value">${teachers.length}</span></div>
+          <div class="kpi-card"><span class="label">Уроков</span><span class="value">${data.reduce((s,r)=>s+(r.quantity||0),0)}</span></div>
+        `;
+        const byTeacher = {};
+        data.forEach(r => { byTeacher[r.teacher_name] = (byTeacher[r.teacher_name]||0) + parseFloat(r.amount||0); });
+        const bySubject = {};
+        data.forEach(r => { bySubject[r.subject] = (bySubject[r.subject]||0) + parseFloat(r.amount||0); });
+        document.getElementById('salWidgets').innerHTML = `
+          <div class="widget-card"><h3>По педагогам</h3><ul class="widget-list">${Object.entries(byTeacher).sort(([,a],[,b])=>b-a).slice(0,10).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+          <div class="widget-card"><h3>По предметам</h3><ul class="widget-list">${Object.entries(bySubject).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).map(([k,v])=>`<li><span>${k}</span><span>${v.toLocaleString()} ₽</span></li>`).join('')}</ul></div>
+        `;
+        document.getElementById('salTableBody').innerHTML = data.slice(0,50).map(r => `<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td></tr>`).join('');
+        document.getElementById('salRawTable').style.display = 'block';
+        document.getElementById('toggleSkippedBtn').textContent = showSkipped ? 'Скрыть пропущенные' : 'Показать пропущенные';
+      }
+
+      document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', function() {
+        activeTab = this.dataset.tab; renderTab();
+      }));
       document.getElementById('logoutBtn').addEventListener('click', async () => { await _supabase.auth.signOut(); window.location.href = 'login.html'; });
 
       init();
