@@ -122,6 +122,7 @@
     <div class="filters-row">
         <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
         <button class="btn btn-primary" id="uploadSalesBtn">Загрузить продажи</button>
+        <button class="btn" id="diagnosticsBtn" style="display:none;">Диагностика</button>
         <span id="salesStatus" style="font-size:13px; color:var(--text-tertiary);"></span>
     </div>
     <div class="kpi-grid" id="leadsKPI"></div>
@@ -199,18 +200,54 @@
         const statusEl = document.getElementById('salesStatus');
         if (salesData.length > 0) {
             statusEl.textContent = `Загружено продаж: ${salesData.length}`;
+            document.getElementById('diagnosticsBtn').style.display = 'inline-flex';
         } else {
             statusEl.textContent = 'Продажи не загружены';
+            document.getElementById('diagnosticsBtn').style.display = 'none';
         }
     }
 
     function setupListeners() {
         document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads);
         document.getElementById('uploadSalesBtn').addEventListener('click', uploadSales);
+        document.getElementById('diagnosticsBtn').addEventListener('click', showUnmatchedClients);
+    }
+
+    function showUnmatchedClients() {
+        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact);
+        const successStage = all.filter(l => l.stage.includes('ПУ состоялся'));
+
+        const clientMap = new Map();
+        salesData.forEach(s => {
+            const clientName = (s.client || '').trim();
+            if (clientName) clientMap.set(clientName, (clientMap.get(clientName) || 0) + parseFloat(s.amount||0));
+        });
+
+        const usedClients = new Set();
+        successStage.forEach(l => {
+            for (let [clientKey, amount] of clientMap.entries()) {
+                if (!usedClients.has(clientKey) && isNameMatch(l.name, clientKey)) {
+                    usedClients.add(clientKey);
+                    break;
+                }
+            }
+        });
+
+        const unmatched = [];
+        for (let [clientKey, amount] of clientMap.entries()) {
+            if (!usedClients.has(clientKey)) {
+                unmatched.push(clientKey);
+            }
+        }
+
+        if (unmatched.length === 0) {
+            alert('Все клиенты из продаж сопоставлены с лидами.');
+        } else {
+            alert('Не сопоставлены клиенты:\n\n' + unmatched.join('\n'));
+        }
     }
 
     async function uploadLeads() {
-        // ... (код загрузки лидов без изменений) ...
         const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
         input.onchange = async (e) => {
             const file = e.target.files[0]; if(!file) return;
@@ -292,7 +329,6 @@
                 const data = new Uint8Array(ev.target.result);
                 const wb = XLSX.read(data, {type:'array'});
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                // Ищем строку заголовка, содержащую "Дата" и "Клиент" (или "Плательщик")
                 let headerRow = -1;
                 for (let i = 0; i < Math.min(rows.length, 5); i++) {
                     const rowStr = rows[i] ? rows[i].join(' ').toLowerCase() : '';
@@ -308,7 +344,6 @@
                 const headers = rows[headerRow].map(h => String(h).trim().toLowerCase());
                 const dateIdx = headers.findIndex(h => h === 'дата');
                 const amountIdx = headers.findIndex(h => h === 'сумма');
-                // Ищем столбец "Клиент", если нет — "Плательщик"
                 let clientIdx = headers.findIndex(h => h === 'клиент');
                 if (clientIdx === -1) clientIdx = headers.findIndex(h => h === 'плательщик');
 
@@ -327,7 +362,6 @@
                     if (!dateStr || !client) continue;
                     const amount = parseFloat(amountStr);
                     if (isNaN(amount) || amount === 0) continue;
-                    // Преобразуем дату в ISO формат
                     let isoDate = dateStr;
                     if (dateStr.includes('.')) {
                         const parts = dateStr.split('.');
@@ -347,7 +381,6 @@
                     return;
                 }
 
-                // Очищаем старые данные из sales_report и вставляем новые
                 const { error: delErr } = await _supabase.from('sales_report').delete().neq('id', 0);
                 if (delErr) { alert('Ошибка очистки таблицы продаж: ' + delErr.message); return; }
                 const { error: insErr } = await _supabase.from('sales_report').insert(parsed);
@@ -370,7 +403,7 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Используем только таблицу sales_report
+        // Используем sales_report
         const clientMap = new Map();
         salesData.forEach(s => {
             const clientName = (s.client || '').trim();
@@ -436,6 +469,9 @@
         }, 0);
 
         document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
+
+        // Показываем кнопку диагностики, если есть продажи
+        updateSalesStatus();
     }
 
     document.getElementById('homeSidebarBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
