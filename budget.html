@@ -119,8 +119,7 @@
       border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
     }
     .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
-
-    /* Монетки */
+    .required { border-color: var(--critical) !important; }
     .coin {
       position: fixed; width: 16px; height: 16px;
       background: radial-gradient(circle at 30% 30%, #f59e0b, #b45309);
@@ -185,7 +184,7 @@
       <option value="quarterly">Ежеквартально</option>
       <option value="yearly">Ежегодно</option>
     </select>
-    <input type="date" id="editNextDate">
+    <input type="date" id="editNextDate" placeholder="Дата следующего платежа">
     <input type="text" id="editLink" placeholder="Ссылка на оплату">
     <textarea id="editDetails" rows="2" placeholder="Реквизиты"></textarea>
     <textarea id="editNote" rows="2" placeholder="Примечание"></textarea>
@@ -281,7 +280,7 @@
       if (!method) return alert('Выберите способ оплаты');
       const exp = expenses.find(e => e.id == pendingPayId);
       if (!exp) return;
-      // Загрузка чека
+
       let receiptUrl = exp.receipt_url || '';
       const file = document.getElementById('receiptFile').files[0];
       if (file) {
@@ -289,21 +288,31 @@
         const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
         if (!error) receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
       }
-      // Создаём следующий платёж
+
       const nextDate = getNextDate(exp.next_payment_date, exp.periodicity);
-      const newExp = { name: exp.name, amount: exp.amount, periodicity: exp.periodicity,
-        next_payment_date: nextDate, payment_link: exp.payment_link, details: exp.details,
-        note: exp.note, paid: false, type: 'monthly' };
-      const { data: inserted } = await _supabase.from('expenses').insert([newExp]).select();
+      // Создаём следующий платёж
+      const newExp = {
+        name: exp.name, amount: exp.amount, periodicity: exp.periodicity,
+        next_payment_date: nextDate, payment_link: exp.payment_link,
+        details: exp.details, note: exp.note, paid: false, type: 'monthly'
+      };
+      const { data: inserted, error: insertError } = await _supabase.from('expenses').insert([newExp]).select();
+      if (insertError) {
+        alert('Ошибка создания следующего платежа: ' + insertError.message);
+        return;
+      }
       const nextId = inserted?.[0]?.id;
+
       // Помечаем текущий оплаченным
       await _supabase.from('expenses').update({
         paid: true, paid_at: new Date().toISOString(), payment_method: method,
         receipt_url: receiptUrl, previous_id: nextId
       }).eq('id', pendingPayId);
+
       document.getElementById('payModal').style.display = 'none';
       showCoins();
       await loadExpenses();
+      alert('Платёж оплачен, следующий создан на ' + (nextDate ? new Date(nextDate).toLocaleDateString('ru') : '—'));
     });
 
     function getNextDate(dateStr, periodicity) {
@@ -320,8 +329,9 @@
       return d.toISOString().split('T')[0];
     }
 
-    // Редактирование
+    // Редактирование / Добавление
     function openEditModal(id) {
+      document.getElementById('editModalTitle').textContent = 'Редактировать платёж';
       const exp = expenses.find(e => e.id == id);
       if (!exp) return;
       document.getElementById('editName').value = exp.name;
@@ -334,24 +344,49 @@
       document.getElementById('editModal').dataset.id = id;
       document.getElementById('editModal').style.display = 'flex';
     }
+
     document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
+
     document.getElementById('saveEditBtn').addEventListener('click', async () => {
-      const id = document.getElementById('editModal').dataset.id;
+      const name = document.getElementById('editName').value.trim();
+      const amount = parseFloat(document.getElementById('editAmount').value) || 0;
+      const nextDate = document.getElementById('editNextDate').value;
+      if (!name || !amount) return alert('Заполните название и сумму');
+      if (!nextDate) {
+        document.getElementById('editNextDate').classList.add('required');
+        return alert('Укажите дату следующего платежа');
+      } else {
+        document.getElementById('editNextDate').classList.remove('required');
+      }
+
       const data = {
-        name: document.getElementById('editName').value.trim(),
-        amount: parseFloat(document.getElementById('editAmount').value) || 0,
+        name,
+        amount,
         periodicity: document.getElementById('editPeriodicity').value,
-        next_payment_date: document.getElementById('editNextDate').value || null,
+        next_payment_date: nextDate || null,
         payment_link: document.getElementById('editLink').value.trim(),
         details: document.getElementById('editDetails').value.trim(),
         note: document.getElementById('editNote').value.trim()
       };
-      await _supabase.from('expenses').update(data).eq('id', id);
+
+      const id = document.getElementById('editModal').dataset.id;
+      if (id) {
+        await _supabase.from('expenses').update(data).eq('id', id);
+      } else {
+        // Добавление нового
+        const { error } = await _supabase.from('expenses').insert([{ ...data, paid: false, type: 'monthly' }]);
+        if (error) {
+          alert('Ошибка добавления: ' + error.message);
+          return;
+        }
+      }
       document.getElementById('editModal').style.display = 'none';
       await loadExpenses();
     });
+
     document.getElementById('deleteEditBtn').addEventListener('click', async () => {
       const id = document.getElementById('editModal').dataset.id;
+      if (!id) return;
       if (confirm('Удалить платёж?')) {
         await _supabase.from('expenses').delete().eq('id', id);
         document.getElementById('editModal').style.display = 'none';
@@ -359,7 +394,7 @@
       }
     });
 
-    // Добавление
+    // Добавление нового
     document.getElementById('addBtn').addEventListener('click', () => {
       document.getElementById('editModalTitle').textContent = 'Новый платёж';
       document.getElementById('editName').value = '';
