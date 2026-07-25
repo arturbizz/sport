@@ -74,6 +74,30 @@
     .coming-soon { opacity: 0.7; }
     .coming-soon .card-icon { filter: grayscale(0.2); }
     .admin-only { display: none; }
+    /* Кнопка чата */
+    .chat-button {
+      position: fixed; bottom: 20px; right: 20px;
+      background: #4f46e5; color: white; border: none;
+      border-radius: 50%; width: 56px; height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: 0 8px 24px rgba(79,70,229,0.3);
+      z-index: 9998; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .chat-button:hover { transform: scale(1.05); box-shadow: 0 12px 28px rgba(79,70,229,0.4); }
+    /* Виджет чата */
+    #chat-widget {
+      position: fixed; bottom: 90px; right: 20px; width: 340px; background: white;
+      border-radius: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); overflow: hidden;
+      font-family: 'Inter', sans-serif; z-index: 9999; display: none; border: 1px solid rgba(15,23,42,0.06);
+    }
+    #chat-header { background: #4f46e5; color: white; padding: 14px 18px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    #chat-messages { height: 320px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+    #chat-input-area { display: flex; border-top: 1px solid #e2e8f0; }
+    #chat-input { flex: 1; border: none; padding: 12px; outline: none; font-size: 14px; background: white; }
+    #chat-send { background: #4f46e5; color: white; border: none; padding: 0 20px; font-weight: 600; cursor: pointer; }
+    .msg { max-width: 80%; padding: 8px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; }
+    .msg.user { align-self: flex-end; background: #eef2ff; color: #1e293b; }
+    .msg.bot { align-self: flex-start; background: white; color: #1e293b; border: 1px solid #e2e8f0; }
   </style>
 </head>
 <body>
@@ -129,7 +153,7 @@
         <p>Скоро открытие</p>
       </a>
 
-      <!-- Административные разделы (видны только вам) -->
+      <!-- Административные разделы -->
       <a href="employees.html" class="card employees admin-only">
         <div class="card-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -208,70 +232,65 @@
       });
     })();
   </script>
-<!-- ИИ-ассистент -->
-<style>
-  #chat-widget {
-    position: fixed; bottom: 20px; right: 20px; width: 340px; background: white;
-    border-radius: 24px; box-shadow: 0 12px 32px rgba(0,0,0,0.12); overflow: hidden;
-    font-family: 'Inter', sans-serif; z-index: 9999; display: none; border: 1px solid rgba(15,23,42,0.06);
-  }
-  #chat-header { background: #4f46e5; color: white; padding: 14px 18px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-  #chat-messages { height: 320px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
-  #chat-input-area { display: flex; border-top: 1px solid #e2e8f0; }
-  #chat-input { flex: 1; border: none; padding: 12px; outline: none; font-size: 14px; background: white; }
-  #chat-send { background: #4f46e5; color: white; border: none; padding: 0 20px; font-weight: 600; cursor: pointer; }
-  .msg { max-width: 80%; padding: 8px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; }
-  .msg.user { align-self: flex-end; background: #eef2ff; color: #1e293b; }
-  .msg.bot { align-self: flex-start; background: white; color: #1e293b; border: 1px solid #e2e8f0; }
-</style>
-<div id="chat-widget">
-  <div id="chat-header">Чат с помощником <span onclick="document.getElementById('chat-widget').style.display='none'" style="cursor:pointer;">✕</span></div>
-  <div id="chat-messages"></div>
-  <div id="chat-input-area">
-    <input id="chat-input" placeholder="Задайте вопрос..." />
-    <button id="chat-send">➤</button>
+
+  <!-- ИИ-ассистент -->
+  <div id="chat-widget">
+    <div id="chat-header">
+      <span>Чат с помощником</span>
+      <span onclick="document.getElementById('chat-widget').style.display='none'" style="cursor:pointer;">✕</span>
+    </div>
+    <div id="chat-messages"></div>
+    <div id="chat-input-area">
+      <input id="chat-input" placeholder="Задайте вопрос..." />
+      <button id="chat-send">➤</button>
+    </div>
   </div>
-</div>
-<button onclick="document.getElementById('chat-widget').style.display='block'" style="position:fixed;bottom:20px;right:20px;background:#4f46e5;color:white;border:none;border-radius:50%;width:56px;height:56px;font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:9998;">💬</button>
+  <button class="chat-button" onclick="document.getElementById('chat-widget').style.display='block'">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+  </button>
 
-<script>
-  const FUNCTION_URL = "https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/ask-assistant";
-  const chatMessages = document.getElementById('chat-messages');
-  const chatInput = document.getElementById('chat-input');
-  const chatSend = document.getElementById('chat-send');
+  <script>
+    const FUNCTION_URL = "https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/ask-assistant";
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send');
 
-  function addMessage(text, sender) {
-    const div = document.createElement('div');
-    div.className = `msg ${sender}`;
-    div.textContent = text;
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
-
-  async function askBot(question) {
-    try {
-      const resp = await fetch(FUNCTION_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question })
-      });
-      const data = await resp.json();
-      addMessage(data.reply, 'bot');
-    } catch(e) {
-      addMessage("Ошибка соединения. Попробуйте позже.", 'bot');
+    function addMessage(text, sender) {
+      const div = document.createElement('div');
+      div.className = `msg ${sender}`;
+      div.textContent = text;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-  }
 
-  chatSend.addEventListener('click', () => {
-    const q = chatInput.value.trim();
-    if (!q) return;
-    addMessage(q, 'user');
-    chatInput.value = '';
-    askBot(q);
-  });
-  chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') chatSend.click();
-  });
-</script>
+    async function askBot(question) {
+      try {
+        const resp = await fetch(FUNCTION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question })
+        });
+        if (!resp.ok) throw new Error(`Статус: ${resp.status}`);
+        const data = await resp.json();
+        addMessage(data.reply || 'Нет ответа', 'bot');
+      } catch(e) {
+        console.error('Ошибка чата:', e);
+        addMessage("Ассистент временно недоступен. Пожалуйста, попробуйте позже.", 'bot');
+      }
+    }
+
+    chatSend.addEventListener('click', () => {
+      const q = chatInput.value.trim();
+      if (!q) return;
+      addMessage(q, 'user');
+      chatInput.value = '';
+      askBot(q);
+    });
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') chatSend.click();
+    });
+  </script>
 </body>
 </html>
