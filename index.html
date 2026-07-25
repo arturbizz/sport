@@ -138,7 +138,6 @@
     .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
     .impersonate-menu button { width: 100%; margin-top: 4px; }
 
-    /* Адаптация чата для маленьких экранов */
     @media (max-width: 500px) {
       #chat-widget { width: 90vw; right: 5vw; }
       #chat-widget.expanded { width: 95vw; }
@@ -148,7 +147,7 @@
 <body>
   <div class="container">
     <div class="user-bar" id="userBar" style="position:relative;">
-      <span id="userEmail"></span>
+      <span id="userInfo"></span>
       <button class="btn-impersonate" id="impersonateBtn" style="display:none;">Тестовый просмотр</button>
       <button class="btn-logout" id="logoutBtn">Выйти</button>
       <div class="impersonate-menu" id="impersonateMenu">
@@ -257,9 +256,9 @@
       const container = document.getElementById('mainCards');
       if (!container) return;
       container.innerHTML = '';
-      const isFounder = currentUser?.email === 'arturgalkin.ru@mail.ru';
       sections.forEach(s => {
-        const show = s.roles.includes(effectiveRole) || (s.admin && isFounder);
+        // Раздел доступен, если роль в списке, либо админский и пользователь — управляющий
+        const show = s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий');
         if (show) {
           const card = document.createElement('a');
           card.className = 'card';
@@ -273,6 +272,12 @@
     async function refreshUI() {
       effectiveRole = await fetchRole();
       renderCards();
+      if (window.updateQuickActions) window.updateQuickActions();
+      // Отображаем email и роль
+      const userInfo = document.getElementById('userInfo');
+      if (userInfo && currentUser) {
+        userInfo.textContent = `${currentUser.email} (${effectiveRole})`;
+      }
       const impBtn = document.getElementById('impersonateBtn');
       if (currentUser?.email === 'arturgalkin.ru@mail.ru') {
         impBtn.style.display = 'inline-block';
@@ -347,7 +352,8 @@
         setTimeout(() => setMascotState('idle'), 2000);
       }
 
-      function updateQuickActions() {
+      // Делаем updateQuickActions глобальной
+      window.updateQuickActions = function() {
         let role = effectiveRole || 'Менеджер';
         const buttons = {
           'Менеджер': ['Моя зарплата', 'Мои продажи', 'Моя конверсия'],
@@ -365,7 +371,7 @@
             askBot(btn.textContent);
           });
         });
-      }
+      };
 
       chatSend.addEventListener('click', () => {
         const q = chatInput.value.trim();
@@ -377,7 +383,7 @@
       chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') chatSend.click(); });
 
       loadHistory();
-      updateQuickActions();
+      window.updateQuickActions();
     }
 
     window.toggleExpand = function() {
@@ -392,7 +398,6 @@
       }
       currentUser = session.user;
       currentToken = session.access_token;
-      document.getElementById('userEmail').textContent = currentUser.email;
 
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         localStorage.removeItem('impersonated_role');
