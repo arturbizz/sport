@@ -8,23 +8,26 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Стили оставлены как в вашем исходном файле */
         :root {
-            --bg: #F8F9FC;
+            --bg: #F7F8FA;
             --surface: #ffffff;
-            --border: rgba(0,0,0,0.04);
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.02),0 1px 2px rgba(0,0,0,0.03);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.04),0 2px 4px rgba(0,0,0,0.02);
-            --shadow-lg: 0 12px 32px rgba(0,0,0,0.06),0 4px 8px rgba(0,0,0,0.03);
-            --text-primary: #1E293B;
-            --text-secondary: #64748B;
-            --text-tertiary: #94A3B8;
-            --accent: #7C3AED;
-            --accent-light: #EDE9FE;
-            --radius-xl: 24px; --radius-lg: 20px; --radius-md: 16px; --radius-sm: 12px; --radius-xs: 8px;
-            --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
-            --sidebar-width: 80px;
-            --transition-base: 250ms cubic-bezier(0.2,0.8,0.2,1);
+            --border: rgba(15,23,42,0.06);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --accent: #4f46e5;
+            --accent-light: #eef2ff;
+            --positive: #059669;
+            --negative: #dc2626;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.03);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.02);
+            --shadow-lg: 0 12px 24px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --radius-sm: 12px;
+            --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+            --sidebar-width: 72px;
+            --transition-base: 280ms cubic-bezier(0.2,0.8,0.2,1);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -37,96 +40,68 @@
             letter-spacing:-0.01em;
             cursor:default;
             caret-color:transparent;
-            position:relative;
             overflow-x:hidden;
         }
-        input,select,textarea { cursor:default; caret-color:transparent; }
-        .ambient-blob { position:fixed; border-radius:50%; filter:blur(120px); opacity:0.07; pointer-events:none; z-index:0; }
-        .ambient-blob.top-right { width:600px; height:600px; background:#7C3AED; top:-200px; right:-200px; }
-        .ambient-blob.bottom-left { width:500px; height:500px; background:#2563EB; bottom:-150px; left:-150px; }
+        .ambient-blob { position:fixed; border-radius:50%; filter:blur(100px); opacity:0.04; pointer-events:none; z-index:0; }
+        .ambient-blob.top-right { width:500px; height:500px; background:var(--accent); top:-100px; right:-100px; }
+        .ambient-blob.bottom-left { width:400px; height:400px; background:#2563eb; bottom:-100px; left:-100px; }
         .sidebar {
             width:var(--sidebar-width);
             background:rgba(255,255,255,0.7);
-            backdrop-filter:blur(20px);
-            -webkit-backdrop-filter:blur(20px);
+            backdrop-filter:blur(24px);
+            -webkit-backdrop-filter:blur(24px);
             border-right:1px solid var(--border);
             display:flex; flex-direction:column; align-items:center; padding:var(--space-8) 0; gap:var(--space-10);
             position:fixed; top:0; bottom:0; z-index:20; box-shadow:var(--shadow-sm);
         }
         .sidebar-icon {
-            width:44px; height:44px; display:flex; align-items:center; justify-content:center;
-            border-radius:var(--radius-md); color:var(--text-tertiary); transition:all var(--transition-base); cursor:pointer; position:relative;
+            width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+            border-radius:var(--radius-sm); color:var(--text-tertiary); transition:all var(--transition-base); cursor:pointer;
         }
         .sidebar-icon.active { background:var(--accent-light); color:var(--accent); }
-        .sidebar-icon:hover { background:rgba(0,0,0,0.03); color:var(--text-primary); }
-        .sidebar-icon.active:hover { background:var(--accent-light); color:var(--accent); }
+        .sidebar-icon:hover { background:rgba(0,0,0,0.02); color:var(--text-primary); }
         .sidebar-icon.logout { margin-top:auto; color:#ef4444; }
-        .sidebar-icon.logout:hover { background:rgba(239,68,68,0.08); }
+        .sidebar-icon.logout:hover { background:rgba(239,68,68,0.06); }
         .main {
-            flex:1; margin-left:var(--sidebar-width); padding:var(--space-10); display:flex; flex-direction:column; gap:var(--space-10);
-            max-width:1600px; width:100%; position:relative; z-index:1; padding-top:var(--space-8);
+            flex:1; margin-left:var(--sidebar-width); padding:var(--space-10); display:flex; flex-direction:column; gap:var(--space-8);
+            max-width:1440px; width:100%; z-index:1;
         }
-        .topbar { display:flex; justify-content:space-between; align-items:center; gap:var(--space-6); flex-wrap:wrap; }
-        .topbar-left { display:flex; align-items:center; gap:var(--space-3); }
-        .topbar-left h1 {
-            font-size:28px; font-weight:700; letter-spacing:-0.03em; color:var(--text-primary);
-            background:linear-gradient(135deg,#7C3AED,#2563EB);
-            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-        }
-        .topbar-right { display:flex; gap:var(--space-3); align-items:center; }
+        .topbar { display:flex; justify-content:space-between; align-items:center; }
+        .topbar-left h1 { font-size:32px; font-weight:700; letter-spacing:-0.02em; }
         .btn {
-            display:inline-flex; align-items:center; gap:var(--space-2); padding:10px 20px; border-radius:var(--radius-sm);
-            font-weight:550; font-size:14px; letter-spacing:-0.01em; cursor:pointer;
-            transition:all var(--transition-base); background:var(--surface); border:1px solid var(--border); color:var(--text-primary);
-            box-shadow:var(--shadow-sm); white-space:nowrap;
+            display:inline-flex; align-items:center; gap:var(--space-2); padding:10px 18px; border-radius:var(--radius-sm);
+            font-weight:550; font-size:14px; cursor:pointer; transition:all var(--transition-base);
+            background:var(--surface); border:1px solid var(--border); color:var(--text-primary); box-shadow:var(--shadow-sm);
         }
-        .btn:hover { background:#f8fafc; border-color:rgba(0,0,0,0.08); box-shadow:var(--shadow-md); transform:translateY(-1px); }
-        .btn-primary { background:var(--accent); border-color:var(--accent); color:white; box-shadow:0 4px 12px rgba(124,58,237,0.25); }
-        .btn-primary:hover { background:#6D28D9; border-color:#6D28D9; box-shadow:0 8px 20px rgba(124,58,237,0.35); }
+        .btn:hover { background:#f8fafc; border-color:rgba(0,0,0,0.08); transform:translateY(-1px); }
+        .btn-primary { background:var(--accent); border-color:var(--accent); color:white; }
+        .btn-primary:hover { background:#4338ca; }
         .filters-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); }
-        .filter-select,.filter-input {
-            padding:9px 14px; border-radius:var(--radius-xs); border:1px solid var(--border); background:var(--surface);
-            font-size:14px; color:var(--text-primary); min-width:130px; box-shadow:var(--shadow-sm); transition:all var(--transition-base);
-            cursor:default;
-        }
-        .filter-select:hover,.filter-input:hover { border-color:rgba(0,0,0,0.1); }
-        .kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:var(--space-6); }
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:var(--space-6); }
         .kpi-card {
             background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
             border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
-            display:flex; flex-direction:column; gap:var(--space-3); position:relative; overflow:hidden;
+            display:flex; flex-direction:column; gap:var(--space-3);
         }
         .kpi-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
-        .kpi-label { font-size:13px; font-weight:500; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; }
-        .kpi-value { font-size:34px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary); line-height:1; }
-        .widget-row {
-            display:grid; grid-template-columns:repeat(auto-fit, minmax(400px,1fr)); gap:var(--space-6);
-        }
+        .kpi-label { font-size:13px; font-weight:500; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.03em; }
+        .kpi-value { font-size:34px; font-weight:700; letter-spacing:-0.02em; }
+        .widget-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(380px,1fr)); gap:var(--space-6); }
         .widget-card {
             background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
             border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
-            position:relative; height:fit-content;
         }
-        .widget-card:hover { transform:translateY(-1px); box-shadow:var(--shadow-lg); }
-        .widget-title {
-            font-size:13px; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em;
-            margin-bottom:var(--space-5); display:flex; align-items:center; gap:var(--space-2);
-        }
-        .table-container {
-            background:var(--surface); border-radius:var(--radius-xl); border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden;
-        }
+        .widget-card:hover { box-shadow:var(--shadow-lg); }
+        .widget-title { font-size:13px; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:var(--space-5); }
+        .table-container { background:var(--surface); border-radius:var(--radius-xl); border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden; }
         table { width:100%; border-collapse:collapse; font-size:14px; }
-        th { text-align:left; padding:var(--space-4) var(--space-6); font-weight:550; color:var(--text-tertiary); background:rgba(248,250,252,0.6); border-bottom:1px solid var(--border); font-size:12px; text-transform:uppercase; letter-spacing:0.04em; }
-        td { padding:var(--space-4) var(--space-6); border-bottom:1px solid rgba(0,0,0,0.03); color:var(--text-primary); }
+        th { text-align:left; padding:var(--space-4) var(--space-6); font-weight:550; color:var(--text-tertiary); background:rgba(248,250,252,0.5); border-bottom:1px solid var(--border); font-size:12px; text-transform:uppercase; }
+        td { padding:var(--space-4) var(--space-6); border-bottom:1px solid rgba(0,0,0,0.02); }
         tr:last-child td { border-bottom:none; }
-        tr:hover td { background:rgba(0,0,0,0.01); }
-        .gradient-li { transition: background 0.2s; }
-        @media(max-width:900px) {
-            .sidebar{display:none}
-            .main{margin-left:0;padding:var(--space-4)}
-            .kpi-row{grid-template-columns:repeat(2,1fr)}
-            .widget-row{grid-template-columns:1fr}
-        }
+        tr:hover td { background:rgba(0,0,0,0.005); }
+        .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:12px; font-weight:550; background:#fef3c7; color:#b45309; }
+        .badge.red { background:#fee2e2; color:#b91c1c; }
+        @media(max-width:900px) { .sidebar{display:none} .main{margin-left:0;padding:var(--space-4)} .kpi-grid{grid-template-columns:repeat(2,1fr)} .widget-grid{grid-template-columns:1fr} }
     </style>
 </head>
 <body>
@@ -147,8 +122,8 @@
     <div class="filters-row">
         <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
     </div>
-    <div class="kpi-row" id="leadsKPI"></div>
-    <div class="widget-row">
+    <div class="kpi-grid" id="leadsKPI"></div>
+    <div class="widget-grid">
         <div class="widget-card" id="stageWidget"><div class="widget-title">По этапам</div><div id="stageContent"></div></div>
         <div class="widget-card" id="sourceWidget"><div class="widget-title">По источникам</div><div id="sourceContent"></div></div>
     </div>
@@ -166,7 +141,6 @@
 
     let leadsData = [], financeData = [];
 
-    // Функции нечёткого сравнения имён
     function normalizeName(name) {
         return name
             .toLowerCase()
@@ -179,8 +153,22 @@
     function isNameMatch(leadName, clientName) {
         const lead = normalizeName(leadName);
         const client = normalizeName(clientName);
+        if (!lead || !client) return false;
         if (lead === client) return true;
-        return lead.includes(client) || client.includes(lead);
+        // Одно содержит другое, но только если длина общей части ≥ 70% от более длинного
+        const longer = lead.length > client.length ? lead : client;
+        const shorter = lead.length > client.length ? client : lead;
+        if (longer.includes(shorter)) {
+            return shorter.length / longer.length >= 0.7;
+        }
+        // Или совпадение по словам (например, фамилия + имя)
+        const leadWords = lead.split(' ').filter(w => w.length > 2);
+        const clientWords = client.split(' ').filter(w => w.length > 2);
+        if (leadWords.length >= 2 && clientWords.length >= 2) {
+            const common = leadWords.filter(w => clientWords.includes(w));
+            return common.length >= Math.min(leadWords.length, clientWords.length);
+        }
+        return false;
     }
 
     function applyGradientColors(tableElement, values) {
@@ -192,7 +180,7 @@
             const val = values[index] || 0;
             let ratio = maxVal === minVal ? 0.5 : (val - minVal) / (maxVal - minVal);
             const hue = ratio * 120;
-            row.style.backgroundColor = `hsla(${hue}, 40%, 85%, 0.2)`;
+            row.style.backgroundColor = `hsla(${hue}, 40%, 85%, 0.25)`;
         });
     }
 
@@ -267,18 +255,11 @@
                         });
                     }
                 }
-                if (parsed.length === 0) {
-                    alert('Файл прочитан, но не найдено ни одной записи. Проверьте столбцы.');
-                    return;
-                }
+                if (parsed.length === 0) { alert('Не найдено записей в файле.'); return; }
                 const { error: delErr } = await _supabase.from('leads').delete().neq('id', 0);
-                if (delErr) { alert('Ошибка удаления старых лидов: ' + delErr.message + '\n\nЗагрузка отменена.'); return; }
+                if (delErr) { alert('Ошибка удаления старых лидов: ' + delErr.message); return; }
                 const { error } = await _supabase.from('leads').insert(parsed);
-                if (error) {
-                    alert('ОШИБКА ЗАГРУЗКИ: ' + error.message + '\n\nСтарые лиды удалены, новые не записались — таблица leads сейчас пустая. Проверьте структуру таблицы в Supabase.');
-                    await loadLeads(); renderAll();
-                    return;
-                }
+                if (error) { alert('ОШИБКА ЗАГРУЗКИ: ' + error.message); await loadLeads(); renderAll(); return; }
                 await loadLeads();
                 renderAll();
                 alert('Лиды загружены (' + parsed.length + ' записей)');
@@ -297,20 +278,23 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Связь с финансами: используем нечёткое сравнение
+        // Связь с финансами: уникальное сопоставление клиент -> один лид
         const clientMap = new Map();
         financeData.forEach(f => {
             const clientName = (f.client || '').trim();
-            if (clientName) clientMap.set(clientName.toLowerCase(), (clientMap.get(clientName.toLowerCase()) || 0) + parseFloat(f.amount||0));
+            if (clientName) clientMap.set(clientName, (clientMap.get(clientName) || 0) + parseFloat(f.amount||0));
         });
 
+        const usedClients = new Set();
         let revenue = 0;
         let salesCount = 0;
+
         successStage.forEach(l => {
             for (let [clientKey, amount] of clientMap.entries()) {
-                if (isNameMatch(l.name, clientKey)) {
+                if (!usedClients.has(clientKey) && isNameMatch(l.name, clientKey)) {
                     revenue += amount;
                     salesCount++;
+                    usedClients.add(clientKey);
                     break;
                 }
             }
@@ -331,12 +315,8 @@
             <div class="kpi-card"><span class="kpi-label">Конв. в продажу</span><span class="kpi-value">${salesConversion}%</span></div>
         `;
 
-        // По этапам
         const stageGroups = {};
-        all.forEach(l => {
-            const s = l.stage || '—';
-            stageGroups[s] = (stageGroups[s] || 0) + 1;
-        });
+        all.forEach(l => { const s = l.stage || '—'; stageGroups[s] = (stageGroups[s] || 0) + 1; });
         const stageSorted = Object.entries(stageGroups).sort((a,b) => b[1] - a[1]);
         const stageValues = stageSorted.map(([_, c]) => c);
         document.getElementById('stageContent').innerHTML = `<table>${stageSorted.map(([s,c]) => `<tr><td>${s}</td><td>${c}</td></tr>`).join('')}</table>`;
@@ -345,7 +325,6 @@
             if (stageTable) applyGradientColors(stageTable, stageValues);
         }, 0);
 
-        // По источникам
         const sourceGroups = {};
         all.forEach(l => {
             const src = l.source || 'Не указан';
@@ -363,7 +342,6 @@
             if (sourceTable) applyGradientColors(sourceTable, sourceValues);
         }, 0);
 
-        // Таблица лидов
         document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
     }
 
