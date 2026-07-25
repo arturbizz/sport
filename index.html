@@ -167,31 +167,41 @@
     </div>
   </div>
   <script>
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
+    (function() {
+      // Дожидаемся полной загрузки DOM, чтобы элементы точно существовали
+      document.addEventListener('DOMContentLoaded', async function() {
+        const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
-    (async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) { window.location.href = 'login.html'; return; }
-        const userEmail = session.user.email;
-        document.getElementById('userEmail').textContent = userEmail;
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-          await supabase.auth.signOut();
-          window.location.href = 'login.html';
-        });
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            window.location.href = 'login.html';
+            return;
+          }
+          const userEmail = session.user.email;
+          document.getElementById('userEmail').textContent = userEmail;
 
-        if (userEmail === ADMIN_EMAIL) {
-          document.querySelectorAll('.admin-only').forEach(el => {
-            el.style.display = 'flex';
+          // Выход из системы
+          document.getElementById('logoutBtn').addEventListener('click', async function() {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
           });
+
+          // Показать административные разделы
+          if (userEmail === ADMIN_EMAIL) {
+            document.querySelectorAll('.admin-only').forEach(function(el) {
+              el.style.display = 'flex';
+            });
+          }
+        } catch (error) {
+          console.error('Ошибка инициализации:', error);
+          // Если сессия не определилась, пробуем перезагрузить страницу входа
+          window.location.href = 'login.html';
         }
-      } catch (e) {
-        console.error('Ошибка на главной странице:', e);
-        window.location.href = 'login.html';
-      }
+      });
     })();
   </script>
 </body>
