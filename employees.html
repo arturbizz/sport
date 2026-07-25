@@ -129,6 +129,10 @@
       border: 1px solid var(--border); border-radius: 10px;
       font-size: 0.9rem; font-family: inherit;
     }
+    .checkbox-row {
+      display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
+    }
+    .checkbox-row input[type="checkbox"] { width: auto; accent-color: var(--pink); }
   </style>
 </head>
 <body>
@@ -168,6 +172,23 @@
       <div style="display:flex; gap:0.5rem; margin-top:1rem;">
         <button class="btn" id="saveBtn">Сохранить</button>
         <button class="btn btn-outline" id="cancelBtn">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка прав доступа -->
+  <div class="modal-overlay" id="permModal" style="display:none;">
+    <div class="modal">
+      <h2>Доступы сотрудника</h2>
+      <p id="permEmployeeName" style="font-weight:600; margin-bottom:1rem;"></p>
+      <div class="checkbox-row"><input type="checkbox" id="permDashboard"><label for="permDashboard">Дашборд (аналитика)</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permLeads"><label for="permLeads">Лиды</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permBudget"><label for="permBudget">Бюджет</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permAdmin"><label for="permAdmin">Мониторинг</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permEmployees"><label for="permEmployees">Сотрудники</label></div>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="savePermBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelPermBtn">Отмена</button>
       </div>
     </div>
   </div>
@@ -225,6 +246,7 @@
             <td>
               ${isAdmin() ? `
                 <button class="btn btn-outline edit-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Изменить</button>
+                <button class="btn btn-outline perm-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Доступ</button>
                 <button class="btn btn-danger delete-btn" data-id="${e.id}" style="padding:0.3rem 0.8rem; font-size:0.8rem;">Удалить</button>
               ` : '—'}
             </td>
@@ -244,6 +266,9 @@
               if (error) { alert('Ошибка удаления: ' + error.message); return; }
               await loadEmployees();
             });
+          });
+          tbody.querySelectorAll('.perm-btn').forEach(btn => {
+            btn.addEventListener('click', () => openPermModal(btn.dataset.id));
           });
         }
       }
@@ -297,6 +322,58 @@
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('empModal').style.display = 'none';
         await loadEmployees();
+      });
+
+      // ---------- ЛОГИКА ПРАВ ДОСТУПА ----------
+      async function openPermModal(empId) {
+        const emp = employees.find(e => e.id === empId);
+        if (!emp) return;
+        document.getElementById('permEmployeeName').textContent = emp.name;
+        document.getElementById('permModal').dataset.empId = empId;
+
+        // Загружаем текущие права сотрудника
+        const { data: perms } = await _supabase
+          .from('employee_permissions')
+          .select('section')
+          .eq('employee_id', empId);
+        const allowedSections = new Set((perms || []).map(p => p.section));
+
+        document.getElementById('permDashboard').checked = allowedSections.has('dashboard');
+        document.getElementById('permLeads').checked = allowedSections.has('leads');
+        document.getElementById('permBudget').checked = allowedSections.has('budget');
+        document.getElementById('permAdmin').checked = allowedSections.has('admin');
+        document.getElementById('permEmployees').checked = allowedSections.has('employees');
+
+        document.getElementById('permModal').style.display = 'flex';
+      }
+
+      document.getElementById('cancelPermBtn').addEventListener('click', () => {
+        document.getElementById('permModal').style.display = 'none';
+      });
+
+      document.getElementById('savePermBtn').addEventListener('click', async () => {
+        const empId = document.getElementById('permModal').dataset.empId;
+        const sections = [];
+        if (document.getElementById('permDashboard').checked) sections.push('dashboard');
+        if (document.getElementById('permLeads').checked) sections.push('leads');
+        if (document.getElementById('permBudget').checked) sections.push('budget');
+        if (document.getElementById('permAdmin').checked) sections.push('admin');
+        if (document.getElementById('permEmployees').checked) sections.push('employees');
+
+        // Удаляем все старые права сотрудника
+        await _supabase.from('employee_permissions').delete().eq('employee_id', empId);
+
+        // Вставляем новые
+        if (sections.length > 0) {
+          const rows = sections.map(section => ({ employee_id: empId, section }));
+          const { error } = await _supabase.from('employee_permissions').insert(rows);
+          if (error) {
+            alert('Ошибка сохранения прав: ' + error.message);
+            return;
+          }
+        }
+        document.getElementById('permModal').style.display = 'none';
+        alert('Права сохранены');
       });
 
       (async () => {
