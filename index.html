@@ -74,6 +74,7 @@
     .coming-soon { opacity: 0.7; }
     .coming-soon .card-icon { filter: grayscale(0.2); }
     .admin-only { display: none; }
+
     /* Кнопка чата */
     .chat-button {
       position: fixed; bottom: 20px; right: 20px;
@@ -84,6 +85,7 @@
       z-index: 9998; transition: transform 0.2s, box-shadow 0.2s;
     }
     .chat-button:hover { transform: scale(1.05); box-shadow: 0 12px 28px rgba(79,70,229,0.4); }
+
     /* Виджет чата */
     #chat-widget {
       position: fixed; bottom: 90px; right: 20px; width: 340px; background: white;
@@ -91,7 +93,28 @@
       font-family: 'Inter', sans-serif; z-index: 9999; display: none; border: 1px solid rgba(15,23,42,0.06);
     }
     #chat-header { background: #4f46e5; color: white; padding: 14px 18px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-    #chat-messages { height: 320px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+    #chat-mascot {
+      background: #f8fafc; padding: 12px; display: flex; align-items: center; justify-content: center;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    #mascot-svg { width: 60px; height: 60px; transition: transform 0.3s; }
+    .mascot-idle { animation: mascot-breathe 3s infinite ease-in-out; }
+    .mascot-listening { animation: mascot-nod 0.6s infinite ease-in-out; }
+    .mascot-speaking { animation: mascot-talk 0.4s infinite ease-in-out; }
+    @keyframes mascot-breathe {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    @keyframes mascot-nod {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-5deg); }
+      75% { transform: rotate(5deg); }
+    }
+    @keyframes mascot-talk {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    #chat-messages { height: 260px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
     #chat-input-area { display: flex; border-top: 1px solid #e2e8f0; }
     #chat-input { flex: 1; border: none; padding: 12px; outline: none; font-size: 14px; background: white; }
     #chat-send { background: #4f46e5; color: white; border: none; padding: 0 20px; font-weight: 600; cursor: pointer; }
@@ -109,7 +132,6 @@
     <h1>Music Club Орёл</h1>
     <p class="subtitle">Платформа управления музыкальной школой</p>
     <div class="cards">
-      <!-- Общие разделы -->
       <a href="schedule.html" class="card schedule">
         <div class="card-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#7c5ce7" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -153,7 +175,6 @@
         <p>Скоро открытие</p>
       </a>
 
-      <!-- Административные разделы -->
       <a href="employees.html" class="card employees admin-only">
         <div class="card-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -233,11 +254,31 @@
     })();
   </script>
 
-  <!-- ИИ-ассистент -->
+  <!-- ИИ-ассистент с маскотом -->
   <div id="chat-widget">
     <div id="chat-header">
       <span>Чат с помощником</span>
       <span onclick="document.getElementById('chat-widget').style.display='none'" style="cursor:pointer;">✕</span>
+    </div>
+    <div id="chat-mascot">
+      <!-- Сова -->
+      <svg id="mascot-svg" class="mascot-idle" viewBox="0 0 100 100" width="60" height="60">
+        <!-- Тело -->
+        <ellipse cx="50" cy="55" rx="30" ry="25" fill="#7c5ce7" />
+        <!-- Глаза -->
+        <circle cx="38" cy="40" r="8" fill="white" />
+        <circle cx="62" cy="40" r="8" fill="white" />
+        <circle cx="38" cy="40" r="4" fill="#2d3436" />
+        <circle cx="62" cy="40" r="4" fill="#2d3436" />
+        <!-- Клюв (будет анимироваться через CSS) -->
+        <polygon id="beak" points="45,48 55,48 50,58" fill="#f9ca24" />
+        <!-- Брови -->
+        <line x1="30" y1="32" x2="42" y2="34" stroke="#2d3436" stroke-width="2" stroke-linecap="round" />
+        <line x1="70" y1="32" x2="58" y2="34" stroke="#2d3436" stroke-width="2" stroke-linecap="round" />
+        <!-- Крылья -->
+        <ellipse cx="20" cy="55" rx="10" ry="15" fill="#6c5ce7" />
+        <ellipse cx="80" cy="55" rx="10" ry="15" fill="#6c5ce7" />
+      </svg>
     </div>
     <div id="chat-messages"></div>
     <div id="chat-input-area">
@@ -256,6 +297,12 @@
     const chatMessages = document.getElementById('chat-messages');
     const chatInput = document.getElementById('chat-input');
     const chatSend = document.getElementById('chat-send');
+    const mascot = document.getElementById('mascot-svg');
+
+    function setMascotState(state) {
+      mascot.classList.remove('mascot-idle', 'mascot-listening', 'mascot-speaking');
+      mascot.classList.add('mascot-' + state);
+    }
 
     function addMessage(text, sender) {
       const div = document.createElement('div');
@@ -266,6 +313,7 @@
     }
 
     async function askBot(question) {
+      setMascotState('listening');
       try {
         const resp = await fetch(FUNCTION_URL, {
           method: 'POST',
@@ -274,11 +322,14 @@
         });
         if (!resp.ok) throw new Error(`Статус: ${resp.status}`);
         const data = await resp.json();
-        addMessage(data.reply || 'Нет ответа', 'bot');
+        setMascotState('speaking');
+        addMessage(data.reply || 'Я не понял, коллега.', 'bot');
       } catch(e) {
         console.error('Ошибка чата:', e);
-        addMessage("Ассистент временно недоступен. Пожалуйста, попробуйте позже.", 'bot');
+        setMascotState('idle');
+        addMessage("Ассистент временно недоступен.", 'bot');
       }
+      setTimeout(() => setMascotState('idle'), 2000);
     }
 
     chatSend.addEventListener('click', () => {
