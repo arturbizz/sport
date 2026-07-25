@@ -170,17 +170,29 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
     let leadsData = [], salesData = [];
 
-    // Кастомные уведомления
     function customAlert(msg) {
         document.getElementById('alertMessage').textContent = msg;
         document.getElementById('alertModal').style.display = 'flex';
         document.getElementById('alertOkBtn').onclick = () => {
             document.getElementById('alertModal').style.display = 'none';
         };
+    }
+
+    async function checkAccess(requiredSection) {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return false; }
+        const userEmail = session.user.email;
+        if (userEmail === 'arturgalkin.ru@mail.ru') return true; // главный админ
+
+        const { data: emp } = await _supabase.from('employees').select('id').eq('email', userEmail).single();
+        if (!emp) { window.location.href = 'index.html'; return false; }
+
+        const { data: perm } = await _supabase.from('employee_permissions').select('*').eq('employee_id', emp.id).eq('section', requiredSection).single();
+        if (!perm) { window.location.href = 'index.html'; return false; }
+        return true;
     }
 
     function applyGradientColors(tableElement, values) {
@@ -197,8 +209,7 @@
     }
 
     async function init() {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
+        if (!await checkAccess('leads')) return;
         await Promise.all([loadLeads(), loadSales()]);
         renderAll();
     }
@@ -318,10 +329,7 @@
                         break;
                     }
                 }
-                if (headerRow === -1) {
-                    customAlert('Не найдена строка заголовка со столбцами "Дата" и "Клиент"/"Плательщик".');
-                    return;
-                }
+                if (headerRow === -1) { customAlert('Не найдена строка заголовка со столбцами "Дата" и "Клиент"/"Плательщик".'); return; }
                 const headers = rows[headerRow].map(h => String(h).trim().toLowerCase());
                 const dateIdx = headers.findIndex(h => h === 'дата');
                 const amountIdx = headers.findIndex(h => h === 'сумма');
@@ -350,18 +358,10 @@
                             isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
                         }
                     }
-                    parsed.push({
-                        operation_date: isoDate,
-                        amount,
-                        client
-                    });
+                    parsed.push({ operation_date: isoDate, amount, client });
                 }
 
-                if (parsed.length === 0) {
-                    customAlert('Не найдено ни одной продажи в файле.');
-                    return;
-                }
-
+                if (parsed.length === 0) { customAlert('Не найдено ни одной продажи в файле.'); return; }
                 const { error: delErr } = await _supabase.from('sales_report').delete().neq('id', 0);
                 if (delErr) { customAlert('Ошибка очистки таблицы продаж: ' + delErr.message); return; }
                 const { error: insErr } = await _supabase.from('sales_report').insert(parsed);
@@ -384,7 +384,7 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Продажи берутся напрямую из файла продаж, без сопоставления
+        // Продажи просто из загруженного файла
         const salesCount = salesData.length;
         const revenue = salesData.reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
         const avgCheck = salesCount > 0 ? (revenue / salesCount).toFixed(0) : 0;
@@ -402,7 +402,6 @@
             <div class="kpi-card"><span class="kpi-label">Конв. в продажу</span><span class="kpi-value">${salesConversion}%</span></div>
         `;
 
-        // Таблицы и виджеты без изменений
         const stageGroups = {};
         all.forEach(l => { const s = l.stage || '—'; stageGroups[s] = (stageGroups[s] || 0) + 1; });
         const stageSorted = Object.entries(stageGroups).sort((a,b) => b[1] - a[1]);
