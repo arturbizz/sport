@@ -13,36 +13,27 @@
       --bg: #f7f8fa;
       --surface: #ffffff;
       --border: rgba(15,23,42,0.06);
-      --text-primary: #0f172a;
+      --text: #0f172a;
       --text-secondary: #475569;
-      --text-tertiary: #94a3b8;
-      --accent: #4f46e5;
-      --accent-light: #eef2ff;
-      --positive: #059669;
-      --negative: #dc2626;
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.03);
-      --shadow-md: 0 4px 6px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.02);
-      --shadow-lg: 0 12px 24px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
+      --accent: #0d9488;
+      --accent-light: #ccfbf1;
+      --warm-yellow: #f59e0b;
+      --soft-green: #10b981;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
       --space-4: 16px; --space-6: 24px; --space-8: 32px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text-primary);
-      padding: 2rem;
-      display: flex; justify-content: center;
-      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
+      color: var(--text);
+      min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
     }
     .container {
       width: 100%; max-width: 1200px;
-      background: var(--surface);
-      border-radius: var(--radius-xl);
-      padding: 2rem;
-      box-shadow: var(--shadow-sm);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(12px);
+      background: var(--surface); border-radius: var(--radius-xl);
+      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      border: 1px solid var(--border); backdrop-filter: blur(12px);
     }
     .header {
       display: flex; justify-content: space-between; align-items: center;
@@ -51,23 +42,31 @@
     .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
     h1 {
       font-size: 2rem; font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), #6366f1);
+      background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+    }
+    .filters {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.9rem; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--surface);
+      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
+      color: var(--text-secondary);
+    }
+    .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .search-input {
+      padding: 0.35rem 0.9rem; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--surface); font-size: 0.8rem; width: 180px;
     }
     .btn {
       padding: 0.6rem 1.4rem; border-radius: var(--radius-sm);
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       border: 1px solid var(--border); background: var(--surface);
-      color: var(--text-primary); box-shadow: var(--shadow-sm);
-      transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.4rem;
+      color: var(--text); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.4rem;
     }
-    .btn:hover { background: #f8fafc; transform: translateY(-1px); }
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
-    .btn-primary:hover { background: #4338ca; }
-    .btn-danger { background: #dc2626; color: white; border-color: #dc2626; }
-    .btn-danger:hover { background: #b91c1c; }
-
+    .btn-primary:hover { background: #0f766e; }
     .cards-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
       gap: 1rem; margin-top: 1rem;
@@ -75,10 +74,10 @@
     .emp-card {
       background: var(--surface); border-radius: var(--radius-lg);
       padding: 1.5rem; border: 1px solid var(--border);
-      box-shadow: var(--shadow-sm); transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
       cursor: pointer; display: flex; flex-direction: column; gap: 0.8rem;
     }
-    .emp-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .emp-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); transform: translateY(-2px); }
     .emp-avatar {
       width: 48px; height: 48px; border-radius: 50%;
       background: var(--accent-light); color: var(--accent);
@@ -87,29 +86,22 @@
     }
     .emp-name { font-weight: 600; }
     .emp-role { color: var(--text-secondary); font-size: 0.9rem; }
-    .emp-perms { font-size: 0.75rem; color: var(--text-tertiary); display: flex; flex-wrap: wrap; gap: 4px; }
+    .emp-perms { font-size: 0.75rem; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 4px; }
     .perm-badge {
       padding: 0.2rem 0.6rem; border-radius: 12px;
-      background: var(--accent-light); color: var(--accent);
-      font-weight: 500;
+      background: var(--accent-light); color: var(--accent); font-weight: 500;
     }
-
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
+      backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
     .modal {
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(16px);
-      border-radius: var(--radius-xl);
-      padding: 2rem; max-width: 500px; width: 90%;
-      box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.5) inset;
-      animation: slideUp 0.25s ease-out; text-align: left;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(16px);
+      border-radius: var(--radius-xl); padding: 2rem; max-width: 500px; width: 90%;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.08); animation: slideUp 0.25s;
+      text-align: left;
     }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
     .modal h2 { margin-bottom: 1rem; }
     .modal label { font-weight: 500; font-size: 0.85rem; color: var(--text-secondary); display: block; margin-top: 0.5rem; }
     .modal select, .modal input {
@@ -129,6 +121,16 @@
       <h1>Сотрудники</h1>
       <button class="btn btn-primary" id="addBtn">+ Добавить сотрудника</button>
     </div>
+    <div class="filters">
+      <button class="filter-btn active" data-role="all">Все</button>
+      <button class="filter-btn" data-role="Управляющий">Управляющие</button>
+      <button class="filter-btn" data-role="Менеджер">Менеджеры</button>
+      <button class="filter-btn" data-role="Администратор">Администраторы</button>
+      <button class="filter-btn" data-role="Преподаватель">Преподаватели</button>
+      <button class="filter-btn" data-role="Бухгалтер">Бухгалтеры</button>
+      <button class="filter-btn" data-role="ИП">ИП</button>
+      <input type="text" class="search-input" id="searchInput" placeholder="Поиск по имени">
+    </div>
     <div class="cards-grid" id="employeesGrid"></div>
   </div>
 
@@ -136,43 +138,31 @@
   <div class="modal-overlay" id="empModal" style="display:none;">
     <div class="modal">
       <h2 id="modalTitle"></h2>
-      <div>
-        <label>Роль</label>
-        <select id="editRole">
-          <option>Управляющий</option><option>Менеджер</option><option>Администратор</option>
-          <option>Преподаватель</option><option>Бухгалтер</option><option>ИП</option>
-        </select>
-      </div>
-      <div>
-        <label>Email</label>
-        <input type="email" id="editEmail" placeholder="Email">
-      </div>
-      <div>
-        <label>Специализация</label>
-        <input type="text" id="editSpec" placeholder="Специализация">
-      </div>
+      <label>Роль</label>
+      <select id="editRole"><option>Управляющий</option><option>Менеджер</option><option>Администратор</option><option>Преподаватель</option><option>Бухгалтер</option><option>ИП</option></select>
+      <label>Email</label>
+      <input type="email" id="editEmail" placeholder="Email">
+      <label>Специализация</label>
+      <input type="text" id="editSpec" placeholder="Специализация">
       <div id="passwordBlock" style="display:none;">
         <label>Пароль (доступен только вам)</label>
         <div class="password-field" id="passwordView"></div>
       </div>
-      <div>
-        <label>Права доступа</label>
-        <div class="checkbox-row"><input type="checkbox" id="permDashboard"><label>Дашборд</label></div>
-        <div class="checkbox-row"><input type="checkbox" id="permLeads"><label>Лиды</label></div>
-        <div class="checkbox-row"><input type="checkbox" id="permBudget"><label>Бюджет</label></div>
-        <div class="checkbox-row"><input type="checkbox" id="permAdmin"><label>Мониторинг</label></div>
-        <div class="checkbox-row"><input type="checkbox" id="permEmployees"><label>Сотрудники</label></div>
-      </div>
+      <label>Права доступа</label>
+      <div class="checkbox-row"><input type="checkbox" id="permDashboard"><label>Дашборд</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permLeads"><label>Лиды</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permBudget"><label>Бюджет</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permAdmin"><label>Мониторинг</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="permEmployees"><label>Сотрудники</label></div>
       <div class="modal-actions">
-        <button class="btn" id="saveEmpBtn">Сохранить</button>
+        <button class="btn btn-primary" id="saveEmpBtn">Сохранить</button>
         <button class="btn" id="deleteEmpBtn" style="display:none;">Удалить</button>
-        <button class="btn" id="impersonateBtn" style="display:none;">Сменить роль</button>
         <button class="btn" id="cancelEmpBtn">Отмена</button>
       </div>
     </div>
   </div>
 
-  <!-- Модалка создания сотрудника -->
+  <!-- Модалка создания -->
   <div class="modal-overlay" id="addModal" style="display:none;">
     <div class="modal">
       <h2>Новый сотрудник</h2>
@@ -196,6 +186,7 @@
       let currentUserEmail = null, employees = [], permissionsMap = {};
       const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
       const ADMINS = [ADMIN_EMAIL, 'evelifetv@gmail.com'];
+      let activeFilter = 'all';
 
       function isAdmin() { return ADMINS.includes(currentUserEmail); }
       function isFounder() { return currentUserEmail === ADMIN_EMAIL; }
@@ -212,7 +203,6 @@
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*').order('name');
         employees = data || [];
-        await loadPermissions();
         renderCards();
       }
 
@@ -224,7 +214,11 @@
 
       function renderCards() {
         const grid = document.getElementById('employeesGrid');
-        grid.innerHTML = employees.map(e => `
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        let filtered = employees;
+        if (activeFilter !== 'all') filtered = filtered.filter(e => e.role === activeFilter);
+        if (searchQuery) filtered = filtered.filter(e => e.name.toLowerCase().includes(searchQuery));
+        grid.innerHTML = filtered.map(e => `
           <div class="emp-card" data-id="${e.id}">
             <div class="emp-avatar">${e.name.charAt(0)}</div>
             <div class="emp-name">${e.name}</div>
@@ -238,6 +232,7 @@
       }
 
       async function openEmployeeModal(empId) {
+        if (!isAdmin()) return;
         const emp = employees.find(e => e.id === empId);
         if (!emp) return;
         document.getElementById('modalTitle').textContent = emp.name;
@@ -246,7 +241,6 @@
         document.getElementById('editSpec').value = emp.specialization || '';
         document.getElementById('passwordView').textContent = emp.password_hint || 'Не указан';
         document.getElementById('passwordBlock').style.display = isFounder() ? 'block' : 'none';
-        document.getElementById('impersonateBtn').style.display = isFounder() ? 'inline-block' : 'none';
         document.getElementById('deleteEmpBtn').style.display = isAdmin() ? 'inline-block' : 'none';
 
         const sections = permissionsMap[emp.id] || [];
@@ -278,36 +272,28 @@
           await _supabase.from('employee_permissions').insert(sections.map(s => ({ employee_id: empId, section: s })));
         }
         document.getElementById('empModal').style.display = 'none';
-        await loadEmployees();
+        await loadPermissions();
+        renderCards();
       });
 
       document.getElementById('deleteEmpBtn').addEventListener('click', async () => {
+        if (!confirm('Удалить сотрудника?')) return;
         const empId = document.getElementById('empModal').dataset.empId;
-        if (confirm('Удалить сотрудника?')) {
-          await _supabase.from('employees').delete().eq('id', empId);
-          document.getElementById('empModal').style.display = 'none';
-          await loadEmployees();
-        }
-      });
-
-      document.getElementById('impersonateBtn').addEventListener('click', () => {
-        const role = document.getElementById('editRole').value;
-        localStorage.setItem('impersonated_role', role);
-        alert(`Режим просмотра: ${role}. Осталась кнопка для возврата.`);
-        // Кнопка возврата будет на всех страницах (реализуется через localStorage)
+        await _supabase.from('employees').delete().eq('id', empId);
+        document.getElementById('empModal').style.display = 'none';
+        await loadEmployees();
       });
 
       document.getElementById('cancelEmpBtn').addEventListener('click', () => {
         document.getElementById('empModal').style.display = 'none';
       });
 
-      // Создание сотрудника
+      // Создание
       document.getElementById('addBtn').addEventListener('click', () => {
+        if (!isAdmin()) return alert('Только для администраторов');
         document.getElementById('addModal').style.display = 'flex';
       });
-      document.getElementById('cancelAddBtn').addEventListener('click', () => {
-        document.getElementById('addModal').style.display = 'none';
-      });
+      document.getElementById('cancelAddBtn').addEventListener('click', () => document.getElementById('addModal').style.display = 'none');
       document.getElementById('createEmpBtn').addEventListener('click', async () => {
         const name = document.getElementById('newName').value.trim();
         const role = document.getElementById('newRole').value;
@@ -320,10 +306,22 @@
         await loadEmployees();
       });
 
+      // Фильтры
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeFilter = btn.dataset.role;
+          renderCards();
+        });
+      });
+      document.getElementById('searchInput').addEventListener('input', renderCards);
+
       (async () => {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
+        await loadPermissions();
         await loadEmployees();
       })();
     })();
