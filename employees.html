@@ -28,7 +28,9 @@
       background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
       color: var(--text);
       min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
+      cursor: default; caret-color: transparent;
     }
+    input, textarea, select { cursor: text; caret-color: auto; }
     .container {
       width: 100%; max-width: 1200px;
       background: var(--surface); border-radius: var(--radius-xl);
@@ -52,7 +54,7 @@
       padding: 0.35rem 0.9rem; border-radius: 20px;
       border: 1px solid var(--border); background: var(--surface);
       cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
-      color: var(--text-secondary);
+      color: var(--text-secondary); caret-color: transparent;
     }
     .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
     .search-input {
@@ -64,6 +66,7 @@
       font-weight: 600; cursor: pointer; font-size: 0.9rem;
       border: 1px solid var(--border); background: var(--surface);
       color: var(--text); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.4rem;
+      caret-color: transparent;
     }
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
     .btn-primary:hover { background: #0f766e; }
@@ -76,6 +79,7 @@
       padding: 1.5rem; border: 1px solid var(--border);
       box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
       cursor: pointer; display: flex; flex-direction: column; gap: 0.8rem;
+      caret-color: transparent;
     }
     .emp-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); transform: translateY(-2px); }
     .emp-avatar {
@@ -288,7 +292,6 @@
         document.getElementById('empModal').style.display = 'none';
       });
 
-      // Создание
       document.getElementById('addBtn').addEventListener('click', () => {
         if (!isAdmin()) return alert('Только для администраторов');
         document.getElementById('addModal').style.display = 'flex';
@@ -306,7 +309,6 @@
         await loadEmployees();
       });
 
-      // Фильтры
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
