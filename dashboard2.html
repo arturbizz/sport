@@ -121,6 +121,8 @@
     </div>
     <div class="filters-row">
         <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
+        <button class="btn btn-primary" id="uploadSalesBtn">Загрузить продажи</button>
+        <span id="salesStatus" style="font-size:13px; color:var(--text-tertiary);"></span>
     </div>
     <div class="kpi-grid" id="leadsKPI"></div>
     <div class="widget-grid">
@@ -139,7 +141,7 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
-    let leadsData = [], financeData = [];
+    let leadsData = [], salesData = [];
 
     function normalizeName(name) {
         return name
@@ -155,9 +157,8 @@
         const client = normalizeName(clientName);
         if (!lead || !client) return false;
         if (lead === client) return true;
-        // Если одно полностью содержит другое — совпадение
         if (lead.includes(client) || client.includes(lead)) return true;
-        // Если хотя бы одно слово длиннее 2 символов общее
+        // Хотя бы одно слово длиннее 2 символов общее
         const leadWords = lead.split(' ').filter(w => w.length > 2);
         const clientWords = client.split(' ').filter(w => w.length > 2);
         return leadWords.some(w => clientWords.includes(w));
@@ -179,16 +180,37 @@
     async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
-        await Promise.all([loadLeads(), loadFinance()]);
+        await Promise.all([loadLeads(), loadSales()]);
         renderAll();
     }
 
-    async function loadLeads() { const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false }); leadsData = data || []; }
-    async function loadFinance() { const { data } = await _supabase.from('crm_finance').select('*'); financeData = data || []; }
+    async function loadLeads() {
+        const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false });
+        leadsData = data || [];
+    }
 
-    function setupLeadsListeners() { document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads); }
+    async function loadSales() {
+        const { data } = await _supabase.from('sales_report').select('*');
+        salesData = data || [];
+        updateSalesStatus();
+    }
+
+    function updateSalesStatus() {
+        const statusEl = document.getElementById('salesStatus');
+        if (salesData.length > 0) {
+            statusEl.textContent = `Загружено продаж: ${salesData.length}`;
+        } else {
+            statusEl.textContent = 'Продажи не загружены';
+        }
+    }
+
+    function setupListeners() {
+        document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads);
+        document.getElementById('uploadSalesBtn').addEventListener('click', uploadSales);
+    }
 
     async function uploadLeads() {
+        // ... (код загрузки лидов без изменений) ...
         const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
         input.onchange = async (e) => {
             const file = e.target.files[0]; if(!file) return;
@@ -261,6 +283,84 @@
         input.click();
     }
 
+    async function uploadSales() {
+        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+        input.onchange = async (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, {type:'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+                // Ищем строку заголовка, содержащую "Дата" и "Клиент" (или "Плательщик")
+                let headerRow = -1;
+                for (let i = 0; i < Math.min(rows.length, 5); i++) {
+                    const rowStr = rows[i] ? rows[i].join(' ').toLowerCase() : '';
+                    if (rowStr.includes('дата') && (rowStr.includes('клиент') || rowStr.includes('плательщик'))) {
+                        headerRow = i;
+                        break;
+                    }
+                }
+                if (headerRow === -1) {
+                    alert('Не найдена строка заголовка со столбцами "Дата" и "Клиент"/"Плательщик".');
+                    return;
+                }
+                const headers = rows[headerRow].map(h => String(h).trim().toLowerCase());
+                const dateIdx = headers.findIndex(h => h === 'дата');
+                const amountIdx = headers.findIndex(h => h === 'сумма');
+                // Ищем столбец "Клиент", если нет — "Плательщик"
+                let clientIdx = headers.findIndex(h => h === 'клиент');
+                if (clientIdx === -1) clientIdx = headers.findIndex(h => h === 'плательщик');
+
+                if (dateIdx === -1 || amountIdx === -1 || clientIdx === -1) {
+                    alert('Не найдены обязательные столбцы: Дата, Сумма, Клиент/Плательщик.');
+                    return;
+                }
+
+                const parsed = [];
+                for (let i = headerRow + 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < Math.max(dateIdx, amountIdx, clientIdx) + 1) continue;
+                    const dateStr = String(row[dateIdx] || '').trim();
+                    const amountStr = String(row[amountIdx] || '0').replace(/\s/g, '').replace(',', '.');
+                    const client = String(row[clientIdx] || '').trim();
+                    if (!dateStr || !client) continue;
+                    const amount = parseFloat(amountStr);
+                    if (isNaN(amount) || amount === 0) continue;
+                    // Преобразуем дату в ISO формат
+                    let isoDate = dateStr;
+                    if (dateStr.includes('.')) {
+                        const parts = dateStr.split('.');
+                        if (parts.length === 3) {
+                            isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                        }
+                    }
+                    parsed.push({
+                        operation_date: isoDate,
+                        amount,
+                        client
+                    });
+                }
+
+                if (parsed.length === 0) {
+                    alert('Не найдено ни одной продажи в файле.');
+                    return;
+                }
+
+                // Очищаем старые данные из sales_report и вставляем новые
+                const { error: delErr } = await _supabase.from('sales_report').delete().neq('id', 0);
+                if (delErr) { alert('Ошибка очистки таблицы продаж: ' + delErr.message); return; }
+                const { error: insErr } = await _supabase.from('sales_report').insert(parsed);
+                if (insErr) { alert('Ошибка загрузки продаж: ' + insErr.message); return; }
+                await loadSales();
+                renderAll();
+                alert('Продажи загружены (' + parsed.length + ' записей)');
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
+
     function renderAll() {
         const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact);
         const total = all.length;
@@ -270,11 +370,11 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Связь с финансами: клиент используется только один раз
+        // Используем только таблицу sales_report
         const clientMap = new Map();
-        financeData.forEach(f => {
-            const clientName = (f.client || '').trim();
-            if (clientName) clientMap.set(clientName, (clientMap.get(clientName) || 0) + parseFloat(f.amount||0));
+        salesData.forEach(s => {
+            const clientName = (s.client || '').trim();
+            if (clientName) clientMap.set(clientName, (clientMap.get(clientName) || 0) + parseFloat(s.amount||0));
         });
 
         const usedClients = new Set();
@@ -307,6 +407,7 @@
             <div class="kpi-card"><span class="kpi-label">Конв. в продажу</span><span class="kpi-value">${salesConversion}%</span></div>
         `;
 
+        // Остальное без изменений
         const stageGroups = {};
         all.forEach(l => { const s = l.stage || '—'; stageGroups[s] = (stageGroups[s] || 0) + 1; });
         const stageSorted = Object.entries(stageGroups).sort((a,b) => b[1] - a[1]);
@@ -340,7 +441,7 @@
     document.getElementById('homeSidebarBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
     document.getElementById('logoutSidebarBtn').addEventListener('click', async ()=>{ await _supabase.auth.signOut(); window.location.href='login.html'; });
 
-    setupLeadsListeners();
+    setupListeners();
     init();
 })();
 </script>
