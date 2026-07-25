@@ -10,60 +10,57 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --pink: #ff8c94;
-      --mint: #a0e7e5;
-      --peach: #fad0c4;
-      --sun: #ffd166;
-      --bg: #fef9f0;
-      --surface: rgba(255,255,255,0.9);
-      --text: #2d3436;
-      --text-light: #636e72;
-      --border: #e0e0e0;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --border: rgba(15,23,42,0.06);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-tertiary: #94a3b8;
+      --accent: #4f46e5;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.03);
+      --radius-xl: 24px;
+      --radius-md: 16px;
+      --space-6: 24px;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, .container, .header, .modal {
-      -webkit-user-select: none; user-select: none; cursor: default;
-    }
     body {
       font-family: 'Inter', system-ui, sans-serif;
-      background: linear-gradient(135deg, #fff0f0 0%, #fefce8 50%, #e0f7f5 100%);
-      color: var(--text);
-      padding: 1.5rem;
-      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text-primary);
+      padding: 2rem;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      position: relative;
-      overflow-x: hidden;
+      min-height: 100vh;
     }
     .container {
-      position: relative; z-index: 2;
-      width: 100%; max-width: 1100px;
+      width: 100%;
+      max-width: 1100px;
       background: var(--surface);
-      backdrop-filter: blur(10px);
-      border-radius: 24px;
-      padding: 1.5rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-      border: 1px solid rgba(255,255,255,0.6);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
     }
     .header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
     }
-    .back-link { color: var(--pink); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-    h1 { font-size: 1.8rem; font-weight: 700; color: var(--pink); }
-
+    .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
     .section {
-      background: white;
-      border-radius: 16px;
-      padding: 1.2rem;
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
       margin-bottom: 1.5rem;
       border: 1px solid var(--border);
     }
     .section h2 {
-      font-size: 1.2rem;
-      margin-bottom: 0.8rem;
-      color: var(--pink);
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
     }
     table {
       width: 100%;
@@ -72,15 +69,18 @@
     th, td {
       padding: 0.6rem;
       text-align: left;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
       font-size: 0.85rem;
     }
     th {
-      background: #fafafa;
+      background: rgba(248,250,252,0.5);
       font-weight: 600;
-      color: var(--text-light);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.75rem;
     }
-    tr:hover { background: #fff5f5; }
+    tr:hover td { background: rgba(0,0,0,0.01); }
     .badge {
       display: inline-block;
       padding: 0.2rem 0.6rem;
@@ -92,11 +92,40 @@
     .badge.update { background: #fef3c7; color: #92400e; }
     .badge.delete { background: #fee2e2; color: #991b1b; }
 
-    @media (max-width: 600px) {
-      body { padding: 0.5rem; }
-      .container { padding: 1rem; }
-      table { font-size: 0.75rem; }
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
+    .modal {
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      max-width: 400px; width: 90%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
+      animation: slideUp 0.25s ease-out;
+      text-align: center;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); }
+    }
+    .modal p { margin-bottom: 1.5rem; font-size: 16px; }
+    .modal .btn { margin: 0 4px; }
+    .btn {
+      padding: 0.45rem 1.2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .btn:hover { background: #f8fafc; }
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-primary:hover { background: #4338ca; }
   </style>
 </head>
 <body>
@@ -123,32 +152,46 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="alertModal" style="display:none;">
+    <div class="modal">
+      <p id="alertMessage"></p>
+      <button class="btn btn-primary" id="alertOkBtn">OK</button>
+    </div>
+  </div>
+
   <script>
     (function() {
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      async function init() {
+      function customAlert(msg) {
+        document.getElementById('alertMessage').textContent = msg;
+        document.getElementById('alertModal').style.display = 'flex';
+        document.getElementById('alertOkBtn').onclick = () => {
+          document.getElementById('alertModal').style.display = 'none';
+        };
+      }
+
+      async function checkAccess(requiredSection) {
         const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) { window.location.href = 'login.html'; return; }
-        // Проверяем, что это управляющий
-        if (session.user.email !== 'arturgalkin.ru@mail.ru') {
-          alert('Доступ запрещён');
-          window.location.href = 'index.html';
-          return;
-        }
+        if (!session) { window.location.href = 'login.html'; return false; }
+        const userEmail = session.user.email;
+        if (userEmail === 'arturgalkin.ru@mail.ru') return true;
+        const { data: emp } = await _supabase.from('employees').select('id').eq('email', userEmail).single();
+        if (!emp) { window.location.href = 'index.html'; return false; }
+        const { data: perm } = await _supabase.from('employee_permissions').select('*').eq('employee_id', emp.id).eq('section', requiredSection).single();
+        if (!perm) { window.location.href = 'index.html'; return false; }
+        return true;
+      }
+
+      async function init() {
+        if (!await checkAccess('admin')) return;
         await loadUsers();
         await loadLogs();
       }
 
       async function loadUsers() {
-        // Получаем список пользователей через Supabase Auth Admin API (доступен через REST)
-        // Требуется Service Role Key, поэтому используем простой запрос к таблице auth.users через rpc
-        // Но для простоты используем стандартный метод getUsers() из Admin API – он не доступен с anon key.
-        // Вместо этого покажем заглушку, т.к. прямой доступ к auth.users из браузера ограничен.
-        // Лучшее решение: создать свою таблицу profiles и триггер, но для MVP используем audit_log.
-        // Пока отобразим только тех, кто совершал действия (из audit_log).
         const { data } = await _supabase.from('audit_log').select('changed_by').order('changed_at', { ascending: false }).limit(100);
         const emails = [...new Set(data.map(d => d.changed_by).filter(Boolean))];
         document.getElementById('usersBody').innerHTML = emails.map(email => `
