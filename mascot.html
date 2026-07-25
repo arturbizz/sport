@@ -7,12 +7,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #f7f8fa;
       --surface: rgba(255,255,255,0.8);
-      --text: #0f172a;
-      --text-secondary: #475569;
       --accent: #0d9488;
-      --accent-light: #ccfbf1;
+      --text-secondary: #475569;
       --radius-xl: 32px; --radius-lg: 20px; --radius-sm: 14px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -43,7 +40,7 @@
     }
     .mascot-avatar {
       width: 52px; height: 52px; border-radius: 50%;
-      background: var(--accent-light); object-fit: cover;
+      background: #ccfbf1; object-fit: cover;
     }
     .header-info h3 { font-size: 18px; font-weight: 600; }
     .header-info span { font-size: 12px; color: var(--text-secondary); }
@@ -116,16 +113,32 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/super-handler`;
-    let currentToken = '';
+    let currentUser = null;
+    let currentToken = null;
+    let effectiveRole = '';
 
     const chatMessages = document.getElementById('chatMessages');
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
+    const quickActions = document.getElementById('quickActions');
 
     // Инициализация сессии
     (async () => {
       const { data: { session } } = await _supabase.auth.getSession();
-      if (session) currentToken = session.access_token;
+      if (session) {
+        currentUser = session.user;
+        currentToken = session.access_token;
+        // Определяем роль
+        if (currentUser.email === 'arturgalkin.ru@mail.ru') {
+          const impRole = localStorage.getItem('impersonated_role');
+          effectiveRole = impRole || 'Управляющий';
+        } else {
+          const { data: emp } = await _supabase.from('employees').select('role').eq('email', currentUser.email).single();
+          effectiveRole = emp?.role || 'Менеджер';
+        }
+      } else {
+        effectiveRole = 'Менеджер'; // fallback
+      }
       loadHistory();
       updateQuickActions();
     })();
@@ -160,7 +173,7 @@
         const resp = await fetch(FUNCTION_URL, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ question })
+          body: JSON.stringify({ question, email: currentUser?.email, impersonatedRole: localStorage.getItem('impersonated_role') || '' })
         });
         const data = await resp.json();
         addMessage(data.reply || 'Я не понял.', 'bot');
@@ -170,10 +183,16 @@
     }
 
     function updateQuickActions() {
-      const buttons = ['Моя зарплата', 'Продажи сегодня', 'Ближайшие платежи', 'Прибыль', 'Конверсия лидов'];
-      const container = document.getElementById('quickActions');
-      container.innerHTML = buttons.map(text => `<button class="quick-btn">${text}</button>`).join('');
-      container.querySelectorAll('.quick-btn').forEach(btn => {
+      const buttonsMap = {
+        'Менеджер': ['Моя зарплата', 'Мои продажи', 'Моя конверсия'],
+        'Преподаватель': ['Моя зарплата', 'Моё расписание'],
+        'Бухгалтер': ['Ближайшие платежи', 'Зарплаты сотрудников', 'Скачать ведомость'],
+        'ИП': ['Продажи сегодня', 'Ближайшие расходы'],
+        'Управляющий': ['Продажи сегодня', 'Прибыль', 'Конверсия лидов']
+      };
+      const buttons = buttonsMap[effectiveRole] || ['Моя зарплата', 'Ближайшие платежи', 'Продажи сегодня'];
+      quickActions.innerHTML = buttons.map(text => `<button class="quick-btn">${text}</button>`).join('');
+      quickActions.querySelectorAll('.quick-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           addMessage(btn.textContent, 'user');
           askBot(btn.textContent);
