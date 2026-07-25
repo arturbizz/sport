@@ -165,21 +165,6 @@
 
     let leadsData = [], financeData = [];
 
-    function normalizeName(name) {
-        return name.toLowerCase().replace(/[^a-zа-яё0-9]/g, ' ').replace(/\s+/g, ' ').trim();
-    }
-
-    function isNameMatch(leadName, clientName) {
-        const ln = normalizeName(leadName);
-        const cn = normalizeName(clientName);
-        if (ln === cn) return true;
-        // Проверяем вхождение одного в другое (с учётом минимальной длины)
-        if (ln.length > 5 && cn.length > 5) {
-            if (ln.includes(cn) || cn.includes(ln)) return true;
-        }
-        return false;
-    }
-
     function applyGradientColors(tableElement, values) {
         if (!tableElement || !values || values.length === 0) return;
         const maxVal = Math.max(...values);
@@ -268,10 +253,12 @@
                     alert('Файл прочитан, но не найдено ни одной записи. Проверьте столбцы.');
                     return;
                 }
-                await _supabase.from('leads').delete().neq('id', 0);
+                const { error: delErr } = await _supabase.from('leads').delete().neq('id', 0);
+                if (delErr) { alert('Ошибка удаления старых лидов: ' + delErr.message + '\n\nЗагрузка отменена.'); return; }
                 const { error } = await _supabase.from('leads').insert(parsed);
                 if (error) {
-                    alert('Ошибка при сохранении лидов: ' + error.message);
+                    alert('ОШИБКА ЗАГРУЗКИ: ' + error.message + '\n\nСтарые лиды удалены, новые не записались — таблица leads сейчас пустая. Проверьте структуру таблицы в Supabase.');
+                    await loadLeads(); renderAll();
                     return;
                 }
                 await loadLeads();
@@ -284,7 +271,7 @@
     }
 
     function renderAll() {
-        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact);
+        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact); // чистые лиды
         const total = all.length;
         const successStage = all.filter(l => l.stage.includes('ПУ состоялся'));
         const successCount = successStage.length;
@@ -292,30 +279,21 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Нечёткое сравнение для продаж
-        const clientRevenue = new Map();
+        // Связь с финансами: ищем доходы, где клиент совпадает с именем лида (для успешных)
+        const clientMap = new Map();
         financeData.forEach(f => {
             const clientName = (f.client || '').trim();
-            if (!clientName) return;
-            const amount = parseFloat(f.amount || 0);
-            clientRevenue.set(clientName, (clientRevenue.get(clientName) || 0) + amount);
+            if (clientName) clientMap.set(clientName.toLowerCase(), (clientMap.get(clientName.toLowerCase()) || 0) + parseFloat(f.amount||0));
         });
-
         let revenue = 0;
         let salesCount = 0;
         successStage.forEach(l => {
-            const leadName = l.name.trim();
-            let matched = false;
-            for (const [clientName, totalAmount] of clientRevenue.entries()) {
-                if (isNameMatch(leadName, clientName)) {
-                    revenue += totalAmount;
-                    salesCount++;
-                    matched = true;
-                    break;
-                }
+            const key = l.name.trim().toLowerCase();
+            if (clientMap.has(key)) {
+                revenue += clientMap.get(key);
+                salesCount++;
             }
         });
-
         const avgCheck = salesCount > 0 ? (revenue / salesCount).toFixed(0) : 0;
         const salesConversion = total > 0 ? (salesCount / total * 100).toFixed(1) : 0;
 
@@ -363,6 +341,7 @@
             if (sourceTable) applyGradientColors(sourceTable, sourceValues);
         }, 0);
 
+        // Таблица лидов
         document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
     }
 
