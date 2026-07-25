@@ -31,7 +31,7 @@
       display: flex; justify-content: center; align-items: center; padding: 2rem;
       cursor: default; caret-color: transparent;
     }
-    input, textarea { cursor: text; caret-color: auto; } /* разрешаем ввод только в полях */
+    input, textarea { cursor: text; caret-color: auto; }
     .container { width: 100%; max-width: 900px; }
     .user-bar {
       display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
@@ -65,7 +65,7 @@
     .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
     .card p { color: var(--text-secondary); font-size: 0.9rem; }
 
-    /* Чат кнопка */
+    /* Чат */
     .chat-button {
       position: fixed; bottom: 20px; right: 20px;
       background: var(--accent); color: white; border: none;
@@ -76,7 +76,6 @@
     }
     .chat-button:hover { transform: scale(1.05); }
 
-    /* Виджет чата */
     #chat-widget {
       position: fixed; bottom: 90px; right: 20px; width: 380px; max-height: 550px;
       background: white; border-radius: var(--radius-xl); box-shadow: 0 12px 32px rgba(0,0,0,0.1);
@@ -295,6 +294,7 @@
         const container = document.getElementById('mainCards');
         container.innerHTML = '';
         sections.forEach(s => {
+          // ✅ Исправлено: строгое равенство (===)
           if (s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий')) {
             const card = document.createElement('a');
             card.className = 'card';
@@ -305,8 +305,7 @@
         });
       }
 
-      // Вызов отрисовки
-      renderCards();
+      await renderCards();
       initChat();
     }
 
