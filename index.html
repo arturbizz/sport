@@ -29,7 +29,9 @@
       color: var(--text);
       min-height: 100vh;
       display: flex; justify-content: center; align-items: center; padding: 2rem;
+      cursor: default; caret-color: transparent;
     }
+    input, textarea { cursor: text; caret-color: auto; } /* разрешаем ввод только в полях */
     .container { width: 100%; max-width: 900px; }
     .user-bar {
       display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
@@ -39,7 +41,7 @@
     .btn-logout, .btn-impersonate {
       background: var(--surface); border: 1px solid var(--border); padding: 0.4rem 1rem;
       border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 0.85rem;
-      transition: 0.2s;
+      transition: 0.2s; color: var(--text); caret-color: transparent;
     }
     .btn-logout:hover, .btn-impersonate:hover { background: #f1f5f9; }
     .btn-impersonate.active { background: var(--accent); color: white; border-color: var(--accent); }
@@ -56,6 +58,7 @@
       text-decoration: none; color: inherit;
       box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid var(--border);
       transition: 0.3s; display: flex; flex-direction: column; align-items: center; text-align: center;
+      cursor: pointer; caret-color: transparent;
     }
     .card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.04); }
     .card-icon { margin-bottom: 1rem; }
@@ -79,6 +82,7 @@
       background: white; border-radius: var(--radius-xl); box-shadow: 0 12px 32px rgba(0,0,0,0.1);
       font-family: 'Inter', sans-serif; z-index: 9999; display: none;
       border: 1px solid var(--border); overflow: hidden; transition: 0.3s;
+      caret-color: auto;
     }
     #chat-widget.expanded { width: 520px; max-height: 80vh; }
     #chat-widget.expanded #chat-messages { height: 55vh; }
@@ -125,7 +129,7 @@
     }
     .quick-btn:hover { background: #f0fdfa; border-color: var(--accent); color: var(--accent); }
     #chat-input-area { display: flex; border-top: 1px solid #e2e8f0; }
-    #chat-input { flex:1; border: none; padding: 12px; outline: none; font-size: 14px; }
+    #chat-input { flex:1; border: none; padding: 12px; outline: none; font-size: 14px; caret-color: auto; }
     #chat-send { background: var(--accent); color: white; border: none; padding: 0 20px; font-weight: 600; cursor: pointer; }
     #expand-btn { cursor: pointer; font-size: 18px; }
     .impersonate-menu {
@@ -214,6 +218,24 @@
       { id: 'knowledge', title: 'База знаний', desc: 'Обучение ассистента', roles: ['Управляющий'], admin: true }
     ];
 
+    function getIcon(type) {
+      const icons = {
+        schedule: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+        vacations: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+        'teacher-schedule': '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+        tasks: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>',
+        nps: '<path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14Z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>',
+        contests: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+        employees: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        budget: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/>',
+        admin: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+        dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+        dashboard2: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+        knowledge: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>'
+      };
+      return icons[type] || '';
+    }
+
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { window.location.href = 'login.html'; return; }
@@ -268,39 +290,22 @@
         return emp?.role || 'Управляющий';
       }
 
-      window.renderCards = async () => {
+      async function renderCards() {
         const effectiveRole = await getEffectiveRole();
         const container = document.getElementById('mainCards');
         container.innerHTML = '';
         sections.forEach(s => {
           if (s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий')) {
             const card = document.createElement('a');
-            card.className = `card`;
+            card.className = 'card';
             card.href = `${s.id}.html`;
             card.innerHTML = `<div class="card-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2">${getIcon(s.id)}</svg></div><h2>${s.title}</h2><p>${s.desc}</p>`;
             container.appendChild(card);
           }
         });
-      };
-
-      function getIcon(type) {
-        const icons = {
-          schedule: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-          vacations: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-          'teacher-schedule': '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-          tasks: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>',
-          nps: '<path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14Z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>',
-          contests: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
-          employees: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-          budget: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/>',
-          admin: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-          dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
-          dashboard2: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-          knowledge: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>'
-        };
-        return icons[type] || '';
       }
 
+      // Вызов отрисовки
       renderCards();
       initChat();
     }
@@ -353,7 +358,7 @@
           if (!resp.ok) throw new Error(resp.status);
           const data = await resp.json();
           setMascotState('speaking');
-          addMessage(data.reply || 'Извините, я не понял.', 'bot');
+          addMessage(data.reply || 'Я не понял.', 'bot');
         } catch(e) {
           setMascotState('idle');
           addMessage('Ассистент временно недоступен.', 'bot');
