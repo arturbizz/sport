@@ -193,26 +193,32 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let financeData = [], expensesData = [], teacherSalaryData = [];
+    let financeData = [], allExpenses = [], teacherSalaryData = [];
     let selectedMonths = 0; // 0 = всё время
 
     async function loadData() {
       const [fin, exp, sal] = await Promise.all([
         _supabase.from('crm_finance').select('*').order('operation_date', { ascending: true }),
-        _supabase.from('expenses').select('*').eq('paid', true).order('paid_at', { ascending: true }),
+        _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true }), // все, без фильтра paid
         _supabase.from('teacher_salary').select('*').order('created_at', { ascending: true })
       ]);
       financeData = fin.data || [];
-      expensesData = exp.data || [];
+      allExpenses = exp.data || [];
       teacherSalaryData = sal.data || [];
       renderAll();
+    }
+
+    // Только оплаченные расходы для истории
+    function getPaidExpenses() {
+      return allExpenses.filter(e => e.paid);
     }
 
     function getMonthlyBreakdown(monthsBack = 0) {
       const months = {};
       const cutoff = monthsBack > 0 ? new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7) : null;
+      const paid = getPaidExpenses();
 
-      expensesData.forEach(e => {
+      paid.forEach(e => {
         const m = e.paid_at ? e.paid_at.slice(0,7) : null;
         if (!m || (cutoff && m < cutoff)) return;
         if (!months[m]) months[m] = { fixed: 0, variable: 0 };
@@ -233,8 +239,9 @@
     function getCategoryBreakdown(monthsBack = 0) {
       const cats = {};
       const cutoff = monthsBack > 0 ? new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7) : null;
+      const paid = getPaidExpenses();
 
-      expensesData.forEach(e => {
+      paid.forEach(e => {
         const m = e.paid_at ? e.paid_at.slice(0,7) : null;
         if (cutoff && m && m < cutoff) return;
         const cat = e.name || 'Без категории';
@@ -268,11 +275,11 @@
     }
 
     function computeForecast() {
-      // Постоянные из актуальных записей expenses (неоплаченные + оплаченные в будущем)
       const now = new Date();
-      const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-      const activeExpenses = expensesData.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth));
-      const totalFixed = activeExpenses.reduce((s, e) => s + parseFloat(e.amount), 0);
+      const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+      // Активные постоянные: все неоплаченные ИЛИ оплаченные, у которых next_payment_date в будущем
+      const activeFixed = allExpenses.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth));
+      const totalFixed = activeFixed.reduce((s, e) => s + parseFloat(e.amount), 0);
 
       // Средние переменные за последние 3 месяца
       const threeMonthsAgo = new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
@@ -280,20 +287,24 @@
         .filter(r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t)))
         .filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       const totalVariable = recentVariable.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const avgVariable = recentVariable.length > 0 ? Math.round(totalVariable / 3) : 0;
+      const monthsCount = Math.max(1, new Set(recentVariable.map(r => r.operation_date?.slice(0,7))).size);
+      const avgVariable = Math.round(totalVariable / monthsCount);
 
       // Средние зарплаты педагогов за последние 3 месяца
       const recentTeacherSal = teacherSalaryData.filter(r => r.month && r.month >= threeMonthsAgo);
       const totalTeacherSal = recentTeacherSal.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const avgTeacherSal = recentTeacherSal.length > 0 ? Math.round(totalTeacherSal / 3) : 0;
+      const avgTeacherSal = recentTeacherSal.length > 0 ? Math.round(totalTeacherSal / monthsCount) : 0;
 
-      // Средние зарплаты сотрудников (из crm_finance по категории ЗП) за последние 3 месяца
+      // Средние зарплаты сотрудников (поиск по категории)
       const recentStaffSal = financeData
         .filter(r => (r.operation_type||'').toLowerCase().includes('расход') || (r.operation_type||'').toLowerCase().includes('выплата'))
-        .filter(r => (r.category||'').toLowerCase().includes('зп') || (r.category||'').toLowerCase().includes('зарплат'))
+        .filter(r => {
+          const cat = (r.category||'').toLowerCase();
+          return cat.includes('зп') || cat.includes('зарплат') || cat.includes('заработн');
+        })
         .filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       const totalStaffSal = recentStaffSal.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const avgStaffSal = recentStaffSal.length > 0 ? Math.round(totalStaffSal / 3) : 0;
+      const avgStaffSal = recentStaffSal.length > 0 ? Math.round(totalStaffSal / monthsCount) : 0;
 
       const total = totalFixed + avgVariable + avgTeacherSal + avgStaffSal;
 
@@ -353,8 +364,9 @@
 
       // Таблица транзакций
       const cutoff = selectedMonths > 0 ? new Date(Date.now() - selectedMonths * 30 * 24 * 60 * 60 * 1000).toISOString() : null;
+      const paid = getPaidExpenses();
       const allTransactions = [
-        ...expensesData.filter(e => !cutoff || (e.paid_at && e.paid_at >= cutoff)).map(e => ({ date: e.paid_at, category: e.name, amount: e.amount, account: 'Постоянный', type: 'Постоянный' })),
+        ...paid.filter(e => !cutoff || (e.paid_at && e.paid_at >= cutoff)).map(e => ({ date: e.paid_at, category: e.name, amount: e.amount, account: 'Постоянный', type: 'Постоянный' })),
         ...financeData.filter(r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t)))
           .filter(r => !cutoff || (r.operation_date && r.operation_date >= cutoff))
           .map(r => ({ date: r.operation_date, category: r.category, amount: r.amount, account: r.account || '—', type: 'Переменный' }))
@@ -378,8 +390,9 @@
     // Экспорт
     document.getElementById('exportBtn').addEventListener('click', () => {
       const cutoff = selectedMonths > 0 ? new Date(Date.now() - selectedMonths * 30 * 24 * 60 * 60 * 1000).toISOString() : null;
+      const paid = getPaidExpenses();
       const transactions = [
-        ...expensesData.filter(e => !cutoff || (e.paid_at && e.paid_at >= cutoff)).map(e => ({ Дата: e.paid_at, Категория: e.name, Сумма: e.amount, Счёт: 'Постоянный', Тип: 'Постоянный' })),
+        ...paid.filter(e => !cutoff || (e.paid_at && e.paid_at >= cutoff)).map(e => ({ Дата: e.paid_at, Категория: e.name, Сумма: e.amount, Счёт: 'Постоянный', Тип: 'Постоянный' })),
         ...financeData.filter(r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t)))
           .filter(r => !cutoff || (r.operation_date && r.operation_date >= cutoff))
           .map(r => ({ Дата: r.operation_date, Категория: r.category, Сумма: r.amount, Счёт: r.account || '—', Тип: 'Переменный' }))
