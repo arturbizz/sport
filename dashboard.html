@@ -136,8 +136,6 @@
         staff: { period:'full' },
         compare: { period1From:'', period1To:'', period2From:'', period2To:'' }
     };
-    // Восстанавливаем фильтры из localStorage — раньше при переходе на другую вкладку/страницу
-    // и возврате на дашборд все фильтры слетали, т.к. нигде не сохранялись.
     let filterState;
     try {
         const saved = JSON.parse(localStorage.getItem('dash_filterState'));
@@ -283,12 +281,10 @@
                 let manIdx = headers.findIndex(h=>h.includes('менеджер (фамилия имя)') || h.includes('менеджер(фамилия имя)'));
                 if (manIdx === -1) manIdx = headers.findIndex(h=>h.includes('менеджер') && !h.includes('ответственный'));
 
-                // Ищем столбец с клиентом
                 let clientIdx = headers.findIndex(h=>h === 'клиент' || h.startsWith('клиент') || h.startsWith('фио клиента') || h === 'плательщик');
                 if (clientIdx === -1) {
                     clientIdx = headers.findIndex(h=>h.includes('клиент') || h.includes('плательщик'));
                 }
-                // Педагог/Период — нужны, чтобы потом верно привязывать выплаты ЗП к конкретному педагогу
                 const teacherIdx = headers.findIndex(h=>h.includes('педагог'));
                 const periodIdx = headers.findIndex(h=>h.includes('период'));
 
@@ -316,17 +312,12 @@
                     alert('⚠️ Столбец с клиентом не найден. Продажи по лидам не будут рассчитаны. Проверьте наличие столбца "Клиент", "ФИО клиента" или "Плательщик" в файле.');
                 }
 
-                // ВАЖНО: проверяем ошибки на каждом шаге. Раньше их не проверяли — если insert падал
-                // (например, из-за отсутствующей в таблице колонки), данные удалялись, а новые не
-                // записывались, и это выглядело как "данные пропали после загрузки".
                 const { error: delErr } = await _supabase.from('crm_finance').delete().neq('id',0);
                 if (delErr) { alert('Ошибка удаления старых данных: ' + delErr.message + '\n\nЗагрузка отменена, старые данные не тронуты.'); return; }
 
                 let { error: insErr } = await _supabase.from('crm_finance').insert(parsed);
                 let droppedOptionalFields = false;
                 if (insErr && (teacherIdx !== -1 || periodIdx !== -1)) {
-                    // Скорее всего в таблице ещё нет колонок teacher_name/period — это не должно стоить
-                    // нам client/account/manager и т.п. Повторяем вставку без необязательных полей.
                     const fallbackParsed = parsed.map(r => { const { teacher_name, period, ...rest } = r; return rest; });
                     const retry = await _supabase.from('crm_finance').insert(fallbackParsed);
                     if (!retry.error) { insErr = null; droppedOptionalFields = true; }
@@ -404,24 +395,42 @@
         widgetsHtml += generateWidget('Расходы по счетам', group(expense,'account').slice(0,8));
         widgetsHtml += generateWidget('Доходы по счетам', group(income,'account').slice(0,8));
 
-        // Ближайшие/просроченные регулярные платежи (таблица expenses из budget.html) —
-        // данные уже запрашивались (loadExpenses), но раньше нигде не выводились.
+        // === ИСПРАВЛЕННЫЙ БЛОК: Ближайшие обязательные платежи ===
         if (expensesData.length) {
             const todayISO = new Date().toISOString().slice(0,10);
-            const upcoming = [...expensesData].sort((a,b)=>(a.next_payment_date||'').localeCompare(b.next_payment_date||'')).slice(0,8);
-            widgetsHtml += `<div class="widget-card"><div class="widget-title">Ближайшие обязательные платежи</div><ul class="widget-list">${
-                upcoming.map(e => {
-                    const overdue = e.next_payment_date && e.next_payment_date < todayISO;
-                    return `<li><span>${e.name||e.title||'—'} ${overdue?'<span class="badge red">просрочен</span>':''}</span><span>${parseFloat(e.amount||0).toLocaleString()} ₽ · ${e.next_payment_date||''}</span></li>`;
-                }).join('') || '<li class="empty-message">Нет данных</li>'
-            }</ul></div>`;
+            const upcoming = [...expensesData]
+                .filter(e => !e.paid)
+                .sort((a, b) => {
+                    if (!a.next_payment_date && !b.next_payment_date) return 0;
+                    if (!a.next_payment_date) return 1;
+                    if (!b.next_payment_date) return -1;
+                    return a.next_payment_date.localeCompare(b.next_payment_date);
+                })
+                .slice(0, 8);
+
+            widgetsHtml += `
+            <div class="widget-card">
+                <div class="widget-title">⚡ Ближайшие обязательные платежи</div>
+                <ul class="widget-list">
+                    ${upcoming.length ? upcoming.map(e => {
+                        const overdue = e.next_payment_date && e.next_payment_date < todayISO;
+                        const dateStr = e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru') : '—';
+                        return `<li style="${overdue ? 'background:#fff0f0;' : ''}">
+                            <span style="max-width:60%; white-space:normal;">${e.name}</span>
+                            <span>${parseFloat(e.amount||0).toLocaleString()} ₽ · ${dateStr}</span>
+                            ${overdue ? '<span class="badge red">просрочен</span>' : ''}
+                        </li>`;
+                    }).join('') : '<li class="empty-message">Все платежи оплачены</li>'}
+                </ul>
+            </div>`;
         }
+        // === КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ===
 
         document.getElementById('finWidgets').innerHTML = widgetsHtml;
         document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
 
-    // ==================== ЗП ПЕДАГОГОВ (защита от дублей) ====================
+    // ==================== ЗП ПЕДАГОГОВ ====================
     function salaryHTML() {
         const f = filterState.salary;
         const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
@@ -544,16 +553,12 @@
                         resolve();
                         return;
                     }
-                    // "Весь месяц" на экране суммирует ВСЕ периоды сразу — если одновременно есть и
-                    // "full", и "1-15"/"16-31" за один и тот же месяц, суммы задвоятся. Предупреждаем.
                     const otherPeriods = [...new Set(salaryData.map(r=>r.period))].filter(p => p && p !== period);
                     if (otherPeriods.length && !confirm(
                         'В базе уже есть данные за период(ы): ' + otherPeriods.join(', ') + '.\n' +
                         'Если это тот же месяц — суммы в "Весь месяц" задвоятся (там сейчас нет привязки к месяцу, только к периоду 1-15/16-31/full).\n' +
                         'Если это другой месяц — сначала нажмите "Очистить все данные".\n\nПродолжить загрузку?'
                     )) { resolve(); return; }
-                    // Удаляем только записи ЭТОГО периода (1-15 / 16-31 / full), а не всё подряд —
-                    // иначе загрузка "16-31" стирала бы только что загруженный "1-15" и наоборот.
                     const { error: delErr } = await _supabase.from('teacher_salary').delete().eq('period', period);
                     if (delErr) { alert('Ошибка очистки периода: ' + delErr.message + '\n\nЗагрузка отменена.'); resolve(); return; }
                     const { error: insErr } = await _supabase.from('teacher_salary').insert(parsed);
@@ -597,9 +602,7 @@
             const amount = parseFloat(r.amount||0);
             const cat = (r.category||'').toLowerCase();
             let matched = null;
-            // Точное совпадение по колонке "Педагог" из выгрузки — надёжный вариант.
             if (r.teacher_name && teachers.includes(r.teacher_name)) matched = r.teacher_name;
-            // Фолбэк на случай старых записей без teacher_name: нечёткое совпадение по статье.
             if (!matched) { for(const t of teachers) if(t && cat.includes(t.toLowerCase())){ matched=t; break; } }
             if(!matched && teachers.length && cat.includes('педагог')) matched='общая (педагог не определён)';
             if(matched && amount>0){
@@ -796,8 +799,6 @@
         });
     }
 
-    // Считает фонд ЗП менеджмента (Менеджер/Администратор/Управляющий) за произвольный диапазон дат,
-    // подгружая worklog/salary_params для всех затронутых месяцев (не только текущего).
     async function getStaffFundForRange(fromISO, toISO) {
         if (!fromISO || !toISO) return { total: 0, worked: 0 };
         const from = new Date(fromISO), to = new Date(toISO);
@@ -859,8 +860,6 @@
             <div class="kpi-card"><span class="kpi-label">Расходы П1 / П2</span><span class="kpi-value">${exp1.toLocaleString()} / ${exp2.toLocaleString()} ₽</span><span>${delta(exp1,exp2)}</span></div>
             <div class="kpi-card"><span class="kpi-label">Прибыль П1 / П2</span><span class="kpi-value">${prof1.toLocaleString()} / ${prof2.toLocaleString()} ₽</span><span>${delta(prof1,prof2)}</span></div>
             <div class="kpi-card"><span class="kpi-label">Маржинальность</span><span class="kpi-value">${inc1?((prof1)/inc1*100).toFixed(1):0}% / ${inc2?((prof2)/inc2*100).toFixed(1):0}%</span></div>`;
-        // Педагоги: сравниваем по бакетам периода (1-15 / 16-31), т.к. в teacher_salary
-        // нет календарных дат — только метка периода, привязать к произвольным П1/П2 нельзя.
         const salByPeriod = (per) => salaryData.filter(r=>!r.skipped && r.period===per);
         const s1data = salByPeriod('1-15'), s2data = salByPeriod('16-31');
         const teacherFund1 = s1data.reduce((s,r)=>s+parseFloat(r.amount||0),0);
@@ -872,7 +871,6 @@
             return {name, amount:s1};
         }).sort((a,b)=>b.amount-a.amount).slice(0,8);
 
-        // Менеджмент: считаем реальный фонд ЗП по датам П1 и П2 (подгружает нужные worklog/salary_params).
         const [staffFund1, staffFund2] = await Promise.all([
             getStaffFundForRange(f.period1From, f.period1To),
             getStaffFundForRange(f.period2From, f.period2To)
