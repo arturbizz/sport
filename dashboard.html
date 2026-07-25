@@ -151,6 +151,26 @@
             box-shadow: 0 8px 20px rgba(79,70,229,0.3);
         }
         .btn:disabled { opacity: 0.5; pointer-events: none; }
+        .btn-icon {
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-base);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+            backdrop-filter: blur(8px);
+        }
+        .btn-icon:hover {
+            background: #f8fafc;
+            border-color: rgba(0,0,0,0.08);
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
         .tabs {
             display: flex;
             gap: var(--space-2);
@@ -380,6 +400,10 @@
         <div class="topbar-right">
             <button class="btn" id="showAllWidgetsBtn">Показать всё</button>
             <button class="btn" id="resetFiltersGlobalBtn">Сбросить</button>
+            <button class="btn" id="uploadFinanceTopBtn" style="display:none;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Загрузить Excel
+            </button>
         </div>
     </div>
     <div class="tabs" id="tabBar">
@@ -414,7 +438,7 @@
     let salaryMonth = new Date().getMonth() + 1;
     const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     let salaryUploadInProgress = false;
-    let staffResults = []; // храним результаты расчёта для экспорта
+    let staffResults = [];
 
     const DEFAULT_FILTER_STATE = {
         finance: { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false },
@@ -494,6 +518,14 @@
 
     function renderTab() {
         const content = document.getElementById('tabContent');
+        // Показываем или скрываем кнопку загрузки финансов в топбаре
+        const uploadTopBtn = document.getElementById('uploadFinanceTopBtn');
+        if (activeTab === 'finance') {
+            uploadTopBtn.style.display = 'inline-flex';
+        } else {
+            uploadTopBtn.style.display = 'none';
+        }
+
         switch (activeTab) {
             case 'finance': content.innerHTML = financeHTML(); setupFinanceListeners(); renderFinance(); break;
             case 'salary': content.innerHTML = salaryHTML(); setupSalaryListeners(); renderSalary(); break;
@@ -520,7 +552,6 @@
             <select class="filter-select" id="finAcc"><option value="">Все счета</option>${accs.map(a=>`<option ${f.acc===a?'selected':''}>${a}</option>`).join('')}</select>
             <select class="filter-select" id="finPayType"><option value="">Тип платежа</option>${payTypes.map(p=>`<option ${f.payType===p?'selected':''}>${p}</option>`).join('')}</select>
             <select class="filter-select" id="finMan"><option value="">Менеджер</option>${mans.map(m=>`<option ${f.man===m?'selected':''}>${m}</option>`).join('')}</select>
-            <button class="btn" id="uploadFinanceBtn">Загрузить Excel</button>
             <button class="btn" id="toggleRawFinBtn">${f.showRaw?'Скрыть':'Показать'} таблицу</button>
         </div>
         <div class="kpi-grid" id="finKPI"></div>
@@ -541,7 +572,7 @@
             document.getElementById('finDateTo').value = filterState.finance.dateTo;
             renderFinance();
         });
-        document.getElementById('uploadFinanceBtn').addEventListener('click', uploadFinance);
+        document.getElementById('uploadFinanceTopBtn').addEventListener('click', uploadFinance);
         document.getElementById('toggleRawFinBtn').addEventListener('click', ()=>{
             filterState.finance.showRaw = !filterState.finance.showRaw;
             document.getElementById('finRawTable').style.display = filterState.finance.showRaw?'block':'none';
@@ -729,7 +760,9 @@
             <button class="btn" id="uploadSalaryBtnFull" ${salaryUploadInProgress?'disabled':''}>Загрузить общий</button>
             <button class="btn" id="clearSalaryBtn">Очистить всё за месяц</button>
             <button class="btn" id="toggleSkippedBtn">${f.showSkipped?'Скрыть':'Показать'} пропущенные</button>
-            <button class="btn" id="exportSalaryBtn">📥 Excel</button>
+            <button class="btn-icon" id="exportSalaryBtn" title="Скачать Excel">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
         </div>
         <div class="kpi-grid" id="salKPI"></div>
         <div class="widget-grid" id="salWidgets">
@@ -815,7 +848,6 @@
             document.getElementById('toggleSkippedBtn').textContent = (filterState.salary.showSkipped?'Скрыть':'Показать')+' пропущенные';
             renderSalary();
         });
-        // Экспорт в Excel
         document.getElementById('exportSalaryBtn').addEventListener('click', exportSalaryToExcel);
     }
 
@@ -1036,7 +1068,9 @@
             <button class="btn ${period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
             <button class="btn ${period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
             <button class="btn ${period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
-            <button class="btn" id="exportStaffBtn">📥 Excel</button>
+            <button class="btn-icon" id="exportStaffBtn" title="Скачать Excel">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
         </div>
         <div class="kpi-grid" id="staffKPI"></div>
         <div class="widget-grid" id="staffWidgets"></div>
@@ -1142,7 +1176,7 @@
             }
             return { emp, worked, base, bonus, total:base+bonus, sales };
         });
-        staffResults = results; // сохраняем для экспорта
+        staffResults = results;
         document.getElementById('staffKPI').innerHTML = `
             <div class="kpi-card"><span class="kpi-label">Фонд оплаты</span><span class="kpi-value">${results.reduce((s,r)=>s+r.total,0).toLocaleString()} ₽</span></div>
             <div class="kpi-card"><span class="kpi-label">Сотрудников</span><span class="kpi-value">${results.length}</span></div>
