@@ -266,11 +266,8 @@
                 let manIdx = headers.findIndex(h=>h.includes('менеджер (фамилия имя)') || h.includes('менеджер(фамилия имя)'));
                 if (manIdx === -1) manIdx = headers.findIndex(h=>h.includes('менеджер') && !h.includes('ответственный'));
 
-                // Ищем столбец с клиентом
                 let clientIdx = headers.findIndex(h=>h === 'клиент' || h.startsWith('клиент') || h.startsWith('фио клиента') || h === 'плательщик');
-                if (clientIdx === -1) {
-                    clientIdx = headers.findIndex(h=>h.includes('клиент') || h.includes('плательщик'));
-                }
+                if (clientIdx === -1) clientIdx = headers.findIndex(h=>h.includes('клиент') || h.includes('плательщик'));
 
                 const parsed = [];
                 for(let i=headerIdx+1; i<rows.length; i++){
@@ -478,7 +475,7 @@
                             parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true, period });
                         }
                     }
-                    // Удаляем ВСЕ записи перед вставкой
+                    // Всегда полностью очищаем таблицу перед вставкой
                     await _supabase.from('teacher_salary').delete().neq('id',0);
                     if (parsed.length > 0) {
                         await _supabase.from('teacher_salary').insert(parsed);
