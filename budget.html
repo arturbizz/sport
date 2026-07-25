@@ -261,21 +261,24 @@
     }
     .checkbox-row input[type="checkbox"] { width: auto; accent-color: var(--violet); }
 
-    /* Монетки */
-    .coin {
-      position: fixed;
-      width: 20px; height: 20px;
-      background: radial-gradient(circle at 30% 30%, #f9ca24, #e67e22);
-      border-radius: 50%;
-      box-shadow: 0 0 6px rgba(249,202,36,0.6);
-      animation: coinDrop 0.8s ease-out forwards;
-      z-index: 9999; pointer-events: none;
+    /* Модальное окно уведомлений */
+    .custom-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
-    @keyframes coinDrop {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(80px) rotate(360deg); opacity: 0; }
+    .custom-modal {
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 2rem;
+      max-width: 400px; width: 90%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
+      animation: slideUp 0.25s ease-out;
+      text-align: center;
     }
-
+    .custom-modal p { margin-bottom: 1.5rem; font-size: 16px; line-height: 1.5; }
+    .custom-modal .btn { margin: 0 4px; }
     @media (max-width: 600px) {
       body { padding: 0.5rem; }
       .container { padding: 1rem; }
@@ -370,8 +373,8 @@
   </div>
 
   <!-- Кастомный алерт -->
-  <div class="modal-overlay" id="alertModal" style="display:none;">
-    <div class="modal" style="max-width:350px; text-align:center;">
+  <div class="custom-modal-overlay" id="alertModal" style="display:none;">
+    <div class="custom-modal">
       <p id="alertMessage"></p>
       <button class="btn" id="alertOkBtn">ОК</button>
     </div>
@@ -388,37 +391,18 @@
     </div>
   </div>
 
-  <!-- Модалка возврата -->
-  <div class="modal-overlay" id="returnModal" style="display:none;">
-    <div class="modal">
-      <h2>Возврат в неоплаченные</h2>
-      <textarea id="returnComment" rows="2" placeholder="Причина возврата"></textarea>
-      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-        <button class="btn" id="confirmReturnBtn">Вернуть</button>
-        <button class="btn btn-outline" id="cancelReturnBtn">Отмена</button>
-      </div>
-    </div>
-  </div>
-
   <script>
     (function() {
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      let currentUserEmail = null, expenses = [];
-      let currentFilter = 'unpaid';
-      let returnExpenseId = null;
-      let pendingPayId = null;
 
       function customAlert(msg) {
-        return new Promise(resolve => {
-          document.getElementById('alertMessage').textContent = msg;
-          document.getElementById('alertModal').style.display = 'flex';
-          document.getElementById('alertOkBtn').onclick = () => {
-            document.getElementById('alertModal').style.display = 'none';
-            resolve();
-          };
-        });
+        document.getElementById('alertMessage').textContent = msg;
+        document.getElementById('alertModal').style.display = 'flex';
+        document.getElementById('alertOkBtn').onclick = () => {
+          document.getElementById('alertModal').style.display = 'none';
+        };
       }
 
       function customConfirm(msg) {
@@ -436,6 +420,23 @@
         });
       }
 
+      async function checkAccess(requiredSection) {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return false; }
+        const userEmail = session.user.email;
+        if (userEmail === 'arturgalkin.ru@mail.ru') return true;
+        const { data: emp } = await _supabase.from('employees').select('id').eq('email', userEmail).single();
+        if (!emp) { window.location.href = 'index.html'; return false; }
+        const { data: perm } = await _supabase.from('employee_permissions').select('*').eq('employee_id', emp.id).eq('section', requiredSection).single();
+        if (!perm) { window.location.href = 'index.html'; return false; }
+        return true;
+      }
+
+      let currentUserEmail = null, expenses = [];
+      let currentFilter = 'unpaid';
+      let returnExpenseId = null;
+      let pendingPayId = null;
+
       function showCoins() {
         for (let i = 0; i < 15; i++) {
           setTimeout(() => {
@@ -450,14 +451,9 @@
       }
 
       async function init() {
+        if (!await checkAccess('budget')) return;
         const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) { window.location.href = 'login.html'; return; }
         currentUserEmail = session.user.email;
-        if (currentUserEmail !== 'arturgalkin.ru@mail.ru') {
-          await customAlert('Доступ запрещён');
-          window.location.href = 'index.html';
-          return;
-        }
         await loadExpenses();
         renderAll();
       }
@@ -530,7 +526,6 @@
           </div>`;
         }).join('');
 
-        // Кнопка оплаты
         container.querySelectorAll('.pay-action').forEach(btn => {
           btn.addEventListener('click', function() {
             pendingPayId = this.dataset.id;
@@ -539,7 +534,6 @@
           });
         });
 
-        // Кнопка загрузки чека
         container.querySelectorAll('.upload-btn').forEach(btn => {
           btn.addEventListener('click', function() {
             const id = this.dataset.id;
@@ -581,14 +575,12 @@
         }));
       }
 
-      // ИСПРАВЛЕННАЯ ФУНКЦИЯ ОПЛАТЫ
       document.getElementById('confirmPayBtn').addEventListener('click', async () => {
         const method = document.getElementById('payMethodSelect').value;
         if (!method) { await customAlert('Выберите способ оплаты'); return; }
         const exp = expenses.find(e => e.id == pendingPayId);
         if (!exp) return;
 
-        // Для разовых платежей просто помечаем оплаченным
         if (exp.periodicity === 'one_time') {
           const { error } = await _supabase.from('expenses').update({ 
             paid: true, 
@@ -603,7 +595,6 @@
           return;
         }
 
-        // Рассчитываем дату следующего платежа
         const baseDate = exp.next_payment_date || new Date().toISOString().split('T')[0];
         const nextDate = getNextPaymentDate(baseDate, exp.periodicity, exp.custom_days);
         if (!nextDate) {
@@ -611,7 +602,6 @@
           return;
         }
 
-        // Создаём новый расход (следующий период)
         const newExp = {
           name: exp.name,
           amount: exp.amount,
@@ -638,7 +628,6 @@
         }
         const nextId = inserted && inserted.length > 0 ? inserted[0].id : null;
 
-        // Помечаем текущий оплаченным и связываем с новым
         const { error: updateError } = await _supabase.from('expenses').update({ 
           paid: true, 
           paid_at: new Date().toISOString(),
@@ -661,8 +650,7 @@
         document.getElementById('payMethodModal').style.display = 'none';
       });
 
-      // Возврат (без изменений)
-      document.getElementById('confirmReturnBtn').addEventListener('click', async () => {
+      document.getElementById('confirmReturnBtn')?.addEventListener('click', async () => {
         const comment = document.getElementById('returnComment').value.trim();
         if (!comment) { await customAlert('Введите причину возврата'); return; }
         const exp = expenses.find(e => e.id == returnExpenseId);
@@ -681,7 +669,7 @@
         renderAll();
       });
 
-      document.getElementById('cancelReturnBtn').addEventListener('click', () => {
+      document.getElementById('cancelReturnBtn')?.addEventListener('click', () => {
         document.getElementById('returnModal').style.display = 'none';
       });
 
