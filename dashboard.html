@@ -706,7 +706,7 @@
         document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
 
-    // ==================== ЗП ПЕДАГОГОВ (с выбором месяца и автоустановкой после загрузки) ====================
+    // ==================== ЗП ПЕДАГОГОВ ====================
     function salaryHTML() {
         const f = filterState.salary;
         const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
@@ -834,17 +834,22 @@
                     const parsed = [];
                     let currentTeacher = '';
                     let detectedMonth = '';
+                    let lookingForPeriod = false; // флаг поиска строки "За период с"
                     for(let i=0; i<rows.length; i++){
                         const row = rows[i]; if(!row || row.length<2) continue;
                         const line = row.join(' ').trim();
                         if(line.startsWith('Выписка по зарплате -')){
                             currentTeacher = line.replace('Выписка по зарплате -','').split('За период')[0].trim();
-                        } else if(line.startsWith('За период с')){
+                            lookingForPeriod = true; // начинаем искать период
+                        } else if(lookingForPeriod && line.startsWith('За период с')){
                             const match = line.match(/(\d{2})\.(\d{2})\.(\d{4})/);
                             if (match) {
                                 detectedMonth = `${match[3]}-${match[2]}`;
                             }
+                            lookingForPeriod = false;
                         } else if(row.length>=5 && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
+                            // Если дошли до данных, а месяц не найден, прекращаем поиск
+                            lookingForPeriod = false;
                             if (row[0] === 'Предмет' || line.includes('Сумма по филиалу') || row[0] === 'Орел') continue;
                             const subject = String(row[0]||'').trim();
                             const lessonType = String(row[1]||'').trim();
@@ -862,7 +867,11 @@
                         resolve();
                         return;
                     }
-                    const monthToDelete = detectedMonth || `${salaryYear}-${String(salaryMonth).padStart(2,'0')}`;
+                    if (!detectedMonth) {
+                        customAlert('Не удалось определить месяц в файле. Убедитесь, что в файле есть строка "За период с ДД.ММ.ГГГГ по ДД.ММ.ГГГГ". Данные будут сохранены с текущим выбранным месяцем.');
+                        detectedMonth = `${salaryYear}-${String(salaryMonth).padStart(2,'0')}`;
+                    }
+                    const monthToDelete = detectedMonth;
                     const { error: delErr } = await _supabase.from('teacher_salary').delete().eq('period', period).eq('month', monthToDelete);
                     if (delErr) { customAlert('Ошибка очистки данных: ' + delErr.message); resolve(); return; }
                     const { error: insErr } = await _supabase.from('teacher_salary').insert(parsed);
@@ -873,12 +882,10 @@
                         return;
                     }
                     // Автоматически переключаем месяц на загруженный
-                    if (detectedMonth) {
-                        const [y, m] = detectedMonth.split('-');
-                        salaryYear = parseInt(y);
-                        salaryMonth = parseInt(m);
-                        document.querySelector('#tabContent .month-title').textContent = `${monthNames[salaryMonth-1]} ${salaryYear}`;
-                    }
+                    const [y, m] = detectedMonth.split('-');
+                    salaryYear = parseInt(y);
+                    salaryMonth = parseInt(m);
+                    document.querySelector('#tabContent .month-title').textContent = `${monthNames[salaryMonth-1]} ${salaryYear}`;
                     await loadSalary();
                     renderSalary();
                     customAlert('Загружено строк: ' + parsed.length + ' (период: ' + period + ', месяц: ' + monthToDelete + ')');
