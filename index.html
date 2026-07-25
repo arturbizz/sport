@@ -285,8 +285,13 @@
 
       async function getEffectiveRole() {
         if (impersonatedRole) return impersonatedRole;
-        const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
-        return emp?.role || 'Управляющий';
+        if (!currentUser) return 'Управляющий'; // fallback
+        try {
+          const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
+          return emp?.role || 'Управляющий'; // если записи нет — считаем Управляющим
+        } catch {
+          return 'Управляющий'; // при ошибке — тоже Управляющий
+        }
       }
 
       async function renderCards() {
@@ -294,7 +299,6 @@
         const container = document.getElementById('mainCards');
         container.innerHTML = '';
         sections.forEach(s => {
-          // ✅ Исправлено: строгое равенство (===)
           if (s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий')) {
             const card = document.createElement('a');
             card.className = 'card';
@@ -368,8 +372,10 @@
       async function updateQuickActions() {
         let role = impersonatedRole;
         if (!role && currentUser?.email) {
-          const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
-          role = emp?.role;
+          try {
+            const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
+            role = emp?.role || 'Управляющий';
+          } catch { role = 'Управляющий'; }
         }
         let buttons = [];
         if (role === 'Менеджер') buttons = ['Моя зарплата', 'Мои продажи', 'Моя конверсия'];
