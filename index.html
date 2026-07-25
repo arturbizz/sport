@@ -257,7 +257,6 @@
       if (!container) return;
       container.innerHTML = '';
       sections.forEach(s => {
-        // Раздел доступен, если роль в списке, либо админский и пользователь — управляющий
         const show = s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий');
         if (show) {
           const card = document.createElement('a');
@@ -273,7 +272,6 @@
       effectiveRole = await fetchRole();
       renderCards();
       if (window.updateQuickActions) window.updateQuickActions();
-      // Отображаем email и роль
       const userInfo = document.getElementById('userInfo');
       if (userInfo && currentUser) {
         userInfo.textContent = `${currentUser.email} (${effectiveRole})`;
@@ -352,7 +350,6 @@
         setTimeout(() => setMascotState('idle'), 2000);
       }
 
-      // Делаем updateQuickActions глобальной
       window.updateQuickActions = function() {
         let role = effectiveRole || 'Менеджер';
         const buttons = {
@@ -405,7 +402,6 @@
         window.location.href = 'login.html';
       });
 
-      // Имперсонация только для основателя
       if (currentUser.email === 'arturgalkin.ru@mail.ru') {
         const savedRole = localStorage.getItem('impersonated_role');
         if (savedRole) impersonatedRole = savedRole;
