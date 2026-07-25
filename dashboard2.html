@@ -8,6 +8,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        /* Стили оставлены как в вашем исходном файле */
         :root {
             --bg: #F8F9FC;
             --surface: #ffffff;
@@ -165,6 +166,23 @@
 
     let leadsData = [], financeData = [];
 
+    // Функции нечёткого сравнения имён
+    function normalizeName(name) {
+        return name
+            .toLowerCase()
+            .replace(/\(.*?\)/g, '')
+            .replace(/[^а-яёa-z\s]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function isNameMatch(leadName, clientName) {
+        const lead = normalizeName(leadName);
+        const client = normalizeName(clientName);
+        if (lead === client) return true;
+        return lead.includes(client) || client.includes(lead);
+    }
+
     function applyGradientColors(tableElement, values) {
         if (!tableElement || !values || values.length === 0) return;
         const maxVal = Math.max(...values);
@@ -271,7 +289,7 @@
     }
 
     function renderAll() {
-        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact); // чистые лиды
+        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact);
         const total = all.length;
         const successStage = all.filter(l => l.stage.includes('ПУ состоялся'));
         const successCount = successStage.length;
@@ -279,21 +297,25 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Связь с финансами: ищем доходы, где клиент совпадает с именем лида (для успешных)
+        // Связь с финансами: используем нечёткое сравнение
         const clientMap = new Map();
         financeData.forEach(f => {
             const clientName = (f.client || '').trim();
             if (clientName) clientMap.set(clientName.toLowerCase(), (clientMap.get(clientName.toLowerCase()) || 0) + parseFloat(f.amount||0));
         });
+
         let revenue = 0;
         let salesCount = 0;
         successStage.forEach(l => {
-            const key = l.name.trim().toLowerCase();
-            if (clientMap.has(key)) {
-                revenue += clientMap.get(key);
-                salesCount++;
+            for (let [clientKey, amount] of clientMap.entries()) {
+                if (isNameMatch(l.name, clientKey)) {
+                    revenue += amount;
+                    salesCount++;
+                    break;
+                }
             }
         });
+
         const avgCheck = salesCount > 0 ? (revenue / salesCount).toFixed(0) : 0;
         const salesConversion = total > 0 ? (salesCount / total * 100).toFixed(1) : 0;
 
