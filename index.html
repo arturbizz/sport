@@ -254,7 +254,6 @@
       container.innerHTML = '';
       const isFounder = currentUser?.email === 'arturgalkin.ru@mail.ru';
       sections.forEach(s => {
-        // админские разделы доступны только основателю или управляющему
         const show = s.roles.includes(effectiveRole) || (s.admin && isFounder);
         if (show) {
           const card = document.createElement('a');
@@ -397,6 +396,7 @@
         window.location.href = 'login.html';
       });
 
+      // Имперсонация только для основателя
       if (currentUser.email === 'arturgalkin.ru@mail.ru') {
         const savedRole = localStorage.getItem('impersonated_role');
         if (savedRole) impersonatedRole = savedRole;
