@@ -183,7 +183,6 @@
           window.location.href = 'login.html';
         });
 
-        // Показываем административные карточки только для admin
         if (userEmail === ADMIN_EMAIL) {
           document.querySelectorAll('.admin-only').forEach(el => {
             el.style.display = 'flex';
@@ -191,6 +190,7 @@
         }
       } catch (e) {
         console.error('Ошибка на главной странице:', e);
+        window.location.href = 'login.html';
       }
     })();
   </script>
