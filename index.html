@@ -242,6 +242,7 @@
       currentToken = session.access_token;
       document.getElementById('userEmail').textContent = currentUser.email;
 
+      // Кнопка имперсонации только для основателя
       if (currentUser.email === 'arturgalkin.ru@mail.ru') {
         document.getElementById('impersonateBtn').style.display = 'inline-block';
         const savedRole = localStorage.getItem('impersonated_role');
@@ -285,21 +286,23 @@
 
       async function getEffectiveRole() {
         if (impersonatedRole) return impersonatedRole;
-        if (!currentUser) return 'Управляющий'; // fallback
+        if (!currentUser) return 'Менеджер'; // fallback, не должен случиться
         try {
           const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
-          return emp?.role || 'Управляющий'; // если записи нет — считаем Управляющим
+          return emp?.role || 'Менеджер'; // если записи нет — даём минимальную роль
         } catch {
-          return 'Управляющий'; // при ошибке — тоже Управляющий
+          return 'Менеджер';
         }
       }
 
       async function renderCards() {
         const effectiveRole = await getEffectiveRole();
+        const isFounder = currentUser?.email === 'arturgalkin.ru@mail.ru';
         const container = document.getElementById('mainCards');
         container.innerHTML = '';
         sections.forEach(s => {
-          if (s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий')) {
+          // ✅ ИСПРАВЛЕНО: строгая проверка роли
+          if (s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий') || (s.admin && isFounder)) {
             const card = document.createElement('a');
             card.className = 'card';
             card.href = `${s.id}.html`;
@@ -374,8 +377,8 @@
         if (!role && currentUser?.email) {
           try {
             const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
-            role = emp?.role || 'Управляющий';
-          } catch { role = 'Управляющий'; }
+            role = emp?.role || 'Менеджер';
+          } catch { role = 'Менеджер'; }
         }
         let buttons = [];
         if (role === 'Менеджер') buttons = ['Моя зарплата', 'Мои продажи', 'Моя конверсия'];
