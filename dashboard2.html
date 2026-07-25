@@ -155,15 +155,12 @@
         const client = normalizeName(clientName);
         if (!lead || !client) return false;
         if (lead === client) return true;
-        // Одно содержит другое, длина меньшего не менее половины длины большего
-        const longer = lead.length > client.length ? lead : client;
-        const shorter = lead.length > client.length ? client : lead;
-        if (longer.includes(shorter) && shorter.length / longer.length >= 0.5) return true;
-        // Или есть хотя бы 2 общих слова длиннее 2 символов
+        // Если одно полностью содержит другое — совпадение
+        if (lead.includes(client) || client.includes(lead)) return true;
+        // Если хотя бы одно слово длиннее 2 символов общее
         const leadWords = lead.split(' ').filter(w => w.length > 2);
         const clientWords = client.split(' ').filter(w => w.length > 2);
-        const common = leadWords.filter(w => clientWords.includes(w));
-        return common.length >= 2;
+        return leadWords.some(w => clientWords.includes(w));
     }
 
     function applyGradientColors(tableElement, values) {
