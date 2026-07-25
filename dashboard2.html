@@ -145,7 +145,6 @@
     <div class="filters-row">
         <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
         <button class="btn btn-primary" id="uploadSalesBtn">Загрузить продажи</button>
-        <button class="btn" id="diagnosticsBtn" style="display:none;">Диагностика</button>
         <span id="salesStatus" style="font-size:13px; color:var(--text-tertiary);"></span>
     </div>
     <div class="kpi-grid" id="leadsKPI"></div>
@@ -184,29 +183,6 @@
         };
     }
 
-    function normalizeName(name) {
-        return name
-            .toLowerCase()
-            .replace(/\(.*?\)/g, '')
-            .replace(/[^а-яёa-z\s]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-    }
-
-    function isNameMatch(leadName, clientName) {
-        const lead = normalizeName(leadName);
-        const client = normalizeName(clientName);
-        if (!lead || !client) return false;
-        if (lead === client) return true;
-        if (lead.includes(client) || client.includes(lead)) return true;
-
-        // Сравнение по словам: все слова лида (длиной >2) должны присутствовать в клиенте
-        const leadWords = lead.split(' ').filter(w => w.length > 2);
-        const clientWords = client.split(' ').filter(w => w.length > 2);
-        if (leadWords.length === 0) return false;
-        return leadWords.every(lw => clientWords.includes(lw));
-    }
-
     function applyGradientColors(tableElement, values) {
         if (!tableElement || !values || values.length === 0) return;
         const maxVal = Math.max(...values);
@@ -242,51 +218,14 @@
         const statusEl = document.getElementById('salesStatus');
         if (salesData.length > 0) {
             statusEl.textContent = `Загружено продаж: ${salesData.length}`;
-            document.getElementById('diagnosticsBtn').style.display = 'inline-flex';
         } else {
             statusEl.textContent = 'Продажи не загружены';
-            document.getElementById('diagnosticsBtn').style.display = 'none';
         }
     }
 
     function setupListeners() {
         document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads);
         document.getElementById('uploadSalesBtn').addEventListener('click', uploadSales);
-        document.getElementById('diagnosticsBtn').addEventListener('click', showUnmatchedClients);
-    }
-
-    function showUnmatchedClients() {
-        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact);
-        const successStage = all.filter(l => l.stage.includes('ПУ состоялся'));
-
-        const clientMap = new Map();
-        salesData.forEach(s => {
-            const clientName = (s.client || '').trim();
-            if (clientName) clientMap.set(clientName, (clientMap.get(clientName) || 0) + parseFloat(s.amount||0));
-        });
-
-        const usedClients = new Set();
-        successStage.forEach(l => {
-            for (let [clientKey] of clientMap.entries()) {
-                if (!usedClients.has(clientKey) && isNameMatch(l.name, clientKey)) {
-                    usedClients.add(clientKey);
-                    break;
-                }
-            }
-        });
-
-        const unmatched = [];
-        for (let [clientKey] of clientMap.entries()) {
-            if (!usedClients.has(clientKey)) {
-                unmatched.push(clientKey);
-            }
-        }
-
-        if (unmatched.length === 0) {
-            customAlert('Все клиенты из продаж сопоставлены с лидами.');
-        } else {
-            customAlert('Не сопоставлены клиенты:\n\n' + unmatched.join('\n'));
-        }
     }
 
     async function uploadLeads() {
@@ -445,28 +384,9 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Сопоставление продаж с лидами (улучшенное)
-        const clientMap = new Map();
-        salesData.forEach(s => {
-            const clientName = (s.client || '').trim();
-            if (clientName) clientMap.set(clientName, (clientMap.get(clientName) || 0) + parseFloat(s.amount||0));
-        });
-
-        const usedClients = new Set();
-        let revenue = 0;
-        let salesCount = 0;
-
-        successStage.forEach(l => {
-            for (let [clientKey, amount] of clientMap.entries()) {
-                if (!usedClients.has(clientKey) && isNameMatch(l.name, clientKey)) {
-                    revenue += amount;
-                    salesCount++;
-                    usedClients.add(clientKey);
-                    break;
-                }
-            }
-        });
-
+        // Продажи берутся напрямую из файла продаж, без сопоставления
+        const salesCount = salesData.length;
+        const revenue = salesData.reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
         const avgCheck = salesCount > 0 ? (revenue / salesCount).toFixed(0) : 0;
         const salesConversion = total > 0 ? (salesCount / total * 100).toFixed(1) : 0;
 
