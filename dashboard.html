@@ -171,7 +171,7 @@
 
     async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
-        if (!session || session.user.email !== ADMIN_EMAIL) { window.location.href='login.html'; return; }
+        if (!session || (session.user.email||'').trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) { window.location.href='login.html'; return; }
         currentUserEmail = session.user.email;
         await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(staffYear, staffMonth), loadSalaryParams(), loadExpenses()]);
         const now = new Date();
@@ -321,17 +321,30 @@
                 // записывались, и это выглядело как "данные пропали после загрузки".
                 const { error: delErr } = await _supabase.from('crm_finance').delete().neq('id',0);
                 if (delErr) { alert('Ошибка удаления старых данных: ' + delErr.message + '\n\nЗагрузка отменена, старые данные не тронуты.'); return; }
-                const { error: insErr } = await _supabase.from('crm_finance').insert(parsed);
+
+                let { error: insErr } = await _supabase.from('crm_finance').insert(parsed);
+                let droppedOptionalFields = false;
+                if (insErr && (teacherIdx !== -1 || periodIdx !== -1)) {
+                    // Скорее всего в таблице ещё нет колонок teacher_name/period — это не должно стоить
+                    // нам client/account/manager и т.п. Повторяем вставку без необязательных полей.
+                    const fallbackParsed = parsed.map(r => { const { teacher_name, period, ...rest } = r; return rest; });
+                    const retry = await _supabase.from('crm_finance').insert(fallbackParsed);
+                    if (!retry.error) { insErr = null; droppedOptionalFields = true; }
+                }
                 if (insErr) {
                     alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message + '\n\nСтарые данные уже были удалены, новые НЕ записались — таблица crm_finance сейчас пустая! ' +
-                          'Скорее всего в базе не хватает колонки (например account, payment_type, client, teacher_name или period). ' +
+                          'Скорее всего в базе не хватает колонки (например account, payment_type, client). ' +
                           'Добавьте недостающие колонки через SQL Editor в Supabase и загрузите файл повторно.');
                     await loadFinance(); renderFinance();
                     return;
                 }
                 await loadFinance();
                 renderFinance();
-                alert('Финансовый отчёт загружен (' + parsed.length + ' записей)');
+                alert('Финансовый отчёт загружен (' + parsed.length + ' записей)' + (droppedOptionalFields
+                    ? '\n\n⚠️ Поля "Педагог" и "Период" НЕ сохранены — в таблице crm_finance нет колонок teacher_name/period. ' +
+                      'Привязка выплат к конкретному педагогу работать не будет, пока вы не добавите эти колонки в Supabase (SQL Editor):\n\n' +
+                      'ALTER TABLE crm_finance ADD COLUMN IF NOT EXISTS teacher_name text;\nALTER TABLE crm_finance ADD COLUMN IF NOT EXISTS period text;'
+                    : ''));
             };
             reader.readAsArrayBuffer(file);
         };
@@ -893,7 +906,10 @@
         }
     });
     document.getElementById('homeSidebarBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
-    document.getElementById('logoutSidebarBtn').addEventListener('click', async ()=>{ await _supabase.auth.signOut(); window.location.href='login.html'; });
+    document.getElementById('logoutSidebarBtn').addEventListener('click', async ()=>{
+        try { await _supabase.auth.signOut(); } catch(e) { console.error('Ошибка выхода:', e); }
+        finally { window.location.href='login.html'; }
+    });
     document.getElementById('showAllWidgetsBtn').addEventListener('click', ()=>{
         document.querySelectorAll('.widget-card').forEach(w=>w.classList.remove('hidden'));
     });
