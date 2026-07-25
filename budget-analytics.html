@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Аналитика бюджета — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --border: rgba(15,23,42,0.06);
+      --text: #0f172a;
+      --text-secondary: #475569;
+      --accent: #0d9488;
+      --accent-light: #ccfbf1;
+      --warm-yellow: #f59e0b;
+      --soft-green: #10b981;
+      --critical: #ef4444;
+      --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
+      color: var(--text);
+      min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
+      cursor: default; caret-color: transparent;
+    }
+    input, select { cursor: text; caret-color: auto; }
+    .container {
+      width: 100%; max-width: 1200px;
+      background: var(--surface); border-radius: var(--radius-xl);
+      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      border: 1px solid var(--border); backdrop-filter: blur(12px);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 {
+      font-size: 2rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .btn {
+      padding: 0.5rem 1.2rem; border-radius: var(--radius-sm);
+      font-weight: 600; cursor: pointer; font-size: 0.85rem;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-primary:hover { background: #0f766e; }
+
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem; margin-bottom: 2rem;
+    }
+    .kpi-card {
+      background: var(--surface); border-radius: var(--radius-lg);
+      padding: 1.2rem; border: 1px solid var(--border);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+    .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
+    .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }
+
+    .chart-container {
+      background: var(--surface); border-radius: var(--radius-lg);
+      padding: 1.2rem; border: 1px solid var(--border); margin-bottom: 1.5rem;
+    }
+    .chart-title { font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary); }
+    .bar-chart { display: flex; gap: 4px; align-items: flex-end; height: 200px; padding: 0 0.5rem; }
+    .bar {
+      flex: 1; border-radius: 6px 6px 0 0; transition: 0.2s; position: relative;
+      display: flex; flex-direction: column-reverse;
+    }
+    .bar:hover { opacity: 0.9; transform: scaleY(1.02); }
+    .bar-fixed { background: var(--accent); }
+    .bar-variable { background: var(--warm-yellow); }
+    .bar-label { position: absolute; bottom: -20px; width: 100%; text-align: center; font-size: 0.65rem; color: var(--text-secondary); }
+
+    .widget-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .widget-card {
+      background: var(--surface); border-radius: var(--radius-lg);
+      padding: 1.2rem; border: 1px solid var(--border);
+    }
+    .widget-title { font-weight: 600; margin-bottom: 0.8rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; }
+    .list-item { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 0.9rem; }
+    .list-item:last-child { border: none; }
+    .list-item .amount { font-weight: 600; }
+
+    .table-container {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { text-align: left; padding: 0.6rem; background: #f8fafc; color: var(--text-secondary); font-weight: 600; }
+    td { padding: 0.6rem; border-top: 1px solid rgba(0,0,0,0.03); }
+    tr:hover td { background: #f8fafc; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <a href="index.html" class="back-link">← На главную</a>
+    <h1>Аналитика бюджета</h1>
+    <button class="btn btn-primary" id="exportBtn">Экспорт Excel</button>
+  </div>
+
+  <div class="kpi-grid" id="kpiContainer"></div>
+
+  <div class="chart-container">
+    <div class="chart-title">Расходы по месяцам</div>
+    <div class="bar-chart" id="barChart"></div>
+  </div>
+
+  <div class="widget-grid">
+    <div class="widget-card">
+      <div class="widget-title">Топ‑10 статей расходов</div>
+      <div id="topCategories"></div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title">Расходы по счетам</div>
+      <div id="byAccount"></div>
+    </div>
+  </div>
+
+  <div class="widget-card" style="margin-bottom:1.5rem;">
+    <div class="widget-title">Прогноз на следующий месяц</div>
+    <div id="forecastBlock" style="font-size:1.1rem;"></div>
+  </div>
+
+  <div class="table-container">
+    <table>
+      <thead><tr><th>Дата</th><th>Категория</th><th>Сумма</th><th>Счёт</th><th>Тип</th></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  (() => {
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let financeData = [], expensesData = [];
+
+    async function loadData() {
+      const [fin, exp] = await Promise.all([
+        _supabase.from('crm_finance').select('*').order('operation_date', { ascending: true }),
+        _supabase.from('expenses').select('*').eq('paid', true).order('paid_at', { ascending: true })
+      ]);
+      financeData = fin.data || [];
+      expensesData = exp.data || [];
+      renderAll();
+    }
+
+    function getMonthlyBreakdown() {
+      const months = {};
+      // Постоянные (expenses)
+      expensesData.forEach(e => {
+        const m = e.paid_at ? e.paid_at.slice(0,7) : null;
+        if (!m) return;
+        if (!months[m]) months[m] = { fixed: 0, variable: 0 };
+        months[m].fixed += parseFloat(e.amount);
+      });
+      // Переменные (crm_finance)
+      financeData.filter(r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t)))
+        .forEach(r => {
+          const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+          if (!m) return;
+          if (!months[m]) months[m] = { fixed: 0, variable: 0 };
+          months[m].variable += parseFloat(r.amount);
+        });
+      return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
+    }
+
+    function getCategoryBreakdown() {
+      const cats = {};
+      expensesData.forEach(e => {
+        const cat = e.name || 'Без категории';
+        cats[cat] = (cats[cat] || 0) + parseFloat(e.amount);
+      });
+      financeData.filter(r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t)))
+        .forEach(r => {
+          const cat = r.category || 'Без категории';
+          cats[cat] = (cats[cat] || 0) + parseFloat(r.amount);
+        });
+      return Object.entries(cats).sort((a,b) => b[1] - a[1]).slice(0,10);
+    }
+
+    function getAccountBreakdown() {
+      const accs = {};
+      financeData.filter(r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t)))
+        .forEach(r => {
+          const acc = r.account || 'Не указан';
+          accs[acc] = (accs[acc] || 0) + parseFloat(r.amount);
+        });
+      return Object.entries(accs).sort((a,b) => b[1] - a[1]).slice(0,10);
+    }
+
+    function forecastNextMonth(monthlyData) {
+      if (monthlyData.length < 3) return null;
+      const last3 = monthlyData.slice(-3);
+      const avgFixed = last3.reduce((s,m) => s + m[1].fixed, 0) / 3;
+      const avgVariable = last3.reduce((s,m) => s + m[1].variable, 0) / 3;
+      return { fixed: Math.round(avgFixed), variable: Math.round(avgVariable), total: Math.round(avgFixed + avgVariable) };
+    }
+
+    function renderAll() {
+      const monthly = getMonthlyBreakdown();
+      const totalFixed = monthly.reduce((s,m) => s + m[1].fixed, 0);
+      const totalVariable = monthly.reduce((s,m) => s + m[1].variable, 0);
+      const avgMonthly = monthly.length > 0 ? (totalFixed + totalVariable) / monthly.length : 0;
+
+      // KPI
+      document.getElementById('kpiContainer').innerHTML = `
+        <div class="kpi-card"><div class="kpi-label">Всего расходов (период)</div><div class="kpi-value">${(totalFixed+totalVariable).toLocaleString()} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Среднемесячные</div><div class="kpi-value">${Math.round(avgMonthly).toLocaleString()} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Постоянные</div><div class="kpi-value">${totalFixed.toLocaleString()} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Переменные</div><div class="kpi-value">${totalVariable.toLocaleString()} ₽</div></div>
+      `;
+
+      // График
+      const maxVal = Math.max(...monthly.map(m => m[1].fixed + m[1].variable), 1);
+      const barChart = document.getElementById('barChart');
+      barChart.innerHTML = monthly.map(([month, vals]) => {
+        const fixedH = (vals.fixed / maxVal * 100).toFixed(1);
+        const varH = (vals.variable / maxVal * 100).toFixed(1);
+        return `<div class="bar" style="height:${+fixedH + +varH}%;" title="${month}: пост. ${vals.fixed} ₽, перем. ${vals.variable} ₽">
+          <div class="bar-variable" style="height:${varH}%;"></div>
+          <div class="bar-fixed" style="height:${fixedH}%;"></div>
+          <div class="bar-label">${month.slice(5)}</div>
+        </div>`;
+      }).join('');
+
+      // Топ категорий
+      document.getElementById('topCategories').innerHTML = getCategoryBreakdown()
+        .map(([cat, sum]) => `<div class="list-item"><span>${cat}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>`).join('');
+
+      // По счетам
+      document.getElementById('byAccount').innerHTML = getAccountBreakdown()
+        .map(([acc, sum]) => `<div class="list-item"><span>${acc}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>`).join('');
+
+      // Прогноз
+      const forecast = forecastNextMonth(monthly);
+      const forecastBlock = document.getElementById('forecastBlock');
+      if (forecast) {
+        forecastBlock.innerHTML = `Ожидаемые расходы: <strong>${forecast.total.toLocaleString()} ₽</strong> (постоянные: ${forecast.fixed.toLocaleString()} ₽, переменные: ${forecast.variable.toLocaleString()} ₽)`;
+      } else {
+        forecastBlock.innerHTML = 'Недостаточно данных для прогноза (нужно минимум 3 месяца).';
+      }
+
+      // Таблица транзакций
+      const allTransactions = [
+        ...expensesData.map(e => ({ date: e.paid_at, category: e.name, amount: e.amount, account: 'Постоянный', type: 'Постоянный' })),
+        ...financeData.filter(r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t)))
+          .map(r => ({ date: r.operation_date, category: r.category, amount: r.amount, account: r.account || '—', type: 'Переменный' }))
+      ].sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,100);
+      document.getElementById('tableBody').innerHTML = allTransactions.map(t =>
+        `<tr><td>${t.date || ''}</td><td>${t.category || ''}</td><td>${parseFloat(t.amount).toLocaleString()} ₽</td><td>${t.account}</td><td>${t.type}</td></tr>`
+      ).join('');
+
+      // Экспорт
+      document.getElementById('exportBtn').onclick = () => {
+        const ws = XLSX.utils.json_to_sheet(allTransactions.map(t => ({
+          Дата: t.date, Категория: t.category, Сумма: t.amount, Счёт: t.account, Тип: t.type
+        })));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Расходы');
+        XLSX.writeFile(wb, 'аналитика_бюджета.xlsx');
+      };
+    }
+
+    loadData();
+  })();
+</script>
+</body>
+</html>
