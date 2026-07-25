@@ -6,115 +6,368 @@
     <title>Дашборд · Music Club Орёл</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #F8F9FC;
+            --bg: #f7f8fa;
             --surface: #ffffff;
-            --border: rgba(0,0,0,0.04);
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.02),0 1px 2px rgba(0,0,0,0.03);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.04),0 2px 4px rgba(0,0,0,0.02);
-            --shadow-lg: 0 12px 32px rgba(0,0,0,0.06),0 4px 8px rgba(0,0,0,0.03);
-            --text-primary: #1E293B;
-            --text-secondary: #64748B;
-            --text-tertiary: #94A3B8;
-            --accent: #7C3AED;
-            --accent-light: #EDE9FE;
-            --radius-xl: 24px; --radius-lg: 20px; --radius-md: 16px; --radius-sm: 12px; --radius-xs: 8px;
-            --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
-            --sidebar-width: 80px;
-            --transition-base: 250ms cubic-bezier(0.2,0.8,0.2,1);
+            --border: rgba(15,23,42,0.06);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-tertiary: #94a3b8;
+            --accent: #4f46e5;
+            --accent-light: #eef2ff;
+            --positive: #059669;
+            --negative: #dc2626;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.03);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.02);
+            --shadow-lg: 0 12px 24px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
+            --radius-2xl: 24px;
+            --radius-xl: 20px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+            --sidebar-width: 72px;
+            --transition-base: 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family:'Inter',system-ui,-apple-system,sans-serif;
-            background:var(--bg);
-            color:var(--text-primary);
-            display:flex;
-            min-height:100vh;
-            -webkit-font-smoothing:antialiased;
-            letter-spacing:-0.01em;
-            cursor:default;
-            caret-color:transparent;
-            position:relative;
-            overflow-x:hidden;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.01em;
+            cursor: default;
+            caret-color: transparent;
+            position: relative;
+            overflow-x: hidden;
         }
-        input,select,textarea { cursor:default; caret-color:transparent; }
-        .ambient-blob { position:fixed; border-radius:50%; filter:blur(120px); opacity:0.07; pointer-events:none; z-index:0; }
-        .ambient-blob.top-right { width:600px; height:600px; background:#7C3AED; top:-200px; right:-200px; }
-        .ambient-blob.bottom-left { width:500px; height:500px; background:#2563EB; bottom:-150px; left:-150px; }
-        .sidebar { width:var(--sidebar-width); background:rgba(255,255,255,0.7); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border-right:1px solid var(--border); display:flex; flex-direction:column; align-items:center; padding:var(--space-8) 0; gap:var(--space-10); position:fixed; top:0; bottom:0; z-index:20; box-shadow:var(--shadow-sm); }
-        .sidebar-icon { width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius-md); color:var(--text-tertiary); transition:all var(--transition-base); cursor:pointer; position:relative; }
-        .sidebar-icon.active { background:var(--accent-light); color:var(--accent); }
-        .sidebar-icon:hover { background:rgba(0,0,0,0.03); color:var(--text-primary); }
-        .sidebar-icon.active:hover { background:var(--accent-light); color:var(--accent); }
-        .sidebar-icon.logout { margin-top:auto; color:#ef4444; }
-        .sidebar-icon.logout:hover { background:rgba(239,68,68,0.08); }
-        .main { flex:1; margin-left:var(--sidebar-width); padding:var(--space-10); display:flex; flex-direction:column; gap:var(--space-10); max-width:1600px; width:100%; position:relative; z-index:1; padding-top:var(--space-8); }
-        .topbar { display:flex; justify-content:space-between; align-items:center; gap:var(--space-6); flex-wrap:wrap; }
-        .topbar-left { display:flex; align-items:center; gap:var(--space-3); }
-        .topbar-left h1 { font-size:28px; font-weight:700; letter-spacing:-0.03em; color:var(--text-primary); background:linear-gradient(135deg,#7C3AED,#2563EB); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .topbar-right { display:flex; gap:var(--space-3); align-items:center; }
-        .btn { display:inline-flex; align-items:center; gap:var(--space-2); padding:10px 20px; border-radius:var(--radius-sm); font-weight:550; font-size:14px; letter-spacing:-0.01em; cursor:pointer; transition:all var(--transition-base); background:var(--surface); border:1px solid var(--border); color:var(--text-primary); box-shadow:var(--shadow-sm); white-space:nowrap; }
-        .btn:hover { background:#f8fafc; border-color:rgba(0,0,0,0.08); box-shadow:var(--shadow-md); transform:translateY(-1px); }
-        .btn-primary { background:var(--accent); border-color:var(--accent); color:white; box-shadow:0 4px 12px rgba(124,58,237,0.25); }
-        .btn-primary:hover { background:#6D28D9; border-color:#6D28D9; box-shadow:0 8px 20px rgba(124,58,237,0.35); }
-        .btn:disabled { opacity:0.5; pointer-events:none; }
-        .btn-icon { padding:8px 12px; border-radius:var(--radius-xs); background:var(--surface); border:1px solid var(--border); color:var(--text-secondary); cursor:pointer; transition:all var(--transition-base); display:inline-flex; align-items:center; }
-        .btn-icon:hover { background:#f8fafc; border-color:rgba(0,0,0,0.1); color:var(--text-primary); }
-        .tabs { display:flex; gap:var(--space-2); background:var(--surface); border-radius:var(--radius-md); padding:4px; border:1px solid var(--border); box-shadow:var(--shadow-sm); align-self:flex-start; }
-        .tab { padding:8px 18px; border-radius:var(--radius-xs); font-weight:550; font-size:14px; cursor:pointer; transition:all var(--transition-base); border:none; background:transparent; color:var(--text-secondary); white-space:nowrap; }
-        .tab.active { background:var(--accent-light); color:var(--accent); }
-        .tab:hover:not(.active) { background:rgba(0,0,0,0.02); color:var(--text-primary); }
-        .content-area { display:flex; flex-direction:column; gap:var(--space-10); width:100%; }
-        .filters-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); }
-        .filter-select,.filter-input { padding:9px 14px; border-radius:var(--radius-xs); border:1px solid var(--border); background:var(--surface); font-size:14px; color:var(--text-primary); min-width:130px; box-shadow:var(--shadow-sm); transition:all var(--transition-base); cursor:default; }
-        .filter-select:hover,.filter-input:hover { border-color:rgba(0,0,0,0.1); }
-        .kpi-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:var(--space-6); }
-        .kpi-card { background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6); border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base); display:flex; flex-direction:column; gap:var(--space-3); position:relative; overflow:hidden; }
-        .kpi-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
-        .kpi-label { font-size:13px; font-weight:500; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; }
-        .kpi-value { font-size:34px; font-weight:700; letter-spacing:-0.02em; color:var(--text-primary); line-height:1; }
-        .widget-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:var(--space-6); align-items:start; grid-auto-rows:min-content; }
-        .widget-card { background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6); border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base); position:relative; height:fit-content; }
-        .widget-card:hover { transform:translateY(-1px); box-shadow:var(--shadow-lg); }
-        .widget-title { font-size:13px; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:var(--space-5); display:flex; align-items:center; gap:var(--space-2); }
-        .widget-list { list-style:none; display:flex; flex-direction:column; gap:var(--space-3); }
-        .widget-list li { display:flex; justify-content:space-between; align-items:center; font-size:15px; padding:var(--space-2) 0; border-bottom:1px solid rgba(0,0,0,0.03); }
-        .widget-list li span:last-child { font-weight:550; color:var(--text-primary); }
-        .empty-message { color:var(--text-tertiary); font-size:14px; padding:var(--space-4) 0; text-align:center; }
-        .table-container { background:var(--surface); border-radius:var(--radius-xl); border:1px solid var(--border); box-shadow:var(--shadow-sm); overflow:hidden; }
-        table { width:100%; border-collapse:collapse; font-size:14px; }
-        th { text-align:left; padding:var(--space-4) var(--space-6); font-weight:550; color:var(--text-tertiary); background:rgba(248,250,252,0.6); border-bottom:1px solid var(--border); font-size:12px; text-transform:uppercase; letter-spacing:0.04em; }
-        td { padding:var(--space-4) var(--space-6); border-bottom:1px solid rgba(0,0,0,0.03); color:var(--text-primary); }
-        tr:last-child td { border-bottom:none; }
-        tr:hover td { background:rgba(0,0,0,0.01); }
-        .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:12px; font-weight:550; background:#FEF3C7; color:#D97706; }
-        .badge.red { background:#FEE2E2; color:#DC2626; }
-        .close-btn { position:absolute; top:12px; right:16px; background:none; border:none; color:var(--text-tertiary); cursor:pointer; opacity:0.5; font-size:16px; }
-        .close-btn:hover { opacity:1; color:#ef4444; }
-        .hidden { display:none!important; }
-        .month-nav { display:flex; align-items:center; gap:var(--space-2); }
-        .month-nav .month-title { font-size:15px; font-weight:550; color:var(--text-primary); min-width:120px; text-align:center; }
-        @media(max-width:900px) { .sidebar{display:none} .main{margin-left:0;padding:var(--space-4)} .kpi-row{grid-template-columns:repeat(2,1fr)} .widget-row{grid-template-columns:1fr} }
+        input, select, textarea { cursor: default; caret-color: transparent; }
+        .ambient-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .ambient-blob.top-right { width: 500px; height: 500px; background: var(--accent); top: -100px; right: -100px; }
+        .ambient-blob.bottom-left { width: 400px; height: 400px; background: #2563eb; bottom: -100px; left: -100px; }
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--space-8) 0;
+            gap: var(--space-10);
+            position: fixed;
+            top: 0; bottom: 0;
+            z-index: 20;
+            box-shadow: var(--shadow-sm);
+        }
+        .sidebar-icon {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: var(--radius-md);
+            color: var(--text-tertiary);
+            transition: all var(--transition-base);
+            cursor: pointer;
+            position: relative;
+        }
+        .sidebar-icon.active {
+            background: var(--accent-light);
+            color: var(--accent);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+        }
+        .sidebar-icon:hover { background: rgba(0,0,0,0.02); color: var(--text-primary); }
+        .sidebar-icon.active:hover { background: var(--accent-light); color: var(--accent); }
+        .sidebar-icon.logout { margin-top: auto; color: #ef4444; }
+        .sidebar-icon.logout:hover { background: rgba(239,68,68,0.06); }
+        .main {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: var(--space-10);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+            max-width: 1440px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: var(--space-6);
+        }
+        .topbar-left h1 {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+        .topbar-right { display: flex; gap: var(--space-3); align-items: center; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            font-weight: 550;
+            font-size: 14px;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-sm);
+            white-space: nowrap;
+            backdrop-filter: blur(8px);
+        }
+        .btn:hover {
+            background: #f8fafc;
+            border-color: rgba(0,0,0,0.08);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        .btn-primary {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79,70,229,0.2);
+        }
+        .btn-primary:hover {
+            background: #4338ca;
+            border-color: #4338ca;
+            box-shadow: 0 8px 20px rgba(79,70,229,0.3);
+        }
+        .btn:disabled { opacity: 0.5; pointer-events: none; }
+        .tabs {
+            display: flex;
+            gap: var(--space-2);
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: 4px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            align-self: flex-start;
+            backdrop-filter: blur(8px);
+        }
+        .tab {
+            padding: 8px 20px;
+            border-radius: var(--radius-lg);
+            font-weight: 550;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .tab.active {
+            background: var(--accent-light);
+            color: var(--accent);
+            box-shadow: var(--shadow-sm);
+        }
+        .tab:hover:not(.active) { background: rgba(0,0,0,0.02); color: var(--text-primary); }
+        .filters-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        .filter-select, .filter-input {
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            font-size: 14px;
+            color: var(--text-primary);
+            min-width: 130px;
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-base);
+            cursor: default;
+            backdrop-filter: blur(8px);
+        }
+        .filter-select:hover, .filter-input:hover { border-color: rgba(0,0,0,0.1); }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: var(--space-6);
+        }
+        .kpi-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-base);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+            backdrop-filter: blur(12px);
+        }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        .kpi-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .kpi-value {
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: var(--space-6);
+            align-items: start;
+        }
+        .widget-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-base);
+            height: fit-content;
+            backdrop-filter: blur(12px);
+        }
+        .widget-card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+        .widget-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: var(--space-5);
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+        .widget-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+        .widget-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            padding: var(--space-2) 0;
+            border-bottom: 1px solid rgba(0,0,0,0.02);
+            transition: background 0.2s;
+        }
+        .widget-list li:hover { background: rgba(0,0,0,0.01); border-radius: var(--radius-sm); }
+        .widget-list li span:last-child { font-weight: 550; }
+        .empty-message {
+            color: var(--text-tertiary);
+            font-size: 14px;
+            padding: var(--space-4) 0;
+            text-align: center;
+        }
+        .table-container {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th {
+            text-align: left;
+            padding: var(--space-4) var(--space-6);
+            font-weight: 550;
+            color: var(--text-tertiary);
+            background: rgba(248,250,252,0.5);
+            border-bottom: 1px solid var(--border);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        td { padding: var(--space-4) var(--space-6); border-bottom: 1px solid rgba(0,0,0,0.02); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(0,0,0,0.005); }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 550;
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .badge.red { background: #fee2e2; color: #b91c1c; }
+        .month-nav { display: flex; align-items: center; gap: var(--space-2); }
+        .month-nav .month-title {
+            font-size: 15px; font-weight: 550; color: var(--text-primary); min-width: 120px; text-align: center;
+            background: var(--surface); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);
+        }
+        .progress-container {
+            width: 100%; background: #f1f5f9; border-radius: 10px; height: 6px; margin: var(--space-3) 0; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; border-radius: 10px; transition: width 0.3s;
+            background: linear-gradient(90deg, var(--accent), #6366f1);
+        }
+        .hidden { display: none !important; }
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main { margin-left: 0; padding: var(--space-4); }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .widget-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 <div class="ambient-blob top-right"></div>
 <div class="ambient-blob bottom-left"></div>
 <aside class="sidebar">
-    <div class="sidebar-icon active" id="homeSidebarBtn" title="Главная"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
-    <div class="sidebar-icon logout" id="logoutSidebarBtn" title="Выйти"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+    <div class="sidebar-icon active" id="homeSidebarBtn" title="Главная">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="sidebar-icon logout" id="logoutSidebarBtn" title="Выйти">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </div>
 </aside>
 <main class="main">
-    <div class="topbar"><div class="topbar-left"><h1>Дашборд</h1></div><div class="topbar-right"><button class="btn" id="showAllWidgetsBtn">Показать всё</button><button class="btn" id="resetFiltersGlobalBtn">Сбросить</button></div></div>
+    <div class="topbar">
+        <div class="topbar-left"><h1>Аналитика</h1></div>
+        <div class="topbar-right">
+            <button class="btn" id="showAllWidgetsBtn">Показать всё</button>
+            <button class="btn" id="resetFiltersGlobalBtn">Сбросить</button>
+        </div>
+    </div>
     <div class="tabs" id="tabBar">
         <button class="tab active" data-tab="finance">Финансы</button>
         <button class="tab" data-tab="salary">ЗП педагоги</button>
         <button class="tab" data-tab="staff">ЗП сотрудники</button>
         <button class="tab" data-tab="compare">Сравнение</button>
     </div>
-    <div class="content-area" id="tabContent"></div>
+    <div id="tabContent" style="display:flex;flex-direction:column;gap:var(--space-8);"></div>
 </main>
 
 <script>
@@ -129,6 +382,7 @@
     let staffYear = new Date().getFullYear();
     let staffMonth = new Date().getMonth() + 1;
     const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+    let salaryUploadInProgress = false;
 
     const DEFAULT_FILTER_STATE = {
         finance: { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false },
@@ -163,7 +417,7 @@
             const val = values[index] || 0;
             let ratio = maxVal === minVal ? 0.5 : (val - minVal) / (maxVal - minVal);
             const hue = ratio * 120;
-            li.style.backgroundColor = `hsla(${hue}, 40%, 85%, 0.3)`;
+            li.style.backgroundColor = `hsla(${hue}, 40%, 88%, 0.25)`;
         });
     }
 
@@ -173,9 +427,11 @@
         currentUserEmail = session.user.email;
         await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(staffYear, staffMonth), loadSalaryParams(), loadExpenses()]);
         const now = new Date();
-        filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-        const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-        filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+        if (!filterState.finance.dateFrom) {
+            filterState.finance.dateFrom = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+            const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+            filterState.finance.dateTo = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+        }
         renderTab();
     }
 
@@ -207,7 +463,6 @@
         document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
     }
 
-    // ==================== ФИНАНСЫ ====================
     function financeHTML() {
         const f = filterState.finance;
         const types = [...new Set(financeData.map(d=>d.operation_type).filter(Boolean))].sort();
@@ -228,8 +483,8 @@
             <button class="btn" id="uploadFinanceBtn">Загрузить Excel</button>
             <button class="btn" id="toggleRawFinBtn">${f.showRaw?'Скрыть':'Показать'} таблицу</button>
         </div>
-        <div class="kpi-row" id="finKPI"></div>
-        <div class="widget-row" id="finWidgets"></div>
+        <div class="kpi-grid" id="finKPI"></div>
+        <div class="widget-grid" id="finWidgets"></div>
         <div class="table-container" id="finRawTable" style="display:${f.showRaw?'block':'none'};">
             <table><thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счет</th><th>Платеж</th><th>Менеджер</th></tr></thead><tbody id="finTableBody"></tbody></table>
         </div>`;
@@ -280,11 +535,8 @@
                 const payTypeIdx = headers.findIndex(h=>h.includes('тип платежа'));
                 let manIdx = headers.findIndex(h=>h.includes('менеджер (фамилия имя)') || h.includes('менеджер(фамилия имя)'));
                 if (manIdx === -1) manIdx = headers.findIndex(h=>h.includes('менеджер') && !h.includes('ответственный'));
-
                 let clientIdx = headers.findIndex(h=>h === 'клиент' || h.startsWith('клиент') || h.startsWith('фио клиента') || h === 'плательщик');
-                if (clientIdx === -1) {
-                    clientIdx = headers.findIndex(h=>h.includes('клиент') || h.includes('плательщик'));
-                }
+                if (clientIdx === -1) clientIdx = headers.findIndex(h=>h.includes('клиент') || h.includes('плательщик'));
                 const teacherIdx = headers.findIndex(h=>h.includes('педагог'));
                 const periodIdx = headers.findIndex(h=>h.includes('период'));
 
@@ -307,14 +559,9 @@
                     if (periodIdx !== -1) row.period = String(cols[periodIdx]||'').trim() || null;
                     parsed.push(row);
                 }
-
-                if (clientIdx === -1) {
-                    alert('⚠️ Столбец с клиентом не найден. Продажи по лидам не будут рассчитаны. Проверьте наличие столбца "Клиент", "ФИО клиента" или "Плательщик" в файле.');
-                }
-
+                if (clientIdx === -1) alert('⚠️ Столбец с клиентом не найден. Продажи по лидам не будут рассчитаны.');
                 const { error: delErr } = await _supabase.from('crm_finance').delete().neq('id',0);
-                if (delErr) { alert('Ошибка удаления старых данных: ' + delErr.message + '\n\nЗагрузка отменена, старые данные не тронуты.'); return; }
-
+                if (delErr) { alert('Ошибка удаления старых данных: ' + delErr.message); return; }
                 let { error: insErr } = await _supabase.from('crm_finance').insert(parsed);
                 let droppedOptionalFields = false;
                 if (insErr && (teacherIdx !== -1 || periodIdx !== -1)) {
@@ -322,20 +569,10 @@
                     const retry = await _supabase.from('crm_finance').insert(fallbackParsed);
                     if (!retry.error) { insErr = null; droppedOptionalFields = true; }
                 }
-                if (insErr) {
-                    alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message + '\n\nСтарые данные уже были удалены, новые НЕ записались — таблица crm_finance сейчас пустая! ' +
-                          'Скорее всего в базе не хватает колонки (например account, payment_type, client). ' +
-                          'Добавьте недостающие колонки через SQL Editor в Supabase и загрузите файл повторно.');
-                    await loadFinance(); renderFinance();
-                    return;
-                }
+                if (insErr) { alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message); await loadFinance(); renderFinance(); return; }
                 await loadFinance();
                 renderFinance();
-                alert('Финансовый отчёт загружен (' + parsed.length + ' записей)' + (droppedOptionalFields
-                    ? '\n\n⚠️ Поля "Педагог" и "Период" НЕ сохранены — в таблице crm_finance нет колонок teacher_name/period. ' +
-                      'Привязка выплат к конкретному педагогу работать не будет, пока вы не добавите эти колонки в Supabase (SQL Editor):\n\n' +
-                      'ALTER TABLE crm_finance ADD COLUMN IF NOT EXISTS teacher_name text;\nALTER TABLE crm_finance ADD COLUMN IF NOT EXISTS period text;'
-                    : ''));
+                alert('Финансовый отчёт загружен (' + parsed.length + ' записей)' + (droppedOptionalFields ? '\n\n⚠️ Поля "Педагог" и "Период" не сохранены.' : ''));
             };
             reader.readAsArrayBuffer(file);
         };
@@ -365,14 +602,13 @@
         document.getElementById('finKPI').innerHTML = `
             <div class="kpi-card"><span class="kpi-label">Доходы</span><span class="kpi-value">${ti.toLocaleString()} ₽</span></div>
             <div class="kpi-card"><span class="kpi-label">Расходы</span><span class="kpi-value">${te.toLocaleString()} ₽</span></div>
-            <div class="kpi-card"><span class="kpi-label">Прибыль</span><span class="kpi-value">${(ti-te).toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Прибыль</span><span class="kpi-value" style="color:${ti-te>=0?'var(--positive)':'var(--negative)'}">${(ti-te).toLocaleString()} ₽</span></div>
             <div class="kpi-card"><span class="kpi-label">Маржинальность</span><span class="kpi-value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
         const group = (arr,key, excludeList=[])=>{
             const m={}; arr.forEach(r=>{ let k=r[key]||'—'; if(excludeList.includes(k)) return; if(key==='manager' && k==='кто менеджер?') k='Репетиции'; m[k]=(m[k]||0)+parseFloat(r.amount||0);});
             return Object.entries(m).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
         };
         const excludeManagers = ['Ресепшен Орёл', '—', ''];
-
         let widgetsHtml = '';
         function generateWidget(title, entries) {
             if (entries.length === 0) return `<div class="widget-card"><div class="widget-title">${title}</div><ul class="widget-list"><li class="empty-message">Нет данных</li></ul></div>`;
@@ -395,7 +631,6 @@
         widgetsHtml += generateWidget('Расходы по счетам', group(expense,'account').slice(0,8));
         widgetsHtml += generateWidget('Доходы по счетам', group(income,'account').slice(0,8));
 
-        // === ИСПРАВЛЕННЫЙ БЛОК: Ближайшие обязательные платежи ===
         if (expensesData.length) {
             const todayISO = new Date().toISOString().slice(0,10);
             const upcoming = [...expensesData]
@@ -407,24 +642,23 @@
                     return a.next_payment_date.localeCompare(b.next_payment_date);
                 })
                 .slice(0, 8);
-
             widgetsHtml += `
             <div class="widget-card">
-                <div class="widget-title">⚡ Ближайшие обязательные платежи</div>
+                <div class="widget-title">Ближайшие обязательные платежи</div>
                 <ul class="widget-list">
                     ${upcoming.length ? upcoming.map(e => {
                         const overdue = e.next_payment_date && e.next_payment_date < todayISO;
-                        const dateStr = e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru') : '—';
-                        return `<li style="${overdue ? 'background:#fff0f0;' : ''}">
-                            <span style="max-width:60%; white-space:normal;">${e.name}</span>
-                            <span>${parseFloat(e.amount||0).toLocaleString()} ₽ · ${dateStr}</span>
+                        const dateStr = e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru', {day:'numeric', month:'short'}) : '—';
+                        return `<li style="${overdue ? 'background: rgba(220,38,38,0.04); border-radius: var(--radius-sm);' : ''}">
+                            <span style="max-width:60%; white-space:normal; font-size:14px;">${e.name}</span>
+                            <span style="font-weight:600;">${parseFloat(e.amount||0).toLocaleString()} ₽</span>
+                            <span style="font-size:13px; color: var(--text-tertiary);">${dateStr}</span>
                             ${overdue ? '<span class="badge red">просрочен</span>' : ''}
                         </li>`;
                     }).join('') : '<li class="empty-message">Все платежи оплачены</li>'}
                 </ul>
             </div>`;
         }
-        // === КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ===
 
         document.getElementById('finWidgets').innerHTML = widgetsHtml;
         document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
@@ -442,20 +676,20 @@
             <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="salPeriod2">16–31</button>
             <select class="filter-select" id="salName"><option value="">Все педагоги</option>${names.map(n=>`<option ${f.name===n?'selected':''}>${n}</option>`).join('')}</select>
             <select class="filter-select" id="salSubj"><option value="">Все предметы</option>${subjects.map(s=>`<option ${f.subj===s?'selected':''}>${s}</option>`).join('')}</select>
-            <button class="btn" id="uploadSalaryBtn1">Загрузить 1–15</button>
-            <button class="btn" id="uploadSalaryBtn2">Загрузить 16–31</button>
-            <button class="btn" id="uploadSalaryBtnFull">Загрузить общий</button>
+            <button class="btn" id="uploadSalaryBtn1" ${salaryUploadInProgress?'disabled':''}>Загрузить 1–15</button>
+            <button class="btn" id="uploadSalaryBtn2" ${salaryUploadInProgress?'disabled':''}>Загрузить 16–31</button>
+            <button class="btn" id="uploadSalaryBtnFull" ${salaryUploadInProgress?'disabled':''}>Загрузить общий</button>
             <button class="btn" id="clearSalaryBtn">Очистить все данные</button>
             <button class="btn" id="toggleSkippedBtn">${f.showSkipped?'Скрыть':'Показать'} пропущенные</button>
         </div>
-        <div class="kpi-row" id="salKPI"></div>
-        <div class="widget-row" id="salWidgets">
+        <div class="kpi-grid" id="salKPI"></div>
+        <div class="widget-grid" id="salWidgets">
             <div class="widget-card" id="teacherTotalWidget"><div class="widget-title">По педагогам</div><div id="teacherTotalContent"></div></div>
             <div class="widget-card" id="teacherIndivWidget"><div class="widget-title">Индивидуальные</div><div id="teacherIndivContent"></div></div>
             <div class="widget-card" id="teacherGroupWidget"><div class="widget-title">Групповые</div><div id="teacherGroupContent"></div></div>
             <div class="widget-card" id="teacherSubjectWidget"><div class="widget-title">По предметам</div><div id="teacherSubjectContent"></div></div>
         </div>
-        <div class="widget-row" id="salPayoutWidgets"></div>
+        <div class="widget-grid" id="salPayoutWidgets"></div>
         <div class="table-container">
             <table><thead><tr><th>Педагог</th><th>Предмет</th><th>Тип</th><th>Ставка</th><th>Кол-во</th><th>Сумма</th><th>Период</th></tr></thead><tbody id="salTableBody"></tbody></table>
         </div>`;
@@ -493,15 +727,15 @@
         const uploadBtns = ['uploadSalaryBtn1','uploadSalaryBtn2','uploadSalaryBtnFull'];
         uploadBtns.forEach(id => {
             document.getElementById(id).addEventListener('click', async function() {
+                if (salaryUploadInProgress) return;
                 const period = id === 'uploadSalaryBtn1' ? '1-15' : (id === 'uploadSalaryBtn2' ? '16-31' : 'full');
-                const btn = document.getElementById(id);
-                btn.disabled = true;
-                btn.textContent = 'Загрузка...';
+                salaryUploadInProgress = true;
+                disableSalaryButtons(true);
                 try {
                     await uploadSalary(period);
                 } finally {
-                    btn.disabled = false;
-                    btn.textContent = period === 'full' ? 'Загрузить общий' : (period === '1-15' ? 'Загрузить 1–15' : 'Загрузить 16–31');
+                    salaryUploadInProgress = false;
+                    disableSalaryButtons(false);
                 }
             });
         });
@@ -516,6 +750,13 @@
             filterState.salary.showSkipped = !filterState.salary.showSkipped;
             document.getElementById('toggleSkippedBtn').textContent = (filterState.salary.showSkipped?'Скрыть':'Показать')+' пропущенные';
             renderSalary();
+        });
+    }
+
+    function disableSalaryButtons(disable) {
+        ['uploadSalaryBtn1','uploadSalaryBtn2','uploadSalaryBtnFull'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = disable;
         });
     }
 
@@ -556,21 +797,20 @@
                     const otherPeriods = [...new Set(salaryData.map(r=>r.period))].filter(p => p && p !== period);
                     if (otherPeriods.length && !confirm(
                         'В базе уже есть данные за период(ы): ' + otherPeriods.join(', ') + '.\n' +
-                        'Если это тот же месяц — суммы в "Весь месяц" задвоятся (там сейчас нет привязки к месяцу, только к периоду 1-15/16-31/full).\n' +
+                        'Если это тот же месяц — суммы в "Весь месяц" задвоятся.\n' +
                         'Если это другой месяц — сначала нажмите "Очистить все данные".\n\nПродолжить загрузку?'
                     )) { resolve(); return; }
                     const { error: delErr } = await _supabase.from('teacher_salary').delete().eq('period', period);
-                    if (delErr) { alert('Ошибка очистки периода: ' + delErr.message + '\n\nЗагрузка отменена.'); resolve(); return; }
+                    if (delErr) { alert('Ошибка очистки периода: ' + delErr.message); resolve(); return; }
                     const { error: insErr } = await _supabase.from('teacher_salary').insert(parsed);
                     if (insErr) {
-                        alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message + '\n\nДанные за период "' + period + '" удалены и НЕ восстановлены. Проверьте структуру таблицы teacher_salary в Supabase.');
+                        alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message + '\n\nДанные за период "' + period + '" удалены и НЕ восстановлены.');
                         await loadSalary(); renderSalary();
                         resolve();
                         return;
                     }
                     await loadSalary();
-                    filterState.salary.period = 'full';
-                    updateSalaryPeriodButtons('salPeriodFull');
+                    // Не переключаем период автоматически — оставляем как было, только обновляем фильтр, если нужно
                     renderSalary();
                     alert('Загружено строк: ' + parsed.length + ' (период: ' + period + ')');
                     resolve();
@@ -636,7 +876,7 @@
         const bySubject = {};
         data.forEach(r=>{ bySubject[r.subject]=(bySubject[r.subject]||0)+parseFloat(r.amount||0); });
 
-        function fillWidget(elementId, title, entries) {
+        function fillWidget(elementId, entries) {
             const container = document.getElementById(elementId);
             if (!container) return;
             const values = entries.map(e => e[1]);
@@ -651,29 +891,33 @@
             if (ul && values.length > 0) applyGradientColors(ul, values);
         }
 
-        const teacherEntries = Object.entries(byTeacher).sort(([,a],[,b])=>b-a).slice(0,10);
-        fillWidget('teacherTotalContent', 'По педагогам', teacherEntries);
-        const indivEntries = Object.entries(byTeacherIndiv).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8);
-        fillWidget('teacherIndivContent', 'Индивидуальные', indivEntries);
-        const groupEntries = Object.entries(byTeacherGroup).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8);
-        fillWidget('teacherGroupContent', 'Групповые', groupEntries);
-        const subjectEntries = Object.entries(bySubject).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a);
-        fillWidget('teacherSubjectContent', 'По предметам', subjectEntries);
+        fillWidget('teacherTotalContent', Object.entries(byTeacher).sort(([,a],[,b])=>b-a).slice(0,10));
+        fillWidget('teacherIndivContent', Object.entries(byTeacherIndiv).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8));
+        fillWidget('teacherGroupContent', Object.entries(byTeacherGroup).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a).slice(0,8));
+        fillWidget('teacherSubjectContent', Object.entries(bySubject).filter(([,v])=>v>0).sort(([,a],[,b])=>b-a));
 
         const payouts = getTeacherPayouts();
         document.getElementById('salPayoutWidgets').innerHTML = teachers.map(name=>{
             const accrued = byTeacher[name]||0;
             const paid = payouts[name]?.total||0;
             const remaining = accrued - paid;
-            let statusClass='unpaid', statusText='Не выплачено';
-            if(paid>=accrued && accrued>0){ statusClass='paid'; statusText='Выплачено'; }
-            else if(paid>0 && paid<accrued){ statusClass='partial'; statusText='Частично'; }
-            return `<div class="widget-card"><h3>${name}</h3>
-                <div style="display:flex;justify-content:space-between;"><span>Начислено:</span><strong>${accrued.toLocaleString()} ₽</strong></div>
-                <div style="display:flex;justify-content:space-between;"><span>Выплачено:</span><strong>${paid.toLocaleString()} ₽</strong></div>
-                <div style="display:flex;justify-content:space-between;"><span>Остаток:</span><strong style="color:${remaining>0?'#c2410c':'#15803d'};">${remaining.toLocaleString()} ₽</strong></div>
-                <span class="payout-status ${statusClass}">${statusText}</span>
-                ${paid>0?`<div class="progress-container"><div class="progress-fill" style="width:${Math.min(100,(paid/accrued*100))}%;"></div></div>`:''}
+            let statusColor = remaining > 0 ? 'var(--negative)' : 'var(--positive)';
+            let statusText = remaining > 0 ? 'Не выплачено' : 'Выплачено';
+            return `<div class="widget-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:600;">${name}</span>
+                    <span style="font-size:13px; color: var(--text-tertiary);">начислено ${accrued.toLocaleString()} ₽</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top: 8px;">
+                    <span>Выплачено:</span>
+                    <strong>${paid.toLocaleString()} ₽</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>Остаток:</span>
+                    <strong style="color:${statusColor}">${remaining.toLocaleString()} ₽</strong>
+                </div>
+                <div class="progress-container" style="margin-top:8px;"><div class="progress-fill" style="width:${accrued?Math.min(100,paid/accrued*100):0}%;"></div></div>
+                <div style="font-size:12px; color:var(--text-tertiary); margin-top:4px;">${statusText}</div>
             </div>`;
         }).join('');
         document.getElementById('salTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.period||'full'}</td></tr>`).join('');
@@ -681,19 +925,20 @@
 
     // ==================== ЗП СОТРУДНИКОВ ====================
     function staffHTML() {
+        const period = filterState.staff.period;
         return `
         <div class="filters-row">
             <div class="month-nav">
-                <button class="btn-icon" id="staffPrevMonthBtn">←</button>
-                <span class="month-title" id="staffMonthTitle">${monthNames[staffMonth-1]} ${staffYear}</span>
-                <button class="btn-icon" id="staffNextMonthBtn">→</button>
+                <button class="btn" id="staffPrevMonthBtn">←</button>
+                <span class="month-title">${monthNames[staffMonth-1]} ${staffYear}</span>
+                <button class="btn" id="staffNextMonthBtn">→</button>
             </div>
-            <button class="btn ${filterState.staff.period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
-            <button class="btn ${filterState.staff.period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
-            <button class="btn ${filterState.staff.period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
+            <button class="btn ${period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
+            <button class="btn ${period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
+            <button class="btn ${period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
         </div>
-        <div class="kpi-row" id="staffKPI"></div>
-        <div class="widget-row" id="staffWidgets"></div>
+        <div class="kpi-grid" id="staffKPI"></div>
+        <div class="widget-grid" id="staffWidgets"></div>
         <div class="table-container">
             <table><thead><tr><th>Сотрудник</th><th>Роль</th><th>Смен</th><th>Базовая</th><th>Бонус</th><th>Итого</th></tr></thead><tbody id="staffTableBody"></tbody></table>
         </div>`;
@@ -703,25 +948,42 @@
         document.getElementById('staffPrevMonthBtn').addEventListener('click', async ()=>{
             staffMonth--; if(staffMonth<1){ staffMonth=12; staffYear--; }
             await loadWorklog(staffYear, staffMonth); await loadSalaryParams();
-            document.getElementById('staffMonthTitle').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
+            document.querySelector('.month-title').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
             renderStaff();
         });
         document.getElementById('staffNextMonthBtn').addEventListener('click', async ()=>{
             staffMonth++; if(staffMonth>12){ staffMonth=1; staffYear++; }
             await loadWorklog(staffYear, staffMonth); await loadSalaryParams();
-            document.getElementById('staffMonthTitle').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
+            document.querySelector('.month-title').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
             renderStaff();
         });
-        ['staffPeriodFull','staffPeriod1','staffPeriod2'].forEach((id,i)=>{
-            document.getElementById(id).addEventListener('click', ()=>{
-                filterState.staff.period = ['full','1-15','16-31'][i];
+        const periodBtns = {
+            staffPeriodFull: 'full',
+            staffPeriod1: '1-15',
+            staffPeriod2: '16-31'
+        };
+        Object.entries(periodBtns).forEach(([id, period]) => {
+            document.getElementById(id).addEventListener('click', () => {
+                filterState.staff.period = period;
+                updateStaffPeriodButtons(id);
                 renderStaff();
             });
         });
     }
 
+    function updateStaffPeriodButtons(activeId) {
+        ['staffPeriodFull','staffPeriod1','staffPeriod2'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.classList.toggle('btn-primary', id === activeId);
+        });
+    }
+
     function renderStaff() {
         persistState();
+        updateStaffPeriodButtons(
+            filterState.staff.period === 'full' ? 'staffPeriodFull' :
+            filterState.staff.period === '1-15' ? 'staffPeriod1' : 'staffPeriod2'
+        );
         const period = filterState.staff.period;
         const y = staffYear, m = staffMonth;
         const daysInMonth = new Date(y, m, 0).getDate();
@@ -764,7 +1026,8 @@
             <div class="kpi-card"><span class="kpi-label">Сотрудников</span><span class="kpi-value">${results.length}</span></div>
             <div class="kpi-card"><span class="kpi-label">Смен</span><span class="kpi-value">${results.reduce((s,r)=>s+r.worked,0)}</span></div>`;
         document.getElementById('staffWidgets').innerHTML = results.map(r=>`
-            <div class="widget-card"><div class="widget-title">${r.emp.name} (${r.emp.role})</div>
+            <div class="widget-card">
+                <div class="widget-title">${r.emp.name} (${r.emp.role})</div>
                 <div style="display:flex;justify-content:space-between;"><span>Смен:</span><strong>${r.worked}</strong></div>
                 <div style="display:flex;justify-content:space-between;"><span>Базовая:</span><strong>${r.base.toFixed(0)} ₽</strong></div>
                 <div style="display:flex;justify-content:space-between;"><span>Бонус:</span><strong>${r.bonus.toFixed(0)} ₽</strong></div>
@@ -785,8 +1048,8 @@
             <input type="date" class="filter-input" id="cmpP2To" value="${f.period2To||''}">
             <button class="btn btn-primary" id="cmpApplyBtn">Сравнить</button>
         </div>
-        <div class="kpi-row" id="cmpKPI"></div>
-        <div class="widget-row" id="cmpWidgets"></div>`;
+        <div class="kpi-grid" id="cmpKPI"></div>
+        <div class="widget-grid" id="cmpWidgets"></div>`;
     }
 
     function setupCompareListeners() {
@@ -905,8 +1168,8 @@
     });
     document.getElementById('homeSidebarBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
     document.getElementById('logoutSidebarBtn').addEventListener('click', async ()=>{
-        try { await _supabase.auth.signOut(); } catch(e) { console.error('Ошибка выхода:', e); }
-        finally { window.location.href='login.html'; }
+        try { await _supabase.auth.signOut(); } catch(e) {}
+        window.location.href='login.html';
     });
     document.getElementById('showAllWidgetsBtn').addEventListener('click', ()=>{
         document.querySelectorAll('.widget-card').forEach(w=>w.classList.remove('hidden'));
