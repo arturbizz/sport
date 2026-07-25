@@ -18,9 +18,7 @@
       --accent: #0d9488;
       --accent-light: #ccfbf1;
       --warm-yellow: #f59e0b;
-      --soft-green: #10b981;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
-      --chat-bg: #f0fdfa;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -38,13 +36,18 @@
       flex-wrap: wrap;
     }
     .user-bar span { font-weight: 500; color: var(--text-secondary); }
-    .btn-logout, .btn-impersonate {
+    .btn-logout, .btn-impersonate, .btn-mascot {
       background: var(--surface); border: 1px solid var(--border); padding: 0.4rem 1rem;
       border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 0.85rem;
       transition: 0.2s; color: var(--text); caret-color: transparent;
     }
-    .btn-logout:hover, .btn-impersonate:hover { background: #f1f5f9; }
+    .btn-logout:hover, .btn-impersonate:hover, .btn-mascot:hover { background: #f1f5f9; }
     .btn-impersonate.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-mascot {
+      background: var(--accent); color: white; border: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-mascot:hover { background: #0f766e; }
     h1 {
       text-align: center; font-size: 2.5rem; font-weight: 800;
       background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
@@ -65,71 +68,24 @@
     .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
     .card p { color: var(--text-secondary); font-size: 0.9rem; }
 
-    /* Чат */
-    .chat-button {
-      position: fixed; bottom: 20px; right: 20px;
-      background: var(--accent); color: white; border: none;
-      border-radius: 50%; width: 56px; height: 56px;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; box-shadow: 0 8px 24px rgba(13,148,136,0.3);
-      z-index: 9998; transition: 0.2s;
+    /* Модальное окно для маскота */
+    .mascot-modal {
+      position: fixed; inset: 0; background: rgba(15,23,42,0.4);
+      backdrop-filter: blur(12px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 10000;
     }
-    .chat-button:hover { transform: scale(1.05); }
-
-    #chat-widget {
-      position: fixed; bottom: 90px; right: 20px; width: 380px; max-height: 550px;
-      background: white; border-radius: var(--radius-xl); box-shadow: 0 12px 32px rgba(0,0,0,0.1);
-      font-family: 'Inter', sans-serif; z-index: 9999; display: none;
-      border: 1px solid var(--border); overflow: hidden; transition: 0.3s;
+    .mascot-modal iframe {
+      width: 90vw; height: 90vh; max-width: 600px; max-height: 800px;
+      border-radius: 32px; border: none;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset;
     }
-    #chat-widget.expanded { width: 520px; max-height: 80vh; }
-    #chat-widget.expanded #chat-messages { height: 55vh; }
-    #chat-header {
-      background: var(--accent); color: white; padding: 14px 18px;
-      font-weight: 600; display: flex; justify-content: space-between;
+    .mascot-modal .close-btn {
+      position: absolute; top: 20px; right: 30px;
+      background: white; border: none; border-radius: 50%;
+      width: 40px; height: 40px; font-size: 20px; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
-    #chat-mascot {
-      background: var(--chat-bg); padding: 10px; display: flex;
-      align-items: center; justify-content: center; border-bottom: 1px solid #e2e8f0;
-    }
-    #mascot-svg { width: 60px; height: 60px; }
-    .mascot-idle { animation: breathe 3s infinite; }
-    .mascot-listening { animation: nod 0.6s infinite; }
-    .mascot-speaking { animation: talk 0.4s infinite; }
-    @keyframes breathe {
-      0%,100% { transform: translateY(0); }
-      50% { transform: translateY(-3px); }
-    }
-    @keyframes nod {
-      0%,100% { transform: rotate(0); }
-      25% { transform: rotate(-5deg); }
-      75% { transform: rotate(5deg); }
-    }
-    @keyframes talk {
-      0%,100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
-    #chat-messages {
-      height: 300px; overflow-y: auto; padding: 16px; display: flex;
-      flex-direction: column; gap: 10px; background: var(--chat-bg);
-    }
-    .msg { max-width: 80%; padding: 8px 14px; border-radius: 18px; font-size: 14px; line-height: 1.4; }
-    .msg.user { align-self: flex-end; background: #ccfbf1; color: #134e4a; }
-    .msg.bot { align-self: flex-start; background: white; color: #0f172a; border: 1px solid #e2e8f0; }
-    .quick-actions {
-      display: flex; gap: 6px; padding: 8px 16px; overflow-x: auto;
-      background: white; border-top: 1px solid #e2e8f0;
-    }
-    .quick-btn {
-      padding: 6px 12px; border-radius: 20px; border: 1px solid #e2e8f0;
-      background: white; font-size: 12px; font-weight: 500; white-space: nowrap;
-      cursor: pointer; transition: 0.2s; color: var(--text-secondary);
-    }
-    .quick-btn:hover { background: #f0fdfa; border-color: var(--accent); color: var(--accent); }
-    #chat-input-area { display: flex; border-top: 1px solid #e2e8f0; }
-    #chat-input { flex:1; border: none; padding: 12px; outline: none; font-size: 14px; caret-color: auto; }
-    #chat-send { background: var(--accent); color: white; border: none; padding: 0 20px; font-weight: 600; cursor: pointer; }
-    #expand-btn { cursor: pointer; font-size: 18px; }
     .impersonate-menu {
       position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border);
       border-radius: var(--radius-sm); box-shadow: 0 8px 16px rgba(0,0,0,0.08);
@@ -137,11 +93,6 @@
     }
     .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
     .impersonate-menu button { width: 100%; margin-top: 4px; }
-
-    @media (max-width: 500px) {
-      #chat-widget { width: 90vw; right: 5vw; }
-      #chat-widget.expanded { width: 95vw; }
-    }
   </style>
 </head>
 <body>
@@ -169,41 +120,21 @@
     <div class="cards" id="mainCards"></div>
   </div>
 
-  <div id="chat-widget">
-    <div id="chat-header">
-      <span>Чат с помощником</span>
-      <span id="expand-btn" onclick="toggleExpand()">⛶</span>
-    </div>
-    <div id="chat-mascot">
-      <svg id="mascot-svg" class="mascot-idle" viewBox="0 0 100 100" width="60" height="60">
-        <ellipse cx="50" cy="55" rx="30" ry="25" fill="#0d9488" />
-        <circle cx="38" cy="40" r="8" fill="white" />
-        <circle cx="62" cy="40" r="8" fill="white" />
-        <circle cx="38" cy="40" r="4" fill="#0f172a" />
-        <circle cx="62" cy="40" r="4" fill="#0f172a" />
-        <polygon points="45,48 55,48 50,58" fill="#f59e0b" />
-        <line x1="30" y1="32" x2="42" y2="34" stroke="#0f172a" stroke-width="2" />
-        <line x1="70" y1="32" x2="58" y2="34" stroke="#0f172a" stroke-width="2" />
-        <ellipse cx="20" cy="55" rx="10" ry="15" fill="#0d9488" opacity="0.8" />
-        <ellipse cx="80" cy="55" rx="10" ry="15" fill="#0d9488" opacity="0.8" />
-      </svg>
-    </div>
-    <div id="chat-messages"></div>
-    <div class="quick-actions" id="quickActions"></div>
-    <div id="chat-input-area">
-      <input id="chat-input" placeholder="Задайте вопрос..." />
-      <button id="chat-send">➤</button>
-    </div>
-  </div>
-  <button class="chat-button" onclick="document.getElementById('chat-widget').style.display='block'">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  <!-- Кнопка Маскотик -->
+  <button class="btn-mascot" id="mascotBtn" style="position:fixed; bottom:20px; right:20px; z-index:9998; padding:12px 20px; border-radius:28px; box-shadow:0 8px 24px rgba(13,148,136,0.3);">
+    <span style="font-size:20px;">🦉</span> Маскотик
   </button>
+
+  <!-- Модальное окно -->
+  <div class="mascot-modal" id="mascotModal">
+    <button class="close-btn" onclick="closeMascot()">✕</button>
+    <iframe id="mascotFrame" src="mascot.html"></iframe>
+  </div>
 
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/super-handler`;
 
     const sections = [
       { id: 'schedule', title: 'График работы', desc: 'Расписание, зарплата', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] },
@@ -271,7 +202,6 @@
     async function refreshUI() {
       effectiveRole = await fetchRole();
       renderCards();
-      if (window.updateQuickActions) window.updateQuickActions();
       const userInfo = document.getElementById('userInfo');
       if (userInfo && currentUser) {
         userInfo.textContent = `${currentUser.email} (${effectiveRole})`;
@@ -293,98 +223,13 @@
       }
     }
 
-    function initChat() {
-      const chatMessages = document.getElementById('chat-messages');
-      const chatInput = document.getElementById('chat-input');
-      const chatSend = document.getElementById('chat-send');
-      const mascot = document.getElementById('mascot-svg');
-
-      function loadHistory() {
-        const key = `chat_history_${currentUser?.email || 'anon'}`;
-        try {
-          const history = JSON.parse(localStorage.getItem(key) || '[]');
-          history.forEach(msg => addMessage(msg.text, msg.sender, false));
-        } catch {}
-      }
-      function saveHistory() {
-        const key = `chat_history_${currentUser?.email || 'anon'}`;
-        const messages = [];
-        chatMessages.querySelectorAll('.msg').forEach(msg => {
-          messages.push({ text: msg.textContent, sender: msg.classList.contains('user') ? 'user' : 'bot' });
-        });
-        localStorage.setItem(key, JSON.stringify(messages));
-      }
-
-      function addMessage(text, sender, save = true) {
-        const div = document.createElement('div');
-        div.className = `msg ${sender}`;
-        div.textContent = text;
-        chatMessages.appendChild(div);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        if (save) saveHistory();
-      }
-
-      function setMascotState(state) {
-        mascot.classList.remove('mascot-idle', 'mascot-listening', 'mascot-speaking');
-        mascot.classList.add('mascot-' + state);
-      }
-
-      async function askBot(question) {
-        setMascotState('listening');
-        try {
-          const headers = { 'Content-Type': 'application/json' };
-          if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
-          const resp = await fetch(FUNCTION_URL, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ question, email: currentUser?.email, impersonatedRole })
-          });
-          if (!resp.ok) throw new Error(resp.status);
-          const data = await resp.json();
-          setMascotState('speaking');
-          addMessage(data.reply || 'Я не понял.', 'bot');
-        } catch(e) {
-          setMascotState('idle');
-          addMessage('Ассистент временно недоступен.', 'bot');
-        }
-        setTimeout(() => setMascotState('idle'), 2000);
-      }
-
-      window.updateQuickActions = function() {
-        let role = effectiveRole || 'Менеджер';
-        const buttons = {
-          'Менеджер': ['Моя зарплата', 'Мои продажи', 'Моя конверсия'],
-          'Преподаватель': ['Моя зарплата', 'Моё расписание'],
-          'Бухгалтер': ['Ближайшие платежи', 'Зарплаты сотрудников', 'Скачать ведомость'],
-          'ИП': ['Продажи сегодня', 'Ближайшие расходы'],
-          'Управляющий': ['Продажи сегодня', 'Прибыль', 'Конверсия лидов']
-        };
-        const list = buttons[role] || ['Моя зарплата', 'Ближайшие платежи', 'Продажи сегодня'];
-        const quickActions = document.getElementById('quickActions');
-        quickActions.innerHTML = list.map(text => `<button class="quick-btn">${text}</button>`).join('');
-        quickActions.querySelectorAll('.quick-btn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            addMessage(btn.textContent, 'user');
-            askBot(btn.textContent);
-          });
-        });
-      };
-
-      chatSend.addEventListener('click', () => {
-        const q = chatInput.value.trim();
-        if (!q) return;
-        addMessage(q, 'user');
-        chatInput.value = '';
-        askBot(q);
-      });
-      chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') chatSend.click(); });
-
-      loadHistory();
-      window.updateQuickActions();
-    }
-
-    window.toggleExpand = function() {
-      document.getElementById('chat-widget').classList.toggle('expanded');
+    // Маскотик
+    document.getElementById('mascotBtn').addEventListener('click', () => {
+      document.getElementById('mascotFrame').src = 'mascot.html';
+      document.getElementById('mascotModal').style.display = 'flex';
+    });
+    window.closeMascot = function() {
+      document.getElementById('mascotModal').style.display = 'none';
     };
 
     async function init() {
@@ -424,7 +269,6 @@
       }
 
       await refreshUI();
-      initChat();
     }
 
     document.addEventListener('DOMContentLoaded', init);
