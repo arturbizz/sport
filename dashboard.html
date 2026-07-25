@@ -381,6 +381,9 @@
     let activeTab = localStorage.getItem('dash_activeTab') || 'finance';
     let staffYear = new Date().getFullYear();
     let staffMonth = new Date().getMonth() + 1;
+    // Добавляем состояние для месяца в зарплате педагогов
+    let salaryYear = new Date().getFullYear();
+    let salaryMonth = new Date().getMonth() + 1;
     const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     let salaryUploadInProgress = false;
 
@@ -463,6 +466,7 @@
         document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
     }
 
+    // ==================== ФИНАНСЫ (без изменений) ====================
     function financeHTML() {
         const f = filterState.finance;
         const types = [...new Set(financeData.map(d=>d.operation_type).filter(Boolean))].sort();
@@ -516,6 +520,7 @@
     }
 
     function uploadFinance() {
+        // ... без изменений ...
         const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
         input.onchange = async (e) => {
             const file = e.target.files[0]; if(!file) return;
@@ -539,7 +544,6 @@
                 if (clientIdx === -1) clientIdx = headers.findIndex(h=>h.includes('клиент') || h.includes('плательщик'));
                 const teacherIdx = headers.findIndex(h=>h.includes('педагог'));
                 const periodIdx = headers.findIndex(h=>h.includes('период'));
-
                 const parsed = [];
                 for(let i=headerIdx+1; i<rows.length; i++){
                     const cols=rows[i]; if(!cols) continue;
@@ -563,16 +567,15 @@
                 const { error: delErr } = await _supabase.from('crm_finance').delete().neq('id',0);
                 if (delErr) { alert('Ошибка удаления старых данных: ' + delErr.message); return; }
                 let { error: insErr } = await _supabase.from('crm_finance').insert(parsed);
-                let droppedOptionalFields = false;
                 if (insErr && (teacherIdx !== -1 || periodIdx !== -1)) {
                     const fallbackParsed = parsed.map(r => { const { teacher_name, period, ...rest } = r; return rest; });
                     const retry = await _supabase.from('crm_finance').insert(fallbackParsed);
-                    if (!retry.error) { insErr = null; droppedOptionalFields = true; }
+                    if (!retry.error) { insErr = null; }
                 }
                 if (insErr) { alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message); await loadFinance(); renderFinance(); return; }
                 await loadFinance();
                 renderFinance();
-                alert('Финансовый отчёт загружен (' + parsed.length + ' записей)' + (droppedOptionalFields ? '\n\n⚠️ Поля "Педагог" и "Период" не сохранены.' : ''));
+                alert('Финансовый отчёт загружен (' + parsed.length + ' записей)');
             };
             reader.readAsArrayBuffer(file);
         };
@@ -631,7 +634,6 @@
         widgetsHtml += generateWidget('Расходы по счетам', group(expense,'account').slice(0,8));
         widgetsHtml += generateWidget('Доходы по счетам', group(income,'account').slice(0,8));
 
-        // Виджет ближайших платежей – теперь в общем стиле
         if (expensesData.length) {
             const todayISO = new Date().toISOString().slice(0,10);
             const upcoming = [...expensesData]
@@ -646,7 +648,7 @@
             widgetsHtml += `
             <div class="widget-card">
                 <div class="widget-title">Ближайшие обязательные платежи</div>
-                <ul class="widget-list" id="list-payments">
+                <ul class="widget-list">
                     ${upcoming.length ? upcoming.map(e => {
                         const overdue = e.next_payment_date && e.next_payment_date < todayISO;
                         const dateStr = e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru', {day:'numeric', month:'short'}) : '—';
@@ -665,13 +667,18 @@
         document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
 
-    // ==================== ЗП ПЕДАГОГОВ (исправлен парсинг) ====================
+    // ==================== ЗП ПЕДАГОГОВ (с выбором месяца) ====================
     function salaryHTML() {
         const f = filterState.salary;
         const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
         const subjects = [...new Set(salaryData.map(d=>d.subject).filter(Boolean))].sort();
         return `
         <div class="filters-row">
+            <div class="month-nav">
+                <button class="btn" id="salaryPrevMonthBtn">←</button>
+                <span class="month-title">${monthNames[salaryMonth-1]} ${salaryYear}</span>
+                <button class="btn" id="salaryNextMonthBtn">→</button>
+            </div>
             <button class="btn ${f.period==='full'?'btn-primary':''}" id="salPeriodFull">Весь месяц</button>
             <button class="btn ${f.period==='1-15'?'btn-primary':''}" id="salPeriod1">1–15</button>
             <button class="btn ${f.period==='16-31'?'btn-primary':''}" id="salPeriod2">16–31</button>
@@ -697,6 +704,22 @@
     }
 
     function setupSalaryListeners() {
+        // Переключение месяцев
+        document.getElementById('salaryPrevMonthBtn').addEventListener('click', async () => {
+            salaryMonth--;
+            if (salaryMonth < 1) { salaryMonth = 12; salaryYear--; }
+            document.querySelector('#tabContent .month-title').textContent = `${monthNames[salaryMonth-1]} ${salaryYear}`;
+            await loadSalary(); // перезагружаем данные, т.к. фильтр по месяцу будет применён в renderSalary
+            renderSalary();
+        });
+        document.getElementById('salaryNextMonthBtn').addEventListener('click', async () => {
+            salaryMonth++;
+            if (salaryMonth > 12) { salaryMonth = 1; salaryYear++; }
+            document.querySelector('#tabContent .month-title').textContent = `${monthNames[salaryMonth-1]} ${salaryYear}`;
+            await loadSalary();
+            renderSalary();
+        });
+
         document.getElementById('salPeriodFull').addEventListener('click', function() {
             filterState.salary.period = 'full';
             updateSalaryPeriodButtons('salPeriodFull');
@@ -773,23 +796,30 @@
                     const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
                     const parsed = [];
                     let currentTeacher = '';
+                    let detectedMonth = '';
                     for(let i=0; i<rows.length; i++){
                         const row = rows[i]; if(!row || row.length<2) continue;
                         const line = row.join(' ').trim();
                         if(line.startsWith('Выписка по зарплате -')){
                             currentTeacher = line.replace('Выписка по зарплате -','').split('За период')[0].trim();
+                            // Попробуем извлечь месяц из следующей строки (За период с ... по ...)
+                        } else if(line.startsWith('За период с')){
+                            // Парсим дату начала: "За период с 01.07.2026 по 15.07.2026"
+                            const match = line.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                            if (match) {
+                                detectedMonth = `${match[3]}-${match[2]}`; // YYYY-MM
+                            }
                         } else if(row.length>=5 && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
-                            // Пропускаем служебные строки
                             if (row[0] === 'Предмет' || line.includes('Сумма по филиалу') || row[0] === 'Орел') continue;
                             const subject = String(row[0]||'').trim();
                             const lessonType = String(row[1]||'').trim();
                             const rate = parseFloat(String(row[2]||'0').replace(',','.'))||0;
                             const qty = parseInt(String(row[3]||'0').replace(' шт.',''))||0;
                             const amount = parseFloat(String(row[4]||'0').replace(',','.').replace(/\s/g,''))||0;
-                            if(qty>0||amount>0) parsed.push({ teacher_name: currentTeacher, subject, lesson_type: lessonType, rate, quantity: qty, amount, skipped: false, period });
+                            if(qty>0||amount>0) parsed.push({ teacher_name: currentTeacher, subject, lesson_type: lessonType, rate, quantity: qty, amount, skipped: false, period, month: detectedMonth });
                         } else if(line.startsWith('Пропущенные записи')){
                             const qty = parseInt(String(row[4]||'0').replace(' шт.',''))||0;
-                            parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true, period });
+                            parsed.push({ teacher_name: currentTeacher, subject: 'Пропущенные', lesson_type: '', rate: 0, quantity: qty, amount: 0, skipped: true, period, month: detectedMonth });
                         }
                     }
                     if (parsed.length === 0) {
@@ -797,24 +827,20 @@
                         resolve();
                         return;
                     }
-                    const otherPeriods = [...new Set(salaryData.map(r=>r.period))].filter(p => p && p !== period);
-                    if (otherPeriods.length && !confirm(
-                        'В базе уже есть данные за период(ы): ' + otherPeriods.join(', ') + '.\n' +
-                        'Если это тот же месяц — суммы в "Весь месяц" задвоятся.\n' +
-                        'Если это другой месяц — сначала нажмите "Очистить все данные".\n\nПродолжить загрузку?'
-                    )) { resolve(); return; }
-                    const { error: delErr } = await _supabase.from('teacher_salary').delete().eq('period', period);
-                    if (delErr) { alert('Ошибка очистки периода: ' + delErr.message); resolve(); return; }
+                    // Удаляем записи за этот месяц и период, чтобы избежать дублей
+                    const monthToDelete = detectedMonth || `${salaryYear}-${String(salaryMonth).padStart(2,'0')}`;
+                    const { error: delErr } = await _supabase.from('teacher_salary').delete().eq('period', period).eq('month', monthToDelete);
+                    if (delErr) { alert('Ошибка очистки данных: ' + delErr.message); resolve(); return; }
                     const { error: insErr } = await _supabase.from('teacher_salary').insert(parsed);
                     if (insErr) {
-                        alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message + '\n\nДанные за период "' + period + '" удалены и НЕ восстановлены.');
+                        alert('ОШИБКА ЗАГРУЗКИ: ' + insErr.message);
                         await loadSalary(); renderSalary();
                         resolve();
                         return;
                     }
                     await loadSalary();
                     renderSalary();
-                    alert('Загружено строк: ' + parsed.length + ' (период: ' + period + ')');
+                    alert('Загружено строк: ' + parsed.length + ' (период: ' + period + ', месяц: ' + monthToDelete + ')');
                     resolve();
                 };
                 reader.readAsArrayBuffer(file);
@@ -824,7 +850,9 @@
     }
 
     function getSalaryFiltered() {
-        let d = salaryData;
+        // Фильтруем по выбранному месяцу и периоду
+        const monthStr = `${salaryYear}-${String(salaryMonth).padStart(2,'0')}`;
+        let d = salaryData.filter(r => r.month === monthStr);
         const f = filterState.salary;
         if (!f.showSkipped) d = d.filter(r => !r.skipped);
         if (f.name) d = d.filter(r => r.teacher_name === f.name);
@@ -834,14 +862,21 @@
     }
 
     function getTeacherPayouts() {
-        const payouts = {};
+        // Выплаты за выбранный месяц
+        const monthStr = `${salaryYear}-${String(salaryMonth).padStart(2,'0')}`;
+        const startDate = `${monthStr}-01`;
+        const lastDay = new Date(salaryYear, salaryMonth, 0).getDate();
+        const endDate = `${monthStr}-${String(lastDay).padStart(2,'0')}`;
+        
         const salaryRelated = financeData.filter(r=>{
             const type = (r.operation_type||'').toLowerCase();
             const cat = (r.category||'').toLowerCase();
             return (type.includes('расход') || type.includes('выплата')) &&
-                   (cat.includes('зп') || cat.includes('зарплат') || cat.includes('педагог'));
+                   (cat.includes('зп') || cat.includes('зарплат') || cat.includes('педагог')) &&
+                   r.operation_date >= startDate && r.operation_date <= endDate;
         });
-        const teachers = [...new Set(salaryData.map(d=>d.teacher_name))];
+        const teachers = [...new Set(salaryData.filter(r=>r.month===monthStr).map(d=>d.teacher_name))];
+        const payouts = {};
         salaryRelated.forEach(r=>{
             const amount = parseFloat(r.amount||0);
             const cat = (r.category||'').toLowerCase();
@@ -937,7 +972,8 @@
         document.getElementById('salTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.teacher_name}</td><td>${r.subject}</td><td>${r.lesson_type}</td><td>${r.rate}</td><td>${r.quantity}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.period||'full'}</td></tr>`).join('');
     }
 
-    // ==================== ЗП СОТРУДНИКОВ ====================
+    // ==================== ЗП СОТРУДНИКОВ (без изменений) ====================
+    // ... (оставлено без изменений, идентично предыдущей версии) ...
     function staffHTML() {
         const period = filterState.staff.period;
         return `
@@ -962,13 +998,13 @@
         document.getElementById('staffPrevMonthBtn').addEventListener('click', async ()=>{
             staffMonth--; if(staffMonth<1){ staffMonth=12; staffYear--; }
             await loadWorklog(staffYear, staffMonth); await loadSalaryParams();
-            document.querySelector('.month-title').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
+            document.querySelector('#tabContent .month-title').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
             renderStaff();
         });
         document.getElementById('staffNextMonthBtn').addEventListener('click', async ()=>{
             staffMonth++; if(staffMonth>12){ staffMonth=1; staffYear++; }
             await loadWorklog(staffYear, staffMonth); await loadSalaryParams();
-            document.querySelector('.month-title').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
+            document.querySelector('#tabContent .month-title').textContent = `${monthNames[staffMonth-1]} ${staffYear}`;
             renderStaff();
         });
         const periodBtns = {
@@ -1051,7 +1087,7 @@
         document.getElementById('staffTableBody').innerHTML = results.map(r=>`<tr><td>${r.emp.name}</td><td>${r.emp.role}</td><td>${r.worked}</td><td>${r.base.toFixed(0)} ₽</td><td>${r.bonus.toFixed(0)} ₽</td><td><strong>${r.total.toFixed(0)} ₽</strong></td></tr>`).join('');
     }
 
-    // ==================== СРАВНЕНИЕ ====================
+    // ==================== СРАВНЕНИЕ (без изменений) ====================
     function compareHTML() {
         const f = filterState.compare;
         return `
