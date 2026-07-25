@@ -173,20 +173,24 @@
     const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = 'login.html'; return; }
-      const userEmail = session.user.email;
-      document.getElementById('userEmail').textContent = userEmail;
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = 'login.html';
-      });
-
-      // Показываем административные карточки только для admin
-      if (userEmail === ADMIN_EMAIL) {
-        document.querySelectorAll('.admin-only').forEach(el => {
-          el.style.display = 'flex';
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        const userEmail = session.user.email;
+        document.getElementById('userEmail').textContent = userEmail;
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+          await supabase.auth.signOut();
+          window.location.href = 'login.html';
         });
+
+        // Показываем административные карточки только для admin
+        if (userEmail === ADMIN_EMAIL) {
+          document.querySelectorAll('.admin-only').forEach(el => {
+            el.style.display = 'flex';
+          });
+        }
+      } catch (e) {
+        console.error('Ошибка на главной странице:', e);
       }
     })();
   </script>
