@@ -631,7 +631,7 @@
         widgetsHtml += generateWidget('Расходы по счетам', group(expense,'account').slice(0,8));
         widgetsHtml += generateWidget('Доходы по счетам', group(income,'account').slice(0,8));
 
-        // Виджет ближайших платежей — улучшенный дизайн
+        // Виджет ближайших платежей – теперь в общем стиле
         if (expensesData.length) {
             const todayISO = new Date().toISOString().slice(0,10);
             const upcoming = [...expensesData]
@@ -646,18 +646,18 @@
             widgetsHtml += `
             <div class="widget-card">
                 <div class="widget-title">Ближайшие обязательные платежи</div>
-                <div style="display:flex; flex-direction:column; gap:12px;">
+                <ul class="widget-list" id="list-payments">
                     ${upcoming.length ? upcoming.map(e => {
                         const overdue = e.next_payment_date && e.next_payment_date < todayISO;
                         const dateStr = e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru', {day:'numeric', month:'short'}) : '—';
-                        return `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(0,0,0,0.03); ${overdue ? 'background:rgba(220,38,38,0.03); border-radius:8px;' : ''}">
-                            <span style="font-weight:500; max-width:55%; white-space:normal; line-height:1.3;">${e.name}</span>
-                            <span style="font-weight:600; min-width:80px; text-align:right;">${parseFloat(e.amount||0).toLocaleString()} ₽</span>
-                            <span style="color:var(--text-tertiary); font-size:13px; min-width:60px; text-align:right;">${dateStr}</span>
+                        return `<li style="${overdue ? 'background: rgba(220,38,38,0.04); border-radius: var(--radius-sm);' : ''}">
+                            <span style="flex:1; white-space:normal;">${e.name}</span>
+                            <span style="width:100px; text-align:right; font-weight:600;">${parseFloat(e.amount||0).toLocaleString()} ₽</span>
+                            <span style="width:70px; text-align:right; color:var(--text-tertiary); font-size:13px;">${dateStr}</span>
                             ${overdue ? '<span class="badge red" style="margin-left:8px;">просрочен</span>' : ''}
-                        </div>`;
-                    }).join('') : '<div class="empty-message">Все платежи оплачены</div>'}
-                </div>
+                        </li>`;
+                    }).join('') : '<li class="empty-message">Все платежи оплачены</li>'}
+                </ul>
             </div>`;
         }
 
@@ -665,7 +665,7 @@
         document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
 
-    // ==================== ЗП ПЕДАГОГОВ (исправлен парсинг и выплаты) ====================
+    // ==================== ЗП ПЕДАГОГОВ (исправлен парсинг) ====================
     function salaryHTML() {
         const f = filterState.salary;
         const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
@@ -778,9 +778,9 @@
                         const line = row.join(' ').trim();
                         if(line.startsWith('Выписка по зарплате -')){
                             currentTeacher = line.replace('Выписка по зарплате -','').split('За период')[0].trim();
-                        } else if(row.length>=5 && row[0]!=='Предмет' && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
-                            // Пропускаем строки с "Сумма по филиалу" и "Орел"
-                            if (line.includes('Сумма по филиалу') || row[0].trim() === 'Орел') continue;
+                        } else if(row.length>=5 && !line.startsWith('Итого') && !line.startsWith('Пропущенные') && !line.startsWith('Общая сумма')){
+                            // Пропускаем служебные строки
+                            if (row[0] === 'Предмет' || line.includes('Сумма по филиалу') || row[0] === 'Орел') continue;
                             const subject = String(row[0]||'').trim();
                             const lessonType = String(row[1]||'').trim();
                             const rate = parseFloat(String(row[2]||'0').replace(',','.'))||0;
@@ -793,7 +793,7 @@
                         }
                     }
                     if (parsed.length === 0) {
-                        alert('Не удалось разобрать файл — не найдено ни одной строки с уроками.');
+                        alert('Не удалось разобрать файл. Убедитесь, что файл содержит строки уроков после заголовков "Предмет Тип Ставка Кол-во Сумма".');
                         resolve();
                         return;
                     }
@@ -835,7 +835,6 @@
 
     function getTeacherPayouts() {
         const payouts = {};
-        // Выбираем только расходные операции с указанием зарплаты
         const salaryRelated = financeData.filter(r=>{
             const type = (r.operation_type||'').toLowerCase();
             const cat = (r.category||'').toLowerCase();
@@ -847,11 +846,9 @@
             const amount = parseFloat(r.amount||0);
             const cat = (r.category||'').toLowerCase();
             let matched = null;
-            // Точное совпадение по teacher_name
             if (r.teacher_name && teachers.includes(r.teacher_name)) {
                 matched = r.teacher_name;
             } else {
-                // Ищем полное имя педагога как отдельное слово в категории
                 for (const t of teachers) {
                     if (t && cat.includes(t.toLowerCase())) {
                         matched = t;
@@ -889,7 +886,7 @@
         });
         const bySubject = {};
         data.forEach(r=>{
-            if (r.subject === 'Орел') return; // исключаем служебную строку, если вдруг попала
+            if (r.subject === 'Орел') return;
             bySubject[r.subject]=(bySubject[r.subject]||0)+parseFloat(r.amount||0);
         });
 
