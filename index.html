@@ -81,7 +81,6 @@
       background: white; border-radius: var(--radius-xl); box-shadow: 0 12px 32px rgba(0,0,0,0.1);
       font-family: 'Inter', sans-serif; z-index: 9999; display: none;
       border: 1px solid var(--border); overflow: hidden; transition: 0.3s;
-      caret-color: auto;
     }
     #chat-widget.expanded { width: 520px; max-height: 80vh; }
     #chat-widget.expanded #chat-messages { height: 55vh; }
@@ -138,6 +137,12 @@
     }
     .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
     .impersonate-menu button { width: 100%; margin-top: 4px; }
+
+    /* Адаптация чата для маленьких экранов */
+    @media (max-width: 500px) {
+      #chat-widget { width: 90vw; right: 5vw; }
+      #chat-widget.expanded { width: 95vw; }
+    }
   </style>
 </head>
 <body>
@@ -268,7 +273,6 @@
     async function refreshUI() {
       effectiveRole = await fetchRole();
       renderCards();
-      updateQuickActions();
       const impBtn = document.getElementById('impersonateBtn');
       if (currentUser?.email === 'arturgalkin.ru@mail.ru') {
         impBtn.style.display = 'inline-block';
@@ -343,7 +347,7 @@
         setTimeout(() => setMascotState('idle'), 2000);
       }
 
-      window.updateQuickActions = function() {
+      function updateQuickActions() {
         let role = effectiveRole || 'Менеджер';
         const buttons = {
           'Менеджер': ['Моя зарплата', 'Мои продажи', 'Моя конверсия'],
@@ -361,7 +365,7 @@
             askBot(btn.textContent);
           });
         });
-      };
+      }
 
       chatSend.addEventListener('click', () => {
         const q = chatInput.value.trim();
