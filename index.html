@@ -254,6 +254,7 @@
       container.innerHTML = '';
       const isFounder = currentUser?.email === 'arturgalkin.ru@mail.ru';
       sections.forEach(s => {
+        // админские разделы доступны только основателю или управляющему
         const show = s.roles.includes(effectiveRole) || (s.admin && isFounder);
         if (show) {
           const card = document.createElement('a');
@@ -269,7 +270,6 @@
       effectiveRole = await fetchRole();
       renderCards();
       updateQuickActions();
-      // отображение кнопки имперсонации
       const impBtn = document.getElementById('impersonateBtn');
       if (currentUser?.email === 'arturgalkin.ru@mail.ru') {
         impBtn.style.display = 'inline-block';
@@ -377,7 +377,6 @@
       updateQuickActions();
     }
 
-    // Глобальная функция сворачивания/разворачивания чата
     window.toggleExpand = function() {
       document.getElementById('chat-widget').classList.toggle('expanded');
     };
@@ -392,14 +391,12 @@
       currentToken = session.access_token;
       document.getElementById('userEmail').textContent = currentUser.email;
 
-      // Выход
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         localStorage.removeItem('impersonated_role');
         await _supabase.auth.signOut();
         window.location.href = 'login.html';
       });
 
-      // Имперсонация (только основатель)
       if (currentUser.email === 'arturgalkin.ru@mail.ru') {
         const savedRole = localStorage.getItem('impersonated_role');
         if (savedRole) impersonatedRole = savedRole;
