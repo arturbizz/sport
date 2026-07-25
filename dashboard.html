@@ -414,6 +414,7 @@
     let salaryMonth = new Date().getMonth() + 1;
     const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
     let salaryUploadInProgress = false;
+    let staffResults = []; // храним результаты расчёта для экспорта
 
     const DEFAULT_FILTER_STATE = {
         finance: { dateFrom:'', dateTo:'', type:'', cat:'', man:'', acc:'', payType:'', showRaw:false },
@@ -706,7 +707,7 @@
         document.getElementById('finTableBody').innerHTML = data.slice(0,60).map(r=>`<tr><td>${r.operation_date}</td><td>${r.operation_type}</td><td>${parseFloat(r.amount||0).toLocaleString()} ₽</td><td>${r.category}</td><td>${r.account||''}</td><td>${r.payment_type||''}</td><td>${r.manager}</td></tr>`).join('');
     }
 
-    // ==================== ЗП ПЕДАГОГОВ (месяц выбирается вручную) ====================
+    // ==================== ЗП ПЕДАГОГОВ ====================
     function salaryHTML() {
         const f = filterState.salary;
         const names = [...new Set(salaryData.map(d=>d.teacher_name).filter(Boolean))].sort();
@@ -728,6 +729,7 @@
             <button class="btn" id="uploadSalaryBtnFull" ${salaryUploadInProgress?'disabled':''}>Загрузить общий</button>
             <button class="btn" id="clearSalaryBtn">Очистить всё за месяц</button>
             <button class="btn" id="toggleSkippedBtn">${f.showSkipped?'Скрыть':'Показать'} пропущенные</button>
+            <button class="btn" id="exportSalaryBtn">📥 Excel</button>
         </div>
         <div class="kpi-grid" id="salKPI"></div>
         <div class="widget-grid" id="salWidgets">
@@ -813,6 +815,29 @@
             document.getElementById('toggleSkippedBtn').textContent = (filterState.salary.showSkipped?'Скрыть':'Показать')+' пропущенные';
             renderSalary();
         });
+        // Экспорт в Excel
+        document.getElementById('exportSalaryBtn').addEventListener('click', exportSalaryToExcel);
+    }
+
+    function exportSalaryToExcel() {
+        const data = getSalaryFiltered();
+        if (data.length === 0) {
+            customAlert('Нет данных для экспорта.');
+            return;
+        }
+        const rows = data.map(r => ({
+            'Педагог': r.teacher_name,
+            'Предмет': r.subject,
+            'Тип': r.lesson_type,
+            'Ставка': r.rate,
+            'Кол-во': r.quantity,
+            'Сумма': r.amount,
+            'Период': r.period || 'full'
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'ЗП_педагоги');
+        XLSX.writeFile(wb, `ЗП_педагоги_${monthNames[salaryMonth-1]}_${salaryYear}.xlsx`);
     }
 
     function disableSalaryButtons(disable) {
@@ -858,7 +883,6 @@
                         resolve();
                         return;
                     }
-                    // Удаляем старые данные за этот месяц и период
                     const { error: delErr } = await _supabase.from('teacher_salary').delete().eq('period', period).eq('month', monthStr);
                     if (delErr) { customAlert('Ошибка очистки данных: ' + delErr.message); resolve(); return; }
                     const { error: insErr } = await _supabase.from('teacher_salary').insert(parsed);
@@ -1012,6 +1036,7 @@
             <button class="btn ${period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
             <button class="btn ${period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
             <button class="btn ${period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
+            <button class="btn" id="exportStaffBtn">📥 Excel</button>
         </div>
         <div class="kpi-grid" id="staffKPI"></div>
         <div class="widget-grid" id="staffWidgets"></div>
@@ -1045,6 +1070,26 @@
                 renderStaff();
             });
         });
+        document.getElementById('exportStaffBtn').addEventListener('click', exportStaffToExcel);
+    }
+
+    function exportStaffToExcel() {
+        if (staffResults.length === 0) {
+            customAlert('Нет данных для экспорта.');
+            return;
+        }
+        const rows = staffResults.map(r => ({
+            'Сотрудник': r.emp.name,
+            'Роль': r.emp.role,
+            'Смен': r.worked,
+            'Базовая': r.base,
+            'Бонус': r.bonus,
+            'Итого': r.total
+        }));
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'ЗП_сотрудники');
+        XLSX.writeFile(wb, `ЗП_сотрудники_${monthNames[staffMonth-1]}_${staffYear}.xlsx`);
     }
 
     function updateStaffPeriodButtons(activeId) {
@@ -1097,6 +1142,7 @@
             }
             return { emp, worked, base, bonus, total:base+bonus, sales };
         });
+        staffResults = results; // сохраняем для экспорта
         document.getElementById('staffKPI').innerHTML = `
             <div class="kpi-card"><span class="kpi-label">Фонд оплаты</span><span class="kpi-value">${results.reduce((s,r)=>s+r.total,0).toLocaleString()} ₽</span></div>
             <div class="kpi-card"><span class="kpi-label">Сотрудников</span><span class="kpi-value">${results.length}</span></div>
