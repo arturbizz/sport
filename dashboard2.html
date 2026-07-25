@@ -155,20 +155,15 @@
         const client = normalizeName(clientName);
         if (!lead || !client) return false;
         if (lead === client) return true;
-        // Одно содержит другое, но только если длина общей части ≥ 70% от более длинного
+        // Одно содержит другое, длина меньшего не менее половины длины большего
         const longer = lead.length > client.length ? lead : client;
         const shorter = lead.length > client.length ? client : lead;
-        if (longer.includes(shorter)) {
-            return shorter.length / longer.length >= 0.7;
-        }
-        // Или совпадение по словам (например, фамилия + имя)
+        if (longer.includes(shorter) && shorter.length / longer.length >= 0.5) return true;
+        // Или есть хотя бы 2 общих слова длиннее 2 символов
         const leadWords = lead.split(' ').filter(w => w.length > 2);
         const clientWords = client.split(' ').filter(w => w.length > 2);
-        if (leadWords.length >= 2 && clientWords.length >= 2) {
-            const common = leadWords.filter(w => clientWords.includes(w));
-            return common.length >= Math.min(leadWords.length, clientWords.length);
-        }
-        return false;
+        const common = leadWords.filter(w => clientWords.includes(w));
+        return common.length >= 2;
     }
 
     function applyGradientColors(tableElement, values) {
@@ -278,7 +273,7 @@
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Связь с финансами: уникальное сопоставление клиент -> один лид
+        // Связь с финансами: клиент используется только один раз
         const clientMap = new Map();
         financeData.forEach(f => {
             const clientName = (f.client || '').trim();
