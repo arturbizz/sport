@@ -223,9 +223,14 @@
       }
     }
 
-    // Маскотик
+    // Маскотик – передача email и токена в iframe
     document.getElementById('mascotBtn').addEventListener('click', () => {
-      document.getElementById('mascotFrame').src = 'mascot.html';
+      const params = new URLSearchParams();
+      if (currentUser) {
+        params.set('email', currentUser.email);
+        params.set('token', currentToken);
+      }
+      document.getElementById('mascotFrame').src = 'mascot.html?' + params.toString();
       document.getElementById('mascotModal').style.display = 'flex';
     });
     window.closeMascot = function() {
