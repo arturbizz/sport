@@ -113,8 +113,11 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/super-handler`;
-    let currentUser = null;
-    let currentToken = null;
+
+    // Получаем email и токен из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const userEmail = urlParams.get('email') || '';
+    const userToken = urlParams.get('token') || '';
     let effectiveRole = '';
 
     const chatMessages = document.getElementById('chatMessages');
@@ -122,34 +125,30 @@
     const sendBtn = document.getElementById('sendBtn');
     const quickActions = document.getElementById('quickActions');
 
-    // Инициализация сессии
     (async () => {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        currentToken = session.access_token;
+      if (userEmail && userToken) {
         // Определяем роль
-        if (currentUser.email === 'arturgalkin.ru@mail.ru') {
+        if (userEmail === 'arturgalkin.ru@mail.ru') {
           const impRole = localStorage.getItem('impersonated_role');
           effectiveRole = impRole || 'Управляющий';
         } else {
-          const { data: emp } = await _supabase.from('employees').select('role').eq('email', currentUser.email).single();
+          const { data: emp } = await _supabase.from('employees').select('role').eq('email', userEmail).single();
           effectiveRole = emp?.role || 'Менеджер';
         }
       } else {
-        effectiveRole = 'Менеджер'; // fallback
+        effectiveRole = 'Менеджер';
       }
       loadHistory();
       updateQuickActions();
     })();
 
     function loadHistory() {
-      const key = 'mascot_chat_history';
+      const key = `mascot_chat_${userEmail || 'anon'}`;
       const history = JSON.parse(localStorage.getItem(key) || '[]');
       history.forEach(msg => addMessage(msg.text, msg.sender, false));
     }
     function saveHistory() {
-      const key = 'mascot_chat_history';
+      const key = `mascot_chat_${userEmail || 'anon'}`;
       const messages = [];
       chatMessages.querySelectorAll('.msg').forEach(msg => {
         messages.push({ text: msg.textContent, sender: msg.classList.contains('user') ? 'user' : 'bot' });
@@ -169,11 +168,11 @@
     async function askBot(question) {
       try {
         const headers = { 'Content-Type': 'application/json' };
-        if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
+        if (userToken) headers['Authorization'] = `Bearer ${userToken}`;
         const resp = await fetch(FUNCTION_URL, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ question, email: currentUser?.email, impersonatedRole: localStorage.getItem('impersonated_role') || '' })
+          body: JSON.stringify({ question, email: userEmail, impersonatedRole: localStorage.getItem('impersonated_role') || '' })
         });
         const data = await resp.json();
         addMessage(data.reply || 'Я не понял.', 'bot');
