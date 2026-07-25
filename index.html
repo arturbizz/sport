@@ -15,13 +15,12 @@
       --border: rgba(15,23,42,0.06);
       --text: #0f172a;
       --text-secondary: #475569;
-      --accent: #0d9488; /* бирюзовый */
+      --accent: #0d9488;
       --accent-light: #ccfbf1;
       --warm-yellow: #f59e0b;
       --soft-green: #10b981;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
-      --space-4: 16px; --space-6: 24px; --space-8: 32px;
-      --chat-bg: #f0fdfa; /* тёплый светлый для чата */
+      --chat-bg: #f0fdfa;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -34,6 +33,7 @@
     .container { width: 100%; max-width: 900px; }
     .user-bar {
       display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
     .user-bar span { font-weight: 500; color: var(--text-secondary); }
     .btn-logout, .btn-impersonate {
@@ -61,7 +61,6 @@
     .card-icon { margin-bottom: 1rem; }
     .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
     .card p { color: var(--text-secondary); font-size: 0.9rem; }
-    .admin-only { display: none; }
 
     /* Чат кнопка */
     .chat-button {
@@ -130,12 +129,12 @@
     #chat-send { background: var(--accent); color: white; border: none; padding: 0 20px; font-weight: 600; cursor: pointer; }
     #expand-btn { cursor: pointer; font-size: 18px; }
     .impersonate-menu {
-      position: absolute; background: white; border: 1px solid var(--border);
+      position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border);
       border-radius: var(--radius-sm); box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-      padding: 8px; display: none; z-index: 50; min-width: 180px;
+      padding: 8px; display: none; z-index: 50; min-width: 200px;
     }
-    .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; }
-    .impersonate-menu button { margin-top: 8px; width: 100%; }
+    .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+    .impersonate-menu button { width: 100%; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -160,12 +159,9 @@
     </div>
     <h1>Music Club Орёл</h1>
     <p class="subtitle">Платформа управления музыкальной школой</p>
-    <div class="cards" id="mainCards">
-      <!-- Карточки будут генерироваться динамически с учётом прав -->
-    </div>
+    <div class="cards" id="mainCards"></div>
   </div>
 
-  <!-- ИИ-ассистент -->
   <div id="chat-widget">
     <div id="chat-header">
       <span>Чат с помощником</span>
@@ -201,11 +197,8 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/super-handler`;
-    let currentUser = null;
-    let currentToken = null;
-    let impersonatedRole = null;
+    let currentUser = null, currentToken = null, impersonatedRole = null;
 
-    // Карточки разделов
     const sections = [
       { id: 'schedule', title: 'График работы', desc: 'Расписание, зарплата', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] },
       { id: 'vacations', title: 'График отпусков', desc: 'Планирование отпусков', roles: ['Управляющий','Менеджер','Администратор'] },
@@ -228,10 +221,8 @@
       currentToken = session.access_token;
       document.getElementById('userEmail').textContent = currentUser.email;
 
-      // Проверка основателя
       if (currentUser.email === 'arturgalkin.ru@mail.ru') {
         document.getElementById('impersonateBtn').style.display = 'inline-block';
-        // Восстановить режим имперсонации, если был сохранён
         const savedRole = localStorage.getItem('impersonated_role');
         if (savedRole) {
           impersonatedRole = savedRole;
@@ -247,7 +238,6 @@
         window.location.href = 'login.html';
       });
 
-      // Логика тестового просмотра
       document.getElementById('impersonateBtn').addEventListener('click', () => {
         document.getElementById('impersonateMenu').style.display = 'block';
       });
@@ -272,10 +262,8 @@
         renderCards();
       });
 
-      // Определяем роль для отображения карточек
       async function getEffectiveRole() {
         if (impersonatedRole) return impersonatedRole;
-        // ищем в employees
         const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
         return emp?.role || 'Управляющий';
       }
@@ -287,9 +275,9 @@
         sections.forEach(s => {
           if (s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий')) {
             const card = document.createElement('a');
-            card.className = `card ${s.id}`;
+            card.className = `card`;
             card.href = `${s.id}.html`;
-            card.innerHTML = `<div class="card-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${getIcon(s.id)}</svg></div><h2>${s.title}</h2><p>${s.desc}</p>`;
+            card.innerHTML = `<div class="card-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2">${getIcon(s.id)}</svg></div><h2>${s.title}</h2><p>${s.desc}</p>`;
             container.appendChild(card);
           }
         });
@@ -314,12 +302,9 @@
       }
 
       renderCards();
-
-      // Инициализация чата
       initChat();
     }
 
-    // ---------- Чат ----------
     function initChat() {
       const chatMessages = document.getElementById('chat-messages');
       const chatInput = document.getElementById('chat-input');
@@ -327,16 +312,13 @@
       const mascot = document.getElementById('mascot-svg');
       const quickActions = document.getElementById('quickActions');
 
-      let currentUserEmail = currentUser?.email || '';
-      let currentTokenLocal = currentToken;
-
       function loadHistory() {
-        const key = `chat_history_${currentUserEmail}`;
+        const key = `chat_history_${currentUser?.email || ''}`;
         const history = JSON.parse(localStorage.getItem(key) || '[]');
         history.forEach(msg => addMessage(msg.text, msg.sender, false));
       }
       function saveHistory() {
-        const key = `chat_history_${currentUserEmail}`;
+        const key = `chat_history_${currentUser?.email || ''}`;
         const messages = [];
         chatMessages.querySelectorAll('.msg').forEach(msg => {
           messages.push({ text: msg.textContent, sender: msg.classList.contains('user') ? 'user' : 'bot' });
@@ -362,11 +344,11 @@
         setMascotState('listening');
         try {
           const headers = { 'Content-Type': 'application/json' };
-          if (currentTokenLocal) headers['Authorization'] = `Bearer ${currentTokenLocal}`;
+          if (currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
           const resp = await fetch(FUNCTION_URL, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ question, email: currentUserEmail, impersonatedRole })
+            body: JSON.stringify({ question, email: currentUser?.email, impersonatedRole })
           });
           if (!resp.ok) throw new Error(resp.status);
           const data = await resp.json();
@@ -379,9 +361,12 @@
         setTimeout(() => setMascotState('idle'), 2000);
       }
 
-      // Быстрые кнопки на основе роли
       async function updateQuickActions() {
-        const role = impersonatedRole || (currentUserEmail ? (await supabase.from('employees').select('role').eq('email', currentUserEmail).single()).data?.role : '');
+        let role = impersonatedRole;
+        if (!role && currentUser?.email) {
+          const { data: emp } = await supabase.from('employees').select('role').eq('email', currentUser.email).single();
+          role = emp?.role;
+        }
         let buttons = [];
         if (role === 'Менеджер') buttons = ['Моя зарплата', 'Мои продажи', 'Моя конверсия'];
         else if (role === 'Преподаватель') buttons = ['Моя зарплата', 'Моё расписание'];
@@ -391,9 +376,8 @@
         else buttons = ['Моя зарплата', 'Ближайшие платежи', 'Продажи сегодня'];
         quickActions.innerHTML = buttons.map(text => `<button class="quick-btn">${text}</button>`).join('');
         quickActions.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => {
-          const q = btn.textContent;
-          addMessage(q, 'user');
-          askBot(q);
+          addMessage(btn.textContent, 'user');
+          askBot(btn.textContent);
         }));
       }
 
