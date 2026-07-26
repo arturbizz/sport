@@ -22,8 +22,8 @@
       --warm-yellow: #f59e0b;
       --soft-green: #10b981;
       --critical: #ef4444;
-      --royalty: #8b5cf6;
-      --net-profit: #1e3a8a;
+      --blue: #3b82f6;
+      --neutral: #8b5cf6;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -60,10 +60,16 @@
     }
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
     .btn-primary:hover { background: #0f766e; }
-    .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 1.2rem; padding: 0.2rem; transition: color 0.2s; }
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--text-secondary); font-size: 1.2rem; padding: 0.2rem;
+      transition: color 0.2s;
+    }
     .icon-btn:hover { color: var(--accent); }
 
-    .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .filters {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;
+    }
     .filter-btn {
       padding: 0.35rem 0.9rem; border-radius: 20px;
       border: 1px solid var(--border); background: var(--surface);
@@ -79,53 +85,32 @@
     }
     .forecast-total { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
     .forecast-details { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
-    .forecast-item { font-size: 0.95rem; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .forecast-item { font-size: 0.95rem; color: var(--text-secondary); }
     .forecast-item strong { color: var(--text); font-weight: 600; }
-    .forecast-expand { margin-left: 0.3rem; font-size: 0.8rem; color: var(--accent); cursor: pointer; user-select: none; }
+    .forecast-expand { margin-top: 0.3rem; font-size: 0.8rem; color: var(--accent); cursor: pointer; }
     .forecast-expand:hover { text-decoration: underline; }
-    .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); width: 100%; }
+    .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); }
     .forecast-list.open { display: block; }
-
-    .coeff-widget {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: var(--surface); border-radius: 10px;
-      border: 1px solid var(--border); padding: 2px;
+    .rate-input {
+      width: 70px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); text-align: center;
     }
-    .coeff-btn {
-      width: 32px; height: 32px; border: none; background: transparent;
-      font-size: 18px; font-weight: 600; color: var(--accent);
-      cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      transition: 0.2s;
-    }
-    .coeff-btn:hover { background: var(--accent-light); }
-    .coeff-value {
-      width: 70px; text-align: center; font-weight: 600; font-size: 1rem;
-      border: none; background: transparent; color: var(--text);
-      -moz-appearance: textfield;
-    }
-    .coeff-value::-webkit-outer-spin-button,
-    .coeff-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
     .kpi-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 1rem; margin-bottom: 2rem;
     }
     .kpi-card {
       background: var(--surface); border-radius: var(--radius-lg);
       padding: 1.2rem; border: 1px solid var(--border);
       box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-      min-width: 0;
     }
     .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
-    .kpi-value {
-      font-size: clamp(1.4rem, 1.8rem, 5vw);
-      font-weight: 700; color: var(--accent); margin-top: 0.3rem;
-      word-break: break-word; overflow-wrap: break-word; max-width: 100%;
-    }
-    .kpi-card.net-profit .kpi-value { color: var(--net-profit); font-size: clamp(1.5rem, 2rem, 5vw); }
-    .kpi-change { font-size: 0.75rem; margin-top: 0.2rem; color: var(--text-secondary); word-break: break-word; }
+    .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }
+    .kpi-card.neutral .kpi-value { color: var(--neutral); }
+    .kpi-change { font-size: 0.75rem; margin-top: 0.2rem; color: var(--text-secondary); }
     .kpi-change .up { color: var(--soft-green); }
     .kpi-change .down { color: var(--critical); }
+    .kpi-note { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; }
 
     .chart-container {
       background: var(--surface); border-radius: var(--radius-lg);
@@ -135,14 +120,15 @@
       font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary);
       display: flex; justify-content: space-between; align-items: center;
     }
-    .chart-title .period-btns { display: flex; gap: 0.3rem; }
-    .chart-title .period-btns button {
-      padding: 0.2rem 0.7rem; border-radius: 14px;
+    .chart-period-btns { display: flex; gap: 0.3rem; }
+    .chart-period-btns button {
+      padding: 0.2rem 0.6rem; border-radius: 14px;
       border: 1px solid var(--border); background: var(--surface);
       font-size: 0.75rem; font-weight: 500; cursor: pointer;
       color: var(--text-secondary); transition: 0.2s;
     }
-    .chart-title .period-btns button.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .chart-period-btns button.active { background: var(--accent); color: white; border-color: var(--accent); }
+
     #mainChart { width: 100%; height: 400px; }
 
     .widget-grid {
@@ -180,21 +166,14 @@
       backdrop-filter: blur(12px);
       border-radius: var(--radius-xl);
       padding: 2rem;
-      max-width: 600px; width: 90%;
+      max-width: 400px; width: 90%;
       box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
       animation: slideUp 0.25s ease-out;
-      max-height: 80vh; overflow-y: auto;
-      position: relative;
+      text-align: center;
     }
     @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-    .modal-close {
-      position: absolute; top: 16px; right: 16px;
-      background: none; border: none; cursor: pointer;
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-secondary); font-size: 18px;
-    }
-    .modal-close:hover { background: rgba(0,0,0,0.05); color: var(--text); }
+    .modal p { margin-bottom: 1.5rem; font-size: 16px; color: var(--text); }
+    .modal .btn { margin: 0 4px; }
     .header-actions { display: flex; gap: 0.5rem; align-items: center; }
     .nav-btn {
       padding: 0.45rem 1rem; border-radius: var(--radius-sm); font-weight: 600;
@@ -202,12 +181,6 @@
       border: 1px solid var(--accent); transition: 0.2s;
     }
     .nav-btn:hover { background: var(--accent); color: white; }
-
-    .month-detail-table { width: 100%; font-size: 0.8rem; }
-    .month-detail-table td { padding: 0.3rem 0; }
-    .progress-bg { height: 6px; background: #f1f5f9; border-radius: 3px; margin-top: 2px; }
-    .progress-fill { height: 100%; border-radius: 3px; background: var(--accent); }
-    .target-profit-input { width: 100px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); text-align: center; }
   </style>
 </head>
 <body>
@@ -247,8 +220,8 @@
 
   <div class="chart-container">
     <div class="chart-title">
-      <span>Динамика доходов, расходов, маркетинга и чистой прибыли</span>
-      <div class="period-btns" id="chartPeriodBtns">
+      <span>Динамика доходов, расходов, маркетинга и прибыли</span>
+      <div class="chart-period-btns" id="chartPeriodBtns">
         <button data-months="-1">Тек.</button>
         <button data-months="1" class="active">Прош.</button>
         <button data-months="3">3 мес</button>
@@ -262,27 +235,27 @@
 
   <div class="widget-grid">
     <div class="widget-card">
-      <div class="widget-title">Анализ влияния маркетинга</div>
-      <div id="marketingImpact"></div>
-    </div>
-    <div class="widget-card">
-      <div class="widget-title">Средние расходы по категориям (6 мес.)</div>
-      <div id="categoryAverages"></div>
-    </div>
-    <div class="widget-card">
-      <div class="widget-title">Прогноз точки безубыточности</div>
-      <div id="breakeven"></div>
-    </div>
-  </div>
-
-  <div class="widget-grid">
-    <div class="widget-card">
-      <div class="widget-title" id="periodCategoryTitle">Расходы по категориям</div>
+      <div class="widget-title" id="periodCategoryTitle">Расходы по категориям (прошлый месяц) — точные суммы</div>
       <div id="periodCategoryTotals"></div>
     </div>
     <div class="widget-card">
       <div class="widget-title" id="topExpensesTitle">Топ-10 крупнейших разовых расходов</div>
       <div id="topOneTimeExpenses"></div>
+    </div>
+  </div>
+
+  <div class="widget-grid">
+    <div class="widget-card">
+      <div class="widget-title">Анализ влияния маркетинга</div>
+      <div id="marketingImpact"></div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title">Средние расходы по категориям (последние 6 мес.)</div>
+      <div id="categoryAverages"></div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title">Прогноз точки безубыточности</div>
+      <div id="breakeven"></div>
     </div>
   </div>
 
@@ -298,19 +271,9 @@
   </div>
 </div>
 
-<!-- Модалка детализации месяца -->
-<div class="modal-overlay" id="monthDetailModal" style="display:none;">
-  <div class="modal">
-    <button class="modal-close" id="closeMonthDetailBtn">&times;</button>
-    <h2 id="monthDetailTitle" style="margin-bottom:1rem; padding-right: 2rem;"></h2>
-    <div id="monthDetailContent"></div>
-  </div>
-</div>
-
 <!-- Уведомление -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
   <div class="modal">
-    <button class="modal-close" onclick="document.getElementById('alertModal').style.display='none'">&times;</button>
     <p id="alertMessage"></p>
     <button class="btn btn-primary" id="alertOkBtn">OK</button>
   </div>
@@ -323,48 +286,49 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let financeData = [], allExpenses = [], teacherSalaryData = [];
-    let selectedMonths = 1;
+    let selectedMonths = 1; // по умолчанию прошлый месяц
     let myChart = null;
-    const ROYALTY_RATE = 0.08;
-    const ROYALTY_START = '2026-07';
 
+    // Коэффициент
     let globalRateCoeff = 1.0;
 
     const FIXED_ARTICLES = [
-      'Администраторы ЗП','ЗП Менеджеры оклад','Управленец','Старший педагог',
-      'Аренда оборудования','Телефония','Банковское обслуживание','% рассрочка'
+      'Администраторы ЗП',
+      'ЗП Менеджеры оклад',
+      'Управленец',
+      'Старший педагог',
+      'Аренда оборудования',
+      'Телефония',
+      'Банковское обслуживание',
+      '% рассрочка'
     ];
+
     const TEACHER_SALARY_ARTICLES = [
-      'ЗП Педагоги уроки','ЗП Педагоги  уроки','ЗП педагоги пробные','ЗП педагоги  пробные'
+      'ЗП Педагоги уроки',
+      'ЗП Педагоги  уроки',
+      'ЗП педагоги пробные',
+      'ЗП педагоги  пробные'
     ];
-
-    const isIncome = r => ['доход','продажа'].some(t => (r.operation_type||'').toLowerCase().includes(t));
-    const isExpense = r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t));
-    const isMarketing = r => (r.category||'').toLowerCase().includes('маркетинг');
-    const isFixedCategory = cat => FIXED_ARTICLES.some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
-    const isTeacherCategory = cat => TEACHER_SALARY_ARTICLES.some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
-
-    function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
-    function applyRoyalty(monthStr) { return monthStr >= ROYALTY_START ? ROYALTY_RATE : 0; }
 
     function showAlert(msg) {
       document.getElementById('alertMessage').textContent = msg;
       document.getElementById('alertModal').style.display = 'flex';
-      document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none';
+      document.getElementById('alertOkBtn').onclick = () => {
+        document.getElementById('alertModal').style.display = 'none';
+      };
     }
 
-    document.addEventListener('click', (e) => {
-      document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        if (e.target === overlay) overlay.style.display = 'none';
-      });
-    });
-
+    // Пагинированная загрузка всех записей
     async function fetchAll(table, orderColumn = 'operation_date') {
       const PAGE_SIZE = 1000;
       let allRows = [];
       let from = 0, to = PAGE_SIZE - 1;
       while (true) {
-        const { data, error } = await _supabase.from(table).select('*').order(orderColumn, { ascending: true }).range(from, to);
+        const { data, error } = await _supabase
+          .from(table)
+          .select('*')
+          .order(orderColumn, { ascending: true })
+          .range(from, to);
         if (error) throw error;
         if (!data || data.length === 0) break;
         allRows = allRows.concat(data);
@@ -374,6 +338,7 @@
       return allRows;
     }
 
+    // Загрузка коэффициента из crm_finance
     async function loadSettings() {
       try {
         const { data, error } = await _supabase
@@ -414,381 +379,13 @@
           account: 'system'
         }]);
       } catch (e) {
-        showAlert('Ошибка сохранения коэффициента. Подробности в консоли.');
+        showAlert('Ошибка сохранения коэффициента.');
         console.error(e);
       }
-      updateForecastAndBreakEven();
+      renderAll();
     }
 
-    function buildCoeffWidget(container) {
-      const widget = document.createElement('span');
-      widget.className = 'coeff-widget';
-      widget.innerHTML = `
-        <button class="coeff-btn" id="coeffMinus">−</button>
-        <input type="number" class="coeff-value" id="coeffValue" value="${globalRateCoeff.toFixed(2)}" step="0.05" min="0.5" max="3.0">
-        <button class="coeff-btn" id="coeffPlus">+</button>
-      `;
-      container.appendChild(widget);
-
-      const input = widget.querySelector('#coeffValue');
-      const minus = widget.querySelector('#coeffMinus');
-      const plus = widget.querySelector('#coeffPlus');
-
-      const updateCoeff = () => {
-        let val = parseFloat(input.value) || 1.0;
-        val = Math.min(3.0, Math.max(0.5, val));
-        input.value = val.toFixed(2);
-        saveRateCoeff(val);
-      };
-
-      input.addEventListener('change', updateCoeff);
-      input.addEventListener('blur', updateCoeff);
-
-      minus.addEventListener('click', () => {
-        let val = parseFloat(input.value) || 1.0;
-        val = Math.max(0.5, val - 0.05);
-        input.value = val.toFixed(2);
-        saveRateCoeff(val);
-      });
-
-      plus.addEventListener('click', () => {
-        let val = parseFloat(input.value) || 1.0;
-        val = Math.min(3.0, val + 0.05);
-        input.value = val.toFixed(2);
-        saveRateCoeff(val);
-      });
-    }
-
-    function bindExpandButtons() {
-      document.querySelectorAll('.forecast-expand').forEach(btn => {
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-        newBtn.addEventListener('click', function(e) {
-          const list = this.nextElementSibling;
-          if (list && list.classList.contains('forecast-list')) {
-            list.classList.toggle('open');
-          }
-        });
-      });
-    }
-
-    function updateForecastAndBreakEven() {
-      if (!financeData.length) return;
-      const forecast = computeForecast();
-      document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
-      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
-      const coeffContainer = document.getElementById('coeffContainer');
-      if (coeffContainer) buildCoeffWidget(coeffContainer);
-      bindExpandButtons();
-
-      const targetInput = document.getElementById('targetProfitInput');
-      if (targetInput) {
-        targetInput.addEventListener('input', updateTargetIncome);
-      }
-    }
-
-    function updateTargetIncome() {
-      const targetProfit = parseFloat(document.getElementById('targetProfitInput')?.value) || 0;
-      const forecast = computeForecast();
-      const royaltyRate = applyRoyalty(ROYALTY_START);
-      const neededIncome = (forecast.total + targetProfit) / (1 - royaltyRate);
-      const display = document.getElementById('targetIncomeDisplay');
-      if (display) display.textContent = Math.round(neededIncome).toLocaleString() + ' ₽';
-    }
-
-    function generateForecastHTML(forecast) {
-      const fixedListHtml = (forecast.fixedList || []).map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
-      const topVarHtml = forecast.topVariable && forecast.topVariable.length
-        ? forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ')
-        : 'Нет данных';
-      return `
-        <div class="forecast-card">
-          <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Прогноз на следующий месяц</div>
-          <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
-          <div class="forecast-details">
-            <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${fixedListHtml}</div></div>
-            <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${topVarHtml}</div></div>
-            <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong> <span style="margin-left:0.5rem;">Коэфф. <span id="coeffContainer"></span></span></div>
-            <div class="forecast-item">Маркетинг: <strong>${forecast.avgMarketing.toLocaleString()} ₽</strong></div>
-            <div class="forecast-item" style="color:var(--royalty);">Роялти: <strong>${forecast.royalty.toLocaleString()} ₽</strong></div>
-          </div>
-        </div>`;
-    }
-
-    function generateBreakEvenHTML(forecast) {
-      const royaltyRate = applyRoyalty(ROYALTY_START);
-      const incomeForZero = Math.round(forecast.total / (1 - royaltyRate));
-      const targetProfit = parseFloat(document.getElementById('targetProfitInput')?.value) || 100000;
-      const incomeForTarget = Math.round((forecast.total + targetProfit) / (1 - royaltyRate));
-      return `
-        <div class="list-item"><span>Для покрытия расходов</span><span class="amount">${forecast.total.toLocaleString()} ₽</span></div>
-        <div class="list-item"><span>Для чистой прибыли = 0</span><span class="amount">${incomeForZero.toLocaleString()} ₽</span></div>
-        <div class="list-item" style="flex-wrap: wrap;">
-          <span>Для прибыли <input type="number" class="target-profit-input" id="targetProfitInput" value="${targetProfit}" style="width:80px;"> ₽</span>
-          <span class="amount" id="targetIncomeDisplay">${incomeForTarget.toLocaleString()} ₽</span>
-        </div>`;
-    }
-
-    function getMonthlyData(monthsBack) {
-      const months = {};
-      const now = new Date();
-      let from = '2000-01', to = '2100-01';
-      if (monthsBack === -1) {
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        from = monthKey(start); to = monthKey(new Date(now.getFullYear(), now.getMonth()+1, 1));
-      } else if (monthsBack === 1) {
-        const prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
-        from = monthKey(prev); to = monthKey(new Date(now.getFullYear(), now.getMonth(), 1));
-      } else if (monthsBack > 1) {
-        from = monthKey(new Date(Date.now() - monthsBack*30*24*60*60*1000));
-      }
-      financeData.forEach(r => {
-        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-        if (!m || (monthsBack && monthsBack!==-1 && m < from) || (monthsBack===1 && m >= to) || (monthsBack===-1 && (m < from || m >= to))) return;
-        if (!months[m]) months[m] = { income:0, expense:0, marketing:0 };
-        if (isIncome(r)) months[m].income += r.amount;
-        if (isExpense(r)) { months[m].expense += r.amount; if (isMarketing(r)) months[m].marketing += r.amount; }
-      });
-      return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
-    }
-
-    function computeChange(cur, prev) {
-      if (!prev) return { diff:'0', abs:0, positive:null };
-      const diff = ((cur-prev)/prev)*100;
-      return { diff: diff.toFixed(1), abs: Math.abs(cur-prev), positive: diff>=0 };
-    }
-
-    function getAvgMonthlyIncome(monthsBack = 3) {
-      const data = getMonthlyData(monthsBack);
-      const incomes = data.map(([,v]) => v.income).filter(v => v > 0);
-      if (incomes.length === 0) return 0;
-      return incomes.reduce((a,b) => a+b, 0) / incomes.length;
-    }
-
-    // ИСПРАВЛЕННАЯ: переменные расходы = общие расходы - постоянные - учителя
-    function computeForecast() {
-      const now = new Date();
-      const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-      const activeFixed = allExpenses.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth+'-01'));
-      const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
-      const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
-
-      // Все расходные операции за последние 3 месяца (или за всё время)
-      const threeMonthsAgo = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
-      let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
-      if (recentOps.length === 0) {
-        recentOps = financeData.filter(isExpense).filter(r => r.operation_date);
-      }
-
-      // ЗП педагогов
-      const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
-      const totalTeacher = teacherOps.reduce((s,r) => s + parseFloat(r.amount), 0);
-      const monthlyTeacher = {};
-      teacherOps.forEach(r => {
-        const m = r.operation_date?.slice(0,7);
-        if (m) monthlyTeacher[m] = (monthlyTeacher[m] || 0) + parseFloat(r.amount);
-      });
-      const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
-      const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff);
-
-      // Общие расходы за этот период
-      const totalExpensesInPeriod = recentOps.reduce((s,r) => s + parseFloat(r.amount), 0);
-      const monthsCount = Math.max(1, new Set(recentOps.map(r => r.operation_date?.slice(0,7))).size);
-
-      // Фиксированные расходы из БД (уже оплаченные не учитываем, но для прогноза используем activeFixed)
-      // Здесь для расчёта среднего переменных берём разницу
-      const variableTotalInPeriod = totalExpensesInPeriod - totalTeacher - activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0); // это не совсем точно, лучше взять фактические фиксированные расходы за период
-      // Но у нас нет истории фиксированных расходов, поэтому просто вычитаем то, что посчитали как "учителя", а остальное считаем переменными
-      const variableOps = recentOps.filter(r => !isTeacherCategory(r.category));
-      const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const avgVariable = Math.round((totalVar / monthsCount) * 1.05);
-      const topVar = Object.entries(
-        variableOps.reduce((acc, r) => {
-          const cat = r.category || 'Без категории';
-          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
-          return acc;
-        }, {})
-      ).sort((a, b) => b[1] - a[1]).slice(0, 5);
-
-      // Маркетинг
-      const marketingOps = recentOps.filter(isMarketing);
-      const totalMark = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const monthsCountMark = Math.max(1, new Set(marketingOps.map(r => r.operation_date?.slice(0,7))).size);
-      const avgMarketing = Math.round((totalMark / monthsCountMark) * 1.05);
-
-      const totalExpensesForecast = totalFixed + avgVariable + avgTeacher;
-      const avgIncome = getAvgMonthlyIncome(3);
-      const royaltyRate = applyRoyalty(nextMonth);
-      const royalty = Math.round(avgIncome * royaltyRate);
-
-      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty };
-    }
-
-    function showMonthDetail(monthKey) {
-      const monthIncome = financeData.filter(r => isIncome(r) && (r.operation_date||'').startsWith(monthKey)).reduce((s,r)=>s+r.amount,0);
-      const monthExpense = financeData.filter(r => isExpense(r) && (r.operation_date||'').startsWith(monthKey));
-      const totalExp = monthExpense.reduce((s,r)=>s+r.amount,0);
-      const royaltyRate = applyRoyalty(monthKey);
-      const royalty = Math.round(monthIncome * royaltyRate);
-      const netProfit = monthIncome - totalExp - royalty;
-      const categories = {};
-      monthExpense.forEach(r => { const cat = r.category||'Без категории'; categories[cat]=(categories[cat]||0)+r.amount; });
-      const sortedCats = Object.entries(categories).sort((a,b)=>b[1]-a[1]);
-      const topCats = sortedCats.slice(0,5);
-      const maxCat = topCats.length ? topCats[0][1] : 1;
-
-      let html = `<p><strong>Доходы:</strong> ${monthIncome.toLocaleString()} ₽</p>`;
-      html += `<p><strong>Расходы:</strong> ${totalExp.toLocaleString()} ₽</p>`;
-      html += `<p><strong>Роялти (${(royaltyRate*100).toFixed(0)}% от доходов):</strong> ${royalty.toLocaleString()} ₽</p>`;
-      html += `<p><strong>Чистая прибыль:</strong> ${netProfit.toLocaleString()} ₽</p>`;
-      html += `<p><strong>Топ категорий расходов:</strong></p>`;
-      topCats.forEach(([cat, sum]) => {
-        const pct = ((sum/totalExp)*100).toFixed(1);
-        html += `<div style="margin-bottom:6px;"><div style="display:flex;justify-content:space-between;"><span>${cat}</span><span>${sum.toLocaleString()} ₽ (${pct}%)</span></div><div class="progress-bg"><div class="progress-fill" style="width:${(sum/maxCat)*100}%"></div></div></div>`;
-      });
-      html += `<p style="margin-top:1rem;"><strong>Все расходные транзакции:</strong></p>`;
-      html += `<table class="month-detail-table"><thead><tr><th>Дата</th><th>Категория</th><th>Сумма</th></tr></thead><tbody>`;
-      monthExpense.sort((a,b)=>b.amount-a.amount).forEach(r => {
-        html += `<tr><td>${r.operation_date}</td><td>${r.category||'—'}</td><td>${r.amount.toLocaleString()} ₽</td></tr>`;
-      });
-      html += `</tbody></table>`;
-
-      document.getElementById('monthDetailTitle').textContent = `Месяц ${monthKey}`;
-      document.getElementById('monthDetailContent').innerHTML = html;
-      document.getElementById('monthDetailModal').style.display = 'flex';
-    }
-
-    document.getElementById('closeMonthDetailBtn').addEventListener('click', ()=> document.getElementById('monthDetailModal').style.display='none');
-
-    function updateChart(monthlyData) {
-      if (!myChart) {
-        myChart = echarts.init(document.getElementById('mainChart'));
-        myChart.on('click', params => {
-          if (params.componentType === 'series' && params.seriesType === 'bar') {
-            const month = params.name;
-            if (month && /^\d{4}-\d{2}$/.test(month)) showMonthDetail(month);
-          }
-        });
-      }
-
-      const months = monthlyData.map(([m]) => m);
-      const incomes = monthlyData.map(([,v]) => v.income);
-      const expenses = monthlyData.map(([,v]) => v.expense);
-      const marketings = monthlyData.map(([,v]) => v.marketing);
-      const netProfits = incomes.map((v,i) => {
-        const royaltyRate = applyRoyalty(months[i]);
-        return v - expenses[i] - Math.round(v * royaltyRate);
-      });
-
-      const option = {
-        tooltip: {
-          trigger: 'axis',
-          formatter: params => {
-            const inc = params.find(p=>p.seriesName==='Доходы')?.value||0;
-            const exp = params.find(p=>p.seriesName==='Расходы')?.value||0;
-            const mark = params.find(p=>p.seriesName==='Маркетинг')?.value||0;
-            const month = params[0].axisValue;
-            const royaltyRate = applyRoyalty(month);
-            const roy = Math.round(inc * royaltyRate);
-            const net = inc - exp - roy;
-            return `<strong>${month}</strong><br/>
-              Доходы: ${inc.toLocaleString()} ₽<br/>
-              Расходы: ${exp.toLocaleString()} ₽<br/>
-              Маркетинг: ${mark.toLocaleString()} ₽<br/>
-              Роялти (${(royaltyRate*100).toFixed(0)}%): ${roy.toLocaleString()} ₽<br/>
-              Чистая прибыль: ${net.toLocaleString()} ₽`;
-          }
-        },
-        legend: { data: ['Доходы','Расходы','Маркетинг','Чистая прибыль'], bottom: 0, textStyle: { color: '#475569' } },
-        grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
-        xAxis: { type: 'category', data: months, axisLabel: { color: '#475569' }, axisLine: { show: false }, axisTick: { show: false } },
-        yAxis: { type: 'value', axisLabel: { color: '#475569', formatter: v => v.toLocaleString()+' ₽' }, splitLine: { lineStyle: { color: '#f1f5f9' } } },
-        series: [
-          { name: 'Доходы', type: 'bar', data: incomes, itemStyle: { color: '#10b981', borderRadius: [8,8,0,0], shadowBlur: 10, shadowColor: 'rgba(16,185,129,0.2)' } },
-          { name: 'Расходы', type: 'bar', data: expenses, itemStyle: { color: '#f87171', borderRadius: [8,8,0,0], shadowBlur: 10, shadowColor: 'rgba(248,113,113,0.2)' } },
-          { name: 'Маркетинг', type: 'line', data: marketings, symbol: 'circle', symbolSize: 6, lineStyle: { color: '#8b5cf6', width: 2, type: 'dashed' }, itemStyle: { color: '#8b5cf6' } },
-          { name: 'Чистая прибыль', type: 'line', data: netProfits, symbol: 'diamond', symbolSize: 8, lineStyle: { color: '#1e3a8a', width: 3 }, itemStyle: { color: '#1e3a8a' } }
-        ]
-      };
-      myChart.setOption(option);
-    }
-
-    function renderAll() {
-      if (!financeData.length) {
-        document.getElementById('forecastContainer').innerHTML = '<p>Нет данных. Загрузите Excel-файл.</p>';
-        if (myChart) myChart.clear();
-        return;
-      }
-
-      const monthly = getMonthlyData(selectedMonths);
-      const totalIncome = monthly.reduce((s,m)=>s+m[1].income,0);
-      const totalExpense = monthly.reduce((s,m)=>s+m[1].expense,0);
-      const totalMarketing = monthly.reduce((s,m)=>s+m[1].marketing,0);
-      let totalRoyalty = 0;
-      monthly.forEach(([month, vals]) => { totalRoyalty += Math.round(vals.income * applyRoyalty(month)); });
-      const operatingProfit = totalIncome - totalExpense;
-      const netProfit = operatingProfit - totalRoyalty;
-
-      let prevMonths = selectedMonths===0 ? 12 : Math.abs(selectedMonths);
-      if (selectedMonths===1 || selectedMonths===-1) prevMonths=2;
-      const prevMonthly = getMonthlyData(prevMonths);
-      const prevIncome = prevMonthly.reduce((s,m)=>s+m[1].income,0);
-      const prevExpense = prevMonthly.reduce((s,m)=>s+m[1].expense,0);
-      const prevMarketing = prevMonthly.reduce((s,m)=>s+m[1].marketing,0);
-      let prevRoyalty = 0;
-      prevMonthly.forEach(([month, vals]) => { prevRoyalty += Math.round(vals.income * applyRoyalty(month)); });
-
-      const incomeCh = computeChange(totalIncome, prevIncome);
-      const expenseCh = computeChange(totalExpense, prevExpense);
-      const marketingCh = computeChange(totalMarketing, prevMarketing);
-      const royaltyCh = computeChange(totalRoyalty, prevRoyalty);
-
-      const forecast = computeForecast();
-
-      document.getElementById('kpiContainer').innerHTML = `
-        <div class="kpi-card"><div class="kpi-label">Доходы</div><div class="kpi-value">${totalIncome.toLocaleString()} ₽</div><div class="kpi-change">MoM: <span class="${incomeCh.positive?'up':'down'}">${incomeCh.positive?'↑':'↓'} ${incomeCh.abs.toLocaleString()} ₽ (${Math.abs(incomeCh.diff)}%)</span></div></div>
-        <div class="kpi-card"><div class="kpi-label">Расходы</div><div class="kpi-value">${totalExpense.toLocaleString()} ₽</div><div class="kpi-change">MoM: <span class="${expenseCh.positive?'up':'down'}">${expenseCh.positive?'↑':'↓'} ${expenseCh.abs.toLocaleString()} ₽ (${Math.abs(expenseCh.diff)}%)</span></div></div>
-        <div class="kpi-card"><div class="kpi-label">Маркетинг</div><div class="kpi-value">${totalMarketing.toLocaleString()} ₽</div><div class="kpi-change">MoM: <span class="${marketingCh.positive?'up':'down'}">${marketingCh.positive?'↑':'↓'} ${marketingCh.abs.toLocaleString()} ₽ (${Math.abs(marketingCh.diff)}%)</span></div></div>
-        <div class="kpi-card" style="border-left: 3px solid var(--royalty);"><div class="kpi-label">Роялти (8%)</div><div class="kpi-value" style="color:var(--royalty);">${totalRoyalty.toLocaleString()} ₽</div><div class="kpi-change">MoM: <span class="${royaltyCh.positive?'up':'down'}">${royaltyCh.positive?'↑':'↓'} ${royaltyCh.abs.toLocaleString()} ₽ (${Math.abs(royaltyCh.diff)}%)</span></div></div>
-        <div class="kpi-card"><div class="kpi-label">Операционная прибыль</div><div class="kpi-value">${operatingProfit.toLocaleString()} ₽</div></div>
-        <div class="kpi-card net-profit"><div class="kpi-label">Чистая прибыль</div><div class="kpi-value">${netProfit.toLocaleString()} ₽</div></div>
-      `;
-
-      document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
-      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
-
-      const coeffContainer = document.getElementById('coeffContainer');
-      if (coeffContainer) buildCoeffWidget(coeffContainer);
-      bindExpandButtons();
-
-      const targetInput = document.getElementById('targetProfitInput');
-      if (targetInput) {
-        targetInput.addEventListener('input', updateTargetIncome);
-      }
-
-      updateChart(monthly);
-
-      const periodLabels = {'-1':'текущий месяц',1:'прошлый месяц',3:'3 месяца',6:'6 месяцев',12:'12 месяцев',0:'всё время'};
-      document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]})`;
-      const monthKeys = new Set(monthly.map(([m])=>m));
-      const catTotals = {}; financeData.filter(isExpense).forEach(r=>{ const m=r.operation_date?.slice(0,7); if(m&&monthKeys.has(m)){ const c=r.category||'Без категории'; catTotals[c]=(catTotals[c]||0)+r.amount; } });
-      document.getElementById('periodCategoryTotals').innerHTML = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([c,t])=>`<div class="list-item"><span>${c}</span><span class="amount">${t.toLocaleString()} ₽</span></div>`).join('')||'Нет данных';
-
-      document.getElementById('topExpensesTitle').textContent = `Топ-10 разовых расходов (${periodLabels[selectedMonths]})`;
-      const oneTime = financeData.filter(r=>isExpense(r)&&r.amount>20000&&!isMarketing(r)&&monthKeys.has((r.operation_date||'').slice(0,7))).sort((a,b)=>b.amount-a.amount).slice(0,10);
-      document.getElementById('topOneTimeExpenses').innerHTML = oneTime.map(r=>`<div class="list-item"><span>${r.operation_date} — ${r.category}</span><span class="amount">${r.amount.toLocaleString()} ₽</span></div>`).join('')||'Нет данных';
-
-      const roi = totalMarketing>0 ? (totalIncome/totalMarketing).toFixed(1) : '—';
-      document.getElementById('marketingImpact').innerHTML = `<div class="list-item"><span>ROI маркетинга</span><span class="amount">${roi}</span></div><div class="list-item"><span>Доля в расходах</span><span class="amount">${totalExpense>0?((totalMarketing/totalExpense)*100).toFixed(1):0}%</span></div>`;
-
-      const sixMonthKeys = new Set(getMonthlyData(6).map(([m])=>m));
-      const sixCat = {}; financeData.filter(isExpense).forEach(r=>{ const m=r.operation_date?.slice(0,7); if(m&&sixMonthKeys.has(m)){ const c=r.category||'Без категории'; sixCat[c]=(sixCat[c]||0)+r.amount; } });
-      const avgCats = Object.entries(sixCat).map(([c,t])=>({cat:c, avg:Math.round(t/6)})).sort((a,b)=>b.avg-a.avg).slice(0,10);
-      document.getElementById('categoryAverages').innerHTML = avgCats.map(c=>`<div class="list-item"><span>${c.cat}</span><span class="amount">${c.avg.toLocaleString()} ₽/мес.</span></div>`).join('')||'Нет данных';
-
-      document.getElementById('tableBody').innerHTML = financeData.slice().sort((a,b)=>b.operation_date?.localeCompare(a.operation_date||'')).slice(0,200).map(r=>`<tr><td>${r.operation_date||''}</td><td>${r.operation_type||''}</td><td>${r.category||''}</td><td>${r.amount.toLocaleString()} ₽</td><td>${r.account||''}</td></tr>`).join('');
-    }
-
+    // Загрузка Excel
     function uploadFinance() {
       const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
       input.onchange = async (e) => {
@@ -806,7 +403,10 @@
           const amountIdx = headers.findIndex(h=>h.startsWith('сумма'));
           const catIdx = headers.findIndex(h=>h.startsWith('статья'));
           const accIdx = headers.findIndex(h=>h.includes('счет')||h.includes('касса'));
-          if(dateIdx===-1 || typeIdx===-1 || amountIdx===-1 || catIdx===-1) { showAlert('Не найдены обязательные столбцы'); return; }
+          if(dateIdx===-1 || typeIdx===-1 || amountIdx===-1 || catIdx===-1) {
+            showAlert('Не найдены обязательные столбцы');
+            return;
+          }
           const parsed = [];
           for(let i=headerIdx+1; i<rows.length; i++){
             const cols=rows[i]; if(!cols) continue;
@@ -821,14 +421,19 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
+
+          // Очищаем и вставляем
           await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
-          for (let i = 0; i < parsed.length; i += 500) {
-            const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
+          const CHUNK_SIZE = 500;
+          for (let i = 0; i < parsed.length; i += CHUNK_SIZE) {
+            const chunk = parsed.slice(i, i + CHUNK_SIZE);
+            const { error } = await _supabase.from('crm_finance').insert(chunk);
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
           }
+
           financeData = await fetchAll('crm_finance', 'operation_date');
           renderAll();
-          showAlert(`Загружено ${parsed.length} записей.`);
+          showAlert(`Загружено ${parsed.length} записей. Аналитика обновлена.`);
         };
         reader.readAsArrayBuffer(file);
       };
@@ -853,43 +458,398 @@
       }
     }
 
-    // Обработчики для основных кнопок периода
-    document.getElementById('periodFilters').addEventListener('click', e => {
-      if (e.target.classList.contains('filter-btn')) {
-        document.querySelectorAll('#periodFilters .filter-btn').forEach(b=>b.classList.remove('active'));
-        e.target.classList.add('active');
-        selectedMonths = parseInt(e.target.dataset.months)||0;
-        // Синхронизируем кнопки в графике
-        document.querySelectorAll('#chartPeriodBtns button').forEach(b=>b.classList.remove('active'));
-        const chartBtn = document.querySelector(`#chartPeriodBtns button[data-months="${selectedMonths}"]`);
-        if (chartBtn) chartBtn.classList.add('active');
-        renderAll();
-      }
-    });
-
-    // Обработчики для кнопок периода в графике
-    document.getElementById('chartPeriodBtns').addEventListener('click', e => {
-      if (e.target.tagName === 'BUTTON') {
-        document.querySelectorAll('#chartPeriodBtns button').forEach(b=>b.classList.remove('active'));
-        e.target.classList.add('active');
-        selectedMonths = parseInt(e.target.dataset.months)||0;
-        // Синхронизируем основные кнопки
-        document.querySelectorAll('#periodFilters .filter-btn').forEach(b=>b.classList.remove('active'));
-        const mainBtn = document.querySelector(`#periodFilters .filter-btn[data-months="${selectedMonths}"]`);
-        if (mainBtn) mainBtn.classList.add('active');
-        renderAll();
-      }
-    });
-
     document.getElementById('uploadBtn').addEventListener('click', uploadFinance);
     document.getElementById('refreshBtn').addEventListener('click', loadData);
 
-    document.getElementById('toggleTableBtn').addEventListener('click', function() {
-      const t = document.getElementById('transactionTable');
-      t.classList.toggle('open');
-      this.textContent = t.classList.contains('open')?'Скрыть таблицу':'Показать таблицу';
+    // Вспомогательные функции
+    const isIncome = (r) => ['доход','продажа'].some(t => (r.operation_type||'').toLowerCase().includes(t));
+    const isExpense = (r) => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t));
+    const isMarketing = (r) => {
+      const cat = (r.category || '').toLowerCase();
+      return cat.includes('маркетинг бюджет') || cat.includes('маркетинг работа');
+    };
+    const isFixedCategory = (cat) => FIXED_ARTICLES.some(a => (cat || '').toLowerCase().includes(a.toLowerCase()));
+    const isTeacherCategory = (cat) => TEACHER_SALARY_ARTICLES.some(a => (cat || '').toLowerCase().includes(a.toLowerCase()));
+
+    function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+
+    function getMonthlyData(monthsBack) {
+      const months = {};
+      const now = new Date();
+      let from = '2000-01', to = '2100-01';
+      if (monthsBack === -1) {
+        const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+        from = monthKey(startOfCurrent);
+        to = monthKey(new Date(now.getFullYear(), now.getMonth() + 1, 1));
+      } else if (monthsBack === 1) {
+        const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfPrevious = new Date(startOfCurrent);
+        startOfPrevious.setMonth(startOfPrevious.getMonth() - 1);
+        from = monthKey(startOfPrevious);
+        to = monthKey(startOfCurrent);
+      } else if (monthsBack > 1) {
+        from = monthKey(new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000));
+      }
+
+      financeData.forEach(r => {
+        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+        if (!m || (monthsBack && monthsBack !== -1 && m < from) || (monthsBack === 1 && m >= to) || (monthsBack === -1 && (m < from || m >= to))) return;
+        if (!months[m]) months[m] = { income:0, expense:0, marketing:0 };
+        if (isIncome(r)) months[m].income += r.amount;
+        if (isExpense(r)) {
+          months[m].expense += r.amount;
+          if (isMarketing(r)) months[m].marketing += r.amount;
+        }
+      });
+      return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
+    }
+
+    function computeChange(current, previous) {
+      if (previous === 0) return { diff: 0, abs: 0, positive: null };
+      const diff = ((current - previous) / previous) * 100;
+      return { diff: diff.toFixed(1), abs: Math.abs(current - previous), positive: diff >= 0 };
+    }
+
+    function computeForecast(rateCoeff = globalRateCoeff) {
+      const now = new Date();
+      const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+
+      const activeFixed = allExpenses.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth));
+      const totalFixed = activeFixed.reduce((s, e) => s + parseFloat(e.amount), 0);
+      const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
+
+      const threeMonthsAgo = new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
+      let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
+      if (recentOps.length === 0) {
+        const allOps = financeData.filter(isExpense).filter(r => r.operation_date);
+        if (allOps.length > 0) {
+          const maxDate = allOps.reduce((max, r) => r.operation_date > max ? r.operation_date : max, '');
+          const maxMonth = new Date(maxDate);
+          maxMonth.setMonth(maxMonth.getMonth() - 2);
+          const fromMonth = maxMonth.toISOString().slice(0,7);
+          recentOps = allOps.filter(r => r.operation_date >= fromMonth && r.operation_date <= maxDate);
+        }
+      }
+
+      const variableOps = recentOps.filter(r => !isFixedCategory(r.category) && !isTeacherCategory(r.category));
+      const totalVariable = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
+      const avgVariable = Math.round((totalVariable / monthsCount) * 1.05);
+      const topVariable = Object.entries(
+        variableOps.reduce((acc, r) => {
+          const cat = r.category || 'Без категории';
+          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
+          return acc;
+        }, {})
+      ).sort((a,b) => b[1] - a[1]).slice(0,5);
+
+      const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
+      const monthlyTeacher = {};
+      teacherOps.forEach(r => {
+        const m = r.operation_date?.slice(0,7);
+        if (m) monthlyTeacher[m] = (monthlyTeacher[m] || 0) + parseFloat(r.amount);
+      });
+      const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
+      const avgTeacher = Math.round(maxTeacher * 1.05 * rateCoeff);
+
+      const marketingOps = recentOps.filter(r => isMarketing(r));
+      const totalMarketing = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const avgMarketing = Math.round((totalMarketing / monthsCount) * 1.05);
+
+      const total = totalFixed + avgVariable + avgTeacher;
+
+      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total, fixedList, topVariable };
+    }
+
+    function updateChart(monthlyData) {
+      if (!myChart) {
+        myChart = echarts.init(document.getElementById('mainChart'));
+      }
+      const months = monthlyData.map(([m]) => m);
+      const incomes = monthlyData.map(([, v]) => v.income);
+      const expenses = monthlyData.map(([, v]) => v.expense);
+      const marketings = monthlyData.map(([, v]) => v.marketing);
+      const profits = monthlyData.map(([, v]) => v.income - v.expense);
+
+      const option = {
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: { type: 'shadow' },
+          formatter: function(params) {
+            const incomeVal = params.find(p => p.seriesName === 'Доходы')?.value || 0;
+            const expenseVal = params.find(p => p.seriesName === 'Расходы')?.value || 0;
+            const marketingVal = params.find(p => p.seriesName === 'Маркетинг')?.value || 0;
+            const profitVal = incomeVal - expenseVal;
+            const profitability = incomeVal ? ((profitVal / incomeVal) * 100).toFixed(1) : '0.0';
+            return `
+              <strong>${params[0].axisValue}</strong><br/>
+              Доходы: ${incomeVal.toLocaleString()} ₽<br/>
+              Расходы: ${expenseVal.toLocaleString()} ₽<br/>
+              Маркетинг: ${marketingVal.toLocaleString()} ₽<br/>
+              Прибыль: ${profitVal.toLocaleString()} ₽<br/>
+              Рентабельность: ${profitability}%
+            `;
+          }
+        },
+        legend: {
+          data: ['Доходы', 'Расходы', 'Маркетинг'],
+          bottom: 0,
+          textStyle: { color: '#475569' }
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '15%',
+          top: '10%',
+          containLabel: true
+        },
+        xAxis: {
+          type: 'category',
+          data: months,
+          axisLabel: { color: '#475569' },
+          axisLine: { show: false },
+          axisTick: { show: false }
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: { color: '#475569', formatter: val => val.toLocaleString() + ' ₽' },
+          splitLine: { lineStyle: { color: '#f1f5f9' } }
+        },
+        series: [
+          {
+            name: 'Доходы',
+            type: 'bar',
+            data: incomes,
+            itemStyle: {
+              color: '#10b981',
+              borderRadius: [8,8,0,0],
+              shadowBlur: 10,
+              shadowColor: 'rgba(16,185,129,0.2)',
+              shadowOffsetY: 2
+            },
+            emphasis: {
+              itemStyle: { shadowBlur: 20, shadowColor: 'rgba(16,185,129,0.4)' }
+            }
+          },
+          {
+            name: 'Расходы',
+            type: 'bar',
+            data: expenses,
+            itemStyle: {
+              color: '#f87171',
+              borderRadius: [8,8,0,0],
+              shadowBlur: 10,
+              shadowColor: 'rgba(248,113,113,0.2)',
+              shadowOffsetY: 2
+            },
+            emphasis: {
+              itemStyle: { shadowBlur: 20, shadowColor: 'rgba(248,113,113,0.4)' }
+            }
+          },
+          {
+            name: 'Маркетинг',
+            type: 'line',
+            data: marketings,
+            symbol: 'circle',
+            symbolSize: 6,
+            lineStyle: { color: '#8b5cf6', width: 2, type: 'dashed' },
+            itemStyle: { color: '#8b5cf6' }
+          }
+        ]
+      };
+
+      myChart.setOption(option);
+    }
+
+    function renderAll() {
+      if (!financeData.length) {
+        document.getElementById('forecastContainer').innerHTML = '<p>Нет данных. Загрузите Excel-файл.</p>';
+        return;
+      }
+
+      const monthly = getMonthlyData(selectedMonths);
+      const totalIncome = monthly.reduce((s,m) => s + m[1].income, 0);
+      const totalExpense = monthly.reduce((s,m) => s + m[1].expense, 0);
+      const totalMarketing = monthly.reduce((s,m) => s + m[1].marketing, 0);
+      const profit = totalIncome - totalExpense;
+
+      let prevMonths = selectedMonths === 0 ? 12 : Math.abs(selectedMonths);
+      if (selectedMonths === 1 || selectedMonths === -1) prevMonths = 2;
+      const prevMonthly = getMonthlyData(prevMonths);
+      const prevIncome = prevMonthly.reduce((s,m) => s + m[1].income, 0);
+      const prevExpense = prevMonthly.reduce((s,m) => s + m[1].expense, 0);
+      const prevMarketing = prevMonthly.reduce((s,m) => s + m[1].marketing, 0);
+
+      const incomeChange = computeChange(totalIncome, prevIncome);
+      const expenseChange = computeChange(totalExpense, prevExpense);
+      const marketingChange = computeChange(totalMarketing, prevMarketing);
+
+      const rateCoeff = parseFloat(document.getElementById('rateCoeff')?.value || globalRateCoeff);
+      const forecast = computeForecast(rateCoeff);
+      const fixedListHtml = forecast.fixedList.map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
+      const topVarHtml = forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ');
+
+      document.getElementById('forecastContainer').innerHTML = `
+        <div class="forecast-card">
+          <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.03em;">Прогноз расходов на следующий месяц</div>
+          <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
+          <div class="forecast-details">
+            <div class="forecast-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Постоянные (из бюджета): <strong>${forecast.totalFixed.toLocaleString()} ₽</strong>
+              <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸ состав</span>
+              <div class="forecast-list">${fixedListHtml}</div>
+            </div>
+            <div class="forecast-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Переменные (среднее +5%): <strong>${forecast.avgVariable.toLocaleString()} ₽</strong>
+              <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸ топ-5</span>
+              <div class="forecast-list">${topVarHtml}</div>
+            </div>
+            <div class="forecast-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              ЗП преподавателей (макс. +5%): <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong>
+              <span style="margin-left:0.5rem;">Коэфф. роста ставок: <input type="number" class="rate-input" id="rateCoeff" value="${rateCoeff}" step="0.05" min="0.5" max="3.0" onchange="saveRateCoeff(parseFloat(this.value)||1.0)"></span>
+            </div>
+            <div class="forecast-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Маркетинг (среднее +5%): <strong>${forecast.avgMarketing.toLocaleString()} ₽</strong>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // KPI
+      document.getElementById('kpiContainer').innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-label">Доходы (за период)</div>
+          <div class="kpi-value">${totalIncome.toLocaleString()} ₽</div>
+          <div class="kpi-change">MoM: <span class="${incomeChange.positive ? 'up' : 'down'}">${incomeChange.positive ? '↑' : '↓'} ${incomeChange.abs.toLocaleString()} ₽ (${Math.abs(incomeChange.diff)}%)</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Расходы (за период)</div>
+          <div class="kpi-value">${totalExpense.toLocaleString()} ₽</div>
+          <div class="kpi-change">MoM: <span class="${expenseChange.positive ? 'up' : 'down'}">${expenseChange.positive ? '↑' : '↓'} ${expenseChange.abs.toLocaleString()} ₽ (${Math.abs(expenseChange.diff)}%)</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Маркетинг (за период)</div>
+          <div class="kpi-value">${totalMarketing.toLocaleString()} ₽</div>
+          <div class="kpi-change">MoM: <span class="${marketingChange.positive ? 'up' : 'down'}">${marketingChange.positive ? '↑' : '↓'} ${marketingChange.abs.toLocaleString()} ₽ (${Math.abs(marketingChange.diff)}%)</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Прибыль (за период)</div>
+          <div class="kpi-value">${profit.toLocaleString()} ₽</div>
+        </div>
+      `;
+
+      updateChart(monthly);
+
+      // Точные суммы по категориям
+      const periodLabels = {'-1':'текущий месяц', 1:'прошлый месяц', 3:'3 месяца', 6:'6 месяцев', 12:'12 месяцев', 0:'всё время'};
+      document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]}) — точные суммы`;
+      const monthKeysInPeriod = new Set(monthly.map(([month]) => month));
+      const periodCatTotals = {};
+      financeData.forEach(r => {
+        if (!isExpense(r)) return;
+        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+        if (m && monthKeysInPeriod.has(m)) {
+          const cat = r.category || 'Без категории';
+          periodCatTotals[cat] = (periodCatTotals[cat] || 0) + r.amount;
+        }
+      });
+      const periodCatList = Object.entries(periodCatTotals).sort((a,b) => b[1]-a[1]);
+      document.getElementById('periodCategoryTotals').innerHTML = periodCatList.map(([cat, total]) => `
+        <div class="list-item"><span>${cat}</span><span class="amount">${total.toLocaleString()} ₽</span></div>
+      `).join('') || 'Нет данных за выбранный период';
+
+      // Топ-10 крупнейших разовых расходов
+      document.getElementById('topExpensesTitle').textContent = `Топ-10 крупнейших разовых расходов (${periodLabels[selectedMonths]})`;
+      const oneTime = financeData
+        .filter(r => isExpense(r) && r.amount > 20000 && !isMarketing(r) && monthKeysInPeriod.has((r.operation_date||'').slice(0,7)))
+        .sort((a,b) => b.amount - a.amount)
+        .slice(0,10)
+        .map(r => `<div class="list-item"><span>${r.operation_date} — ${r.category}</span><span class="amount">${r.amount.toLocaleString()} ₽</span></div>`).join('');
+      document.getElementById('topOneTimeExpenses').innerHTML = oneTime || 'Нет данных за выбранный период';
+
+      // Маркетинг ROI
+      const marketingROI = totalMarketing > 0 ? (totalIncome / totalMarketing).toFixed(1) : '—';
+      document.getElementById('marketingImpact').innerHTML = `
+        <div class="list-item"><span>ROI маркетинга (доход / затраты)</span><span class="amount">${marketingROI}</span></div>
+        <div class="list-item"><span>Доля маркетинга в расходах</span><span class="amount">${totalExpense>0 ? ((totalMarketing/totalExpense)*100).toFixed(1) : 0}%</span></div>
+        <div class="kpi-note" style="margin-top:0.5rem;">Каждый 1 ₽ на маркетинг приносит ${marketingROI} ₽ дохода</div>
+      `;
+
+      // Средние по категориям (последние 6 месяцев)
+      const sixMonthData = getMonthlyData(6);
+      const sixMonthKeys = new Set(sixMonthData.map(([month]) => month));
+      const sixCatTotals = {};
+      financeData.forEach(r => {
+        if (!isExpense(r)) return;
+        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+        if (m && sixMonthKeys.has(m)) {
+          const cat = r.category || 'Без категории';
+          sixCatTotals[cat] = (sixCatTotals[cat] || 0) + r.amount;
+        }
+      });
+      const avgCatList = Object.entries(sixCatTotals).map(([cat, total]) => ({ cat, avg: Math.round(total / Math.max(1, sixMonthData.length)) })).sort((a,b) => b.avg - a.avg).slice(0,10);
+      document.getElementById('categoryAverages').innerHTML = avgCatList.map(c => `
+        <div class="list-item"><span>${c.cat}</span><span class="amount">${c.avg.toLocaleString()} ₽/мес.</span></div>
+      `).join('') || 'Нет данных';
+
+      // Точка безубыточности
+      document.getElementById('breakeven').innerHTML = `
+        <div class="list-item"><span>Необходимый доход для покрытия расходов</span><span class="amount">${forecast.total.toLocaleString()} ₽</span></div>
+        <div class="list-item"><span>Прогнозируемый дефицит/профицит</span><span class="amount" style="color:${(totalIncome - forecast.total)>=0?'var(--soft-green)':'var(--critical)'};">${(totalIncome - forecast.total).toLocaleString()} ₽</span></div>
+      `;
+
+      // Таблица транзакций
+      const transactions = financeData.slice().sort((a,b) => (b.operation_date||'').localeCompare(a.operation_date||'')).slice(0,200);
+      document.getElementById('tableBody').innerHTML = transactions.map(t => `
+        <tr><td>${t.operation_date||''}</td><td>${t.operation_type||''}</td><td>${t.category||''}</td><td>${t.amount.toLocaleString()} ₽</td><td>${t.account||''}</td></tr>
+      `).join('');
+    }
+
+    // Обработчики кнопок периода
+    function setPeriod(months) {
+      selectedMonths = months;
+      // Обновляем основные кнопки
+      document.querySelectorAll('#periodFilters .filter-btn').forEach(b => b.classList.remove('active'));
+      const mainBtn = document.querySelector(`#periodFilters .filter-btn[data-months="${months}"]`);
+      if (mainBtn) mainBtn.classList.add('active');
+      // Обновляем кнопки в графике
+      document.querySelectorAll('#chartPeriodBtns button').forEach(b => b.classList.remove('active'));
+      const chartBtn = document.querySelector(`#chartPeriodBtns button[data-months="${months}"]`);
+      if (chartBtn) chartBtn.classList.add('active');
+      renderAll();
+    }
+
+    document.getElementById('periodFilters').addEventListener('click', (e) => {
+      if (e.target.classList.contains('filter-btn')) {
+        setPeriod(parseInt(e.target.dataset.months) || 0);
+      }
     });
-    window.addEventListener('resize', ()=> myChart?.resize());
+
+    document.getElementById('chartPeriodBtns').addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        setPeriod(parseInt(e.target.dataset.months) || 0);
+      }
+    });
+
+    document.getElementById('toggleTableBtn').addEventListener('click', function() {
+      const table = document.getElementById('transactionTable');
+      table.classList.toggle('open');
+      this.textContent = table.classList.contains('open') ? 'Скрыть таблицу транзакций' : 'Показать таблицу транзакций';
+    });
+
+    document.getElementById('infoBtn').addEventListener('click', () => {
+      const msg = `Всего записей: ${financeData.length}\nПериод данных: ${financeData[0]?.operation_date || '—'} — ${financeData[financeData.length-1]?.operation_date || '—'}`;
+      showAlert(msg);
+    });
+
+    window.addEventListener('resize', () => {
+      if (myChart) myChart.resize();
+    });
+
     loadData();
   })();
 </script>
