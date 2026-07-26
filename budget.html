@@ -124,6 +124,24 @@
     }
     .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
     .required { border-color: var(--critical) !important; }
+
+    .success-animation {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .circle {
+      width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--soft-green);
+      display: flex; align-items: center; justify-content: center; margin: 1rem auto;
+      animation: scaleIn 0.3s ease-out;
+    }
+    @keyframes scaleIn {
+      0% { transform: scale(0); opacity: 0; }
+      80% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .checkmark {
+      width: 30px; height: 30px;
+    }
+    .checkmark svg { stroke: var(--soft-green); stroke-width: 3; fill: none; }
     .coin {
       position: fixed; width: 16px; height: 16px;
       background: radial-gradient(circle at 30% 30%, #f59e0b, #b45309);
@@ -141,9 +159,9 @@
   <div class="header">
     <a href="index.html" class="back-link">← На главную</a>
     <h1>Бюджет</h1>
-    <div style="display: flex; gap: 0.5rem;">
+    <div style="display: flex; gap: 0.5rem;" id="headerActions">
       <a href="budget-pro.html" class="nav-link" style="color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--accent); padding: 0.45rem 1rem; border-radius: var(--radius-sm);">Аналитика бюджета</a>
-      <button class="btn btn-primary" id="addBtn">+ Добавить платёж</button>
+      <button class="btn btn-primary" id="addBtn" style="display:none;">+ Добавить платёж</button>
     </div>
   </div>
 
@@ -207,12 +225,46 @@
   </div>
 </div>
 
+<!-- Модалка успеха -->
+<div class="modal-overlay" id="successModal" style="display:none;">
+  <div class="modal" style="text-align:center;">
+    <div class="success-animation">
+      <div class="circle">
+        <div class="checkmark">
+          <svg viewBox="0 0 24 24">
+            <polyline points="4 12 9 17 20 6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <p id="successMessage" style="margin-top:1rem; font-size:16px; color:var(--text);"></p>
+    </div>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-primary" id="closeSuccessBtn">OK</button>
+    </div>
+  </div>
+</div>
+
 <script>
   (() => {
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let expenses = [], currentFilter = 'unpaid';
+    let currentUserRole = null;
+
+    // Проверка прав
+    async function checkAccess() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) { window.location.href = 'login.html'; return; }
+      const email = session.user.email;
+      if (email === 'arturgalkin.ru@mail.ru') { currentUserRole = 'Управляющий'; return; }
+      const { data: emp } = await _supabase.from('employees').select('role').eq('email', email).single();
+      currentUserRole = emp?.role || null;
+    }
+
+    function canEdit() {
+      return currentUserRole === 'Управляющий' || currentUserRole === 'Бухгалтер';
+    }
 
     async function loadExpenses() {
       const { data } = await _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true });
@@ -239,6 +291,16 @@
       }
     }
 
+    function showSuccessModal(message) {
+      document.getElementById('successMessage').textContent = message;
+      document.getElementById('successModal').style.display = 'flex';
+      showCoins();
+    }
+
+    document.getElementById('closeSuccessBtn').addEventListener('click', () => {
+      document.getElementById('successModal').style.display = 'none';
+    });
+
     function renderSummary() {
       const filtered = getFiltered();
       const total = filtered.reduce((s,e) => s + parseFloat(e.amount), 0);
@@ -262,14 +324,14 @@
           <div style="font-size:0.8rem; color:var(--text-secondary);">${periodLabel}</div>
           ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:0.75rem; color:var(--accent);">Чек</a>` : ''}
           <div class="card-actions">
-            ${!e.paid ? `<button class="check-btn pay-action" title="Оплатить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></button>` : ''}
-            <button class="btn edit-btn">Изм.</button>
-            <button class="btn btn-danger delete-btn">Уд.</button>
+            ${canEdit() && !e.paid ? `<button class="check-btn pay-action" title="Оплатить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></button>` : ''}
+            ${canEdit() ? `<button class="btn edit-btn">Изм.</button>` : ''}
+            ${canEdit() ? `<button class="btn btn-danger delete-btn">Уд.</button>` : ''}
           </div>
         </div>`;
       }).join('');
 
-      // Отдельные обработчики на кнопки
+      // обработчики
       container.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', (e) => {
         e.stopPropagation();
         openPayModal(b.closest('.payment-card').dataset.id);
@@ -286,18 +348,19 @@
           await loadExpenses();
         }
       }));
-
-      // Клик по всей карточке открывает просмотр
       container.querySelectorAll('.payment-card').forEach(card => {
         card.addEventListener('click', (e) => {
-          // Не реагируем, если кликнули по кнопке или ссылке внутри
           if (e.target.closest('button') || e.target.closest('a')) return;
           openEditModal(card.dataset.id, true);
         });
       });
     }
 
-    function renderAll() { renderSummary(); renderCards(); }
+    function renderAll() {
+      renderSummary();
+      renderCards();
+      document.getElementById('addBtn').style.display = canEdit() ? 'inline-flex' : 'none';
+    }
 
     // Оплата
     let pendingPayId = null;
@@ -314,7 +377,11 @@
       if (file) {
         const fileName = `receipts/${exp.id}_${Date.now()}.${file.name.split('.').pop()}`;
         const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
-        if (!error) receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
+        if (error) {
+          alert(`Не удалось загрузить файл: ${error.message}. Проверьте, существует ли бакет "receipts" в Supabase Storage с публичным доступом.`);
+          return;
+        }
+        receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
       }
 
       const nextDate = getNextDate(exp.next_payment_date, exp.periodicity);
@@ -336,9 +403,8 @@
       }).eq('id', pendingPayId);
 
       document.getElementById('payModal').style.display = 'none';
-      showCoins();
+      showSuccessModal(`Платёж оплачен, следующий создан на ${nextDate ? new Date(nextDate).toLocaleDateString('ru') : '—'}`);
       await loadExpenses();
-      alert('Платёж оплачен, следующий создан на ' + (nextDate ? new Date(nextDate).toLocaleDateString('ru') : '—'));
     });
 
     function getNextDate(dateStr, periodicity) {
@@ -359,7 +425,9 @@
     function openEditModal(id, readOnly = false) {
       const exp = expenses.find(e => e.id == id);
       if (!exp) return;
-      document.getElementById('editModalTitle').textContent = readOnly ? 'Просмотр платежа' : 'Редактировать платёж';
+      // Если пользователь не имеет прав, всегда только просмотр
+      const isReadOnly = readOnly || !canEdit();
+      document.getElementById('editModalTitle').textContent = isReadOnly ? 'Просмотр платежа' : 'Редактировать платёж';
       document.getElementById('editName').value = exp.name;
       document.getElementById('editAmount').value = exp.amount;
       document.getElementById('editPeriodicity').value = exp.periodicity;
@@ -368,10 +436,7 @@
       document.getElementById('editDetails').value = exp.details || '';
       document.getElementById('editNote').value = exp.note || '';
       document.getElementById('editModal').dataset.id = id;
-      document.getElementById('editModal').dataset.readOnly = readOnly;
 
-      // Переключение режимов
-      const isReadOnly = readOnly;
       document.getElementById('editName').readOnly = isReadOnly;
       document.getElementById('editAmount').readOnly = isReadOnly;
       document.getElementById('editPeriodicity').disabled = isReadOnly;
@@ -382,11 +447,11 @@
 
       document.getElementById('viewActions').style.display = isReadOnly ? 'flex' : 'none';
       document.getElementById('editActions').style.display = isReadOnly ? 'none' : 'flex';
+      document.getElementById('enableEditBtn').style.display = canEdit() ? 'inline-flex' : 'none';
 
       document.getElementById('editModal').style.display = 'flex';
     }
 
-    // Кнопка "Редактировать" в режиме просмотра
     document.getElementById('enableEditBtn').addEventListener('click', () => {
       const id = document.getElementById('editModal').dataset.id;
       openEditModal(id, false);
@@ -452,8 +517,6 @@
       document.getElementById('editDetails').value = '';
       document.getElementById('editNote').value = '';
       delete document.getElementById('editModal').dataset.id;
-      document.getElementById('editModal').dataset.readOnly = false;
-      // Режим редактирования
       document.getElementById('editName').readOnly = false;
       document.getElementById('editAmount').readOnly = false;
       document.getElementById('editPeriodicity').disabled = false;
@@ -476,7 +539,10 @@
       });
     });
 
-    loadExpenses();
+    (async () => {
+      await checkAccess();
+      await loadExpenses();
+    })();
   })();
 </script>
 </body>
