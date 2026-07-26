@@ -11,6 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* ... (стили без изменений из предыдущей версии) ... */
     :root {
       --bg: #f7f8fa;
       --surface: #ffffff;
@@ -145,7 +146,7 @@
     td { padding: 0.6rem; border-top: 1px solid rgba(0,0,0,0.03); }
     tr:hover td { background: #f8fafc; }
 
-    /* ---- Модальные окна ---- */
+    /* Модальные окна */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.3);
       backdrop-filter: blur(8px);
@@ -306,9 +307,8 @@
     let selectedMonths = 1;
     let myChart = null;
 
-    // Сохранённый коэффициент
-    const STORED_RATE_KEY = 'budget_pro_rate_coeff';
-    let rateCoeff = parseFloat(localStorage.getItem(STORED_RATE_KEY)) || 1.0;
+    // Глобальный коэффициент (будет загружен из Supabase)
+    let globalRateCoeff = 1.0;
 
     const FIXED_ARTICLES = [
       'Администраторы ЗП',
@@ -361,6 +361,29 @@
         from += PAGE_SIZE; to += PAGE_SIZE;
       }
       return allRows;
+    }
+
+    // Загрузка глобального коэффициента из app_settings
+    async function loadSettings() {
+      const { data, error } = await _supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'teacher_rate_coeff')
+        .single();
+      if (data) {
+        globalRateCoeff = parseFloat(data.value) || 1.0;
+      } else {
+        // Если записи нет, создаём со значением по умолчанию
+        await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' });
+        globalRateCoeff = 1.0;
+      }
+    }
+
+    // Сохранение коэффициента в БД
+    async function saveRateCoeff(value) {
+      globalRateCoeff = value;
+      await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
+      renderAll();
     }
 
     function uploadFinance() {
@@ -426,6 +449,7 @@
         financeData = fin;
         allExpenses = exp;
         teacherSalaryData = sal;
+        await loadSettings(); // загружаем коэффициент из БД
         renderAll();
       } catch (err) {
         console.error(err);
@@ -535,7 +559,7 @@
         if (m) monthlyTeacher[m] = (monthlyTeacher[m] || 0) + parseFloat(r.amount);
       });
       const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
-      const avgTeacher = Math.round(maxTeacher * 1.05 * rateCoeff);
+      const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff); // используем глобальный коэффициент
 
       const marketingOps = recentOps.filter(r => isMarketing(r));
       const totalMarketing = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
@@ -741,7 +765,7 @@
             <div class="forecast-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               ЗП преподавателей (макс. +5%): <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong>
-              <span style="margin-left:0.5rem;">Коэфф. роста ставок: <input type="number" class="rate-input" id="rateCoeff" value="${rateCoeff}" step="0.05" min="0.5" max="3.0"></span>
+              <span style="margin-left:0.5rem;">Коэфф. роста ставок: <input type="number" class="rate-input" id="rateCoeff" value="${globalRateCoeff}" step="0.05" min="0.5" max="3.0"></span>
             </div>
             <div class="forecast-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -751,13 +775,12 @@
         </div>
       `;
 
-      // Сохранение коэффициента
+      // Сохранение коэффициента в БД при изменении
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
-        rateInput.addEventListener('input', function() {
-          rateCoeff = parseFloat(this.value) || 1.0;
-          localStorage.setItem(STORED_RATE_KEY, rateCoeff);
-          renderAll();
+        rateInput.addEventListener('change', function() {
+          const newVal = parseFloat(this.value) || 1.0;
+          saveRateCoeff(newVal);
         });
       }
 
