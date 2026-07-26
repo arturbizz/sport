@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM через Supabase Proxy</title>
+  <title>Тест API AlfaCRM (v2 подбор)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1000px; margin: 2rem auto; padding: 1rem; }
@@ -15,10 +15,28 @@
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM (прокси)</h1>
+  <h1>Тест API AlfaCRM (подбор эндпоинта)</h1>
   <div>
-    <label>URL прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
-    <label>Эндпоинт AlfaCRM: <input type="text" id="alfaEndpoint" size="80" value="https://api.alfa-crm.ru/v2/finance"></label><br>
+    <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
+    <label>Домен CRM: 
+      <select id="baseDomain">
+        <option value="https://api.alfa-crm.ru">api.alfa-crm.ru</option>
+        <option value="https://demo.alfa-crm.ru">demo.alfa-crm.ru</option>
+        <option value="https://musicclub.alfa-crm.ru">musicclub.alfa-crm.ru</option>
+      </select>
+    </label><br>
+    <label>Путь: 
+      <select id="apiPath">
+        <option value="/v2/operation">/v2/operation</option>
+        <option value="/v2/operations">/v2/operations</option>
+        <option value="/v2/finance/transactions">/v2/finance/transactions</option>
+        <option value="/v2/finance/list">/v2/finance/list</option>
+        <option value="/v2/finance/index">/v2/finance/index</option>
+        <option value="/v2/crm/finance">/v2/crm/finance</option>
+        <option value="/v2/crm/operation">/v2/crm/operation</option>
+      </select>
+    </label><br>
+    <label>Параметры (необязательно): <input type="text" id="queryParams" size="40" placeholder="page=1&date_from=2026-07-01"></label><br>
     <button id="fetchBtn">Загрузить через прокси</button>
     <button id="saveBtn" disabled>Сохранить в Supabase</button>
   </div>
@@ -36,12 +54,13 @@
 
     document.getElementById('fetchBtn').addEventListener('click', async () => {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
-      const endpoint = document.getElementById('alfaEndpoint').value.trim();
-      if (!proxyUrl || !endpoint) {
-        document.getElementById('status').textContent = 'Заполните оба поля';
-        return;
-      }
-      document.getElementById('status').textContent = 'Отправляю запрос через ваш прокси...';
+      const base = document.getElementById('baseDomain').value;
+      const path = document.getElementById('apiPath').value;
+      let query = document.getElementById('queryParams').value.trim();
+      if (query && !query.startsWith('?')) query = '?' + query;
+      const endpoint = base + path + query;
+      if (!proxyUrl || !endpoint) return;
+      document.getElementById('status').textContent = 'Пробую: ' + endpoint + ' ...';
       try {
         const resp = await fetch(proxyUrl, {
           method: 'POST',
@@ -49,18 +68,14 @@
           body: JSON.stringify({ endpoint })
         });
         const json = await resp.json();
-
-        // Если прокси вернул ошибку, показываем всю информацию
         if (json.error) {
           let msg = `Ошибка: ${json.error}`;
           if (json.status) msg += `\nHTTP статус: ${json.status}`;
           if (json.raw) msg += `\nСырой ответ (первые 500 символов):\n${json.raw}`;
-          if (json.headers) msg += `\nЗаголовки ответа CRM: ${JSON.stringify(json.headers, null, 2)}`;
           document.getElementById('status').textContent = msg;
           return;
         }
-
-        console.log('Ответ от прокси:', json);
+        console.log('Ответ:', json);
         let raw = null;
         if (Array.isArray(json)) raw = json;
         else if (json.data && Array.isArray(json.data)) raw = json.data;
@@ -68,7 +83,7 @@
         else if (json.records && Array.isArray(json.records)) raw = json.records;
         else raw = Object.values(json).find(v => Array.isArray(v));
 
-        if (!raw) throw new Error('Не удалось найти массив данных. Проверьте структуру ответа в консоли (F12).');
+        if (!raw) throw new Error('Массив данных не найден. Смотрите консоль (F12).');
         fetchedData = raw.map(item => ({
           operation_date: item.date || item.operation_date || item.created_at || '',
           operation_type: item.type || item.operation_type || item.category || '',
@@ -78,7 +93,7 @@
         }));
         renderTable(fetchedData);
         document.getElementById('saveBtn').disabled = false;
-        document.getElementById('status').textContent = `Загружено ${fetchedData.length} записей.`;
+        document.getElementById('status').textContent = `Успех! Загружено ${fetchedData.length} записей.`;
       } catch (err) {
         document.getElementById('status').textContent = 'Критическая ошибка: ' + err.message;
         console.error(err);
@@ -87,7 +102,7 @@
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
       if (!fetchedData.length) return;
-      document.getElementById('status').textContent = 'Сохранение...';
+      document.getElementById('status').textContent = 'Сохранение в Supabase...';
       try {
         await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
         const { error } = await _supabase.from('crm_finance').insert(fetchedData);
