@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM v2 (без сохранения)</title>
+  <title>Тест API AlfaCRM v2 (постраничная загрузка)</title>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
     input, button, select, textarea { padding: 0.5rem; margin: 0.3rem; font-size: 0.9rem; }
@@ -14,7 +14,7 @@
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM v2 (только просмотр)</h1>
+  <h1>Тест API AlfaCRM v2 (постранично)</h1>
   <p style="color: #475569; font-size: 0.9rem;">Данные не сохраняются в Supabase. Можно безопасно тестировать.</p>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
@@ -30,7 +30,7 @@
     <label>Фильтр (JSON, необязательно):<br>
       <textarea id="requestBody" rows="3" cols="60">{"page":0}</textarea>
     </label><br>
-    <button id="loadBtn">Загрузить</button>
+    <button id="loadAllBtn">Загрузить ВСЕ страницы</button>
     <span id="pageInfo"></span>
   </div>
   <div class="status" id="status"></div>
@@ -44,14 +44,10 @@
     const branchInput = document.getElementById('branch');
     const apiPathSelect = document.getElementById('apiPath');
     const requestBodyTextarea = document.getElementById('requestBody');
-    const loadBtn = document.getElementById('loadBtn');
+    const loadAllBtn = document.getElementById('loadAllBtn');
     const statusDiv = document.getElementById('status');
     const pageInfoSpan = document.getElementById('pageInfo');
     const dataTableBody = document.querySelector('#dataTable tbody');
-
-    let allFetchedItems = [];
-    let currentPage = 0;
-    let totalItems = 0;
 
     function formatDate(dateStr) {
       if (!dateStr) return '';
@@ -62,39 +58,45 @@
       return dateStr;
     }
 
-    async function loadPage(page) {
+    async function loadAll() {
       const proxyUrl = proxyUrlInput.value.trim();
       const branch = branchInput.value.trim();
       const path = apiPathSelect.value;
-      let body;
+      let bodyTemplate;
       try {
-        body = JSON.parse(requestBodyTextarea.value || '{}');
+        bodyTemplate = JSON.parse(requestBodyTextarea.value || '{}');
       } catch (e) {
         statusDiv.textContent = 'Ошибка: невалидный JSON';
         return;
       }
-      body.page = page;
       if (!proxyUrl || !branch || !path) {
         statusDiv.textContent = 'Заполните все поля';
         return;
       }
-      statusDiv.textContent = `Загрузка страницы ${page}...`;
+      statusDiv.textContent = 'Начинаю загрузку всех страниц...';
+      let allItems = [];
+      let page = 0;
+      let total = null;
       try {
-        const resp = await fetch(proxyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ branch, path, body })
-        });
-        const json = await resp.json();
-        if (json.error) throw new Error(json.error);
-        totalItems = json.total || 0;
-        const items = json.items || [];
-        if (page === 0) allFetchedItems = [];
-        allFetchedItems = allFetchedItems.concat(items);
-        renderTable(allFetchedItems);
-        pageInfoSpan.textContent = `Показано ${allFetchedItems.length} из ${totalItems}`;
-        statusDiv.textContent = `Загружено ${allFetchedItems.length} записей.`;
-        currentPage = page;
+        while (true) {
+          const body = { ...bodyTemplate, page };
+          const resp = await fetch(proxyUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ branch, path, body })
+          });
+          const json = await resp.json();
+          if (json.error) throw new Error(json.error);
+          if (total === null) total = json.total;
+          const items = json.items || [];
+          allItems = allItems.concat(items);
+          pageInfoSpan.textContent = `Загружено ${allItems.length} из ${total}`;
+          statusDiv.textContent = `Страница ${page}: получено ${items.length} записей`;
+          if (items.length === 0 || allItems.length >= total) break;
+          page++;
+        }
+        renderTable(allItems);
+        statusDiv.textContent = `Готово! Всего загружено ${allItems.length} записей.`;
       } catch (err) {
         statusDiv.textContent = 'Ошибка: ' + err.message;
         console.error(err);
@@ -118,9 +120,9 @@
       }).join('');
     }
 
-    loadBtn.addEventListener('click', () => loadPage(0));
-    // Загружаем первую страницу сразу
-    loadPage(0);
+    loadAllBtn.addEventListener('click', loadAll);
+    // автоматически загружаем первую страницу при открытии
+    loadAll();
   </script>
 </body>
 </html>
