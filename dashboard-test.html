@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Сравнение показателей — CRM vs Excel</title>
+  <title>Сравнение показателей — CRM vs Excel (июль 2026)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
@@ -61,6 +61,8 @@
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
 
     async function fetchPage(proxyUrl, branch, path, body) {
+      // Отладочный вывод
+      console.log('Запрос к прокси:', { branch, path, body });
       const resp = await fetch(proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,15 +73,18 @@
       return json;
     }
 
-    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate, maxPages = 20) {
+    // Загружаем ВСЕ страницы без ограничения
+    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate) {
       let allItems = [];
       let page = 0;
-      while (page < maxPages) {
+      while (true) {
         const json = await fetchPage(proxyUrl, branch, path, { ...bodyTemplate, page });
         const items = json.items || [];
         allItems = allItems.concat(items);
-        if (items.length < 50) break;
+        if (items.length === 0) break;  // конец данных
         page++;
+        // Пауза 200 мс между запросами, чтобы не перегружать CRM
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
       return allItems;
     }
@@ -97,7 +102,6 @@
       statusEl.textContent = 'Загрузка справочников (типы платежей)...';
       const payTypes = await fetchAllPages(proxyUrl, branch, 'pay-type/index', {});
       payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
-      // выводим в консоль для отладки
       console.log('Типы платежей:', dicts.payTypes);
 
       statusEl.textContent = 'Справочники загружены.';
@@ -108,11 +112,11 @@
       const branch = document.getElementById('branch').value.trim();
       if (!proxyUrl || !branch) return;
 
-      document.getElementById('status').textContent = 'Загрузка данных из CRM...';
+      document.getElementById('status').textContent = 'Загрузка данных из CRM (только июль 2026)...';
       try {
         await loadDictionaries(proxyUrl, branch);
 
-        // Загружаем операции за июль 2026 (ограничим 1000 для скорости)
+        // Загружаем ТОЛЬКО июль 2026, все страницы
         const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {
           document_date_from: '01.07.2026',
           document_date_to: '31.07.2026'
@@ -174,7 +178,7 @@
         const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
         document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
 
-        document.getElementById('status').textContent = `Загружено ${items.length} операций. Проверьте консоль (F12) для деталей.`;
+        document.getElementById('status').textContent = `Загружено ${items.length} операций за июль 2026.`;
       } catch (err) {
         document.getElementById('status').textContent = 'Ошибка: ' + err.message;
         console.error(err);
