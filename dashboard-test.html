@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тест API AlfaCRM — Music Club</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; max-width: 1000px; margin: 2rem auto; padding: 1rem; }
+    input, button, select { padding: 0.5rem; margin: 0.3rem; font-size: 0.9rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ddd; padding: 0.4rem; text-align: left; font-size: 0.85rem; }
+    th { background: #f8f8f8; }
+    .status { margin: 0.5rem 0; font-weight: 600; }
+    .info { background: #f0f8ff; padding: 0.5rem; border-radius: 8px; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Тест API AlfaCRM → crm_finance</h1>
+  <div class="info">
+    <strong>Ключи:</strong><br>
+    X-APP-KEY: 1a9660367fd73dd812e78257b089eeae<br>
+    API Token: f9b58fee-65b7-11f1-8c3e-3cecef965e00<br>
+    <strong>Возможные эндпоинты:</strong>
+    <select id="endpointSelect">
+      <option value="https://api.alfa-crm.ru/v2/finance">/v2/finance</option>
+      <option value="https://api.alfa-crm.ru/v2/finances">/v2/finances</option>
+      <option value="https://api.alfa-crm.ru/v2/finance/list">/v2/finance/list</option>
+      <option value="https://api.alfa-crm.ru/v2/finance/operation">/v2/finance/operation</option>
+      <option value="https://api.alfa-crm.ru/v2/operations">/v2/operations</option>
+    </select>
+    <button id="fetchBtn">Загрузить из CRM</button>
+    <button id="saveBtn" disabled>Сохранить в Supabase</button>
+  </div>
+  <div class="status" id="status"></div>
+  <table id="dataTable">
+    <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Категория</th><th>Счёт</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const APP_KEY = '1a9660367fd73dd812e78257b089eeae';
+    const TOKEN = 'f9b58fee-65b7-11f1-8c3e-3cecef965e00';
+
+    let fetchedData = [];
+
+    document.getElementById('fetchBtn').addEventListener('click', async () => {
+      const url = document.getElementById('endpointSelect').value.trim();
+      document.getElementById('status').textContent = `Попытка: ${url} ...`;
+      try {
+        const resp = await fetch(url, {
+          headers: {
+            'X-APP-KEY': APP_KEY,
+            'Authorization': `Bearer ${TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!resp.ok) {
+          const errText = await resp.text();
+          throw new Error(`HTTP ${resp.status}: ${errText}`);
+        }
+        const json = await resp.json();
+        console.log('Ответ API:', json);
+
+        // Ищем массив данных
+        let raw = null;
+        if (Array.isArray(json)) raw = json;
+        else if (json.data && Array.isArray(json.data)) raw = json.data;
+        else if (json.items && Array.isArray(json.items)) raw = json.items;
+        else if (json.records && Array.isArray(json.records)) raw = json.records;
+        else if (json.result && Array.isArray(json.result)) raw = json.result;
+        else {
+          const arr = Object.values(json).find(v => Array.isArray(v));
+          if (arr) raw = arr;
+          else throw new Error('Не найден массив данных. Смотрите консоль (F12) для структуры ответа.');
+        }
+
+        const first = raw[0];
+        console.log('Первый элемент:', first);
+        fetchedData = raw.map(item => ({
+          operation_date: item.date || item.operation_date || item.created_at || '',
+          operation_type: item.type || item.operation_type || item.category || '',
+          amount: parseFloat(item.amount || item.sum || item.price || 0),
+          category: item.category || item.expense_item || item.description || '',
+          account: item.account || item.cash_register || item.bank_account || ''
+        }));
+        renderTable(fetchedData);
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('status').textContent = `Загружено ${fetchedData.length} записей.`;
+      } catch (err) {
+        document.getElementById('status').textContent = 'Ошибка: ' + err.message;
+        console.error(err);
+      }
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      if (!fetchedData.length) return;
+      document.getElementById('status').textContent = 'Сохранение в Supabase...';
+      try {
+        await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
+        const { error } = await _supabase.from('crm_finance').insert(fetchedData);
+        if (error) throw error;
+        document.getElementById('status').textContent = `Сохранено ${fetchedData.length} записей.`;
+      } catch (err) {
+        document.getElementById('status').textContent = 'Ошибка сохранения: ' + err.message;
+      }
+    });
+
+    function renderTable(data) {
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = data.map(r => `<tr>
+        <td>${r.operation_date}</td>
+        <td>${r.operation_type}</td>
+        <td>${r.amount.toLocaleString()} ₽</td>
+        <td>${r.category}</td>
+        <td>${r.account}</td>
+      </tr>`).join('');
+    }
+  </script>
+</body>
+</html>
