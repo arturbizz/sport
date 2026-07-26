@@ -803,7 +803,7 @@
       }
       const since = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10);
       const recentLeads = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact && l.date_added >= since);
-      const convertedStages = ['клиент','ученик','оплата','продажа'];
+      const convertedStages = ['Основная: ПУ состоялся'];
       const converted = recentLeads.filter(l => convertedStages.some(s => (l.stage||'').toLowerCase().includes(s)));
       const conversionRate = recentLeads.length ? converted.length / recentLeads.length : 0;
       const incomeOps = financeData.filter(isIncome);
