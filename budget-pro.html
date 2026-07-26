@@ -243,7 +243,6 @@
       'Старший педагог'
     ];
 
-    // Красивое модальное окно вместо alert
     function showAlert(msg) {
       document.getElementById('alertMessage').textContent = msg;
       document.getElementById('alertModal').style.display = 'flex';
@@ -252,21 +251,39 @@
       };
     }
 
+    // Пагинированная загрузка всех записей
+    async function fetchAll(table, orderColumn = 'operation_date') {
+      const PAGE_SIZE = 1000;
+      let allRows = [];
+      let from = 0;
+      let to = PAGE_SIZE - 1;
+      while (true) {
+        const { data, error } = await _supabase
+          .from(table)
+          .select('*')
+          .order(orderColumn, { ascending: true })
+          .range(from, to);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        allRows = allRows.concat(data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+        to += PAGE_SIZE;
+      }
+      return allRows;
+    }
+
     async function loadData() {
       try {
         const [fin, exp, sal] = await Promise.all([
-          _supabase.from('crm_finance').select('*').limit(5000).order('operation_date', { ascending: true }),
-          _supabase.from('expenses').select('*').limit(5000).order('next_payment_date', { ascending: true }),
-          _supabase.from('teacher_salary').select('*').limit(5000).order('created_at', { ascending: true })
+          fetchAll('crm_finance', 'operation_date'),
+          fetchAll('expenses', 'next_payment_date'),
+          fetchAll('teacher_salary', 'created_at')
         ]);
 
-        if (fin.error || exp.error || sal.error) {
-          throw new Error('Ошибка загрузки данных из Supabase');
-        }
-
-        financeData = fin.data || [];
-        allExpenses = exp.data || [];
-        teacherSalaryData = sal.data || [];
+        financeData = fin;
+        allExpenses = exp;
+        teacherSalaryData = sal;
         renderAll();
       } catch (err) {
         console.error(err);
@@ -399,7 +416,7 @@
 
       const total = totalFixed + avgVariable + avgTeacherSal;
 
-      const debugMsg = `Данные загружены из Supabase. Всего записей в crm_finance: ${financeData.length}. ` +
+      const debugMsg = `Данные загружены полностью. Всего записей в crm_finance: ${financeData.length}. ` +
         `Расходных операций: ${financeData.filter(isExpenseOperation).length}. ` +
         `Последняя дата: ${financeData.length ? financeData[financeData.length-1].operation_date : 'нет'}.`;
 
@@ -480,7 +497,6 @@
       }
     });
 
-    // Первая загрузка
     loadData();
   })();
 </script>
