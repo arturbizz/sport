@@ -219,8 +219,8 @@
 
   <div class="widget-grid">
     <div class="widget-card">
-      <div class="widget-title" id="topExpensesTitle">Топ-10 крупнейших разовых расходов</div>
-      <div id="topOneTimeExpenses"></div>
+      <div class="widget-title" id="topCategoriesTitle">Топ-10 крупнейших категорий расходов</div>
+      <div id="topCategories"></div>
     </div>
     <div class="widget-card">
       <div class="widget-title">Анализ влияния маркетинга</div>
@@ -384,10 +384,6 @@
       return cat.includes('маркетинг бюджет') || cat.includes('маркетинг работа');
     };
 
-    // ИСПРАВЛЕНО: new Date(y,m,1).toISOString() переводит локальную полночь в UTC — для
-    // часовых поясов восточнее Гринвича (например, Москва) это откатывает границу месяца
-    // на день/месяц назад ("Прошлый месяц" реально показывал позапрошлый). Считаем месяц
-    // по локальным getFullYear()/getMonth(), без перехода в UTC.
     function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
 
     function getMonthlyData(monthsBack) {
@@ -418,10 +414,6 @@
       return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
     }
 
-    // ИСПРАВЛЕНО: раньше возвращался Object.values() — массив объектов без привязки к месяцу.
-    // Из-за этого блок с "MoM под каждым столбцом графика" ниже (который ищет prevData.find(p=>p[0]===month))
-    // никогда не находил совпадение и всегда показывал 0%. Теперь возвращаем словарь {месяц: {...}},
-    // чтобы можно было и просуммировать все значения (для верхних KPI), и найти конкретный месяц (для графика).
     function getPrevPeriodData() {
       let start, end;
       if (selectedMonths === 1) {
@@ -532,7 +524,7 @@
         </div>
       `;
 
-      // График
+      // График – ИСПРАВЛЕНО: правильно обращаемся к словарю prevData
       const maxVal = Math.max(...monthly.map(m => Math.max(m[1].income, m[1].expense, m[1].marketing)), 1);
       const barChart = document.getElementById('barChart');
       barChart.innerHTML = monthly.map(([month, vals]) => {
@@ -555,41 +547,46 @@
         </div>`;
       }).join('');
 
-      // Топ-10 разовых расходов — ИСПРАВЛЕНО: теперь учитывает выбранный период (селектор фильтров сверху),
-      // а не всегда весь массив данных. Заголовок виджета обновляется под выбранный период.
+      // Топ-10 категорий расходов (агрегировано)
       const periodLabels = {1:'прошлый месяц', 3:'3 месяца', 6:'6 месяцев', 12:'12 месяцев', 0:'всё время'};
-      document.getElementById('topExpensesTitle').textContent = `Топ-10 крупнейших разовых расходов (${periodLabels[selectedMonths]})`;
+      document.getElementById('topCategoriesTitle').textContent = `Топ-10 крупнейших категорий расходов (${periodLabels[selectedMonths]})`;
       const monthKeysInPeriod = new Set(monthly.map(([month]) => month));
-      const oneTime = financeData
-        .filter(r => isExpense(r) && r.amount > 20000 && !isMarketing(r) && monthKeysInPeriod.has((r.operation_date||'').slice(0,7)))
-        .sort((a,b) => b.amount - a.amount)
-        .slice(0,10)
-        .map(r => `<div class="list-item"><span>${r.operation_date} — ${r.category}</span><span class="amount">${r.amount.toLocaleString()} ₽</span></div>`).join('');
-      document.getElementById('topOneTimeExpenses').innerHTML = oneTime || 'Нет данных за выбранный период';
+      const catTotals = {};
+      financeData.forEach(r => {
+        if (!isExpense(r)) return;
+        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+        if (m && monthKeysInPeriod.has(m)) {
+          const cat = r.category || 'Без категории';
+          catTotals[cat] = (catTotals[cat] || 0) + r.amount;
+        }
+      });
+      const topCatList = Object.entries(catTotals).sort((a,b) => b[1] - a[1]).slice(0,10);
+      document.getElementById('topCategories').innerHTML = topCatList.map(([cat, sum]) => `
+        <div class="list-item"><span>${cat}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>
+      `).join('') || 'Нет данных за выбранный период';
 
-      // Маркетинг ROI
+      // Маркетинг ROI – с пояснением
       const marketingROI = totalMarketing > 0 ? (totalIncome / totalMarketing).toFixed(1) : '—';
       document.getElementById('marketingImpact').innerHTML = `
         <div class="list-item"><span>ROI маркетинга (доход / затраты)</span><span class="amount">${marketingROI}</span></div>
         <div class="list-item"><span>Доля маркетинга в расходах</span><span class="amount">${totalExpense>0 ? ((totalMarketing/totalExpense)*100).toFixed(1) : 0}%</span></div>
+        <div class="kpi-note" style="margin-top:0.5rem;">Каждый 1 ₽ на маркетинг приносит ${marketingROI} ₽ дохода</div>
       `;
 
-      // Средние по категориям (последние 6 месяцев) — ИСПРАВЛЕНО: раньше деструктуризация
-      // "([, vals])" пропускала месяц и сравнивала дату с объектом (m === vals), что никогда
-      // не было true — виджет всегда был пуст. Теперь правильно берём месяц и фильтруем по нему.
+      // Средние по категориям (последние 6 месяцев)
       const sixMonthData = getMonthlyData(6);
       const sixMonthKeys = new Set(sixMonthData.map(([month]) => month));
-      const catTotals = {};
+      const sixCatTotals = {};
       financeData.forEach(r => {
         if (!isExpense(r)) return;
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
         if (m && sixMonthKeys.has(m)) {
           const cat = r.category || 'Без категории';
-          catTotals[cat] = (catTotals[cat] || 0) + r.amount;
+          sixCatTotals[cat] = (sixCatTotals[cat] || 0) + r.amount;
         }
       });
-      const catList = Object.entries(catTotals).map(([cat, total]) => ({ cat, avg: Math.round(total / Math.max(1, sixMonthData.length)) })).sort((a,b) => b.avg - a.avg).slice(0,10);
-      document.getElementById('categoryAverages').innerHTML = catList.map(c => `
+      const avgCatList = Object.entries(sixCatTotals).map(([cat, total]) => ({ cat, avg: Math.round(total / Math.max(1, sixMonthData.length)) })).sort((a,b) => b.avg - a.avg).slice(0,10);
+      document.getElementById('categoryAverages').innerHTML = avgCatList.map(c => `
         <div class="list-item"><span>${c.cat}</span><span class="amount">${c.avg.toLocaleString()} ₽/мес.</span></div>
       `).join('') || 'Нет данных';
 
