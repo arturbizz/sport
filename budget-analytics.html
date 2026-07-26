@@ -219,9 +219,10 @@
 
     async function loadData() {
       const [fin, exp, sal] = await Promise.all([
-        _supabase.from('crm_finance').select('*').order('operation_date', { ascending: true }),
-        _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true }),
-        _supabase.from('teacher_salary').select('*').order('created_at', { ascending: true })
+        // Увеличен лимит до 5000, чтобы загрузить все записи
+        _supabase.from('crm_finance').select('*').limit(5000).order('operation_date', { ascending: true }),
+        _supabase.from('expenses').select('*').limit(5000).order('next_payment_date', { ascending: true }),
+        _supabase.from('teacher_salary').select('*').limit(5000).order('created_at', { ascending: true })
       ]);
       financeData = fin.data || [];
       allExpenses = exp.data || [];
@@ -282,7 +283,7 @@
           if (insErr) { alert('Ошибка загрузки: ' + insErr.message); return; }
 
           await loadData();
-          alert('Загружено ' + parsed.length + ' записей');
+          alert('Загружено ' + parsed.length + ' записей. Аналитика обновлена.');
         };
         reader.readAsArrayBuffer(file);
       };
