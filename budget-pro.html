@@ -239,17 +239,7 @@
     <div id="mainChart"></div>
   </div>
 
-  <div class="widget-grid">
-    <div class="widget-card">
-      <div class="widget-title" id="periodCategoryTitle">Расходы по категориям</div>
-      <div id="periodCategoryTotals"></div>
-    </div>
-    <div class="widget-card">
-      <div class="widget-title" id="topExpensesTitle">Топ-10 крупнейших разовых расходов</div>
-      <div id="topOneTimeExpenses"></div>
-    </div>
-  </div>
-
+  <!-- Изменён порядок: сначала маркетинг, средние, безубыточность, потом категории и топ-10 -->
   <div class="widget-grid">
     <div class="widget-card">
       <div class="widget-title">Анализ влияния маркетинга</div>
@@ -262,6 +252,17 @@
     <div class="widget-card">
       <div class="widget-title">Прогноз точки безубыточности</div>
       <div id="breakeven"></div>
+    </div>
+  </div>
+
+  <div class="widget-grid">
+    <div class="widget-card">
+      <div class="widget-title" id="periodCategoryTitle">Расходы по категориям</div>
+      <div id="periodCategoryTotals"></div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title" id="topExpensesTitle">Топ-10 крупнейших разовых расходов</div>
+      <div id="topOneTimeExpenses"></div>
     </div>
   </div>
 
@@ -438,15 +439,16 @@
       });
     }
 
-    // Привязываем раскрытие списков
     function bindExpandButtons() {
       document.querySelectorAll('.forecast-expand').forEach(btn => {
-        btn.onclick = () => {
-          const list = btn.nextElementSibling;
+        // Убираем старый обработчик, чтобы не дублировался
+        btn.onclick = null;
+        btn.addEventListener('click', function(e) {
+          const list = this.nextElementSibling;
           if (list && list.classList.contains('forecast-list')) {
             list.classList.toggle('open');
           }
-        };
+        });
       });
     }
 
@@ -476,14 +478,16 @@
 
     function generateForecastHTML(forecast) {
       const fixedListHtml = (forecast.fixedList || []).map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
-      const topVarHtml = (forecast.topVariable || []).map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ');
+      // Если топ переменных пуст, не показываем кнопку и список
+      const hasVarData = forecast.topVariable && forecast.topVariable.length > 0;
+      const topVarHtml = hasVarData ? forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ') : '';
       return `
         <div class="forecast-card">
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Прогноз на следующий месяц</div>
           <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
           <div class="forecast-details">
             <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${fixedListHtml}</div></div>
-            <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${topVarHtml}</div></div>
+            <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> ${hasVarData ? '<span class="forecast-expand">▸</span><div class="forecast-list">'+topVarHtml+'</div>' : ''}</div>
             <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong> <span style="margin-left:0.5rem;">Коэфф. <span id="coeffContainer"></span></span></div>
             <div class="forecast-item">Маркетинг: <strong>${forecast.avgMarketing.toLocaleString()} ₽</strong></div>
             <div class="forecast-item" style="color:var(--royalty);">Роялти: <strong>${forecast.royalty.toLocaleString()} ₽</strong></div>
@@ -727,7 +731,7 @@
 
       updateChart(monthly);
 
-      // остальные виджеты без изменений
+      // Остальные виджеты (теперь порядок тот, который нужен)
       const periodLabels = {'-1':'текущий месяц',1:'прошлый месяц',3:'3 месяца',6:'6 месяцев',12:'12 месяцев',0:'всё время'};
       document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]})`;
       const monthKeys = new Set(monthly.map(([m])=>m));
@@ -781,7 +785,8 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-          await _supabase.from('crm_finance').delete().neq('id',0);
+          // Удаляем только операционные данные, настройки не трогаем
+          await _supabase.from('crm_finance').delete().not('operation_type', 'in', 'settings');
           for (let i = 0; i < parsed.length; i += 500) {
             const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
