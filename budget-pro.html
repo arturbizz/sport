@@ -79,16 +79,33 @@
     }
     .forecast-total { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
     .forecast-details { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
-    .forecast-item { font-size: 0.95rem; color: var(--text-secondary); }
+    .forecast-item { font-size: 0.95rem; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     .forecast-item strong { color: var(--text); font-weight: 600; }
     .forecast-expand { margin-top: 0.3rem; font-size: 0.8rem; color: var(--accent); cursor: pointer; }
     .forecast-expand:hover { text-decoration: underline; }
-    .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); }
+    .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); width: 100%; }
     .forecast-list.open { display: block; }
-    .rate-input {
-      width: 70px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); text-align: center;
-      background: rgba(255,255,255,0.7); font-weight: 500;
+
+    /* Кастомный коэффициент */
+    .coeff-widget {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--surface); border-radius: 10px;
+      border: 1px solid var(--border); padding: 2px;
     }
+    .coeff-btn {
+      width: 32px; height: 32px; border: none; background: transparent;
+      font-size: 18px; font-weight: 600; color: var(--accent);
+      cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      transition: 0.2s;
+    }
+    .coeff-btn:hover { background: var(--accent-light); }
+    .coeff-value {
+      width: 60px; text-align: center; font-weight: 600; font-size: 1rem;
+      border: none; background: transparent; color: var(--text);
+      -moz-appearance: textfield;
+    }
+    .coeff-value::-webkit-outer-spin-button,
+    .coeff-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
     .kpi-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -98,17 +115,13 @@
       background: var(--surface); border-radius: var(--radius-lg);
       padding: 1.2rem; border: 1px solid var(--border);
       box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-      min-width: 0; /* важно для предотвращения переполнения */
+      min-width: 0;
     }
     .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
     .kpi-value {
       font-size: clamp(1.4rem, 1.8rem, 5vw);
-      font-weight: 700;
-      color: var(--accent);
-      margin-top: 0.3rem;
-      word-break: break-word;
-      overflow-wrap: break-word;
-      max-width: 100%;
+      font-weight: 700; color: var(--accent); margin-top: 0.3rem;
+      word-break: break-word; overflow-wrap: break-word; max-width: 100%;
     }
     .kpi-card.net-profit .kpi-value { color: var(--net-profit); font-size: clamp(1.5rem, 2rem, 5vw); }
     .kpi-change { font-size: 0.75rem; margin-top: 0.2rem; color: var(--text-secondary); word-break: break-word; }
@@ -295,7 +308,7 @@
     const ROYALTY_RATE = 0.08;
     const ROYALTY_START = '2026-07';
 
-    // Глобальный коэффициент (загружается из Supabase)
+    // Глобальный коэффициент (из Supabase)
     let globalRateCoeff = 1.0;
 
     const FIXED_ARTICLES = [
@@ -348,7 +361,10 @@
         const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'teacher_rate_coeff').single();
         if (error || !data) {
           globalRateCoeff = 1.0;
-          // Не пытаемся создать запись, просто используем 1.0
+          // Попробуем создать запись со значением по умолчанию
+          try {
+            await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' }, { onConflict: 'key' });
+          } catch(e) {}
         } else {
           globalRateCoeff = parseFloat(data.value) || 1.0;
         }
@@ -357,21 +373,63 @@
       }
     }
 
-    // Сохранение коэффициента в app_settings с уведомлением об ошибке
+    // Сохранение коэффициента в Supabase
     async function saveRateCoeff(value) {
       globalRateCoeff = value;
       try {
-        const { error } = await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
+        const { error } = await _supabase.from('app_settings').upsert(
+          { key: 'teacher_rate_coeff', value: String(value) },
+          { onConflict: 'key' }
+        );
         if (error) {
-          showAlert('Не удалось сохранить коэффициент. Проверьте, создана ли таблица app_settings и отключён ли Row Level Security.');
           console.error('Ошибка сохранения коэффициента:', error);
+          showAlert('Не удалось сохранить коэффициент. Проверьте, создана ли таблица app_settings и отключён ли Row Level Security. Подробности в консоли.');
         }
       } catch (e) {
-        showAlert('Ошибка соединения при сохранении коэффициента.');
         console.error(e);
+        showAlert('Ошибка соединения при сохранении коэффициента.');
       }
-      // Обновляем только прогноз и точку безубыточности
       updateForecastAndBreakEven();
+    }
+
+    // Создание кастомного виджета коэффициента
+    function buildCoeffWidget(container) {
+      const widget = document.createElement('span');
+      widget.className = 'coeff-widget';
+      widget.innerHTML = `
+        <button class="coeff-btn" id="coeffMinus">−</button>
+        <input type="number" class="coeff-value" id="coeffValue" value="${globalRateCoeff}" step="0.05" min="0.5" max="3.0">
+        <button class="coeff-btn" id="coeffPlus">+</button>
+      `;
+      container.appendChild(widget);
+
+      const input = widget.querySelector('#coeffValue');
+      const minus = widget.querySelector('#coeffMinus');
+      const plus = widget.querySelector('#coeffPlus');
+
+      const updateCoeff = () => {
+        let val = parseFloat(input.value) || 1.0;
+        val = Math.min(3.0, Math.max(0.5, val));
+        input.value = val.toFixed(2);
+        saveRateCoeff(val);
+      };
+
+      input.addEventListener('change', updateCoeff);
+      input.addEventListener('blur', updateCoeff);
+
+      minus.addEventListener('click', () => {
+        let val = parseFloat(input.value) || 1.0;
+        val = Math.max(0.5, val - 0.05);
+        input.value = val.toFixed(2);
+        saveRateCoeff(val);
+      });
+
+      plus.addEventListener('click', () => {
+        let val = parseFloat(input.value) || 1.0;
+        val = Math.min(3.0, val + 0.05);
+        input.value = val.toFixed(2);
+        saveRateCoeff(val);
+      });
     }
 
     function updateForecastAndBreakEven() {
@@ -379,13 +437,10 @@
       const forecast = computeForecast();
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
-      // Перепривязываем обработчики
-      const rateInput = document.getElementById('rateCoeff');
-      if (rateInput) {
-        rateInput.addEventListener('input', function() {
-          saveRateCoeff(parseFloat(this.value) || 1.0);
-        });
-      }
+      // Вставляем кастомный виджет коэффициента
+      const coeffContainer = document.getElementById('coeffContainer');
+      if (coeffContainer) buildCoeffWidget(coeffContainer);
+
       const targetInput = document.getElementById('targetProfitInput');
       if (targetInput) {
         targetInput.addEventListener('input', updateTargetIncome);
@@ -411,7 +466,7 @@
           <div class="forecast-details">
             <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸</span><div class="forecast-list">${fixedListHtml}</div></div>
             <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸</span><div class="forecast-list">${topVarHtml}</div></div>
-            <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong> <span style="margin-left:0.5rem;">Коэфф. <input type="number" class="rate-input" id="rateCoeff" value="${globalRateCoeff}" step="0.05" min="0.5" max="3.0"></span></div>
+            <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong> <span style="margin-left:0.5rem;">Коэфф. <span id="coeffContainer"></span></span></div>
             <div class="forecast-item">Маркетинг: <strong>${forecast.avgMarketing.toLocaleString()} ₽</strong></div>
             <div class="forecast-item" style="color:var(--royalty);">Роялти: <strong>${forecast.royalty.toLocaleString()} ₽</strong></div>
           </div>
@@ -643,13 +698,10 @@
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
 
-      // обработчики
-      const rateInput = document.getElementById('rateCoeff');
-      if (rateInput) {
-        rateInput.addEventListener('input', function() {
-          saveRateCoeff(parseFloat(this.value) || 1.0);
-        });
-      }
+      // Вставляем кастомный виджет коэффициента
+      const coeffContainer = document.getElementById('coeffContainer');
+      if (coeffContainer) buildCoeffWidget(coeffContainer);
+
       const targetInput = document.getElementById('targetProfitInput');
       if (targetInput) {
         targetInput.addEventListener('input', updateTargetIncome);
