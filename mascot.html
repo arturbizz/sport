@@ -2,211 +2,425 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Маскотик – AI помощник</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover">
+  <title>Маскотик – помощник</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --surface: rgba(255,255,255,0.8);
-      --accent: #0d9488;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --border: rgba(15,23,42,0.06);
+      --text: #0f172a;
       --text-secondary: #475569;
-      --radius-xl: 32px; --radius-lg: 20px; --radius-sm: 14px;
+      --accent: #0d9488;
+      --accent-light: #ccfbf1;
+      --warm-yellow: #f59e0b;
+      --soft-green: #10b981;
+      --critical: #ef4444;
+      --radius-xl: 24px; --radius-lg: 20px; --radius-sm: 14px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Inter', sans-serif;
-      background: transparent;
-      display: flex; align-items: center; justify-content: center;
-      height: 100vh; padding: 20px;
-      cursor: default; caret-color: transparent;
+      background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      cursor: default;
+      caret-color: transparent;
     }
-    input, textarea { cursor: text; caret-color: auto; }
-
     .copilot {
-      width: 100%; height: 100%;
-      max-width: 520px; max-height: 780px;
-      background: var(--surface);
+      width: 100%;
+      max-width: 480px;
+      background: rgba(255,255,255,0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-radius: var(--radius-xl);
-      border: 1px solid rgba(255,255,255,0.5);
-      box-shadow: 0 25px 60px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.2) inset;
-      display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.3) inset;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      max-height: 90vh;
     }
-
-    .chat-header {
-      display: flex; align-items: center; gap: 14px; padding: 20px 24px;
-      border-bottom: 1px solid rgba(0,0,0,0.04);
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(12px);
     }
-    .mascot-avatar {
-      width: 52px; height: 52px; border-radius: 50%;
-      background: #ccfbf1; object-fit: cover;
+    .avatar {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
     }
-    .header-info h3 { font-size: 18px; font-weight: 600; }
+    .header-info h2 { font-size: 18px; font-weight: 600; }
     .header-info span { font-size: 12px; color: var(--text-secondary); }
-
-    .chat-messages {
-      flex: 1; overflow-y: auto; padding: 24px;
-      display: flex; flex-direction: column; gap: 16px;
-      background: rgba(248,250,252,0.6);
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(248,250,252,0.5);
     }
     .msg {
-      max-width: 80%; padding: 12px 18px; border-radius: var(--radius-sm);
-      font-size: 14px; line-height: 1.5;
+      max-width: 80%;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      line-height: 1.5;
       animation: fadeIn 0.2s ease;
     }
     @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } }
-    .msg.user { align-self: flex-end; background: #ccfbf1; color: #134e4a; }
     .msg.bot {
-      align-self: flex-start; background: white; color: #0f172a;
-      border: 1px solid rgba(0,0,0,0.05); border-left: 3px solid var(--accent);
+      align-self: flex-start;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.04);
+      border-left: 3px solid var(--accent);
+      color: var(--text);
+      white-space: pre-wrap;
     }
-
+    .msg.error {
+      align-self: center;
+      background: rgba(239,68,68,0.1);
+      color: var(--critical);
+    }
     .quick-actions {
-      display: flex; gap: 8px; padding: 12px 24px; overflow-x: auto;
-      border-top: 1px solid rgba(0,0,0,0.04);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(12px);
     }
     .quick-btn {
-      padding: 8px 16px; border-radius: 24px; border: 1px solid #e2e8f0;
-      background: white; font-size: 13px; font-weight: 500; white-space: nowrap;
-      cursor: pointer; transition: 0.2s; color: var(--text-secondary);
+      padding: 12px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: white;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+      user-select: none;
     }
-    .quick-btn:hover { background: #f0fdfa; border-color: var(--accent); color: var(--accent); }
-
-    .input-area {
-      display: flex; padding: 16px 24px; gap: 10px;
-      border-top: 1px solid rgba(0,0,0,0.04);
+    .quick-btn:active { background: var(--accent-light); border-color: var(--accent); }
+    .quick-btn .icon { font-size: 24px; }
+    .login-btn {
+      margin: 20px;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
     }
-    .input-area input {
-      flex:1; border: 1px solid #e2e8f0; border-radius: 28px;
-      padding: 12px 20px; font-size: 14px; outline: none;
-      background: rgba(255,255,255,0.7);
-    }
-    .input-area button {
-      background: var(--accent); color: white; border: none;
-      border-radius: 50%; width: 48px; height: 48px;
-      font-size: 20px; cursor: pointer; transition: 0.2s;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .input-area button:hover { background: #0f766e; }
   </style>
 </head>
 <body>
-  <div class="copilot">
-    <div class="chat-header">
-      <img src="mascot.png" class="mascot-avatar" alt="Маскотик" onerror="this.style.display='none'">
+  <div class="copilot" id="app">
+    <div class="header">
+      <div class="avatar">🦉</div>
       <div class="header-info">
-        <h3>Маскотик</h3>
-        <span>Всегда на связи</span>
+        <h2 id="userName">Маскотик</h2>
+        <span id="userRole"></span>
       </div>
     </div>
-    <div class="chat-messages" id="chatMessages"></div>
+    <div class="messages" id="messagesContainer"></div>
     <div class="quick-actions" id="quickActions"></div>
-    <div class="input-area">
-      <input id="chatInput" placeholder="Спросите что угодно..." />
-      <button id="sendBtn">➤</button>
-    </div>
   </div>
-
-  <script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/super-handler`;
+    const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Получаем email и токен из URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const userEmail = urlParams.get('email') || '';
-    const userToken = urlParams.get('token') || '';
+    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
+    let currentUser = null;
     let effectiveRole = '';
 
-    const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const quickActions = document.getElementById('quickActions');
+    const messagesEl = document.getElementById('messagesContainer');
+    const quickActionsEl = document.getElementById('quickActions');
 
-    (async () => {
-      if (userEmail && userToken) {
-        // Определяем роль
-        if (userEmail === 'arturgalkin.ru@mail.ru') {
-          const impRole = localStorage.getItem('impersonated_role');
-          effectiveRole = impRole || 'Управляющий';
-        } else {
-          const { data: emp } = await _supabase.from('employees').select('role').eq('email', userEmail).single();
-          effectiveRole = emp?.role || 'Менеджер';
-        }
-      } else {
-        effectiveRole = 'Менеджер';
-      }
-      loadHistory();
-      updateQuickActions();
-    })();
-
-    function loadHistory() {
-      const key = `mascot_chat_${userEmail || 'anon'}`;
-      const history = JSON.parse(localStorage.getItem(key) || '[]');
-      history.forEach(msg => addMessage(msg.text, msg.sender, false));
-    }
-    function saveHistory() {
-      const key = `mascot_chat_${userEmail || 'anon'}`;
-      const messages = [];
-      chatMessages.querySelectorAll('.msg').forEach(msg => {
-        messages.push({ text: msg.textContent, sender: msg.classList.contains('user') ? 'user' : 'bot' });
-      });
-      localStorage.setItem(key, JSON.stringify(messages));
-    }
-
-    function addMessage(text, sender, save = true) {
+    function addMessage(text, isError = false) {
       const div = document.createElement('div');
-      div.className = `msg ${sender}`;
+      div.className = `msg bot${isError ? ' error' : ''}`;
       div.textContent = text;
-      chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      if (save) saveHistory();
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
-    async function askBot(question) {
-      try {
-        const headers = { 'Content-Type': 'application/json' };
-        if (userToken) headers['Authorization'] = `Bearer ${userToken}`;
-        const resp = await fetch(FUNCTION_URL, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ question, email: userEmail, impersonatedRole: localStorage.getItem('impersonated_role') || '' })
-        });
-        const data = await resp.json();
-        addMessage(data.reply || 'Я не понял.', 'bot');
-      } catch(e) {
-        addMessage('Ошибка соединения.', 'bot');
-      }
-    }
-
-    function updateQuickActions() {
-      const buttonsMap = {
-        'Менеджер': ['Моя зарплата', 'Мои продажи', 'Моя конверсия'],
-        'Преподаватель': ['Моя зарплата', 'Моё расписание'],
-        'Бухгалтер': ['Ближайшие платежи', 'Зарплаты сотрудников', 'Скачать ведомость'],
-        'ИП': ['Продажи сегодня', 'Ближайшие расходы'],
-        'Управляющий': ['Продажи сегодня', 'Прибыль', 'Конверсия лидов']
-      };
-      const buttons = buttonsMap[effectiveRole] || ['Моя зарплата', 'Ближайшие платежи', 'Продажи сегодня'];
-      quickActions.innerHTML = buttons.map(text => `<button class="quick-btn">${text}</button>`).join('');
-      quickActions.querySelectorAll('.quick-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          addMessage(btn.textContent, 'user');
-          askBot(btn.textContent);
+    function showQuickActions(buttons) {
+      quickActionsEl.innerHTML = buttons.map(btn => {
+        return `<button class="quick-btn" data-action="${btn.action}">
+          <span class="icon">${btn.icon}</span>
+          <span>${btn.label}</span>
+        </button>`;
+      }).join('');
+      quickActionsEl.querySelectorAll('.quick-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const action = btn.dataset.action;
+          await handleAction(action);
         });
       });
     }
 
-    sendBtn.addEventListener('click', () => {
-      const q = chatInput.value.trim();
-      if (!q) return;
-      addMessage(q, 'user');
-      chatInput.value = '';
-      askBot(q);
-    });
-    chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+    // Определение действий для каждой роли
+    const roleActions = {
+      'Управляющий': [
+        { icon: '📊', label: 'Сводка KPI', action: 'kpi' },
+        { icon: '💰', label: 'Кассовый разрыв', action: 'cashflow' },
+        { icon: '📈', label: 'Воронка лидов', action: 'leads' },
+        { icon: '🎯', label: 'Точка безубыточности', action: 'breakeven' },
+        { icon: '💳', label: 'Предстоящие платежи', action: 'unpaid' },
+        { icon: '📋', label: 'Ежемесячные платежи', action: 'regular' },
+        { icon: '👥', label: 'Зарплаты', action: 'salaries' },
+        { icon: '🧾', label: 'Налоги/роялти', action: 'tax' },
+        { icon: '🔗', label: 'Чеки за 30 дн.', action: 'receipts' },
+      ],
+      'Бухгалтер': [
+        { icon: '💳', label: 'Предстоящие платежи', action: 'unpaid' },
+        { icon: '📋', label: 'Ежемесячные платежи', action: 'regular' },
+        { icon: '👥', label: 'Зарплаты', action: 'salaries' },
+        { icon: '🧾', label: 'Налоги/роялти', action: 'tax' },
+        { icon: '🔗', label: 'Чеки за 30 дн.', action: 'receipts' },
+      ],
+      'Менеджер': [
+        { icon: '💸', label: 'Мои продажи', action: 'mysales' },
+        { icon: '💵', label: 'Моя зарплата', action: 'mysalary' },
+        { icon: '📊', label: 'Моя конверсия', action: 'myconversion' },
+        { icon: '📅', label: 'График работы', action: 'graph' },
+        { icon: '✅', label: 'Мои задачи', action: 'mytasks' },
+      ],
+      'Администратор': [
+        { icon: '📅', label: 'График на сегодня', action: 'todaygraph' },
+        { icon: '👥', label: 'Лиды за сегодня', action: 'todayleads' },
+        { icon: '✅', label: 'Задачи на сегодня', action: 'todaytasks' },
+      ],
+      'Преподаватель': [
+        { icon: '💵', label: 'Моя зарплата', action: 'teachersalary' },
+        { icon: '📅', label: 'Моё расписание', action: 'teacherschedule' },
+      ],
+      'ИП': [
+        { icon: '💰', label: 'Доходы за месяц', action: 'ipincome' },
+        { icon: '💸', label: 'Расходы за месяц', action: 'ipexpense' },
+        { icon: '🧾', label: 'Предстоящие налоги', action: 'iptax' },
+      ]
+    };
+
+    async function handleAction(action) {
+      addMessage(`Загрузка...`);
+      try {
+        let result = '';
+        const today = new Date().toISOString().slice(0,7);
+        const currentMonthStart = `${today}-01`;
+        const nextMonthStart = new Date(new Date().getFullYear(), new Date().getMonth()+1, 1).toISOString().slice(0,7) + '-01';
+
+        switch (action) {
+          case 'kpi': {
+            const [inc, exp] = await Promise.all([
+              _supabase.from('crm_finance').select('amount').gte('operation_date', currentMonthStart).or('operation_type.ilike.%доход%,operation_type.ilike.%продажа%'),
+              _supabase.from('crm_finance').select('amount').gte('operation_date', currentMonthStart).or('operation_type.ilike.%расход%,operation_type.ilike.%выплата%')
+            ]);
+            const income = (inc.data||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
+            const expense = (exp.data||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
+            const net = income - expense;
+            result = `📈 Доходы: ${income.toLocaleString()} ₽\n📉 Расходы: ${expense.toLocaleString()} ₽\n💎 Чистая прибыль: ${net.toLocaleString()} ₽`;
+            break;
+          }
+          case 'cashflow': {
+            const { data } = await _supabase.from('expenses').select('name, amount, next_payment_date').eq('paid', false).lte('next_payment_date', new Date(Date.now()+7*86400000).toISOString().slice(0,10)).order('next_payment_date');
+            if (!data || data.length===0) result = 'На ближайшие 7 дней нет запланированных платежей.';
+            else result = data.map(e => `• ${e.next_payment_date}: ${e.name} — ${e.amount} ₽`).join('\n');
+            break;
+          }
+          case 'leads': {
+            const { data } = await _supabase.from('leads').select('stage').gte('date_added', new Date(Date.now()-30*86400000).toISOString());
+            const total = (data||[]).filter(l => !l.stage?.includes('Дубль') && !l.stage?.includes('Некорректные'));
+            const conv = total.filter(l => l.stage?.includes('ПУ состоялся'));
+            const rate = total.length ? (conv.length/total.length*100).toFixed(1) : 0;
+            result = `Всего лидов за 30 дн: ${total.length}\nКонверсия: ${rate}% (${conv.length} успешных)`;
+            break;
+          }
+          case 'breakeven': {
+            const { data: expenses } = await _supabase.from('expenses').select('amount, periodicity').eq('paid', false);
+            const monthlyEquiv = { weekly: 52/12, biweekly: 26/12, monthly: 1, quarterly: 1/3, yearly: 1/12 };
+            const totalFixed = Math.round((expenses||[]).reduce((s,e) => s + parseFloat(e.amount)*(monthlyEquiv[e.periodicity]??1), 0));
+            const royaltyRate = 0.08;
+            const incomeForZero = Math.round(totalFixed/(1-royaltyRate));
+            result = `Для покрытия расходов нужно: ${totalFixed.toLocaleString()} ₽\nДля выхода в ноль с учётом роялти: ${incomeForZero.toLocaleString()} ₽`;
+            break;
+          }
+          case 'unpaid': {
+            const { data } = await _supabase.from('expenses').select('name, amount, next_payment_date').eq('paid', false).order('next_payment_date');
+            if (!data || data.length===0) result = 'В этом месяце всё оплачено.';
+            else result = data.map(e => `• ${e.next_payment_date || '—'}: ${e.name} — ${e.amount} ₽`).join('\n');
+            break;
+          }
+          case 'regular': {
+            const { data } = await _supabase.from('expenses').select('name, amount, periodicity').eq('paid', false);
+            if (!data || data.length===0) result = 'Нет активных платежей.';
+            else {
+              const total = data.reduce((s,e)=>s+parseFloat(e.amount),0);
+              result = data.map(e => `• ${e.name} — ${e.amount} ₽ (${e.periodicity})`).join('\n');
+              result += `\n\nОбщая сумма: ${total.toLocaleString()} ₽`;
+            }
+            break;
+          }
+          case 'salaries': {
+            const { data: emps } = await _supabase.from('employees').select('id, name, role');
+            const monthStr = new Date().toISOString().slice(0,7);
+            const { data: params } = await _supabase.from('salary_params').select('*').eq('month', monthStr);
+            const { data: worklog } = await _supabase.from('worklog').select('*').gte('date', monthStr+'-01').lte('date', monthStr+'-31');
+            const lines = [];
+            for (const emp of (emps||[])) {
+              const param = (params||[]).find(p => p.emp_id === emp.id) || {};
+              const logs = (worklog||[]).filter(w => w.emp_id === emp.id && w.status === 'working');
+              const worked = logs.length;
+              const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
+              const normDays = param.norm_days || 22;
+              const base = rates[emp.role] ? (rates[emp.role]/normDays)*worked : 0;
+              let bonus = 0;
+              if (emp.role === 'Менеджер') {
+                const sales = logs.reduce((s,l)=>s+(l.daily_sales||0),0);
+                bonus = sales * ((param.plan_fulfilled?7:5))/100;
+              }
+              lines.push(`${emp.name}: ${Math.round(base+bonus).toLocaleString()} ₽`);
+            }
+            result = lines.join('\n') || 'Нет данных по зарплатам.';
+            break;
+          }
+          case 'tax': {
+            const [inc] = await Promise.all([
+              _supabase.from('crm_finance').select('amount').gte('operation_date', currentMonthStart).or('operation_type.ilike.%доход%,operation_type.ilike.%продажа%')
+            ]);
+            const income = (inc.data||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
+            const royalty = Math.round(income * 0.08);
+            result = `Ожидаемое роялти (8% от доходов): ${royalty.toLocaleString()} ₽`;
+            break;
+          }
+          case 'receipts': {
+            const { data } = await _supabase.from('expenses').select('name, receipt_url, paid_at').not('receipt_url', 'is', null).gte('paid_at', new Date(Date.now()-30*86400000).toISOString()).order('paid_at', {ascending: false});
+            if (!data || data.length===0) result = 'За последние 30 дней чеков не найдено.';
+            else result = data.map(e => `• ${new Date(e.paid_at).toLocaleDateString('ru')}: ${e.name} — чек`).join('\n');
+            break;
+          }
+          case 'mysales': {
+            if (!currentUser) break;
+            const { data: emp } = await _supabase.from('employees').select('id').eq('email', currentUser.email).single();
+            if (!emp) { result = 'Сотрудник не найден.'; break; }
+            const monthStr = new Date().toISOString().slice(0,7);
+            const { data: logs } = await _supabase.from('worklog').select('daily_sales').eq('emp_id', emp.id).gte('date', monthStr+'-01').lte('date', monthStr+'-31').eq('status','working');
+            const sales = (logs||[]).reduce((s,l)=>s+(l.daily_sales||0),0);
+            const { data: param } = await _supabase.from('salary_params').select('plan_amount').eq('emp_id', emp.id).eq('month', monthStr).single();
+            const plan = param?.plan_amount || 0;
+            const remaining = Math.max(0, plan - sales);
+            const percent = plan ? ((sales/plan)*100).toFixed(1) : 0;
+            result = `Ваши продажи за месяц: ${sales.toLocaleString()} ₽\nПлан: ${plan.toLocaleString()} ₽\nВыполнение: ${percent}%\nОсталось до плана: ${remaining.toLocaleString()} ₽`;
+            break;
+          }
+          case 'mysalary': {
+            if (!currentUser) break;
+            const { data: emp } = await _supabase.from('employees').select('id, role').eq('email', currentUser.email).single();
+            if (!emp) { result = 'Сотрудник не найден.'; break; }
+            const monthStr = new Date().toISOString().slice(0,7);
+            const { data: logs } = await _supabase.from('worklog').select('daily_sales, status').eq('emp_id', emp.id).gte('date', monthStr+'-01').lte('date', monthStr+'-31');
+            const worked = (logs||[]).filter(l=>l.status==='working').length;
+            const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
+            const base = rates[emp.role] ? (rates[emp.role]/22)*worked : 0;
+            const sales = (logs||[]).filter(l=>l.status==='working').reduce((s,l)=>s+(l.daily_sales||0),0);
+            const { data: param } = await _supabase.from('salary_params').select('plan_fulfilled').eq('emp_id', emp.id).eq('month', monthStr).single();
+            const bonusRate = param?.plan_fulfilled ? 0.07 : 0.05;
+            const bonus = sales * bonusRate;
+            result = `Отработано смен: ${worked}\nБазовая: ${Math.round(base).toLocaleString()} ₽\nБонус: ${Math.round(bonus).toLocaleString()} ₽\nИтого: ${Math.round(base+bonus).toLocaleString()} ₽`;
+            break;
+          }
+          case 'myconversion': {
+            if (!currentUser) break;
+            const { data: leads } = await _supabase.from('leads').select('stage').gte('date_added', new Date(Date.now()-30*86400000).toISOString());
+            const total = (leads||[]).filter(l => !l.stage?.includes('Дубль') && !l.stage?.includes('Некорректные'));
+            const conv = total.filter(l => l.stage?.includes('ПУ состоялся'));
+            const rate = total.length ? (conv.length/total.length*100).toFixed(1) : 0;
+            result = `Конверсия за 30 дней: ${rate}% (${conv.length} из ${total.length})`;
+            break;
+          }
+          case 'graph': {
+            result = 'Откройте график работы для заполнения продаж: /schedule.html';
+            break;
+          }
+          case 'mytasks': {
+            if (!currentUser) break;
+            const { data: tasks } = await _supabase.from('tasks').select('title').contains('assignee_ids', [currentUser.id]);
+            result = (tasks||[]).length ? tasks.map(t => '• '+t.title).join('\n') : 'Нет активных задач.';
+            break;
+          }
+          case 'teachersalary': {
+            if (!currentUser) break;
+            const { data: emp } = await _supabase.from('employees').select('name').eq('email', currentUser.email).single();
+            const teacherName = emp?.name || '';
+            const monthStr = new Date().toISOString().slice(0,7);
+            const { data: sal } = await _supabase.from('teacher_salary').select('amount, period').eq('teacher_name', teacherName).eq('month', monthStr);
+            const total = (sal||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
+            result = `Ваша зарплата за ${monthStr}: ${total.toLocaleString()} ₽`;
+            break;
+          }
+          default: result = 'Действие не реализовано';
+        }
+        messagesEl.lastChild.textContent = result;
+      } catch (err) {
+        messagesEl.lastChild.textContent = 'Ошибка загрузки данных';
+        console.error(err);
+      }
+    }
+
+    async function init() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) {
+        window.location.href = 'login.html';
+        return;
+      }
+      currentUser = session.user;
+      const email = currentUser.email;
+      document.getElementById('userName').textContent = email;
+      if (email === ADMIN_EMAIL) {
+        effectiveRole = 'Управляющий';
+      } else {
+        const { data: emp } = await _supabase.from('employees').select('role').eq('email', email).single();
+        effectiveRole = emp?.role || '';
+      }
+      document.getElementById('userRole').textContent = effectiveRole || 'Роль не определена';
+      const buttons = roleActions[effectiveRole] || [];
+      if (buttons.length === 0) {
+        addMessage('Для вашей роли нет доступных действий.', true);
+        return;
+      }
+      showQuickActions(buttons);
+      addMessage('Здравствуйте! Выберите действие.');
+    }
+
+    init();
   </script>
 </body>
 </html>
