@@ -219,7 +219,6 @@
 
     async function loadData() {
       const [fin, exp, sal] = await Promise.all([
-        // Увеличен лимит до 5000, чтобы загрузить все записи
         _supabase.from('crm_finance').select('*').limit(5000).order('operation_date', { ascending: true }),
         _supabase.from('expenses').select('*').limit(5000).order('next_payment_date', { ascending: true }),
         _supabase.from('teacher_salary').select('*').limit(5000).order('created_at', { ascending: true })
@@ -230,8 +229,8 @@
       renderAll();
     }
 
-    // Функция загрузки Excel
-    function uploadFinance() {
+    // Загрузка Excel с разбивкой на чанки
+    async function uploadFinance() {
       const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
       input.onchange = async (e) => {
         const file = e.target.files[0]; if(!file) return;
@@ -277,13 +276,25 @@
           }
           if (parsed.length === 0) { alert('Не найдено записей в файле.'); return; }
 
+          // Удаляем старые данные
           const { error: delErr } = await _supabase.from('crm_finance').delete().neq('id',0);
           if (delErr) { alert('Ошибка очистки старых данных: ' + delErr.message); return; }
-          const { error: insErr } = await _supabase.from('crm_finance').insert(parsed);
-          if (insErr) { alert('Ошибка загрузки: ' + insErr.message); return; }
+
+          // Вставляем частями по 500 записей
+          const CHUNK_SIZE = 500;
+          let inserted = 0;
+          for (let i = 0; i < parsed.length; i += CHUNK_SIZE) {
+            const chunk = parsed.slice(i, i + CHUNK_SIZE);
+            const { error: insErr } = await _supabase.from('crm_finance').insert(chunk);
+            if (insErr) {
+              alert(`Ошибка загрузки на записях ${i+1}-${i+chunk.length}: ${insErr.message}`);
+              return;
+            }
+            inserted += chunk.length;
+          }
 
           await loadData();
-          alert('Загружено ' + parsed.length + ' записей. Аналитика обновлена.');
+          alert(`Загружено ${inserted} записей. Аналитика обновлена.`);
         };
         reader.readAsArrayBuffer(file);
       };
