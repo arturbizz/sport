@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Аналитика бюджета — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -85,6 +84,10 @@
     .forecast-details { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
     .forecast-item { font-size: 0.95rem; color: var(--text-secondary); }
     .forecast-item strong { color: var(--text); font-weight: 600; }
+    .forecast-expand { margin-top: 0.3rem; font-size: 0.8rem; color: var(--accent); cursor: pointer; }
+    .forecast-expand:hover { text-decoration: underline; }
+    .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); }
+    .forecast-list.open { display: block; }
 
     .kpi-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -182,10 +185,6 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Обновить данные
       </button>
-      <button class="btn" id="uploadBtn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Загрузить Excel
-      </button>
       <button class="icon-btn" id="infoBtn" title="Техническая информация">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
       </button>
@@ -271,7 +270,26 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let financeData = [], selectedMonths = 1;
+    let financeData = [], allExpenses = [], teacherSalaryData = [];
+    let selectedMonths = 1;
+
+    const FIXED_ARTICLES = [
+      'Администраторы ЗП',
+      'ЗП Менеджеры оклад',
+      'Управленец',
+      'Старший педагог',
+      'Аренда оборудования',
+      'Телефония',
+      'Банковское обслуживание',
+      '% рассрочка'
+    ];
+
+    const TEACHER_SALARY_ARTICLES = [
+      'ЗП Педагоги уроки',
+      'ЗП Педагоги  уроки',
+      'ЗП педагоги пробные',
+      'ЗП педагоги  пробные'
+    ];
 
     function showAlert(msg) {
       document.getElementById('alertMessage').textContent = msg;
@@ -281,8 +299,7 @@
       };
     }
 
-    // Загрузка данных через Supabase
-    async function fetchAll(table) {
+    async function fetchAll(table, orderColumn = 'operation_date') {
       const PAGE_SIZE = 1000;
       let allRows = [];
       let from = 0, to = PAGE_SIZE - 1;
@@ -290,7 +307,7 @@
         const { data, error } = await _supabase
           .from(table)
           .select('*')
-          .order('operation_date', { ascending: true })
+          .order(orderColumn, { ascending: true })
           .range(from, to);
         if (error) throw error;
         if (!data || data.length === 0) break;
@@ -301,80 +318,47 @@
       return allRows;
     }
 
-    // Загрузка Excel напрямую (аналогично основному дашборду)
-    function uploadFinance() {
-      const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
-      input.onchange = async (e) => {
-        const file = e.target.files[0]; if(!file) return;
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-          const data = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(data, {type:'array'});
-          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-          const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата'));
-          if(headerIdx===-1) { showAlert('Не найден заголовок'); return; }
-          const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
-          const dateIdx = headers.findIndex(h=>h.startsWith('дата'));
-          const typeIdx = headers.findIndex(h=>h.startsWith('тип'));
-          const amountIdx = headers.findIndex(h=>h.startsWith('сумма'));
-          const catIdx = headers.findIndex(h=>h.startsWith('статья'));
-          const accIdx = headers.findIndex(h=>h.includes('счет')||h.includes('касса'));
-          if(dateIdx===-1 || typeIdx===-1 || amountIdx===-1 || catIdx===-1) {
-            showAlert('Не найдены обязательные столбцы: Дата, Тип операции, Сумма, Статья, Счет');
-            return;
-          }
-          const parsed = [];
-          for(let i=headerIdx+1; i<rows.length; i++){
-            const cols=rows[i]; if(!cols) continue;
-            const amt = parseFloat(String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.'));
-            if(isNaN(amt)) continue;
-            parsed.push({
-              operation_date: (String(cols[dateIdx]||'').trim()).split('.').reverse().join('-'),
-              operation_type: String(cols[typeIdx]||'').trim(),
-              amount: amt,
-              category: String(cols[catIdx]||'').trim(),
-              account: accIdx!==-1 ? String(cols[accIdx]||'').trim() : ''
-            });
-          }
-          if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-
-          // Очищаем и вставляем
-          await _supabase.from('crm_finance').delete().neq('id',0);
-          const CHUNK_SIZE = 500;
-          for (let i = 0; i < parsed.length; i += CHUNK_SIZE) {
-            const chunk = parsed.slice(i, i + CHUNK_SIZE);
-            const { error } = await _supabase.from('crm_finance').insert(chunk);
-            if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
-          }
-
-          await loadData();
-          showAlert(`Загружено ${parsed.length} записей.`);
-        };
-        reader.readAsArrayBuffer(file);
-      };
-      input.click();
-    }
-
     async function loadData() {
       try {
-        financeData = await fetchAll('crm_finance');
+        const [fin, exp, sal] = await Promise.all([
+          fetchAll('crm_finance', 'operation_date'),
+          fetchAll('expenses', 'next_payment_date'),
+          fetchAll('teacher_salary', 'created_at')
+        ]);
+        financeData = fin;
+        allExpenses = exp;
+        teacherSalaryData = sal;
         renderAll();
       } catch (err) {
         console.error(err);
-        showAlert('Не удалось загрузить данные. Проверьте соединение.');
+        showAlert('Не удалось загрузить данные. Проверьте соединение с Supabase.');
       }
     }
 
     document.getElementById('refreshBtn').addEventListener('click', loadData);
-    document.getElementById('uploadBtn').addEventListener('click', uploadFinance);
 
-    // === ЛОГИКА РАСЧЁТОВ ===
-    const isIncome = (r) => ['доход','продажа'].some(t => (r.operation_type||'').toLowerCase().includes(t));
-    const isExpense = (r) => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t));
-    const isMarketing = (r) => {
+    function isIncome(r) {
+      const type = (r.operation_type || '').toLowerCase();
+      return type.includes('доход') || type.includes('продажа');
+    }
+
+    function isExpense(r) {
+      const type = (r.operation_type || '').toLowerCase();
+      return ['расход','выплата','инкассация','возврат'].some(t => type.includes(t));
+    }
+
+    function isMarketing(r) {
       const cat = (r.category || '').toLowerCase();
       return cat.includes('маркетинг бюджет') || cat.includes('маркетинг работа');
-    };
+    }
+
+    function isFixedCategory(cat) {
+      return FIXED_ARTICLES.some(a => (cat || '').toLowerCase().includes(a.toLowerCase()));
+    }
+
+    function isTeacherCategory(cat) {
+      return TEACHER_SALARY_ARTICLES.some(a => (cat || '').toLowerCase().includes(a.toLowerCase()));
+    }
 
     function getMonthlyData(monthsBack) {
       const months = {};
@@ -393,30 +377,19 @@
       financeData.forEach(r => {
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
         if (!m || (monthsBack && m < from) || (monthsBack === 1 && m >= to)) return;
-        if (!months[m]) months[m] = { income:0, expense:0, marketing:0 };
-        if (isIncome(r)) months[m].income += r.amount;
+        if (!months[m]) months[m] = { income:0, expense:0, marketing:0, fixed:0, variable:0, teacher:0 };
+        if (isIncome(r)) {
+          months[m].income += r.amount;
+        }
         if (isExpense(r)) {
           months[m].expense += r.amount;
           if (isMarketing(r)) months[m].marketing += r.amount;
+          if (isFixedCategory(r.category)) months[m].fixed += r.amount;
+          else if (isTeacherCategory(r.category)) months[m].teacher += r.amount;
+          else months[m].variable += r.amount;
         }
       });
       return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
-    }
-
-    function getPrevPeriod(monthsBack) {
-      const now = new Date();
-      if (monthsBack === 1) {
-        const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startOfPrev = new Date(startOfCurrent);
-        startOfPrev.setMonth(startOfPrev.getMonth() - 1);
-        const startOfPrevPrev = new Date(startOfPrev);
-        startOfPrevPrev.setMonth(startOfPrevPrev.getMonth() - 1);
-        return { from: startOfPrevPrev.toISOString().slice(0,7), to: startOfPrev.toISOString().slice(0,7) };
-      }
-      const length = monthsBack === 0 ? 12 : monthsBack;
-      const end = new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000);
-      const start = new Date(end.getTime() - length * 30 * 24 * 60 * 60 * 1000);
-      return { from: start.toISOString().slice(0,7), to: end.toISOString().slice(0,7) };
     }
 
     function computeChange(current, previous) {
@@ -430,47 +403,51 @@
       const totalIncome = monthly.reduce((s,m) => s + m[1].income, 0);
       const totalExpense = monthly.reduce((s,m) => s + m[1].expense, 0);
       const totalMarketing = monthly.reduce((s,m) => s + m[1].marketing, 0);
+      const totalFixed = monthly.reduce((s,m) => s + m[1].fixed, 0);
+      const totalVariable = monthly.reduce((s,m) => s + m[1].variable, 0);
+      const totalTeacher = monthly.reduce((s,m) => s + m[1].teacher, 0);
       const profit = totalIncome - totalExpense;
 
-      const prev = getPrevPeriod(selectedMonths);
-      const prevMonthly = getMonthlyData(null).filter(([m]) => m >= prev.from && m < prev.to);
+      // Предыдущий период для сравнения
+      let prevMonths = selectedMonths === 0 ? 12 : selectedMonths;
+      if (selectedMonths === 1) prevMonths = 2;
+      const prevMonthly = getMonthlyData(prevMonths);
       const prevIncome = prevMonthly.reduce((s,m) => s + m[1].income, 0);
       const prevExpense = prevMonthly.reduce((s,m) => s + m[1].expense, 0);
+      const prevMarketing = prevMonthly.reduce((s,m) => s + m[1].marketing, 0);
 
       const incomeChange = computeChange(totalIncome, prevIncome);
       const expenseChange = computeChange(totalExpense, prevExpense);
-      const marketingChange = computeChange(totalMarketing, prevMonthly.reduce((s,m) => s + m[1].marketing, 0));
+      const marketingChange = computeChange(totalMarketing, prevMarketing);
 
-      // Прогноз
-      const last3 = monthly.slice(-3);
+      // Прогноз на основе последних 3 месяцев
+      const last3 = getMonthlyData(3);
       const avgIncome = last3.reduce((s,m) => s + m[1].income, 0) / Math.max(1, last3.length);
       const avgExpense = last3.reduce((s,m) => s + m[1].expense, 0) / Math.max(1, last3.length);
+      const avgMarketing = last3.reduce((s,m) => s + m[1].marketing, 0) / Math.max(1, last3.length);
       const forecastIncome = Math.round(avgIncome * 1.03);
       const forecastExpense = Math.round(avgExpense * 1.05);
+      const forecastMarketing = Math.round(avgMarketing * 1.05);
       const forecastProfit = forecastIncome - forecastExpense;
-
-      // Крупнейшие разовые расходы (единичные транзакции > 20 000 ₽ за последние 12 месяцев)
-      const oneTimeExpenses = financeData
-        .filter(r => isExpense(r) && r.amount > 20000 && !isMarketing(r))
-        .sort((a,b) => b.amount - a.amount)
-        .slice(0,10)
-        .map(r => ({ date: r.operation_date, category: r.category, amount: r.amount }));
-
-      // Анализ маркетинга: корреляция расходов на маркетинг и доходов
-      const marketingROI = totalMarketing > 0 ? (totalIncome / totalMarketing).toFixed(1) : '—';
 
       // Рендеринг
       document.getElementById('forecastContainer').innerHTML = `
         <div class="forecast-card">
           <div style="font-size:0.85rem; color:var(--text-secondary);">Прогноз на следующий месяц</div>
-          <div style="display:flex; gap:2rem; margin-top:0.5rem;">
-            <div>
-              <div class="forecast-total">${forecastProfit.toLocaleString()} ₽</div>
-              <div style="font-size:0.8rem;">Прибыль</div>
+          <div class="forecast-total">${forecastProfit.toLocaleString()} ₽ <span style="font-size:0.9rem; font-weight:500;">прибыль</span></div>
+          <div class="forecast-details">
+            <div class="forecast-item">
+              <strong>Доходы:</strong> ${forecastIncome.toLocaleString()} ₽
             </div>
-            <div>
-              <div>Доходы: ${forecastIncome.toLocaleString()} ₽</div>
-              <div>Расходы: ${forecastExpense.toLocaleString()} ₽</div>
+            <div class="forecast-item">
+              <strong>Расходы:</strong> ${forecastExpense.toLocaleString()} ₽
+              <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸ состав</span>
+              <div class="forecast-list">
+                <span>Постоянные: ${totalFixed.toLocaleString()} ₽</span>,
+                <span>Переменные: ${totalVariable.toLocaleString()} ₽</span>,
+                <span>ЗП преподавателей: ${totalTeacher.toLocaleString()} ₽</span>,
+                <span>Маркетинг: ${forecastMarketing.toLocaleString()} ₽</span>
+              </div>
             </div>
           </div>
         </div>
@@ -501,44 +478,55 @@
       // График
       const maxVal = Math.max(...monthly.map(m => Math.max(m[1].income, m[1].expense, m[1].marketing)), 1);
       const barChart = document.getElementById('barChart');
-      barChart.innerHTML = monthly.map(([month, vals]) => `
-        <div class="bar-group">
+      barChart.innerHTML = monthly.map(([month, vals]) => {
+        const prev = prevMonthly.find(p => p[0] === month)?.[1] || { income:0, expense:0, marketing:0 };
+        const incomeMom = computeChange(vals.income, prev.income);
+        const expenseMom = computeChange(vals.expense, prev.expense);
+        const marketingMom = computeChange(vals.marketing, prev.marketing);
+        return `<div class="bar-group">
           <div style="display:flex; gap:2px; width:100%; height:100%; align-items:flex-end;">
-            <div class="bar bar-income" style="height:${(vals.income/maxVal*100).toFixed(1)}%;" title="Доход: ${vals.income.toLocaleString()} ₽"><div class="bar-tooltip">${vals.income.toLocaleString()} ₽</div></div>
-            <div class="bar bar-expense" style="height:${(vals.expense/maxVal*100).toFixed(1)}%;" title="Расход: ${vals.expense.toLocaleString()} ₽"><div class="bar-tooltip">${vals.expense.toLocaleString()} ₽</div></div>
-            <div class="bar bar-marketing" style="height:${(vals.marketing/maxVal*100).toFixed(1)}%;" title="Маркетинг: ${vals.marketing.toLocaleString()} ₽"><div class="bar-tooltip">${vals.marketing.toLocaleString()} ₽</div></div>
+            <div class="bar bar-income" style="height:${(vals.income/maxVal*100).toFixed(1)}%;"><div class="bar-tooltip">${vals.income.toLocaleString()} ₽</div></div>
+            <div class="bar bar-expense" style="height:${(vals.expense/maxVal*100).toFixed(1)}%;"><div class="bar-tooltip">${vals.expense.toLocaleString()} ₽</div></div>
+            <div class="bar bar-marketing" style="height:${(vals.marketing/maxVal*100).toFixed(1)}%;"><div class="bar-tooltip">${vals.marketing.toLocaleString()} ₽</div></div>
           </div>
           <div class="bar-label">${month.slice(5)}</div>
           <div class="bar-mom">
-            <span style="color:var(--soft-green);">▲ ${((vals.income / (prevMonthly.find(p=>p[0]===month)?.[1]?.income || 1) - 1) * 100).toFixed(0)}%</span>
-            <span style="color:var(--critical); margin-left:4px;">▼ ${((vals.expense / (prevMonthly.find(p=>p[0]===month)?.[1]?.expense || 1) - 1) * 100).toFixed(0)}%</span>
+            <span style="color:${incomeMom.positive ? 'var(--soft-green)' : 'var(--critical)'};">▲ ${incomeMom.diff}%</span>
+            <span style="color:${expenseMom.positive ? 'var(--soft-green)' : 'var(--critical)'}; margin-left:4px;">▼ ${expenseMom.diff}%</span>
+            <span style="color:${marketingMom.positive ? 'var(--soft-green)' : 'var(--critical)'}; margin-left:4px;">◆ ${marketingMom.diff}%</span>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
 
-      // Топ-10 разовых расходов
-      document.getElementById('topOneTimeExpenses').innerHTML = oneTimeExpenses.map(e => `
-        <div class="list-item"><span>${e.date} — ${e.category}</span><span class="amount">${e.amount.toLocaleString()} ₽</span></div>
-      `).join('') || 'Нет данных';
+      // Топ-10 разовых расходов (единичные > 20000, не маркетинг)
+      const oneTime = financeData
+        .filter(r => isExpense(r) && r.amount > 20000 && !isMarketing(r))
+        .sort((a,b) => b.amount - a.amount)
+        .slice(0,10)
+        .map(r => `<div class="list-item"><span>${r.operation_date} — ${r.category}</span><span class="amount">${r.amount.toLocaleString()} ₽</span></div>`).join('');
+      document.getElementById('topOneTimeExpenses').innerHTML = oneTime || 'Нет данных';
 
       // Маркетинг ROI
+      const marketingROI = totalMarketing > 0 ? (totalIncome / totalMarketing).toFixed(1) : '—';
       document.getElementById('marketingImpact').innerHTML = `
         <div class="list-item"><span>ROI маркетинга (доход / затраты)</span><span class="amount">${marketingROI}</span></div>
         <div class="list-item"><span>Доля маркетинга в расходах</span><span class="amount">${totalExpense>0 ? ((totalMarketing/totalExpense)*100).toFixed(1) : 0}%</span></div>
       `;
 
-      // Средние по категориям
-      const catAvg = {};
-      financeData.filter(isExpense).forEach(r => {
-        const cat = r.category || 'Без категории';
-        if (!catAvg[cat]) catAvg[cat] = { total:0, months:new Set() };
-        catAvg[cat].total += r.amount;
-        catAvg[cat].months.add(r.operation_date?.slice(0,7));
+      // Средние по категориям (последние 6 месяцев)
+      const sixMonthData = getMonthlyData(6);
+      const catTotals = {};
+      sixMonthData.forEach(([, vals]) => {
+        financeData.forEach(r => {
+          if (!isExpense(r)) return;
+          const m = r.operation_date?.slice(0,7);
+          if (m === vals) {
+            const cat = r.category || 'Без категории';
+            catTotals[cat] = (catTotals[cat] || 0) + r.amount;
+          }
+        });
       });
-      const catList = Object.entries(catAvg).map(([cat, data]) => ({
-        cat,
-        avg: Math.round(data.total / Math.max(1, data.months.size))
-      })).sort((a,b) => b.avg - a.avg).slice(0,10);
+      const catList = Object.entries(catTotals).map(([cat, total]) => ({ cat, avg: Math.round(total / Math.max(1, sixMonthData.length)) })).sort((a,b) => b.avg - a.avg).slice(0,10);
       document.getElementById('categoryAverages').innerHTML = catList.map(c => `
         <div class="list-item"><span>${c.cat}</span><span class="amount">${c.avg.toLocaleString()} ₽/мес.</span></div>
       `).join('') || 'Нет данных';
@@ -556,7 +544,6 @@
       `).join('');
     }
 
-    // Фильтры
     document.getElementById('periodFilters').addEventListener('click', (e) => {
       if (e.target.classList.contains('filter-btn')) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
