@@ -3,24 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM v2 – полные данные</title>
+  <title>Тест API AlfaCRM v2 – полные данные с названиями</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; max-width: 1200px; margin: 2rem auto; padding: 1rem; }
+    body { font-family: 'Inter', sans-serif; max-width: 1300px; margin: 2rem auto; padding: 1rem; }
     input, button, select, textarea { padding: 0.5rem; margin: 0.3rem; font-size: 0.9rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ddd; padding: 0.4rem; text-align: left; font-size: 0.85rem; }
     th { background: #f8f8f8; }
     .status { margin: 0.5rem 0; font-weight: 600; white-space: pre-wrap; background: #fef3c7; padding: 0.5rem; border-radius: 8px; }
     .summary { background: #e0f2fe; padding: 0.5rem; border-radius: 8px; margin-bottom: 1rem; }
+    label { display: block; margin: 0.3rem 0; }
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM v2 – все данные</h1>
+  <h1>Тест API AlfaCRM v2 – с названиями и фильтром</h1>
   <div>
-    <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
-    <label>Филиал (branch ID): <input type="text" id="branch" size="10" value="20"></label><br>
-    <button id="loadAllBtn">Загрузить все операции из CRM</button>
+    <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label>
+    <label>Филиал (branch ID): <input type="text" id="branch" size="10" value="20"></label>
+    <label>Дата С: <input type="date" id="dateFrom" value="2026-07-01"></label>
+    <label>Дата ПО: <input type="date" id="dateTo" value="2026-08-31"></label>
+    <button id="loadBtn">Загрузить все операции за период</button>
     <button id="saveBtn" disabled>Сохранить в Supabase (осторожно!)</button>
   </div>
   <div class="summary" id="summary"></div>
@@ -36,31 +39,66 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let fetchedData = [];
 
-    // Загружаем все страницы
+    // Кэш справочников
+    const dicts = {
+      payItems: {},   // id -> name
+      payAccounts: {},
+      customers: {},
+      teachers: {}
+    };
+
+    // Загрузка страницы
+    async function fetchPage(proxyUrl, branch, path, body) {
+      const resp = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch, path, body })
+      });
+      const json = await resp.json();
+      if (json.error) throw new Error(json.error);
+      return json;
+    }
+
+    // Загрузка всех страниц (с учётом total)
     async function fetchAllPages(proxyUrl, branch, path, bodyTemplate) {
       let allItems = [];
       let page = 0;
       let total = null;
       while (true) {
         const body = { ...bodyTemplate, page };
-        const resp = await fetch(proxyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ branch, path, body })
-        });
-        const json = await resp.json();
-        if (json.error) throw new Error(json.error);
+        const json = await fetchPage(proxyUrl, branch, path, body);
         if (total === null) total = json.total;
         const items = json.items || [];
         allItems = allItems.concat(items);
-        document.getElementById('status').textContent = `Загружено ${allItems.length} из ${total}...`;
+        document.getElementById('status').textContent = `${path}: загружено ${allItems.length} из ${total}...`;
         if (items.length === 0 || allItems.length >= total) break;
         page++;
       }
       return allItems;
     }
 
-    // Преобразование даты
+    // Загрузка справочников
+    async function loadDictionaries(proxyUrl, branch) {
+      document.getElementById('status').textContent = 'Загрузка справочников...';
+      try {
+        const [payItems, payAccounts, customers, teachers] = await Promise.all([
+          fetchAllPages(proxyUrl, branch, 'pay-item/index', {}),
+          fetchAllPages(proxyUrl, branch, 'pay-account/index', {}),
+          fetchAllPages(proxyUrl, branch, 'customer/index', {}),
+          fetchAllPages(proxyUrl, branch, 'teacher/index', {})
+        ]);
+        payItems.forEach(item => { dicts.payItems[item.id] = item.name; });
+        payAccounts.forEach(item => { dicts.payAccounts[item.id] = item.name; });
+        customers.forEach(item => { dicts.customers[item.id] = item.name || `${item.last_name || ''} ${item.first_name || ''}`; });
+        teachers.forEach(item => { dicts.teachers[item.id] = item.name || `${item.last_name || ''} ${item.first_name || ''}`; });
+        document.getElementById('status').textContent = 'Справочники загружены.';
+      } catch (e) {
+        console.error(e);
+        document.getElementById('status').textContent = 'Ошибка загрузки справочников: ' + e.message;
+      }
+    }
+
+    // Форматирование даты
     function formatDate(dateStr) {
       if (!dateStr) return '';
       const parts = dateStr.split('.');
@@ -68,14 +106,31 @@
       return dateStr;
     }
 
-    document.getElementById('loadAllBtn').addEventListener('click', async () => {
+    // Основная загрузка
+    document.getElementById('loadBtn').addEventListener('click', async () => {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
       const branch = document.getElementById('branch').value.trim();
-      if (!proxyUrl || !branch) return;
-      document.getElementById('status').textContent = 'Загрузка операций...';
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+      if (!proxyUrl || !branch || !dateFrom || !dateTo) return;
+
+      // Преобразуем в формат DD.MM.YYYY для CRM
+      const formatCRMDate = iso => iso.split('-').reverse().join('.');
+      const crmFrom = formatCRMDate(dateFrom);
+      const crmTo = formatCRMDate(dateTo);
+
+      document.getElementById('status').textContent = 'Загрузка справочников и операций...';
       try {
-        const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {});
-        console.log('Пример первого элемента:', items[0]); // для отладки
+        // 1. Справочники
+        await loadDictionaries(proxyUrl, branch);
+
+        // 2. Операции с фильтром по дате
+        const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {
+          document_date_from: crmFrom,
+          document_date_to: crmTo
+        });
+
+        console.log('Пример первого элемента:', items[0]);
 
         // Сводка
         let totalIncome = 0, totalExpense = 0, salesCount = 0;
@@ -86,7 +141,7 @@
         });
 
         document.getElementById('summary').innerHTML = `
-          <strong>Сводка по загруженным данным:</strong><br>
+          <strong>Сводка за период ${dateFrom} – ${dateTo}:</strong><br>
           • Всего операций: ${items.length}<br>
           • Доходных операций (продаж): ${salesCount}<br>
           • Сумма доходов: ${totalIncome.toLocaleString()} ₽<br>
@@ -94,26 +149,31 @@
           • Прибыль: ${(totalIncome - totalExpense).toLocaleString()} ₽
         `;
 
-        fetchedData = items.map(item => ({
-          operation_date: formatDate(item.document_date),
-          operation_type: (parseFloat(item.income || item.amount || 0) > 0) ? 'Доход' : 'Расход',
-          amount: parseFloat(item.income || item.amount || 0),
-          category: item.pay_item_id || '',
-          account: item.pay_account_id || '',
-          customer: item.customer_id || '',
-          teacher: item.teacher_id || '',
-          note: item.note || ''
-        }));
+        // Формируем читаемые данные
+        fetchedData = items.map(item => {
+          const amount = parseFloat(item.income || item.amount || 0);
+          return {
+            operation_date: formatDate(item.document_date),
+            operation_type: amount > 0 ? 'Доход' : 'Расход',
+            amount: amount,
+            category: dicts.payItems[item.pay_item_id] || item.pay_item_id || '',
+            account: dicts.payAccounts[item.pay_account_id] || item.pay_account_id || '',
+            customer: dicts.customers[item.customer_id] || item.customer_id || '',
+            teacher: dicts.teachers[item.teacher_id] || item.teacher_id || '',
+            note: item.note || ''
+          };
+        });
 
-        renderTable(fetchedData.slice(0, 200)); // первые 200 для обзора
+        renderTable(fetchedData.slice(0, 200)); // показываем первые 200
         document.getElementById('saveBtn').disabled = false;
-        document.getElementById('status').textContent = `Загружено ${fetchedData.length} операций.`;
+        document.getElementById('status').textContent = `Загружено ${fetchedData.length} операций с названиями.`;
       } catch (err) {
         document.getElementById('status').textContent = 'Ошибка: ' + err.message;
         console.error(err);
       }
     });
 
+    // Сохранение
     document.getElementById('saveBtn').addEventListener('click', async () => {
       if (!fetchedData.length) return;
       if (!confirm(`Будут удалены ВСЕ данные в crm_finance (кроме настроек) и сохранено ${fetchedData.length} записей. Продолжить?`)) return;
