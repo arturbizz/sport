@@ -384,6 +384,12 @@
       return cat.includes('маркетинг бюджет') || cat.includes('маркетинг работа');
     };
 
+    // ИСПРАВЛЕНО: new Date(y,m,1).toISOString() переводит локальную полночь в UTC — для
+    // часовых поясов восточнее Гринвича (например, Москва) это откатывает границу месяца
+    // на день/месяц назад ("Прошлый месяц" реально показывал позапрошлый). Считаем месяц
+    // по локальным getFullYear()/getMonth(), без перехода в UTC.
+    function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
+
     function getMonthlyData(monthsBack) {
       const months = {};
       const now = new Date();
@@ -392,10 +398,10 @@
         const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfPrevious = new Date(startOfCurrent);
         startOfPrevious.setMonth(startOfPrevious.getMonth() - 1);
-        from = startOfPrevious.toISOString().slice(0,7);
-        to = startOfCurrent.toISOString().slice(0,7);
+        from = monthKey(startOfPrevious);
+        to = monthKey(startOfCurrent);
       } else if (monthsBack > 1) {
-        from = new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
+        from = monthKey(new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000));
       }
 
       financeData.forEach(r => {
@@ -431,8 +437,8 @@
         end = new Date(Date.now() - selectedMonths * 30 * 24 * 60 * 60 * 1000);
         start = new Date(end.getTime() - length * 30 * 24 * 60 * 60 * 1000);
       }
-      const fromKey = start.toISOString().slice(0,7);
-      const toKey = end.toISOString().slice(0,7);
+      const fromKey = monthKey(start);
+      const toKey = monthKey(end);
       const prevMonthly = {};
       financeData.forEach(r => {
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
