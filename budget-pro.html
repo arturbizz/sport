@@ -219,6 +219,21 @@
     </div>
   </div>
 
+  <div class="widget-grid">
+    <div class="widget-card">
+      <div class="widget-title">Точность прошлых прогнозов (план vs факт)</div>
+      <div id="forecastAccuracy"></div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title">Прогноз кассового разрыва (30 дней)</div>
+      <div id="cashFlowForecast"></div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-title">Доходный потенциал воронки лидов</div>
+      <div id="leadsForecast"></div>
+    </div>
+  </div>
+
   <div style="margin-bottom:1.5rem;">
     <button class="btn" id="toggleTableBtn">Показать таблицу транзакций</button>
   </div>
@@ -255,13 +270,14 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let financeData = [], allExpenses = [], teacherSalaryData = [];
+    let financeData = [], allExpenses = [], teacherSalaryData = [], leadsData = [];
     let selectedMonths = 1;
     let myChart = null;
     const ROYALTY_RATE = 0.08;
     const ROYALTY_START = '2026-07';
 
     let globalRateCoeff = 1.0;
+    let teacherForecastMode = 'avg'; // 'avg' (реалистично) | 'max' (консервативно)
 
     const FIXED_ARTICLES = [
       'Администраторы ЗП','ЗП Менеджеры оклад','Управленец','Старший педагог',
@@ -333,6 +349,36 @@
       } catch (e) {
         globalRateCoeff = 1.0;
       }
+      try {
+        const { data } = await _supabase
+          .from('crm_finance')
+          .select('amount')
+          .eq('operation_type', 'settings')
+          .eq('category', 'teacher_forecast_mode')
+          .order('id', { ascending: false })
+          .limit(1);
+        teacherForecastMode = (data && data.length && data[0].amount === 1) ? 'max' : 'avg';
+      } catch (e) {
+        teacherForecastMode = 'avg';
+      }
+    }
+
+    async function saveTeacherForecastMode(mode) {
+      teacherForecastMode = mode;
+      try {
+        await _supabase.from('crm_finance').delete().eq('category', 'teacher_forecast_mode').eq('operation_type', 'settings');
+        await _supabase.from('crm_finance').insert([{
+          operation_date: new Date().toISOString().split('T')[0],
+          operation_type: 'settings',
+          amount: mode === 'max' ? 1 : 0,
+          category: 'teacher_forecast_mode',
+          account: 'system'
+        }]);
+      } catch (e) {
+        showAlert('Ошибка сохранения режима прогноза ЗП педагогов.');
+        console.error(e);
+      }
+      renderAll();
     }
 
     async function saveRateCoeff(value) {
@@ -412,6 +458,8 @@
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast, getMonthlyData(selectedMonths).reduce((s,m)=>s+m[1].income,0));
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
+      const teacherModeContainer = document.getElementById('teacherModeContainer');
+      if (teacherModeContainer) buildTeacherModeWidget(teacherModeContainer);
       bindExpandButtons();
 
       const targetInput = document.getElementById('targetProfitInput');
@@ -434,18 +482,43 @@
       const topVarHtml = forecast.topVar && forecast.topVar.length
         ? forecast.topVar.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ')
         : 'Нет данных';
+      const rangeHtml = forecast.totalRange
+        ? `<div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.2rem;">Диапазон (по разбросу последних месяцев): ${forecast.totalRange.min.toLocaleString()} – ${forecast.totalRange.max.toLocaleString()} ₽</div>`
+        : '';
+      const seasonHtml = forecast.seasonality
+        ? `<div class="forecast-item" style="color:var(--text-secondary);">Год назад (${forecast.seasonality.month}): доход ${forecast.seasonality.income.toLocaleString()} ₽, расход ${forecast.seasonality.expense.toLocaleString()} ₽</div>`
+        : '';
       return `
         <div class="forecast-card">
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Прогноз на следующий месяц</div>
           <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
+          ${rangeHtml}
           <div class="forecast-details">
             <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${fixedListHtml}</div></div>
             <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${topVarHtml}</div></div>
-            <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong> <span style="margin-left:0.5rem;">Коэфф. <span id="coeffContainer"></span></span></div>
+            <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong>
+              <span style="margin-left:0.5rem;">Коэфф. <span id="coeffContainer"></span></span>
+              <span id="teacherModeContainer" style="margin-left:0.5rem;"></span>
+            </div>
             <div class="forecast-item">Маркетинг: <strong>${forecast.avgMarketing.toLocaleString()} ₽</strong></div>
             <div class="forecast-item" style="color:var(--royalty);">Роялти: <strong>${forecast.royalty.toLocaleString()} ₽</strong></div>
+            ${seasonHtml}
           </div>
         </div>`;
+    }
+
+    function buildTeacherModeWidget(container) {
+      const widget = document.createElement('span');
+      widget.className = 'coeff-widget';
+      widget.innerHTML = `
+        <button class="coeff-btn" data-mode="avg" style="width:auto;padding:0 8px;font-size:12px;font-weight:600;">Среднее</button>
+        <button class="coeff-btn" data-mode="max" style="width:auto;padding:0 8px;font-size:12px;font-weight:600;">Максимум</button>
+      `;
+      widget.querySelectorAll('button').forEach(btn => {
+        if (btn.dataset.mode === teacherForecastMode) { btn.style.background = 'var(--accent)'; btn.style.color = 'white'; }
+        btn.addEventListener('click', () => saveTeacherForecastMode(btn.dataset.mode));
+      });
+      container.appendChild(widget);
     }
 
     function generateBreakEvenHTML(forecast, currentIncome) {
@@ -510,9 +583,18 @@
       // расходов брали не тот месяц — сейчас это незаметно (роялти уже действует), но сломается
       // в любой момент ДО начала действия роялти или на стыке декабрь→январь.
       const nextMonth = monthKey(new Date(now.getFullYear(), now.getMonth() + 1, 1));
+
+      // ИСПРАВЛЕНО: раньше "Постоянные" = сумма amount каждой неоплаченной записи expenses,
+      // БЕЗ учёта periodicity. Годовой платёж (страховка и т.п.) целиком попадал в прогноз
+      // одного месяца, а еженедельный — занижался примерно в 4 раза. Теперь каждая запись
+      // приводится к месячному эквиваленту по своей периодичности.
+      const MONTHLY_EQUIV = { weekly: 52/12, biweekly: 26/12, monthly: 1, quarterly: 1/3, yearly: 1/12 };
       const activeFixed = allExpenses.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth+'-01'));
-      const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
-      const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
+      const totalFixed = Math.round(activeFixed.reduce((s,e) => s + parseFloat(e.amount) * (MONTHLY_EQUIV[e.periodicity] ?? 1), 0));
+      const fixedList = activeFixed.map(e => ({
+        name: e.name + (e.periodicity && e.periodicity !== 'monthly' ? ` (${{weekly:'ежен.',biweekly:'раз в 2 нед.',quarterly:'кварт.',yearly:'ежегод.'}[e.periodicity]||e.periodicity} → мес. экв.)` : ''),
+        amount: Math.round(parseFloat(e.amount) * (MONTHLY_EQUIV[e.periodicity] ?? 1))
+      }));
 
       // Все расходные операции за последние 3 месяца (или больше, если нет)
       const threeMonthsAgo = monthKey(new Date(Date.now() - 3*30*24*60*60*1000));
@@ -529,8 +611,14 @@
       // прогноз расходов и точку безубыточности.
       const variableOps = recentOps.filter(r => !isTeacherCategory(r.category) && !isFixedCategory(r.category));
       const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
+      const monthlyVar = {};
+      variableOps.forEach(r => { const m = r.operation_date?.slice(0,7); if (m) monthlyVar[m] = (monthlyVar[m]||0) + parseFloat(r.amount); });
+      const varMonthValues = Object.values(monthlyVar);
+      const monthsCount = Math.max(1, varMonthValues.length);
       const avgVariable = Math.round((totalVar / monthsCount) * 1.05);
+      const variableRange = varMonthValues.length > 1
+        ? { min: Math.round(Math.min(...varMonthValues)), max: Math.round(Math.max(...varMonthValues)) }
+        : null;
       const topVar = Object.entries(
         variableOps.reduce((acc, r) => {
           const cat = r.category || 'Без категории';
@@ -546,8 +634,16 @@
         const m = r.operation_date?.slice(0,7);
         if (m) monthlyTeacher[m] = (monthlyTeacher[m] || 0) + parseFloat(r.amount);
       });
-      const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
-      const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff);
+      const teacherMonthValues = Object.values(monthlyTeacher);
+      const maxTeacher = Math.max(...teacherMonthValues, 0);
+      const avgTeacherRaw = teacherMonthValues.length ? teacherMonthValues.reduce((a,b)=>a+b,0)/teacherMonthValues.length : 0;
+      // Переключатель "среднее / максимум" — среднее реалистичнее, максимум даёт запас прочности
+      // на случай, если один из последних месяцев был нетипично высоким.
+      const teacherBase = teacherForecastMode === 'max' ? maxTeacher : avgTeacherRaw;
+      const avgTeacher = Math.round(teacherBase * 1.05 * globalRateCoeff);
+      const teacherRange = teacherMonthValues.length > 1
+        ? { min: Math.round(Math.min(...teacherMonthValues) * globalRateCoeff), max: Math.round(maxTeacher * globalRateCoeff) }
+        : null;
 
       // Маркетинг
       const marketingOps = recentOps.filter(isMarketing);
@@ -560,7 +656,28 @@
       const royaltyRate = applyRoyalty(nextMonth);
       const royalty = Math.round(avgIncome * royaltyRate);
 
-      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty };
+      // Доверительный интервал прогноза: постоянные расходы считаем неизменными (низкая
+      // волатильность), а разброс переменных и ЗП педагогов за последние месяцы даёт вилку
+      // "пессимистично / оптимистично" вместо одной точечной цифры.
+      const totalRange = (variableRange || teacherRange)
+        ? {
+            min: totalFixed + (variableRange?.min ?? avgVariable) + (teacherRange?.min ?? avgTeacher),
+            max: totalFixed + (variableRange?.max ?? avgVariable) + (teacherRange?.max ?? avgTeacher)
+          }
+        : null;
+
+      // Сезонность: тот же месяц год назад — если данных хватает на полный год истории.
+      const nextMonthNum = parseInt(nextMonth.split('-')[1], 10);
+      const nextMonthYear = parseInt(nextMonth.split('-')[0], 10);
+      const sameMonthLastYear = `${nextMonthYear-1}-${String(nextMonthNum).padStart(2,'0')}`;
+      const lastYearData = getMonthlyData(0).find(([m]) => m === sameMonthLastYear);
+      const seasonality = lastYearData ? {
+        month: sameMonthLastYear,
+        income: Math.round(lastYearData[1].income),
+        expense: Math.round(lastYearData[1].expense)
+      } : null;
+
+      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty, totalRange, seasonality, teacherForecastMode };
     }
 
     // Детализация месяца
@@ -654,6 +771,103 @@
       myChart.setOption(option);
     }
 
+    // --- План vs факт: снимок прогноза ---
+    // Раз в месяц сохраняем прогноз "на следующий месяц" в саму базу (тем же способом, что и
+    // коэффициент), чтобы потом можно было сверить, насколько прогноз совпал с реальностью.
+    // Снимок делаем ОДИН раз на месяц (если уже есть — не перезаписываем, иначе план "задним
+    // числом" подгонялся бы под факт и сравнение потеряло бы смысл).
+    async function snapshotForecastIfNeeded(forecast) {
+      const now = new Date();
+      const targetMonth = monthKey(new Date(now.getFullYear(), now.getMonth() + 1, 1));
+      const already = financeData.some(r => r.operation_type === 'settings' && r.category === 'forecast_snapshot' && (r.operation_date||'').slice(0,7) === targetMonth);
+      if (already) return;
+      try {
+        const { error } = await _supabase.from('crm_finance').insert([{
+          operation_date: targetMonth + '-01',
+          operation_type: 'settings',
+          amount: forecast.total,
+          category: 'forecast_snapshot',
+          account: JSON.stringify({ totalFixed: forecast.totalFixed, avgVariable: forecast.avgVariable, avgTeacher: forecast.avgTeacher, avgMarketing: forecast.avgMarketing, royalty: forecast.royalty })
+        }]);
+        if (!error) financeData.push({ operation_date: targetMonth+'-01', operation_type:'settings', category:'forecast_snapshot', amount: forecast.total });
+      } catch (e) { console.error('Ошибка сохранения снимка прогноза:', e); }
+    }
+
+    function renderForecastAccuracy() {
+      const el = document.getElementById('forecastAccuracy');
+      const currentMonth = monthKey(new Date());
+      const snapshots = financeData
+        .filter(r => r.operation_type === 'settings' && r.category === 'forecast_snapshot' && (r.operation_date||'').slice(0,7) < currentMonth)
+        .sort((a,b) => (b.operation_date||'').localeCompare(a.operation_date||''));
+      if (!snapshots.length) {
+        el.innerHTML = 'Пока недостаточно истории — прогноз сохраняется автоматически каждый месяц, сравнение появится через 1–2 месяца.';
+        return;
+      }
+      el.innerHTML = snapshots.slice(0,12).map(s => {
+        const m = s.operation_date.slice(0,7);
+        const actual = financeData.filter(r => isExpense(r) && (r.operation_date||'').slice(0,7) === m).reduce((sum,r)=>sum+r.amount,0);
+        const predicted = s.amount;
+        const diffPct = actual > 0 ? (((predicted-actual)/actual)*100).toFixed(1) : '—';
+        const color = Math.abs(diffPct) <= 10 ? 'var(--soft-green)' : (Math.abs(diffPct) <= 25 ? 'var(--warm-yellow)' : 'var(--critical)');
+        return `<div class="list-item"><span>${m}: план ${predicted.toLocaleString()} ₽ / факт ${actual.toLocaleString()} ₽</span><span class="amount" style="color:${color};">${diffPct==='—'?'—':(diffPct>0?'+':'')+diffPct+'%'}</span></div>`;
+      }).join('');
+    }
+
+    // --- Прогноз кассового разрыва на 30 дней вперёд ---
+    // Строим по фактически запланированным платежам (expenses.next_payment_date) — это единственные
+    // точно известные будущие даты трат. Доход внутри периода не имеет точных дат, поэтому
+    // раскладываем его равномерно (avgIncome/30) как условное допущение — явно об этом пишем.
+    function renderCashFlow() {
+      const el = document.getElementById('cashFlowForecast');
+      const today = new Date();
+      const horizon = new Date(today.getTime() + 30*24*60*60*1000);
+      const todayISO = today.toISOString().slice(0,10);
+      const horizonISO = horizon.toISOString().slice(0,10);
+      const upcoming = allExpenses
+        .filter(e => !e.paid && e.next_payment_date && e.next_payment_date >= todayISO && e.next_payment_date <= horizonISO)
+        .sort((a,b) => a.next_payment_date.localeCompare(b.next_payment_date));
+      if (!upcoming.length) {
+        el.innerHTML = 'Нет запланированных платежей на ближайшие 30 дней (или все поля "Дата след. платежа" не заполнены в разделе Бюджет).';
+        return;
+      }
+      const avgDailyIncome = getAvgMonthlyIncome(3) / 30;
+      let cumulativeOut = 0, cumulativeIn = 0;
+      const rows = upcoming.map(e => {
+        cumulativeOut += parseFloat(e.amount);
+        const daysFromNow = Math.max(0, Math.round((new Date(e.next_payment_date) - today) / 86400000));
+        cumulativeIn = avgDailyIncome * daysFromNow;
+        const projectedBalance = Math.round(cumulativeIn - cumulativeOut);
+        return `<div class="list-item"><span>${e.next_payment_date} — ${e.name}</span><span class="amount" style="color:${projectedBalance<0?'var(--critical)':'var(--text)'}">−${parseFloat(e.amount).toLocaleString()} ₽ ${projectedBalance<0?`(касса в минус ≈ ${projectedBalance.toLocaleString()} ₽)`:''}</span></div>`;
+      }).join('');
+      el.innerHTML = `<div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.6rem;">Допущение: доход распределён равномерно по дням (≈${Math.round(avgDailyIncome).toLocaleString()} ₽/день по среднему за 3 мес.). Точных дат поступлений система не знает.</div>` + rows;
+    }
+
+    // --- Доходный потенциал воронки лидов ---
+    // Best-effort: если таблица leads недоступна или в ней нет узнаваемых стадий — просто
+    // показываем базовую сводку без домыслов о конверсии.
+    function renderLeadsForecast() {
+      const el = document.getElementById('leadsForecast');
+      if (!leadsData.length) {
+        el.innerHTML = 'Нет данных по лидам (таблица leads недоступна или пуста — заполняется на странице «Лиды»).';
+        return;
+      }
+      const since = new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10);
+      const recentLeads = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact && l.date_added >= since);
+      const convertedStages = ['клиент','ученик','оплата','продажа'];
+      const converted = recentLeads.filter(l => convertedStages.some(s => (l.stage||'').toLowerCase().includes(s)));
+      const conversionRate = recentLeads.length ? converted.length / recentLeads.length : 0;
+      const incomeOps = financeData.filter(isIncome);
+      const avgCheck = incomeOps.length ? incomeOps.reduce((s,r)=>s+r.amount,0) / incomeOps.length : 0;
+      const pipeline = recentLeads.length - converted.length;
+      const potentialIncome = Math.round(pipeline * conversionRate * avgCheck);
+      el.innerHTML = `
+        <div class="list-item"><span>Лидов за 30 дней (без дублей/брака)</span><span class="amount">${recentLeads.length}</span></div>
+        <div class="list-item"><span>Конвертировано</span><span class="amount">${converted.length} (${(conversionRate*100).toFixed(1)}%)</span></div>
+        <div class="list-item"><span>В воронке (ещё не закрыто)</span><span class="amount">${pipeline}</span></div>
+        <div class="list-item"><span>Потенциальный доход из воронки</span><span class="amount">${potentialIncome.toLocaleString()} ₽</span></div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:0.4rem;">Грубая оценка: (лиды в воронке) × (конверсия за 30 дней) × (средний чек по всем поступлениям). Стадии "конвертирован" определены по ключевым словам в поле stage — если у вас другие названия стадий, скажите, поправлю точнее.</div>`;
+    }
+
     function renderAll() {
       if (!financeData.length) {
         document.getElementById('forecastContainer').innerHTML = '<p>Нет данных. Загрузите Excel-файл.</p>';
@@ -700,6 +914,8 @@
 
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
+      const teacherModeContainer = document.getElementById('teacherModeContainer');
+      if (teacherModeContainer) buildTeacherModeWidget(teacherModeContainer);
       bindExpandButtons();
 
       const targetInput = document.getElementById('targetProfitInput');
@@ -784,6 +1000,9 @@
         financeData = fin;
         allExpenses = exp;
         teacherSalaryData = sal;
+        // Лиды — best-effort: если таблицы нет или к ней нет доступа, просто не показываем
+        // виджет воронки, не роняя всю страницу.
+        try { leadsData = await fetchAll('leads', 'date_added'); } catch(e) { leadsData = []; console.warn('Лиды недоступны:', e); }
         await loadSettings();
         renderAll();
       } catch (err) {
