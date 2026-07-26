@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM — Music Club</title>
+  <title>Тест API AlfaCRM через Supabase Proxy</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1000px; margin: 2rem auto; padding: 1rem; }
@@ -12,24 +12,14 @@
     th, td { border: 1px solid #ddd; padding: 0.4rem; text-align: left; font-size: 0.85rem; }
     th { background: #f8f8f8; }
     .status { margin: 0.5rem 0; font-weight: 600; }
-    .info { background: #f0f8ff; padding: 0.5rem; border-radius: 8px; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM → crm_finance</h1>
-  <div class="info">
-    <strong>Ключи:</strong><br>
-    X-APP-KEY: 1a9660367fd73dd812e78257b089eeae<br>
-    API Token: f9b58fee-65b7-11f1-8c3e-3cecef965e00<br>
-    <strong>Возможные эндпоинты:</strong>
-    <select id="endpointSelect">
-      <option value="https://api.alfa-crm.ru/v2/finance">/v2/finance</option>
-      <option value="https://api.alfa-crm.ru/v2/finances">/v2/finances</option>
-      <option value="https://api.alfa-crm.ru/v2/finance/list">/v2/finance/list</option>
-      <option value="https://api.alfa-crm.ru/v2/finance/operation">/v2/finance/operation</option>
-      <option value="https://api.alfa-crm.ru/v2/operations">/v2/operations</option>
-    </select>
-    <button id="fetchBtn">Загрузить из CRM</button>
+  <h1>Тест API AlfaCRM (прокси)</h1>
+  <div>
+    <label>URL прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
+    <label>Эндпоинт AlfaCRM: <input type="text" id="alfaEndpoint" size="80" value="https://api.alfa-crm.ru/v2/finance"></label><br>
+    <button id="fetchBtn">Загрузить через прокси</button>
     <button id="saveBtn" disabled>Сохранить в Supabase</button>
   </div>
   <div class="status" id="status"></div>
@@ -42,29 +32,26 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const APP_KEY = '1a9660367fd73dd812e78257b089eeae';
-    const TOKEN = 'f9b58fee-65b7-11f1-8c3e-3cecef965e00';
-
     let fetchedData = [];
 
     document.getElementById('fetchBtn').addEventListener('click', async () => {
-      const url = document.getElementById('endpointSelect').value.trim();
-      document.getElementById('status').textContent = `Попытка: ${url} ...`;
+      const proxyUrl = document.getElementById('proxyUrl').value.trim();
+      const endpoint = document.getElementById('alfaEndpoint').value.trim();
+      if (!proxyUrl || !endpoint) {
+        document.getElementById('status').textContent = 'Заполните оба поля';
+        return;
+      }
+      document.getElementById('status').textContent = 'Отправляю запрос через ваш прокси...';
       try {
-        const resp = await fetch(url, {
-          headers: {
-            'X-APP-KEY': APP_KEY,
-            'Authorization': `Bearer ${TOKEN}`,
-            'Content-Type': 'application/json'
-          }
+        // Запрос идёт К ВАШЕЙ Edge Function, а не к AlfaCRM
+        const resp = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint })
         });
-        if (!resp.ok) {
-          const errText = await resp.text();
-          throw new Error(`HTTP ${resp.status}: ${errText}`);
-        }
         const json = await resp.json();
-        console.log('Ответ API:', json);
+        if (json.error) throw new Error(json.error);
+        console.log('Ответ от прокси:', json);
 
         // Ищем массив данных
         let raw = null;
@@ -72,15 +59,9 @@
         else if (json.data && Array.isArray(json.data)) raw = json.data;
         else if (json.items && Array.isArray(json.items)) raw = json.items;
         else if (json.records && Array.isArray(json.records)) raw = json.records;
-        else if (json.result && Array.isArray(json.result)) raw = json.result;
-        else {
-          const arr = Object.values(json).find(v => Array.isArray(v));
-          if (arr) raw = arr;
-          else throw new Error('Не найден массив данных. Смотрите консоль (F12) для структуры ответа.');
-        }
+        else raw = Object.values(json).find(v => Array.isArray(v));
 
-        const first = raw[0];
-        console.log('Первый элемент:', first);
+        if (!raw) throw new Error('Не удалось найти массив данных. Проверьте структуру ответа в консоли (F12).');
         fetchedData = raw.map(item => ({
           operation_date: item.date || item.operation_date || item.created_at || '',
           operation_type: item.type || item.operation_type || item.category || '',
@@ -99,7 +80,7 @@
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
       if (!fetchedData.length) return;
-      document.getElementById('status').textContent = 'Сохранение в Supabase...';
+      document.getElementById('status').textContent = 'Сохранение...';
       try {
         await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
         const { error } = await _supabase.from('crm_finance').insert(fetchedData);
