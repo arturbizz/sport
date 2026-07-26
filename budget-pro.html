@@ -86,7 +86,6 @@
     .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); width: 100%; }
     .forecast-list.open { display: block; }
 
-    /* Кастомный коэффициент */
     .coeff-widget {
       display: inline-flex; align-items: center; gap: 4px;
       background: var(--surface); border-radius: 10px;
@@ -100,7 +99,7 @@
     }
     .coeff-btn:hover { background: var(--accent-light); }
     .coeff-value {
-      width: 60px; text-align: center; font-weight: 600; font-size: 1rem;
+      width: 70px; text-align: center; font-weight: 600; font-size: 1rem;
       border: none; background: transparent; color: var(--text);
       -moz-appearance: textfield;
     }
@@ -308,7 +307,7 @@
     const ROYALTY_RATE = 0.08;
     const ROYALTY_START = '2026-07';
 
-    // Глобальный коэффициент (из Supabase)
+    // Коэффициент из crm_finance (settings)
     let globalRateCoeff = 1.0;
 
     const FIXED_ARTICLES = [
@@ -355,50 +354,63 @@
       return allRows;
     }
 
-    // Загрузка коэффициента из app_settings
+    // Загрузка коэффициента из crm_finance
     async function loadSettings() {
       try {
-        const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'teacher_rate_coeff').single();
-        if (error || !data) {
+        const { data, error } = await _supabase
+          .from('crm_finance')
+          .select('amount')
+          .eq('operation_type', 'settings')
+          .eq('category', 'teacher_rate_coeff')
+          .order('id', { ascending: false })
+          .limit(1);
+        if (error || !data || data.length === 0) {
           globalRateCoeff = 1.0;
-          // Попробуем создать запись со значением по умолчанию
+          // Попытаемся создать запись с 1.0
           try {
-            await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' }, { onConflict: 'key' });
+            await _supabase.from('crm_finance').insert([{
+              operation_date: new Date().toISOString().split('T')[0],
+              operation_type: 'settings',
+              amount: 1.0,
+              category: 'teacher_rate_coeff',
+              account: 'system'
+            }]);
           } catch(e) {}
         } else {
-          globalRateCoeff = parseFloat(data.value) || 1.0;
+          globalRateCoeff = parseFloat(data[0].amount) || 1.0;
         }
       } catch (e) {
         globalRateCoeff = 1.0;
       }
     }
 
-    // Сохранение коэффициента в Supabase
+    // Сохранение коэффициента в crm_finance
     async function saveRateCoeff(value) {
       globalRateCoeff = value;
       try {
-        const { error } = await _supabase.from('app_settings').upsert(
-          { key: 'teacher_rate_coeff', value: String(value) },
-          { onConflict: 'key' }
-        );
-        if (error) {
-          console.error('Ошибка сохранения коэффициента:', error);
-          showAlert('Не удалось сохранить коэффициент. Проверьте, создана ли таблица app_settings и отключён ли Row Level Security. Подробности в консоли.');
-        }
+        // Удаляем старые настройки
+        await _supabase.from('crm_finance').delete().eq('category', 'teacher_rate_coeff').eq('operation_type', 'settings');
+        // Вставляем новую
+        await _supabase.from('crm_finance').insert([{
+          operation_date: new Date().toISOString().split('T')[0],
+          operation_type: 'settings',
+          amount: value,
+          category: 'teacher_rate_coeff',
+          account: 'system'
+        }]);
       } catch (e) {
+        showAlert('Ошибка сохранения коэффициента. Подробности в консоли.');
         console.error(e);
-        showAlert('Ошибка соединения при сохранении коэффициента.');
       }
       updateForecastAndBreakEven();
     }
 
-    // Создание кастомного виджета коэффициента
     function buildCoeffWidget(container) {
       const widget = document.createElement('span');
       widget.className = 'coeff-widget';
       widget.innerHTML = `
         <button class="coeff-btn" id="coeffMinus">−</button>
-        <input type="number" class="coeff-value" id="coeffValue" value="${globalRateCoeff}" step="0.05" min="0.5" max="3.0">
+        <input type="number" class="coeff-value" id="coeffValue" value="${globalRateCoeff.toFixed(2)}" step="0.05" min="0.5" max="3.0">
         <button class="coeff-btn" id="coeffPlus">+</button>
       `;
       container.appendChild(widget);
@@ -437,7 +449,6 @@
       const forecast = computeForecast();
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
-      // Вставляем кастомный виджет коэффициента
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
 
@@ -698,7 +709,6 @@
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
 
-      // Вставляем кастомный виджет коэффициента
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
 
@@ -762,7 +772,8 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-          await _supabase.from('crm_finance').delete().neq('id',0);
+          await _supabase.from('crm_finance').delete().eq('operation_type', 'in');
+          await _supabase.from('crm_finance').delete().eq('operation_type', 'out');
           for (let i = 0; i < parsed.length; i += 500) {
             const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
