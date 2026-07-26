@@ -42,7 +42,7 @@
       display: flex; flex-direction: column; align-items: center;
       padding: 1.5rem 1.5rem 1rem;
       background: linear-gradient(180deg, rgba(204,251,241,0.6) 0%, rgba(255,255,255,0) 100%);
-      flex-shrink: 0;
+      flex-shrink: 0; position: relative;
     }
     .avatar { width: 80px; height: 80px; border-radius: 50%; background: white; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 0.6rem; object-fit: cover; border: 2px solid white; }
     .greeting { font-size: 1.2rem; font-weight: 650; }
@@ -92,10 +92,10 @@
     .role-tag.ip { background: #64748b; }
     .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 15; display: none; }
     .overlay.active { display: block; }
-    .top-buttons { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; z-index: 5; }
+    .top-buttons { position: absolute; top: 0.5rem; right: 0.5rem; display: flex; gap: 0.3rem; z-index: 5; }
     .top-btn {
       background: rgba(255,255,255,0.7); border: 1px solid var(--border); border-radius: 10px;
-      padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);
+      padding: 0.3rem 0.6rem; font-size: 0.7rem; font-weight: 500; color: var(--text-secondary);
       cursor: pointer; backdrop-filter: blur(8px); text-decoration: none; transition: 0.2s;
     }
     .top-btn:active { background: rgba(0,0,0,0.03); }
@@ -379,9 +379,9 @@
           _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', period)
         ]);
         let result = '';
-        // Менеджеры/админы
+        // Менеджеры и администраторы
         const staff = (emps.data||[]).filter(e=>['Менеджер','Администратор','Управляющий'].includes(e.role));
-        staff.forEach(emp => {
+        for (const emp of staff) {
           const p = (params.data||[]).find(x=>x.emp_id===emp.id) || {};
           const logs = (worklog.data||[]).filter(l=>{
             if (l.emp_id!==emp.id || l.status!=='working') return false;
@@ -399,8 +399,23 @@
             const plan = p.plan_amount||0;
             bonus = Math.round(totalSales * ((plan>0 && totalSales>=plan)?0.07:0.05));
           }
+          if (emp.role==='Администратор' && !isFirstHalf) {
+            const managersSales = staff.filter(e=>e.role==='Менеджер').reduce((sum, man) => {
+              const manLogs = (worklog.data||[]).filter(l=>l.emp_id===man.id && l.status==='working' && parseInt(l.date.split('-')[2],10)>=16);
+              return sum + manLogs.reduce((s,l)=>s+(l.daily_sales||0),0);
+            }, 0);
+            bonus = Math.round(managersSales * 0.01);
+          }
+          if (emp.role==='Управляющий' && !isFirstHalf) {
+            const managersSales = staff.filter(e=>e.role==='Менеджер').reduce((sum, man) => {
+              const manLogs = (worklog.data||[]).filter(l=>l.emp_id===man.id && l.status==='working' && parseInt(l.date.split('-')[2],10)>=16);
+              return sum + manLogs.reduce((s,l)=>s+(l.daily_sales||0),0);
+            }, 0);
+            const plan = p.plan_amount||0;
+            bonus = Math.round(managersSales * ((plan>0 && managersSales>=plan)?0.01:0));
+          }
           result += `<b>${emp.name}</b>: ${(base+bonus).toLocaleString()} ₽\n`;
-        });
+        }
         // Преподаватели
         (teacherSalary.data||[]).forEach(t => {
           result += `<b>${t.teacher_name}</b>: ${parseFloat(t.amount).toLocaleString()} ₽\n`;
