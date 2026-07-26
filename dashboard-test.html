@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM (v2 подбор)</title>
+  <title>Тест API AlfaCRM (коробка)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1000px; margin: 2rem auto; padding: 1rem; }
@@ -15,28 +15,24 @@
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM (подбор эндпоинта)</h1>
+  <h1>Тест API AlfaCRM (коробка)</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
-    <label>Домен CRM: 
-      <select id="baseDomain">
-        <option value="https://api.alfa-crm.ru">api.alfa-crm.ru</option>
-        <option value="https://demo.alfa-crm.ru">demo.alfa-crm.ru</option>
-        <option value="https://musicclub.alfa-crm.ru">musicclub.alfa-crm.ru</option>
-      </select>
-    </label><br>
-    <label>Путь: 
+    <label>Домен CRM: <input type="text" id="baseDomain" size="50" value="https://musicclubmsk.s20.online"></label><br>
+    <label>Путь API:
       <select id="apiPath">
         <option value="/v2/operation">/v2/operation</option>
         <option value="/v2/operations">/v2/operations</option>
-        <option value="/v2/finance/transactions">/v2/finance/transactions</option>
+        <option value="/v2/operation/index">/v2/operation/index</option>
+        <option value="/v2/operation/list">/v2/operation/list</option>
+        <option value="/v2/finance/operation">/v2/finance/operation</option>
         <option value="/v2/finance/list">/v2/finance/list</option>
         <option value="/v2/finance/index">/v2/finance/index</option>
         <option value="/v2/crm/finance">/v2/crm/finance</option>
-        <option value="/v2/crm/operation">/v2/crm/operation</option>
       </select>
     </label><br>
-    <label>Параметры (необязательно): <input type="text" id="queryParams" size="40" placeholder="page=1&date_from=2026-07-01"></label><br>
+    <label>SIP (филиал): <input type="text" id="sip" size="10" value="303"></label><br>
+    <label>Доп. параметры: <input type="text" id="queryParams" size="40" placeholder="page=1&date_from=2026-07-01"></label><br>
     <button id="fetchBtn">Загрузить через прокси</button>
     <button id="saveBtn" disabled>Сохранить в Supabase</button>
   </div>
@@ -54,8 +50,9 @@
 
     document.getElementById('fetchBtn').addEventListener('click', async () => {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
-      const base = document.getElementById('baseDomain').value;
+      const base = document.getElementById('baseDomain').value.trim();
       const path = document.getElementById('apiPath').value;
+      const sip = document.getElementById('sip').value.trim();
       let query = document.getElementById('queryParams').value.trim();
       if (query && !query.startsWith('?')) query = '?' + query;
       const endpoint = base + path + query;
@@ -65,7 +62,7 @@
         const resp = await fetch(proxyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint })
+          body: JSON.stringify({ endpoint, sip })
         });
         const json = await resp.json();
         if (json.error) {
@@ -102,7 +99,7 @@
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
       if (!fetchedData.length) return;
-      document.getElementById('status').textContent = 'Сохранение в Supabase...';
+      document.getElementById('status').textContent = 'Сохранение...';
       try {
         await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
         const { error } = await _supabase.from('crm_finance').insert(fetchedData);
