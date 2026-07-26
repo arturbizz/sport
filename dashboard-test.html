@@ -3,39 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM v2 (коробка)</title>
+  <title>Тест API AlfaCRM v2 (полная загрузка)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; max-width: 1000px; margin: 2rem auto; padding: 1rem; }
+    body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
     input, button, select, textarea { padding: 0.5rem; margin: 0.3rem; font-size: 0.9rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ddd; padding: 0.4rem; text-align: left; font-size: 0.85rem; }
     th { background: #f8f8f8; }
     .status { margin: 0.5rem 0; font-weight: 600; white-space: pre-wrap; background: #fef3c7; padding: 0.5rem; border-radius: 8px; }
+    .success { background: #d1fae5; }
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM v2 (коробка)</h1>
+  <h1>Тест API AlfaCRM v2 (полная загрузка)</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
     <label>Филиал (branch ID): <input type="text" id="branch" size="10" value="20"></label><br>
-    <label>Путь API:
-      <select id="apiPath">
-        <option value="pay/index">pay/index (финансы)</option>
-        <option value="pay-item/index">pay-item/index (статьи)</option>
-        <option value="pay-account/index">pay-account/index (счета)</option>
-        <option value="customer/index">customer/index (клиенты)</option>
-      </select>
-    </label><br>
-    <label>Тело запроса (JSON):<br>
-      <textarea id="requestBody" rows="4" cols="60">{"page":0}</textarea>
-    </label><br>
-    <button id="fetchBtn">Загрузить через прокси</button>
+    <button id="loadAllBtn">Загрузить все операции (pay/index)</button>
     <button id="saveBtn" disabled>Сохранить в Supabase</button>
   </div>
   <div class="status" id="status"></div>
   <table id="dataTable">
-    <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Категория</th><th>Счёт</th></tr></thead>
+    <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья (ID)</th><th>Счёт (ID)</th></tr></thead>
     <tbody></tbody>
   </table>
 
@@ -45,52 +35,49 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let fetchedData = [];
 
-    document.getElementById('fetchBtn').addEventListener('click', async () => {
-      const proxyUrl = document.getElementById('proxyUrl').value.trim();
-      const branch = document.getElementById('branch').value.trim();
-      const path = document.getElementById('apiPath').value;
-      let body;
-      try {
-        body = JSON.parse(document.getElementById('requestBody').value);
-      } catch (e) {
-        document.getElementById('status').textContent = 'Ошибка: тело запроса не является валидным JSON';
-        return;
-      }
-      if (!proxyUrl || !branch || !path) {
-        document.getElementById('status').textContent = 'Заполните все поля';
-        return;
-      }
-      document.getElementById('status').textContent = 'Отправляю запрос...';
-      try {
+    // Загрузка всех страниц
+    async function fetchAllPages(proxyUrl, branch, path, initialBody) {
+      let allItems = [];
+      let page = 0;
+      let total = null;
+      while (true) {
+        const body = { ...initialBody, page };
         const resp = await fetch(proxyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ branch, path, body })
         });
         const json = await resp.json();
-        if (json.error) {
-          document.getElementById('status').textContent = `Ошибка: ${json.error}`;
-          return;
-        }
-        console.log('Ответ:', json);
+        if (json.error) throw new Error(json.error);
+        if (total === null) total = json.total;
+        const items = json.items || [];
+        allItems = allItems.concat(items);
+        document.getElementById('status').textContent = `Загружено ${allItems.length} из ${total}...`;
+        if (items.length === 0 || allItems.length >= total) break;
+        page++;
+      }
+      return allItems;
+    }
 
-        // Извлекаем массив items
-        const raw = json.items || [];
-        if (!raw.length) throw new Error('Массив items пуст');
-
-        // Показываем первый элемент для отладки
-        console.log('Первый элемент:', raw[0]);
-
-        fetchedData = raw.map(item => ({
-          operation_date: item.document_date || item.date || '',
+    document.getElementById('loadAllBtn').addEventListener('click', async () => {
+      const proxyUrl = document.getElementById('proxyUrl').value.trim();
+      const branch = document.getElementById('branch').value.trim();
+      if (!proxyUrl || !branch) return;
+      document.getElementById('status').textContent = 'Загрузка всех операций...';
+      try {
+        const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {});
+        console.log('Все операции:', items);
+        fetchedData = items.map(item => ({
+          operation_date: item.document_date || '',
           operation_type: item.income ? 'Доход' : 'Расход',
           amount: parseFloat(item.income || item.sum || item.amount || 0),
-          category: item.pay_item_id || item.category_id || '',
-          account: item.pay_account_id || item.account_id || ''
+          category: item.pay_item_id || '',
+          account: item.pay_account_id || ''
         }));
         renderTable(fetchedData);
         document.getElementById('saveBtn').disabled = false;
-        document.getElementById('status').textContent = `Загружено ${fetchedData.length} записей.`;
+        document.getElementById('status').textContent = `Загружено ${fetchedData.length} операций.`;
+        document.getElementById('status').classList.add('success');
       } catch (err) {
         document.getElementById('status').textContent = 'Ошибка: ' + err.message;
         console.error(err);
@@ -99,7 +86,7 @@
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
       if (!fetchedData.length) return;
-      document.getElementById('status').textContent = 'Сохранение...';
+      document.getElementById('status').textContent = 'Сохранение в Supabase...';
       try {
         await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
         const { error } = await _supabase.from('crm_finance').insert(fetchedData);
