@@ -544,7 +544,7 @@
       return incomes.reduce((a,b) => a+b, 0) / incomes.length;
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ computeForecast – используем все исторические данные для переменных расходов
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ computeForecast – переменные расходы определяются как разница
     function computeForecast() {
       const now = new Date();
       const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -552,30 +552,14 @@
       const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
-      // Все расходы для переменных (за всю историю)
-      const allExpenseOps = financeData.filter(isExpense).filter(r => r.operation_date);
-      const allVariableOps = allExpenseOps.filter(r => !isFixedCategory(r.category) && !isTeacherCategory(r.category));
-
-      let avgVariable = 0;
-      let topVar = [];
-      if (allVariableOps.length > 0) {
-        const totalVar = allVariableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
-        const monthsCount = Math.max(1, new Set(allVariableOps.map(r => r.operation_date?.slice(0,7))).size);
-        avgVariable = Math.round((totalVar / monthsCount) * 1.05);
-        topVar = Object.entries(allVariableOps.reduce((acc, r) => {
-          const cat = r.category || 'Без категории';
-          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
-          return acc;
-        }, {})).sort((a, b) => b[1] - a[1]).slice(0, 5);
-      }
-
-      // Для ЗП педагогов и маркетинга используем последние 3 месяца (если есть)
+      // Все расходные операции за последние 3 месяца (или за всё время, если нет)
       const threeMonthsAgo = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
       let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
-        recentOps = allExpenseOps;
+        recentOps = financeData.filter(isExpense).filter(r => r.operation_date);
       }
 
+      // ЗП педагогов
       const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
       const monthlyTeacher = {};
       teacherOps.forEach(r => {
@@ -585,6 +569,20 @@
       const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
       const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff);
 
+      // Переменные расходы = все расходы минус учителя и фиксированные статьи
+      const variableOps = recentOps.filter(r => !isTeacherCategory(r.category) && !isFixedCategory(r.category));
+      const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
+      const avgVariable = Math.round((totalVar / monthsCount) * 1.05);
+      const topVar = Object.entries(
+        variableOps.reduce((acc, r) => {
+          const cat = r.category || 'Без категории';
+          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
+          return acc;
+        }, {})
+      ).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+      // Маркетинг
       const marketingOps = recentOps.filter(isMarketing);
       const totalMark = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCountMark = Math.max(1, new Set(marketingOps.map(r => r.operation_date?.slice(0,7))).size);
@@ -795,7 +793,7 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-          // удаляем все, кроме settings
+          // Удаляем все, кроме settings
           await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
           for (let i = 0; i < parsed.length; i += 500) {
             const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
