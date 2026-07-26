@@ -265,16 +265,6 @@
   </div>
 </div>
 
-<!-- Техническая информация -->
-<div class="modal-overlay" id="infoModal" style="display:none;">
-  <div class="modal">
-    <button class="modal-close" onclick="document.getElementById('infoModal').style.display='none'">&times;</button>
-    <h2 style="margin-bottom:1rem;">Техническая информация</h2>
-    <div id="infoContent"></div>
-    <button class="btn btn-primary" style="margin-top:1.5rem;" onclick="document.getElementById('infoModal').style.display='none'">Закрыть</button>
-  </div>
-</div>
-
 <!-- Уведомление -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
   <div class="modal">
@@ -294,16 +284,26 @@
     let selectedMonths = 1;
     let myChart = null;
     const ROYALTY_RATE = 0.08;
-    const ROYALTY_START = '2026-07';
+    const ROYALTY_START = '2026-07'; // роялти с июля 2026
 
-    let globalRateCoeff = 1.0;
+    // Коэффициент из localStorage (надёжно, без БД)
+    const STORAGE_KEY = 'budget_pro_teacher_coeff';
+    let globalRateCoeff = parseFloat(localStorage.getItem(STORAGE_KEY)) || 1.0;
 
-    // Вспомогательные функции
+    // Статьи
+    const FIXED_ARTICLES = [
+      'Администраторы ЗП','ЗП Менеджеры оклад','Управленец','Старший педагог',
+      'Аренда оборудования','Телефония','Банковское обслуживание','% рассрочка'
+    ];
+    const TEACHER_SALARY_ARTICLES = [
+      'ЗП Педагоги уроки','ЗП Педагоги  уроки','ЗП педагоги пробные','ЗП педагоги  пробные'
+    ];
+
     const isIncome = r => ['доход','продажа'].some(t => (r.operation_type||'').toLowerCase().includes(t));
     const isExpense = r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t));
     const isMarketing = r => (r.category||'').toLowerCase().includes('маркетинг');
-    const isFixedCategory = cat => ['Администраторы ЗП','ЗП Менеджеры оклад','Управленец','Старший педагог','Аренда оборудования','Телефония','Банковское обслуживание','% рассрочка'].some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
-    const isTeacherCategory = cat => ['ЗП Педагоги уроки','ЗП Педагоги  уроки','ЗП педагоги пробные','ЗП педагоги  пробные'].some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
+    const isFixedCategory = cat => FIXED_ARTICLES.some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
+    const isTeacherCategory = cat => TEACHER_SALARY_ARTICLES.some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
 
     function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
     function applyRoyalty(monthStr) { return monthStr >= ROYALTY_START ? ROYALTY_RATE : 0; }
@@ -335,42 +335,24 @@
       return allRows;
     }
 
-    // Безопасная загрузка коэффициента – при ошибке просто берём 1.0
-    async function loadSettings() {
-      try {
-        const { data } = await _supabase.from('app_settings').select('value').eq('key', 'teacher_rate_coeff').single();
-        if (data) globalRateCoeff = parseFloat(data.value) || 1.0;
-        else {
-          // Попытаемся создать запись, но если таблицы нет – просто используем 1.0
-          try {
-            await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' });
-          } catch (e) { /* таблицы нет, ничего не делаем */ }
-        }
-      } catch (e) {
-        console.warn('Не удалось загрузить настройки, используется коэффициент 1.0');
-        globalRateCoeff = 1.0;
-      }
-    }
-
-    async function saveRateCoeff(value) {
+    // Сохранение коэффициента в localStorage
+    function saveRateCoeff(value) {
       globalRateCoeff = value;
-      try {
-        await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
-      } catch (e) { /* игнорируем, если таблицы нет */ }
+      localStorage.setItem(STORAGE_KEY, value);
       updateForecastAndBreakEven();
     }
 
     function updateForecastAndBreakEven() {
       if (!financeData.length) return;
       const forecast = computeForecast();
-      const totalIncome = getMonthlyData(selectedMonths).reduce((s,m) => s+m[1].income,0);
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
-      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast, totalIncome);
-      // Обработчики
+      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
+      // обработчики на rateCoeff
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
         rateInput.addEventListener('input', function() {
-          saveRateCoeff(parseFloat(this.value) || 1.0);
+          const newVal = parseFloat(this.value) || 1.0;
+          saveRateCoeff(newVal);
         });
       }
       const targetInput = document.getElementById('targetProfitInput');
@@ -389,8 +371,8 @@
     }
 
     function generateForecastHTML(forecast) {
-      const fixedListHtml = forecast.fixedList.map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
-      const topVarHtml = forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ');
+      const fixedListHtml = (forecast.fixedList || []).map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
+      const topVarHtml = (forecast.topVariable || []).map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ');
       return `
         <div class="forecast-card">
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Прогноз на следующий месяц</div>
@@ -493,9 +475,8 @@
       const avgIncome = getAvgMonthlyIncome(3);
       const royaltyRate = applyRoyalty(nextMonth);
       const royalty = Math.round(avgIncome * royaltyRate);
-      const netProfitForecast = avgIncome - totalExpensesForecast - royalty;
 
-      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty, netProfitForecast };
+      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty };
     }
 
     function showMonthDetail(monthKey) {
@@ -631,9 +612,12 @@
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
 
+      // обработчики
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
-        rateInput.addEventListener('input', function() { saveRateCoeff(parseFloat(this.value) || 1.0); });
+        rateInput.addEventListener('input', function() {
+          saveRateCoeff(parseFloat(this.value) || 1.0);
+        });
       }
       const targetInput = document.getElementById('targetProfitInput');
       if (targetInput) {
@@ -719,7 +703,6 @@
         financeData = fin;
         allExpenses = exp;
         teacherSalaryData = sal;
-        await loadSettings();
         renderAll();
       } catch (err) {
         console.error(err);
@@ -744,9 +727,11 @@
       this.textContent = t.classList.contains('open')?'Скрыть таблицу':'Показать таблицу';
     });
     document.getElementById('infoBtn').addEventListener('click', ()=>{
-      document.getElementById('infoContent').innerText = `Записей: ${financeData.length}\nПериод: ${financeData[0]?.operation_date||'—'} – ${financeData[financeData.length-1]?.operation_date||'—'}`;
-      document.getElementById('infoModal').style.display='flex';
+      const msg = `Всего записей: ${financeData.length}\nПериод данных: ${financeData[0]?.operation_date || '—'} — ${financeData[financeData.length-1]?.operation_date || '—'}`;
+      document.getElementById('infoContent').innerText = msg;
+      document.getElementById('infoModal').style.display = 'flex';
     });
+    document.getElementById('closeInfoBtn').addEventListener('click', ()=> document.getElementById('infoModal').style.display = 'none');
     window.addEventListener('resize', ()=> myChart?.resize());
     loadData();
   })();
