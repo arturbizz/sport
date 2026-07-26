@@ -12,7 +12,6 @@
     th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; font-size: 0.9rem; }
     th { background: #f3f4f6; }
     .status { background: #fef3c7; padding: 0.5rem; border-radius: 8px; margin: 0.5rem 0; white-space: pre-wrap; }
-    .progress { color: #0d9488; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -78,38 +77,40 @@
       return json;
     }
 
-    // Загружаем ВСЕ страницы с отображением прогресса
-    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate, description) {
+    // Загрузка с лимитом страниц и с branch_id в теле
+    async function fetchWithLimit(proxyUrl, branch, path, bodyTemplate, maxPages, description) {
       let allItems = [];
       let page = 0;
-      while (true) {
-        const json = await fetchPage(proxyUrl, branch, path, { ...bodyTemplate, page });
+      while (page < maxPages) {
+        const body = { ...bodyTemplate, page, branch_id: parseInt(branch) };
+        const json = await fetchPage(proxyUrl, branch, path, body);
         const items = json.items || [];
         allItems = allItems.concat(items);
-        updateStatus(`${description}: загружено ${allItems.length} записей (страница ${page})...`);
+        updateStatus(`${description}: загружено ${allItems.length} записей (стр. ${page})`);
         if (items.length === 0) break;
         page++;
-        // Небольшая пауза между запросами
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      if (page === maxPages) {
+        updateStatus(`${description}: достигнут лимит страниц (${maxPages}), загружено ${allItems.length} записей.`);
       }
       return allItems;
     }
 
     async function loadDictionaries(proxyUrl, branch) {
-      updateStatus('Загрузка статей (pay-item)...');
-      const payItems = await fetchAllPages(proxyUrl, branch, 'pay-item/index', {}, 'Статьи');
+      updateStatus('Загрузка статей (pay-item) – до 5 страниц...');
+      const payItems = await fetchWithLimit(proxyUrl, branch, 'pay-item/index', {}, 5, 'Статьи');
       payItems.forEach(i => dicts.payItems[i.id] = i.name);
 
-      updateStatus('Загрузка счетов (pay-account)...');
-      const payAccounts = await fetchAllPages(proxyUrl, branch, 'pay-account/index', {}, 'Счета');
+      updateStatus('Загрузка счетов (pay-account) – до 5 страниц...');
+      const payAccounts = await fetchWithLimit(proxyUrl, branch, 'pay-account/index', {}, 5, 'Счета');
       payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
 
-      updateStatus('Загрузка типов платежей (pay-type)...');
-      const payTypes = await fetchAllPages(proxyUrl, branch, 'pay-type/index', {}, 'Типы платежей');
+      updateStatus('Загрузка типов платежей (pay-type) – до 5 страниц...');
+      const payTypes = await fetchWithLimit(proxyUrl, branch, 'pay-type/index', {}, 5, 'Типы');
       payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
       console.log('Типы платежей:', dicts.payTypes);
-
-      updateStatus('Справочники загружены.');
+      updateStatus('Справочники загружены (ограниченно).');
     }
 
     document.getElementById('loadBtn').addEventListener('click', async () => {
@@ -120,50 +121,41 @@
       try {
         await loadDictionaries(proxyUrl, branch);
 
-        // Пробуем разные варианты фильтрации по дате
         updateStatus('Загрузка операций за июль 2026...');
         let items = [];
 
-        // Вариант 1: стандартные параметры
-        try {
-          items = await fetchAllPages(proxyUrl, branch, 'pay/index', {
-            document_date_from: '01.07.2026',
-            document_date_to: '31.07.2026'
-          }, 'Операции (вариант 1)');
-        } catch (e) {
-          updateStatus('Вариант 1 не сработал, пробуем вариант 2...');
-        }
+        // Пробуем разные варианты параметров даты
+        const dateFilters = [
+          { document_date_from: '01.07.2026', document_date_to: '31.07.2026' },
+          { date_from: '01.07.2026', date_to: '31.07.2026' },
+          { created_at_from: '2026-07-01', created_at_to: '2026-07-31' }
+        ];
 
-        // Вариант 2: если первый не дал результатов, пробуем date_from/date_to
-        if (items.length === 0) {
+        for (const filter of dateFilters) {
           try {
-            items = await fetchAllPages(proxyUrl, branch, 'pay/index', {
-              date_from: '01.07.2026',
-              date_to: '31.07.2026'
-            }, 'Операции (вариант 2)');
+            items = await fetchWithLimit(proxyUrl, branch, 'pay/index', filter, 50, 'Операции (фильтр)');
+            if (items.length > 0) break;
           } catch (e) {
-            updateStatus('Вариант 2 не сработал.');
+            console.warn('Фильтр не сработал:', filter, e);
           }
         }
 
-        // Если и так не получилось, загружаем все и фильтруем на клиенте (медленно)
+        // Если фильтры не дали результата, загружаем без фильтра и фильтруем на клиенте (с лимитом 2000)
         if (items.length === 0) {
-          updateStatus('Фильтр по дате не поддерживается. Загружаем все операции и фильтруем на клиенте...');
-          const allItems = await fetchAllPages(proxyUrl, branch, 'pay/index', {}, 'Все операции');
-          // Фильтруем по document_date (формат DD.MM.YYYY)
+          updateStatus('Фильтр по дате не сработал. Загружаем без фильтра (до 2000 записей)...');
+          const allItems = await fetchWithLimit(proxyUrl, branch, 'pay/index', {}, 40, 'Все операции');
           items = allItems.filter(item => {
             const d = item.document_date;
             if (!d) return false;
             const [day, month, year] = d.split('.').map(Number);
-            if (!day || !month || !year) return false;
             return year === 2026 && month === 7;
           });
-          updateStatus(`Отфильтровано ${items.length} записей за июль 2026 из ${allItems.length} всего.`);
+          updateStatus(`Отфильтровано ${items.length} записей за июль из ${allItems.length} загруженных.`);
         }
 
-        console.log('Первый элемент (для отладки):', items[0]);
+        console.log('Первый элемент:', items[0]);
 
-        // Анализируем
+        // Анализ
         let totalIncome = 0, totalExpense = 0, totalMarketing = 0;
         let salesCount = 0;
         const categoryExpenses = {};
@@ -217,7 +209,7 @@
         const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
         document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
 
-        updateStatus(`Готово. Загружено ${items.length} операций за июль 2026.`);
+        updateStatus(`Готово. За июль 2026: ${items.length} операций.`);
       } catch (err) {
         updateStatus('Ошибка: ' + err.message);
         console.error(err);
