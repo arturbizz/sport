@@ -36,18 +36,13 @@
       flex-wrap: wrap;
     }
     .user-bar span { font-weight: 500; color: var(--text-secondary); }
-    .btn-logout, .btn-impersonate, .btn-mascot {
+    .btn-logout, .btn-impersonate {
       background: var(--surface); border: 1px solid var(--border); padding: 0.4rem 1rem;
       border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 0.85rem;
       transition: 0.2s; color: var(--text); caret-color: transparent;
     }
-    .btn-logout:hover, .btn-impersonate:hover, .btn-mascot:hover { background: #f1f5f9; }
+    .btn-logout:hover, .btn-impersonate:hover { background: #f1f5f9; }
     .btn-impersonate.active { background: var(--accent); color: white; border-color: var(--accent); }
-    .btn-mascot {
-      background: var(--accent); color: white; border: none;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .btn-mascot:hover { background: #0f766e; }
     h1 {
       text-align: center; font-size: 2.5rem; font-weight: 800;
       background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
@@ -68,24 +63,6 @@
     .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
     .card p { color: var(--text-secondary); font-size: 0.9rem; }
 
-    /* Модальное окно для маскота */
-    .mascot-modal {
-      position: fixed; inset: 0; background: rgba(15,23,42,0.4);
-      backdrop-filter: blur(12px);
-      display: none; align-items: center; justify-content: center;
-      z-index: 10000;
-    }
-    .mascot-modal iframe {
-      width: 90vw; height: 90vh; max-width: 600px; max-height: 800px;
-      border-radius: 32px; border: none;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.1) inset;
-    }
-    .mascot-modal .close-btn {
-      position: absolute; top: 20px; right: 30px;
-      background: white; border: none; border-radius: 50%;
-      width: 40px; height: 40px; font-size: 20px; cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
     .impersonate-menu {
       position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border);
       border-radius: var(--radius-sm); box-shadow: 0 8px 16px rgba(0,0,0,0.08);
@@ -120,17 +97,6 @@
     <div class="cards" id="mainCards"></div>
   </div>
 
-  <!-- Кнопка Маскотик -->
-  <button class="btn-mascot" id="mascotBtn" style="position:fixed; bottom:20px; right:20px; z-index:9998; padding:12px 20px; border-radius:28px; box-shadow:0 8px 24px rgba(13,148,136,0.3);">
-    <span style="font-size:20px;">🦉</span> Маскотик
-  </button>
-
-  <!-- Модальное окно -->
-  <div class="mascot-modal" id="mascotModal">
-    <button class="close-btn" onclick="closeMascot()">✕</button>
-    <iframe id="mascotFrame" src="mascot.html"></iframe>
-  </div>
-
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
@@ -149,7 +115,8 @@
       { id: 'admin', title: 'Мониторинг', desc: 'Логи и активность', roles: ['Управляющий','Администратор'], admin: true },
       { id: 'dashboard', title: 'Дашборд', desc: 'Аналитика и финансы', roles: ['Управляющий','Менеджер','Администратор','Бухгалтер'], admin: true },
       { id: 'dashboard2', title: 'Лиды', desc: 'Аналитика по лидам', roles: ['Управляющий','Менеджер'], admin: true },
-      { id: 'knowledge', title: 'База знаний', desc: 'Обучение ассистента', roles: ['Управляющий'], admin: true }
+      { id: 'knowledge', title: 'База знаний', desc: 'Обучение ассистента', roles: ['Управляющий'], admin: true },
+      { id: 'mascot', title: 'Маскотик', desc: 'Быстрый помощник', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] }
     ];
 
     const iconPaths = {
@@ -165,7 +132,8 @@
       admin: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
       dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
       dashboard2: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-      knowledge: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>'
+      knowledge: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
+      mascot: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>'
     };
 
     let currentUser = null;
@@ -224,20 +192,6 @@
         impBtn.style.display = 'none';
       }
     }
-
-    // Маскотик – передача email и токена в iframe
-    document.getElementById('mascotBtn').addEventListener('click', () => {
-      const params = new URLSearchParams();
-      if (currentUser) {
-        params.set('email', currentUser.email);
-        params.set('token', currentToken);
-      }
-      document.getElementById('mascotFrame').src = 'mascot.html?' + params.toString();
-      document.getElementById('mascotModal').style.display = 'flex';
-    });
-    window.closeMascot = function() {
-      document.getElementById('mascotModal').style.display = 'none';
-    };
 
     async function init() {
       const { data: { session }, error } = await _supabase.auth.getSession();
