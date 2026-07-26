@@ -286,11 +286,9 @@
     const ROYALTY_RATE = 0.08;
     const ROYALTY_START = '2026-07'; // роялти с июля 2026
 
-    // Коэффициент из localStorage (надёжно, без БД)
-    const STORAGE_KEY = 'budget_pro_teacher_coeff';
-    let globalRateCoeff = parseFloat(localStorage.getItem(STORAGE_KEY)) || 1.0;
+    // Коэффициент из БД (общий для всех)
+    let globalRateCoeff = 1.0;
 
-    // Статьи
     const FIXED_ARTICLES = [
       'Администраторы ЗП','ЗП Менеджеры оклад','Управленец','Старший педагог',
       'Аренда оборудования','Телефония','Банковское обслуживание','% рассрочка'
@@ -335,10 +333,27 @@
       return allRows;
     }
 
-    // Сохранение коэффициента в localStorage
-    function saveRateCoeff(value) {
+    // Загрузка коэффициента из app_settings (без падений)
+    async function loadSettings() {
+      try {
+        const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'teacher_rate_coeff').single();
+        if (error || !data) {
+          // попробуем создать запись
+          try { await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' }); } catch(e){}
+          globalRateCoeff = 1.0;
+        } else {
+          globalRateCoeff = parseFloat(data.value) || 1.0;
+        }
+      } catch (e) {
+        globalRateCoeff = 1.0;
+      }
+    }
+
+    async function saveRateCoeff(value) {
       globalRateCoeff = value;
-      localStorage.setItem(STORAGE_KEY, value);
+      try {
+        await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
+      } catch (e) { /* тихо */ }
       updateForecastAndBreakEven();
     }
 
@@ -347,12 +362,11 @@
       const forecast = computeForecast();
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
-      // обработчики на rateCoeff
+      // Обработчики для нового поля
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
         rateInput.addEventListener('input', function() {
-          const newVal = parseFloat(this.value) || 1.0;
-          saveRateCoeff(newVal);
+          saveRateCoeff(parseFloat(this.value) || 1.0);
         });
       }
       const targetInput = document.getElementById('targetProfitInput');
@@ -393,7 +407,7 @@
       const targetProfit = parseFloat(document.getElementById('targetProfitInput')?.value) || 100000;
       const incomeForTarget = Math.round((forecast.total + targetProfit) / (1 - royaltyRate));
       return `
-        <div class="list-item"><span>Для покрытия расходов (операционный ноль)</span><span class="amount">${forecast.total.toLocaleString()} ₽</span></div>
+        <div class="list-item"><span>Для покрытия расходов</span><span class="amount">${forecast.total.toLocaleString()} ₽</span></div>
         <div class="list-item"><span>Для чистой прибыли = 0</span><span class="amount">${incomeForZero.toLocaleString()} ₽</span></div>
         <div class="list-item" style="flex-wrap: wrap;">
           <span>Для прибыли <input type="number" class="target-profit-input" id="targetProfitInput" value="${targetProfit}" style="width:80px;"> ₽</span>
@@ -703,6 +717,7 @@
         financeData = fin;
         allExpenses = exp;
         teacherSalaryData = sal;
+        await loadSettings(); // грузим коэффициент
         renderAll();
       } catch (err) {
         console.error(err);
@@ -726,12 +741,6 @@
       t.classList.toggle('open');
       this.textContent = t.classList.contains('open')?'Скрыть таблицу':'Показать таблицу';
     });
-    document.getElementById('infoBtn').addEventListener('click', ()=>{
-      const msg = `Всего записей: ${financeData.length}\nПериод данных: ${financeData[0]?.operation_date || '—'} — ${financeData[financeData.length-1]?.operation_date || '—'}`;
-      document.getElementById('infoContent').innerText = msg;
-      document.getElementById('infoModal').style.display = 'flex';
-    });
-    document.getElementById('closeInfoBtn').addEventListener('click', ()=> document.getElementById('infoModal').style.display = 'none');
     window.addEventListener('resize', ()=> myChart?.resize());
     loadData();
   })();
