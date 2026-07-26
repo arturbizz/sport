@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM (коробка)</title>
+  <title>Тест API AlfaCRM v2 (коробка)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1000px; margin: 2rem auto; padding: 1rem; }
-    input, button, select { padding: 0.5rem; margin: 0.3rem; font-size: 0.9rem; }
+    input, button, select, textarea { padding: 0.5rem; margin: 0.3rem; font-size: 0.9rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ddd; padding: 0.4rem; text-align: left; font-size: 0.85rem; }
     th { background: #f8f8f8; }
@@ -15,24 +15,21 @@
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM (коробка)</h1>
+  <h1>Тест API AlfaCRM v2 (коробка)</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
-    <label>Домен CRM: <input type="text" id="baseDomain" size="50" value="https://musicclubmsk.s20.online"></label><br>
+    <label>Филиал (branch ID): <input type="text" id="branch" size="10" value="20"></label><br>
     <label>Путь API:
       <select id="apiPath">
-        <option value="/v2/operation">/v2/operation</option>
-        <option value="/v2/operations">/v2/operations</option>
-        <option value="/v2/operation/index">/v2/operation/index</option>
-        <option value="/v2/operation/list">/v2/operation/list</option>
-        <option value="/v2/finance/operation">/v2/finance/operation</option>
-        <option value="/v2/finance/list">/v2/finance/list</option>
-        <option value="/v2/finance/index">/v2/finance/index</option>
-        <option value="/v2/crm/finance">/v2/crm/finance</option>
+        <option value="pay/index">pay/index (финансы)</option>
+        <option value="pay-item/index">pay-item/index (статьи)</option>
+        <option value="pay-account/index">pay-account/index (счета)</option>
+        <option value="customer/index">customer/index (клиенты)</option>
       </select>
     </label><br>
-    <label>SIP (филиал): <input type="text" id="sip" size="10" value="303"></label><br>
-    <label>Доп. параметры: <input type="text" id="queryParams" size="40" placeholder="page=1&date_from=2026-07-01"></label><br>
+    <label>Тело запроса (JSON):<br>
+      <textarea id="requestBody" rows="4" cols="60">{"page":0}</textarea>
+    </label><br>
     <button id="fetchBtn">Загрузить через прокси</button>
     <button id="saveBtn" disabled>Сохранить в Supabase</button>
   </div>
@@ -50,29 +47,34 @@
 
     document.getElementById('fetchBtn').addEventListener('click', async () => {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
-      const base = document.getElementById('baseDomain').value.trim();
+      const branch = document.getElementById('branch').value.trim();
       const path = document.getElementById('apiPath').value;
-      const sip = document.getElementById('sip').value.trim();
-      let query = document.getElementById('queryParams').value.trim();
-      if (query && !query.startsWith('?')) query = '?' + query;
-      const endpoint = base + path + query;
-      if (!proxyUrl || !endpoint) return;
-      document.getElementById('status').textContent = 'Пробую: ' + endpoint + ' ...';
+      let body;
+      try {
+        body = JSON.parse(document.getElementById('requestBody').value);
+      } catch (e) {
+        document.getElementById('status').textContent = 'Ошибка: тело запроса не является валидным JSON';
+        return;
+      }
+      if (!proxyUrl || !branch || !path) {
+        document.getElementById('status').textContent = 'Заполните все поля';
+        return;
+      }
+      document.getElementById('status').textContent = 'Отправляю запрос...';
       try {
         const resp = await fetch(proxyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint, sip })
+          body: JSON.stringify({ branch, path, body })
         });
         const json = await resp.json();
         if (json.error) {
-          let msg = `Ошибка: ${json.error}`;
-          if (json.status) msg += `\nHTTP статус: ${json.status}`;
-          if (json.raw) msg += `\nСырой ответ (первые 500 символов):\n${json.raw}`;
-          document.getElementById('status').textContent = msg;
+          document.getElementById('status').textContent = `Ошибка: ${json.error}`;
           return;
         }
         console.log('Ответ:', json);
+
+        // Ищем массив данных
         let raw = null;
         if (Array.isArray(json)) raw = json;
         else if (json.data && Array.isArray(json.data)) raw = json.data;
@@ -81,18 +83,19 @@
         else raw = Object.values(json).find(v => Array.isArray(v));
 
         if (!raw) throw new Error('Массив данных не найден. Смотрите консоль (F12).');
+
         fetchedData = raw.map(item => ({
-          operation_date: item.date || item.operation_date || item.created_at || '',
-          operation_type: item.type || item.operation_type || item.category || '',
-          amount: parseFloat(item.amount || item.sum || item.price || 0),
-          category: item.category || item.expense_item || item.description || '',
-          account: item.account || item.cash_register || item.bank_account || ''
+          operation_date: item.document_date || item.date || '',
+          operation_type: item.income ? 'Доход' : 'Расход',
+          amount: parseFloat(item.income || item.sum || 0),
+          category: item.pay_item_id || '',
+          account: item.pay_account_id || ''
         }));
         renderTable(fetchedData);
         document.getElementById('saveBtn').disabled = false;
-        document.getElementById('status').textContent = `Успех! Загружено ${fetchedData.length} записей.`;
+        document.getElementById('status').textContent = `Загружено ${fetchedData.length} записей.`;
       } catch (err) {
-        document.getElementById('status').textContent = 'Критическая ошибка: ' + err.message;
+        document.getElementById('status').textContent = 'Ошибка: ' + err.message;
         console.error(err);
       }
     });
