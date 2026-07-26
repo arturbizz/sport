@@ -61,7 +61,7 @@
       return json;
     }
 
-    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate, maxPages = 100) {
+    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate, maxPages = 20) {
       let allItems = [];
       let page = 0;
       while (page < maxPages) {
@@ -75,12 +75,16 @@
     }
 
     async function loadDictionaries(proxyUrl, branch) {
-      const [payItems, payAccounts] = await Promise.all([
-        fetchAllPages(proxyUrl, branch, 'pay-item/index', {}),
-        fetchAllPages(proxyUrl, branch, 'pay-account/index', {}),
-      ]);
+      const statusEl = document.getElementById('status');
+      statusEl.textContent = 'Загрузка статей (pay-item)...';
+      const payItems = await fetchAllPages(proxyUrl, branch, 'pay-item/index', {});
       payItems.forEach(i => dicts.payItems[i.id] = i.name);
+
+      statusEl.textContent = 'Загрузка счетов (pay-account)...';
+      const payAccounts = await fetchAllPages(proxyUrl, branch, 'pay-account/index', {});
       payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
+
+      statusEl.textContent = 'Справочники загружены.';
     }
 
     document.getElementById('loadBtn').addEventListener('click', async () => {
@@ -95,7 +99,6 @@
         await loadDictionaries(proxyUrl, branch);
         document.getElementById('status').textContent = 'Загрузка операций...';
 
-        // Фильтр по выбранным датам (формат ДД.ММ.ГГГГ)
         const formatCRMDate = iso => iso.split('-').reverse().join('.');
         const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {
           document_date_from: formatCRMDate(dateFrom),
