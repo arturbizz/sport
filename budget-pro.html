@@ -129,6 +129,11 @@
     .nav-btn { padding: 0.45rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--accent); border: 1px solid var(--accent); transition: 0.2s; }
     .nav-btn:hover { background: var(--accent); color: white; }
     .target-profit-input { width: 100px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); text-align: center; }
+    /* Подсказка для диапазона */
+    .range-hint {
+      display: inline-block; font-size: 0.8rem; color: var(--text-secondary); cursor: help;
+      margin-left: 0.3rem; font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -412,13 +417,16 @@
       const topVarHtml = forecast.topVariable && forecast.topVariable.length
         ? forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ')
         : 'Нет данных';
+      // Диапазон для переменных
+      const varRange = forecast.variableRange;
+      const rangeHint = varRange ? `<span class="range-hint" title="Оптимистично: ${varRange.low.toLocaleString()} ₽\nПессимистично: ${varRange.high.toLocaleString()} ₽">±</span>` : '';
       return `
         <div class="forecast-card">
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Прогноз на следующий месяц</div>
           <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
           <div class="forecast-details">
             <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${fixedListHtml}</div></div>
-            <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${topVarHtml}</div></div>
+            <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> ${rangeHint} <span class="forecast-expand">▸</span><div class="forecast-list">${topVarHtml}</div></div>
             <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong> <span style="margin-left:0.5rem;">Коэфф. <span id="coeffContainer"></span></span></div>
             <div class="forecast-item">Маркетинг: <strong>${forecast.avgMarketing.toLocaleString()} ₽</strong></div>
             <div class="forecast-item" style="color:var(--royalty);">Роялти: <strong>${forecast.royalty.toLocaleString()} ₽</strong></div>
@@ -479,7 +487,7 @@
       return incomes.reduce((a,b) => a+b, 0) / incomes.length;
     }
 
-    // ИСХОДНАЯ ЛОГИКА ПЕРЕМЕННЫХ РАСХОДОВ – гарантированно работает
+    // Продвинутый прогноз с исключением выбросов и линейным трендом
     function computeForecast() {
       const now = new Date();
       const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -487,25 +495,93 @@
       const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
-      const threeMonthsAgo = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
-      let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
-      if (recentOps.length === 0) {
-        recentOps = financeData.filter(isExpense).filter(r => r.operation_date);
-      }
+      // Все расходные операции (без ограничения по времени для анализа тренда)
+      const allExpenseOps = financeData.filter(isExpense).filter(r => r.operation_date);
 
-      const variableOps = recentOps.filter(r => !isFixedCategory(r.category) && !isTeacherCategory(r.category));
-      const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
-      const avgVariable = Math.round((totalVar / monthsCount) * 1.05);
-      const topVar = Object.entries(
-        variableOps.reduce((acc, r) => {
-          const cat = r.category || 'Без категории';
-          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
-          return acc;
-        }, {})
-      ).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      // Группируем переменные расходы по категориям и месяцам
+      const variableByMonthCategory = {};
+      allExpenseOps.forEach(r => {
+        if (isFixedCategory(r.category) || isTeacherCategory(r.category)) return;
+        const m = r.operation_date?.slice(0,7);
+        if (!m) return;
+        const cat = r.category || 'Без категории';
+        if (!variableByMonthCategory[cat]) variableByMonthCategory[cat] = {};
+        variableByMonthCategory[cat][m] = (variableByMonthCategory[cat][m] || 0) + parseFloat(r.amount);
+      });
 
-      const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
+      // Рассчитываем прогноз для каждой категории с выбросами и трендом
+      let optimisticVarTotal = 0;
+      let pessimisticVarTotal = 0;
+      const categoryPredictions = []; // для топ-5
+
+      Object.entries(variableByMonthCategory).forEach(([cat, monthlyValues]) => {
+        const months = Object.keys(monthlyValues).sort();
+        const values = months.map(m => monthlyValues[m]);
+        if (values.length === 0) return;
+
+        // Вычисляем квартили и убираем выбросы
+        const sorted = [...values].sort((a,b)=>a-b);
+        const q1 = sorted[Math.floor(sorted.length * 0.25)];
+        const q3 = sorted[Math.floor(sorted.length * 0.75)];
+        const iqr = q3 - q1;
+        const lower = q1 - 1.5 * iqr;
+        const upper = q3 + 1.5 * iqr;
+        const cleanValues = values.filter(v => v >= lower && v <= upper);
+        const cleanMonths = months.filter((_, i) => values[i] >= lower && values[i] <= upper);
+
+        // Если все значения оказались выбросами, используем исходные
+        let finalValues = cleanValues.length >= 2 ? cleanValues : values;
+        let finalMonths = cleanValues.length >= 2 ? cleanMonths : months;
+
+        // Линейный тренд
+        let predicted = 0;
+        if (finalValues.length >= 3) {
+          // Простая регрессия: индекс месяца -> значение
+          const n = finalValues.length;
+          const indices = finalMonths.map((m, i) => i); // 0,1,2...
+          const sumX = indices.reduce((s,x)=>s+x,0);
+          const sumY = finalValues.reduce((s,y)=>s+y,0);
+          const sumXY = indices.reduce((s,x,i)=>s+x*finalValues[i],0);
+          const sumX2 = indices.reduce((s,x)=>s+x*x,0);
+          const slope = (n*sumXY - sumX*sumY) / (n*sumX2 - sumX*sumX);
+          const intercept = (sumY - slope*sumX) / n;
+          const nextIndex = finalMonths.length; // прогноз на следующий месяц
+          const trendValue = slope * nextIndex + intercept;
+
+          // Оценка значимости тренда (R²)
+          const yMean = sumY / n;
+          const ssRes = finalValues.reduce((s,y,i)=>s+Math.pow(y - (slope*i + intercept),2),0);
+          const ssTot = finalValues.reduce((s,y)=>s+Math.pow(y - yMean,2),0);
+          const rSquared = 1 - ssRes/ssTot;
+          predicted = (rSquared >= 0.5) ? Math.round(trendValue) : Math.round(finalValues.reduce((s,v)=>s+v,0)/n);
+        } else {
+          predicted = Math.round(finalValues.reduce((s,v)=>s+v,0)/finalValues.length);
+        }
+
+        // Консервативная оценка (без очистки) – просто среднее по всем значениям
+        const avgAll = Math.round(values.reduce((s,v)=>s+v,0)/values.length);
+
+        // Добавляем 5% запас
+        const opt = Math.round(predicted * 1.05);
+        const pess = Math.round(avgAll * 1.05);
+        optimisticVarTotal += opt;
+        pessimisticVarTotal += pess;
+
+        // Сохраняем для топ-5 (используем прогнозную сумму opt)
+        categoryPredictions.push([cat, opt]);
+      });
+
+      // Сортируем топ-5 по прогнозной сумме
+      const topVar = categoryPredictions.sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+      // Основной прогноз переменных – среднее между оптимистичным и пессимистичным
+      const avgVariable = Math.round((optimisticVarTotal + pessimisticVarTotal) / 2);
+      const variableRange = { low: Math.min(optimisticVarTotal, pessimisticVarTotal), high: Math.max(optimisticVarTotal, pessimisticVarTotal) };
+
+      // ЗП педагогов (по максимуму из последних месяцев)
+      const recentThreeMonths = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
+      const teacherOps = allExpenseOps.filter(r => isTeacherCategory(r.category) && r.operation_date >= recentThreeMonths);
+      if (teacherOps.length === 0) teacherOps.push(...allExpenseOps.filter(r => isTeacherCategory(r.category)).slice(-10));
       const monthlyTeacher = {};
       teacherOps.forEach(r => {
         const m = r.operation_date?.slice(0,7);
@@ -514,7 +590,8 @@
       const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
       const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff);
 
-      const marketingOps = recentOps.filter(isMarketing);
+      // Маркетинг
+      const marketingOps = allExpenseOps.filter(isMarketing);
       const totalMark = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCountMark = Math.max(1, new Set(marketingOps.map(r => r.operation_date?.slice(0,7))).size);
       const avgMarketing = Math.round((totalMark / monthsCountMark) * 1.05);
@@ -524,7 +601,7 @@
       const royaltyRate = applyRoyalty(nextMonth);
       const royalty = Math.round(avgIncome * royaltyRate);
 
-      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty };
+      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty, variableRange };
     }
 
     function updateChart(monthlyData) {
