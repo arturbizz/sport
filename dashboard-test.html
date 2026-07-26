@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM v2 – сводка за 2 месяца</title>
+  <title>Тест API AlfaCRM v2 – сводка за текущий месяц</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
@@ -19,10 +19,12 @@
   </style>
 </head>
 <body>
-  <h1>Сводка за 2 месяца (июль-август 2026)</h1>
+  <h1>Сводка за текущий месяц (июль 2026)</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label>
     <label>Филиал: <input type="text" id="branch" size="10" value="20"></label>
+    <label>Дата С: <input type="date" id="dateFrom" value="2026-07-01"></label>
+    <label>Дата ПО: <input type="date" id="dateTo" value="2026-07-31"></label>
     <button id="loadBtn">Загрузить данные</button>
     <span id="status" class="status"></span>
   </div>
@@ -46,7 +48,6 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Справочники
     const dicts = { payItems: {}, payAccounts: {}, customers: {}, teachers: {} };
 
     async function fetchPage(proxyUrl, branch, path, body) {
@@ -74,45 +75,38 @@
     }
 
     async function loadDictionaries(proxyUrl, branch) {
-      const [payItems, payAccounts, customers, teachers] = await Promise.all([
+      const [payItems, payAccounts] = await Promise.all([
         fetchAllPages(proxyUrl, branch, 'pay-item/index', {}),
         fetchAllPages(proxyUrl, branch, 'pay-account/index', {}),
-        fetchAllPages(proxyUrl, branch, 'customer/index', {}),
-        fetchAllPages(proxyUrl, branch, 'teacher/index', {})
       ]);
       payItems.forEach(i => dicts.payItems[i.id] = i.name);
       payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
-      customers.forEach(i => dicts.customers[i.id] = i.name || `${i.last_name||''} ${i.first_name||''}`);
-      teachers.forEach(i => dicts.teachers[i.id] = i.name || `${i.last_name||''} ${i.first_name||''}`);
     }
 
     document.getElementById('loadBtn').addEventListener('click', async () => {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
       const branch = document.getElementById('branch').value.trim();
-      if (!proxyUrl || !branch) return;
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+      if (!proxyUrl || !branch || !dateFrom || !dateTo) return;
 
       document.getElementById('status').textContent = 'Загрузка справочников...';
       try {
         await loadDictionaries(proxyUrl, branch);
         document.getElementById('status').textContent = 'Загрузка операций...';
 
-        // Фильтр за июль и август 2026
-        const itemsJuly = await fetchAllPages(proxyUrl, branch, 'pay/index', {
-          document_date_from: '01.07.2026',
-          document_date_to: '31.07.2026'
+        // Фильтр по выбранным датам (формат ДД.ММ.ГГГГ)
+        const formatCRMDate = iso => iso.split('-').reverse().join('.');
+        const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {
+          document_date_from: formatCRMDate(dateFrom),
+          document_date_to: formatCRMDate(dateTo)
         });
-        const itemsAug = await fetchAllPages(proxyUrl, branch, 'pay/index', {
-          document_date_from: '01.08.2026',
-          document_date_to: '31.08.2026'
-        });
-        const allItems = [...itemsJuly, ...itemsAug];
 
-        // Аналитика
         let totalIncome = 0, totalExpense = 0, totalMarketing = 0;
         const categoryExpenses = {};
         const oneTimeExpenses = [];
 
-        allItems.forEach(item => {
+        items.forEach(item => {
           const amount = parseFloat(item.income || item.amount || 0);
           const catId = item.pay_item_id;
           const catName = dicts.payItems[catId] || `ID ${catId}`;
@@ -120,11 +114,8 @@
           else {
             const absAmount = Math.abs(amount);
             totalExpense += absAmount;
-            // Маркетинг
             if (catName.toLowerCase().includes('маркетинг') || catName.toLowerCase().includes('лидмаркет')) totalMarketing += absAmount;
-            // Категории
             categoryExpenses[catName] = (categoryExpenses[catName] || 0) + absAmount;
-            // Разовые крупные расходы (> 1000)
             if (absAmount > 1000) oneTimeExpenses.push({ date: item.document_date, category: catName, amount: absAmount });
           }
         });
@@ -135,18 +126,18 @@
           <div class="kpi-card"><div class="label">Расходы</div><div class="value">${totalExpense.toLocaleString()} ₽</div></div>
           <div class="kpi-card"><div class="label">Маркетинг</div><div class="value">${totalMarketing.toLocaleString()} ₽</div></div>
           <div class="kpi-card"><div class="label">Прибыль</div><div class="value">${(totalIncome - totalExpense).toLocaleString()} ₽</div></div>
-          <div class="kpi-card"><div class="label">Операций</div><div class="value">${allItems.length}</div></div>
+          <div class="kpi-card"><div class="label">Операций</div><div class="value">${items.length}</div></div>
         `;
 
-        // Расходы по категориям (топ-10)
+        // Расходы по категориям
         const sortedCategories = Object.entries(categoryExpenses).sort((a,b) => b[1] - a[1]).slice(0,10);
         document.querySelector('#categoryTable tbody').innerHTML = sortedCategories.map(([cat, sum]) => `<tr><td>${cat}</td><td>${sum.toLocaleString()} ₽</td></tr>`).join('');
 
-        // Топ-10 крупнейших расходов
+        // Топ-10 расходов
         const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
         document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
 
-        document.getElementById('status').textContent = `Загружено ${allItems.length} операций.`;
+        document.getElementById('status').textContent = `Загружено ${items.length} операций за период ${dateFrom} – ${dateTo}.`;
       } catch (err) {
         document.getElementById('status').textContent = 'Ошибка: ' + err.message;
         console.error(err);
