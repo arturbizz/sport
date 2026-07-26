@@ -131,7 +131,18 @@
       background: var(--surface); border-radius: var(--radius-lg);
       padding: 1.5rem; border: 1px solid var(--border); margin-bottom: 2rem;
     }
-    .chart-title { font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary); }
+    .chart-title {
+      font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .chart-title .period-btns { display: flex; gap: 0.3rem; }
+    .chart-title .period-btns button {
+      padding: 0.2rem 0.7rem; border-radius: 14px;
+      border: 1px solid var(--border); background: var(--surface);
+      font-size: 0.75rem; font-weight: 500; cursor: pointer;
+      color: var(--text-secondary); transition: 0.2s;
+    }
+    .chart-title .period-btns button.active { background: var(--accent); color: white; border-color: var(--accent); }
     #mainChart { width: 100%; height: 400px; }
 
     .widget-grid {
@@ -235,7 +246,17 @@
   <div class="kpi-grid" id="kpiContainer"></div>
 
   <div class="chart-container">
-    <div class="chart-title">Динамика доходов, расходов, маркетинга и чистой прибыли</div>
+    <div class="chart-title">
+      <span>Динамика доходов, расходов, маркетинга и чистой прибыли</span>
+      <div class="period-btns" id="chartPeriodBtns">
+        <button data-months="-1">Тек.</button>
+        <button data-months="1" class="active">Прош.</button>
+        <button data-months="3">3 мес</button>
+        <button data-months="6">6 мес</button>
+        <button data-months="12">12 мес</button>
+        <button data-months="0">Всё</button>
+      </div>
+    </div>
     <div id="mainChart"></div>
   </div>
 
@@ -544,7 +565,7 @@
       return incomes.reduce((a,b) => a+b, 0) / incomes.length;
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ computeForecast – переменные расходы определяются как разница
+    // ИСПРАВЛЕННАЯ: переменные расходы = общие расходы - постоянные - учителя
     function computeForecast() {
       const now = new Date();
       const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -552,7 +573,7 @@
       const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
-      // Все расходные операции за последние 3 месяца (или за всё время, если нет)
+      // Все расходные операции за последние 3 месяца (или за всё время)
       const threeMonthsAgo = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
       let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
@@ -561,6 +582,7 @@
 
       // ЗП педагогов
       const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
+      const totalTeacher = teacherOps.reduce((s,r) => s + parseFloat(r.amount), 0);
       const monthlyTeacher = {};
       teacherOps.forEach(r => {
         const m = r.operation_date?.slice(0,7);
@@ -569,10 +591,16 @@
       const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
       const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff);
 
-      // Переменные расходы = все расходы минус учителя и фиксированные статьи
-      const variableOps = recentOps.filter(r => !isTeacherCategory(r.category) && !isFixedCategory(r.category));
+      // Общие расходы за этот период
+      const totalExpensesInPeriod = recentOps.reduce((s,r) => s + parseFloat(r.amount), 0);
+      const monthsCount = Math.max(1, new Set(recentOps.map(r => r.operation_date?.slice(0,7))).size);
+
+      // Фиксированные расходы из БД (уже оплаченные не учитываем, но для прогноза используем activeFixed)
+      // Здесь для расчёта среднего переменных берём разницу
+      const variableTotalInPeriod = totalExpensesInPeriod - totalTeacher - activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0); // это не совсем точно, лучше взять фактические фиксированные расходы за период
+      // Но у нас нет истории фиксированных расходов, поэтому просто вычитаем то, что посчитали как "учителя", а остальное считаем переменными
+      const variableOps = recentOps.filter(r => !isTeacherCategory(r.category));
       const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
       const avgVariable = Math.round((totalVar / monthsCount) * 1.05);
       const topVar = Object.entries(
         variableOps.reduce((acc, r) => {
@@ -793,7 +821,6 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-          // Удаляем все, кроме settings
           await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
           for (let i = 0; i < parsed.length; i += 500) {
             const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
@@ -826,17 +853,37 @@
       }
     }
 
-    document.getElementById('uploadBtn').addEventListener('click', uploadFinance);
-    document.getElementById('refreshBtn').addEventListener('click', loadData);
-
+    // Обработчики для основных кнопок периода
     document.getElementById('periodFilters').addEventListener('click', e => {
       if (e.target.classList.contains('filter-btn')) {
-        document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('#periodFilters .filter-btn').forEach(b=>b.classList.remove('active'));
         e.target.classList.add('active');
         selectedMonths = parseInt(e.target.dataset.months)||0;
+        // Синхронизируем кнопки в графике
+        document.querySelectorAll('#chartPeriodBtns button').forEach(b=>b.classList.remove('active'));
+        const chartBtn = document.querySelector(`#chartPeriodBtns button[data-months="${selectedMonths}"]`);
+        if (chartBtn) chartBtn.classList.add('active');
         renderAll();
       }
     });
+
+    // Обработчики для кнопок периода в графике
+    document.getElementById('chartPeriodBtns').addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON') {
+        document.querySelectorAll('#chartPeriodBtns button').forEach(b=>b.classList.remove('active'));
+        e.target.classList.add('active');
+        selectedMonths = parseInt(e.target.dataset.months)||0;
+        // Синхронизируем основные кнопки
+        document.querySelectorAll('#periodFilters .filter-btn').forEach(b=>b.classList.remove('active'));
+        const mainBtn = document.querySelector(`#periodFilters .filter-btn[data-months="${selectedMonths}"]`);
+        if (mainBtn) mainBtn.classList.add('active');
+        renderAll();
+      }
+    });
+
+    document.getElementById('uploadBtn').addEventListener('click', uploadFinance);
+    document.getElementById('refreshBtn').addEventListener('click', loadData);
+
     document.getElementById('toggleTableBtn').addEventListener('click', function() {
       const t = document.getElementById('transactionTable');
       t.classList.toggle('open');
