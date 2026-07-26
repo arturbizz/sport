@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Сравнение показателей — AlfaCRM vs Excel</title>
+  <title>Сравнение показателей — CRM vs Excel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
@@ -12,11 +12,10 @@
     th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; font-size: 0.9rem; }
     th { background: #f3f4f6; }
     .status { background: #fef3c7; padding: 0.5rem; border-radius: 8px; margin: 0.5rem 0; }
-    .kpi-row td:first-child { font-weight: 600; }
   </style>
 </head>
 <body>
-  <h1>Сравнение показателей (CRM за июль 2026)</h1>
+  <h1>Сравнение показателей (июль 2026)</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
     <label>Филиал: <input type="text" id="branch" size="10" value="20"></label><br>
@@ -35,6 +34,10 @@
       <tr><td>Операционная прибыль</td><td id="kpiOperProfit">—</td></tr>
       <tr><td>Чистая прибыль</td><td id="kpiNetProfit">—</td></tr>
       <tr><td>Всего операций</td><td id="kpiCount">—</td></tr>
+      <tr><td>Доходных операций (продаж)</td><td id="kpiSalesCount">—</td></tr>
+      <tr><td>Средний чек</td><td id="kpiAvgCheck">—</td></tr>
+      <tr><td>ROI маркетинга</td><td id="kpiROI">—</td></tr>
+      <tr><td>Доля маркетинга в расходах</td><td id="kpiMarketingShare">—</td></tr>
     </tbody>
   </table>
 
@@ -55,7 +58,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const dicts = { payItems: {}, payAccounts: {} };
+    const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
 
     async function fetchPage(proxyUrl, branch, path, body) {
       const resp = await fetch(proxyUrl, {
@@ -86,9 +89,17 @@
       statusEl.textContent = 'Загрузка справочников (статьи)...';
       const payItems = await fetchAllPages(proxyUrl, branch, 'pay-item/index', {});
       payItems.forEach(i => dicts.payItems[i.id] = i.name);
+
       statusEl.textContent = 'Загрузка справочников (счета)...';
       const payAccounts = await fetchAllPages(proxyUrl, branch, 'pay-account/index', {});
       payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
+
+      statusEl.textContent = 'Загрузка справочников (типы платежей)...';
+      const payTypes = await fetchAllPages(proxyUrl, branch, 'pay-type/index', {});
+      payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
+      // выводим в консоль для отладки
+      console.log('Типы платежей:', dicts.payTypes);
+
       statusEl.textContent = 'Справочники загружены.';
     }
 
@@ -101,36 +112,48 @@
       try {
         await loadDictionaries(proxyUrl, branch);
 
-        // Загружаем операции за июль 2026
+        // Загружаем операции за июль 2026 (ограничим 1000 для скорости)
         const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {
           document_date_from: '01.07.2026',
           document_date_to: '31.07.2026'
         });
 
+        console.log('Первый элемент (для отладки):', items[0]);
+
         // Анализируем
         let totalIncome = 0, totalExpense = 0, totalMarketing = 0;
+        let salesCount = 0;
         const categoryExpenses = {};
         const oneTimeExpenses = [];
 
         items.forEach(item => {
           const amount = parseFloat(item.income || item.amount || 0);
-          const catId = item.pay_item_id;
-          const catName = dicts.payItems[catId] || `ID ${catId}`;
-          if (amount > 0) totalIncome += amount;
-          else {
-            const absAmount = Math.abs(amount);
-            totalExpense += absAmount;
-            if (catName.toLowerCase().includes('маркетинг') || catName.toLowerCase().includes('лидмаркет')) totalMarketing += absAmount;
-            categoryExpenses[catName] = (categoryExpenses[catName] || 0) + absAmount;
-            if (absAmount > 1000) oneTimeExpenses.push({ date: item.document_date, category: catName, amount: absAmount });
+          const typeId = item.pay_type_id;
+          const typeName = dicts.payTypes[typeId] || '';
+          const isIncome = typeName.toLowerCase().includes('доход') || typeName.toLowerCase().includes('приход');
+          const isExpense = typeName.toLowerCase().includes('расход') || typeName.toLowerCase().includes('выплата');
+
+          if (isIncome) {
+            totalIncome += amount;
+            salesCount++;
+          } else if (isExpense) {
+            totalExpense += amount;
+            const catId = item.pay_item_id;
+            const catName = dicts.payItems[catId] || `ID ${catId}`;
+            if (catName.toLowerCase().includes('маркетинг') || catName.toLowerCase().includes('лидмаркет')) totalMarketing += amount;
+            categoryExpenses[catName] = (categoryExpenses[catName] || 0) + amount;
+            if (amount > 1000) oneTimeExpenses.push({ date: item.document_date, category: catName, amount });
           }
         });
 
         const operatingProfit = totalIncome - totalExpense;
         const royalty = new Date().toISOString().slice(0,7) >= '2026-07' ? Math.round(totalIncome * 0.08) : 0;
         const netProfit = operatingProfit - royalty;
+        const avgCheck = salesCount > 0 ? Math.round(totalIncome / salesCount) : 0;
+        const roi = totalMarketing > 0 ? (totalIncome / totalMarketing).toFixed(1) : '—';
+        const marketingShare = totalExpense > 0 ? ((totalMarketing / totalExpense) * 100).toFixed(1) : '0';
 
-        // Заполняем таблицу KPI
+        // Заполняем KPI
         document.getElementById('kpiIncome').textContent = totalIncome.toLocaleString() + ' ₽';
         document.getElementById('kpiExpense').textContent = totalExpense.toLocaleString() + ' ₽';
         document.getElementById('kpiMarketing').textContent = totalMarketing.toLocaleString() + ' ₽';
@@ -138,6 +161,10 @@
         document.getElementById('kpiOperProfit').textContent = operatingProfit.toLocaleString() + ' ₽';
         document.getElementById('kpiNetProfit').textContent = netProfit.toLocaleString() + ' ₽';
         document.getElementById('kpiCount').textContent = items.length;
+        document.getElementById('kpiSalesCount').textContent = salesCount;
+        document.getElementById('kpiAvgCheck').textContent = avgCheck.toLocaleString() + ' ₽';
+        document.getElementById('kpiROI').textContent = roi;
+        document.getElementById('kpiMarketingShare').textContent = marketingShare + '%';
 
         // Расходы по категориям
         const sortedCats = Object.entries(categoryExpenses).sort((a,b) => b[1] - a[1]).slice(0,10);
@@ -147,7 +174,7 @@
         const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
         document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
 
-        document.getElementById('status').textContent = `Загружено ${items.length} операций из CRM за июль 2026. Сравните с Excel.`;
+        document.getElementById('status').textContent = `Загружено ${items.length} операций. Проверьте консоль (F12) для деталей.`;
       } catch (err) {
         document.getElementById('status').textContent = 'Ошибка: ' + err.message;
         console.error(err);
