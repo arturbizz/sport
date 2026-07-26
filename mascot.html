@@ -37,7 +37,6 @@
       cursor: default;
       -webkit-tap-highlight-color: transparent;
     }
-    /* Главный контейнер — эффект стекла */
     .copilot {
       width: 100%;
       max-width: 440px;
@@ -50,32 +49,33 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      max-height: 90vh;
+      height: 90vh;
+      max-height: 800px;
       position: relative;
     }
-    /* Аватар и приветствие */
+    /* Шапка */
     .hero {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1.8rem 1.5rem 1.2rem;
+      padding: 1.5rem 1.5rem 1rem;
       background: linear-gradient(180deg, rgba(204,251,241,0.6) 0%, rgba(255,255,255,0) 100%);
+      flex-shrink: 0;
     }
     .avatar {
-      width: 90px;
-      height: 90px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background: white;
       box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-      margin-bottom: 0.8rem;
+      margin-bottom: 0.6rem;
       object-fit: cover;
       border: 2px solid white;
     }
     .greeting {
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       font-weight: 650;
       color: var(--text);
-      text-align: center;
     }
     .role-badge {
       display: inline-block;
@@ -88,19 +88,77 @@
       font-weight: 600;
       letter-spacing: 0.02em;
     }
-    /* Секция с кнопками-действиями */
-    .actions {
+    /* Область ответа */
+    .response-area {
       flex: 1;
       overflow-y: auto;
-      padding: 0.8rem 1.2rem 1.2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-    }
-    .action-group {
+      padding: 0 1.5rem 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .response-card {
+      background: #f8fafc;
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.2rem;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      box-shadow: var(--shadow-xs);
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } }
+    .response-card.error { background: #fee2e2; }
+    .empty-state {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-top: 2rem;
+      font-size: 0.9rem;
+    }
+    /* Плавающая кнопка вызова меню */
+    .fab {
+      position: absolute;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      box-shadow: 0 8px 20px rgba(13,148,136,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 20;
+      transition: transform 0.2s;
+      font-size: 28px;
+      font-weight: 400;
+    }
+    .fab:active { transform: scale(0.95); }
+    /* Панель действий (выезжает снизу) */
+    .actions-panel {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      border-radius: 20px 20px 0 0;
+      padding: 1.2rem 1.2rem 1.5rem;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.06);
+      z-index: 30;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .actions-panel.open {
+      transform: translateY(0);
     }
     .action-group-title {
       font-size: 0.7rem;
@@ -108,128 +166,93 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--text-secondary);
-      margin-left: 0.3rem;
-      margin-bottom: 0.1rem;
+      margin: 0.8rem 0 0.4rem 0.3rem;
     }
     .action-btn {
       display: flex;
       align-items: center;
       gap: 0.8rem;
-      padding: 0.9rem 1rem;
+      padding: 0.8rem 0.8rem;
       background: white;
       border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-xs);
-      transition: all 0.2s ease;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+      transition: background 0.2s;
       cursor: pointer;
       position: relative;
-      user-select: none;
     }
-    .action-btn:active {
-      background: #f8fafc;
-      transform: scale(0.98);
-    }
+    .action-btn:active { background: #f8fafc; }
     .action-icon {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .action-icon svg {
-      width: 24px;
-      height: 24px;
-    }
-    .action-text {
-      flex: 1;
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--text);
-    }
-    /* Метка роли (маленькая буква в уголке) */
-    .role-tag {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 20px;
-      height: 20px;
-      background: var(--accent);
+    .action-icon svg { width: 24px; height: 24px; }
+    .action-text { flex:1; font-size: 0.9rem; font-weight: 500; }
+    /* Премиум-метка (золотая звезда) */
+    .premium-dot {
+      width: 16px; height: 16px;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      border-radius: 4px;
+      box-shadow: 0 2px 6px rgba(245,158,11,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.55rem;
       color: white;
-      border-radius: 6px;
-      font-size: 0.65rem;
       font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-transform: uppercase;
+      position: absolute;
+      top: -4px; right: -4px;
     }
-    /* Цвета ролей (для различения) */
-    .role-tag.manager { background: #3b82f6; }
-    .role-tag.booker { background: #8b5cf6; }
-    .role-tag.admin { background: #f59e0b; }
-    .role-tag.ip { background: #64748b; }
-    .role-tag.teacher { background: #ec4899; }
-    .role-tag.owner { background: #0d9488; }
-    /* Сообщения (история) */
-    .messages {
-      padding: 0 1.2rem 0.8rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      max-height: 200px;
-      overflow-y: auto;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      border-top: 1px solid var(--border);
-      margin: 0 1.2rem;
+    /* Затемнение фона при открытой панели */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.15);
+      z-index: 15;
+      display: none;
     }
-    .msg {
-      padding: 0.6rem 0.8rem;
-      background: #f8fafc;
-      border-radius: 10px;
-      white-space: pre-wrap;
-      line-height: 1.4;
-    }
-    .msg.error { background: #fee2e2; color: var(--text); }
-    /* Кнопка выхода внизу */
+    .overlay.active { display: block; }
+    /* Кнопка выхода */
     .logout-area {
-      padding: 0.8rem 1.2rem 1.2rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: flex-end;
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      z-index: 5;
     }
     .logout-btn {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      font-size: 0.8rem;
-      font-weight: 500;
-      cursor: pointer;
-      padding: 0.5rem 1rem;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid var(--border);
       border-radius: 10px;
-      transition: 0.2s;
+      padding: 0.4rem 0.8rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      backdrop-filter: blur(8px);
     }
-    .logout-btn:active { background: #f1f5f9; }
   </style>
 </head>
 <body>
-  <div class="copilot">
-    <!-- Шапка с аватаром -->
+  <div class="copilot" id="app">
+    <!-- Затемнение -->
+    <div class="overlay" id="overlay"></div>
+    <!-- Кнопка выхода -->
+    <div class="logout-area">
+      <button class="logout-btn" id="logoutBtn">Выйти</button>
+    </div>
+    <!-- Шапка -->
     <div class="hero">
       <img src="mascot.png" class="avatar" alt="Маскотик" onerror="this.style.display='none'">
       <div class="greeting" id="greeting">Привет!</div>
       <div class="role-badge" id="roleBadge">роль</div>
     </div>
-    <!-- Кнопки действий -->
-    <div class="actions" id="actionsContainer"></div>
-    <!-- История сообщений (после нажатий) -->
-    <div class="messages" id="messagesContainer" style="display:none;"></div>
-    <!-- Выход -->
-    <div class="logout-area">
-      <button class="logout-btn" id="logoutBtn">Выйти</button>
+    <!-- Область ответа -->
+    <div class="response-area" id="responseArea">
+      <div class="empty-state">Нажмите <strong>+</strong> чтобы выбрать действие</div>
     </div>
+    <!-- Плавающая кнопка -->
+    <button class="fab" id="fabBtn">+</button>
+    <!-- Панель действий -->
+    <div class="actions-panel" id="actionsPanel"></div>
   </div>
 
   <script type="module">
@@ -241,8 +264,10 @@
 
     let currentUser = null;
     let effectiveRole = '';
-    const messagesEl = document.getElementById('messagesContainer');
-    const actionsEl = document.getElementById('actionsContainer');
+    const panel = document.getElementById('actionsPanel');
+    const overlay = document.getElementById('overlay');
+    const fab = document.getElementById('fabBtn');
+    const responseArea = document.getElementById('responseArea');
 
     // Иконки (премиальные SVG)
     const icons = {
@@ -272,119 +297,120 @@
       'Управляющий': [
         { group: 'Финансы',
           items: [
-            { action:'kpi', label:'Сводка KPI', icon: icons.kpi, tag:'У' },
-            { action:'cashflow', label:'Кассовый разрыв 7 дн.', icon: icons.cashflow, tag:'У' },
-            { action:'breakeven', label:'Точка безубыточности', icon: icons.breakeven, tag:'У' },
-            { action:'unpaid', label:'Предстоящие платежи', icon: icons.unpaid, tag:'У' },
-            { action:'regular', label:'Ежемесячные платежи', icon: icons.regular, tag:'У' },
-            { action:'salaries', label:'Зарплаты', icon: icons.salaries, tag:'У' },
-            { action:'tax', label:'Налоги/роялти', icon: icons.tax, tag:'У' },
-            { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts, tag:'У' },
+            { action:'kpi', label:'Сводка KPI', icon: icons.kpi },
+            { action:'cashflow', label:'Кассовый разрыв 7 дн.', icon: icons.cashflow },
+            { action:'breakeven', label:'Точка безубыточности', icon: icons.breakeven },
+            { action:'unpaid', label:'Предстоящие платежи', icon: icons.unpaid },
+            { action:'regular', label:'Ежемесячные платежи', icon: icons.regular },
+            { action:'salaries', label:'Зарплаты', icon: icons.salaries },
+            { action:'tax', label:'Налоги/роялти', icon: icons.tax },
+            { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts },
           ]
         },
         { group: 'Маркетинг и лиды',
           items: [
-            { action:'leads', label:'Воронка лидов', icon: icons.leads, tag:'У' },
+            { action:'leads', label:'Воронка лидов', icon: icons.leads },
           ]
         }
       ],
       'Бухгалтер': [
         { group: 'Платежи и зарплаты',
           items: [
-            { action:'unpaid', label:'Предстоящие платежи', icon: icons.unpaid, tag:'Б' },
-            { action:'regular', label:'Ежемесячные платежи', icon: icons.regular, tag:'Б' },
-            { action:'salaries', label:'Зарплаты', icon: icons.salaries, tag:'Б' },
-            { action:'tax', label:'Налоги/роялти', icon: icons.tax, tag:'Б' },
-            { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts, tag:'Б' },
+            { action:'unpaid', label:'Предстоящие платежи', icon: icons.unpaid },
+            { action:'regular', label:'Ежемесячные платежи', icon: icons.regular },
+            { action:'salaries', label:'Зарплаты', icon: icons.salaries },
+            { action:'tax', label:'Налоги/роялти', icon: icons.tax },
+            { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts },
           ]
         }
       ],
       'Менеджер': [
         { group: 'Личные показатели',
           items: [
-            { action:'mysales', label:'Мои продажи', icon: icons.mysales, tag:'М' },
-            { action:'mysalary', label:'Моя зарплата', icon: icons.mysalary, tag:'М' },
-            { action:'myconversion', label:'Моя конверсия', icon: icons.myconversion, tag:'М' },
-            { action:'graph', label:'График работы', icon: icons.graph, tag:'М' },
-            { action:'mytasks', label:'Мои задачи', icon: icons.mytasks, tag:'М' },
+            { action:'mysales', label:'Мои продажи', icon: icons.mysales },
+            { action:'mysalary', label:'Моя зарплата', icon: icons.mysalary },
+            { action:'myconversion', label:'Моя конверсия', icon: icons.myconversion },
+            { action:'graph', label:'График работы', icon: icons.graph },
+            { action:'mytasks', label:'Мои задачи', icon: icons.mytasks },
           ]
         }
       ],
       'Администратор': [
         { group: 'Оперативное',
           items: [
-            { action:'todaygraph', label:'График на сегодня', icon: icons.graph, tag:'А' },
-            { action:'todayleads', label:'Лиды за сегодня', icon: icons.leads, tag:'А' },
-            { action:'todaytasks', label:'Задачи на сегодня', icon: icons.mytasks, tag:'А' },
+            { action:'todaygraph', label:'График на сегодня', icon: icons.graph },
+            { action:'todayleads', label:'Лиды за сегодня', icon: icons.leads },
+            { action:'todaytasks', label:'Задачи на сегодня', icon: icons.mytasks },
           ]
         }
       ],
       'Преподаватель': [
         { group: 'Мои данные',
           items: [
-            { action:'teachersalary', label:'Моя зарплата', icon: icons.teachersalary, tag:'П' },
-            { action:'teacherschedule', label:'Моё расписание', icon: icons.teacherschedule, tag:'П' },
+            { action:'teachersalary', label:'Моя зарплата', icon: icons.teachersalary },
+            { action:'teacherschedule', label:'Моё расписание', icon: icons.teacherschedule },
           ]
         }
       ],
       'ИП': [
         { group: 'Финансы ИП',
           items: [
-            { action:'ipincome', label:'Доходы за месяц', icon: icons.ipincome, tag:'ИП' },
-            { action:'ipexpense', label:'Расходы за месяц', icon: icons.ipexpense, tag:'ИП' },
-            { action:'iptax', label:'Предстоящие налоги', icon: icons.iptax, tag:'ИП' },
+            { action:'ipincome', label:'Доходы за месяц', icon: icons.ipincome },
+            { action:'ipexpense', label:'Расходы за месяц', icon: icons.ipexpense },
+            { action:'iptax', label:'Предстоящие налоги', icon: icons.iptax },
           ]
         }
       ]
     };
 
-    function addMessage(text, isError=false) {
-      messagesEl.style.display = 'flex';
-      const div = document.createElement('div');
-      div.className = `msg${isError?' error':''}`;
-      div.textContent = text;
-      messagesEl.appendChild(div);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+    function addResponse(text, isError=false) {
+      const card = document.createElement('div');
+      card.className = `response-card${isError?' error':''}`;
+      card.textContent = text;
+      responseArea.innerHTML = ''; // очищаем предыдущий ответ
+      responseArea.appendChild(card);
     }
 
-    function renderActions(buttons) {
-      actionsEl.innerHTML = '';
+    function renderPanel(buttons) {
+      panel.innerHTML = '';
       buttons.forEach(group => {
-        const groupDiv = document.createElement('div');
-        groupDiv.className = 'action-group';
-        if (group.group) {
-          const title = document.createElement('div');
-          title.className = 'action-group-title';
-          title.textContent = group.group;
-          groupDiv.appendChild(title);
-        }
+        const title = document.createElement('div');
+        title.className = 'action-group-title';
+        title.textContent = group.group;
+        panel.appendChild(title);
         group.items.forEach(item => {
           const btn = document.createElement('div');
           btn.className = 'action-btn';
           btn.innerHTML = `
             <div class="action-icon">${item.icon}</div>
             <span class="action-text">${item.label}</span>
-            <span class="role-tag ${getTagClass(item.tag)}">${item.tag}</span>
+            <div class="premium-dot">★</div>
           `;
-          btn.addEventListener('click', () => handleAction(item.action));
-          groupDiv.appendChild(btn);
+          btn.addEventListener('click', () => {
+            closePanel();
+            handleAction(item.action);
+          });
+          panel.appendChild(btn);
         });
-        actionsEl.appendChild(groupDiv);
       });
     }
 
-    function getTagClass(tag) {
-      if (tag==='У') return 'owner';
-      if (tag==='Б') return 'booker';
-      if (tag==='М') return 'manager';
-      if (tag==='А') return 'admin';
-      if (tag==='П') return 'teacher';
-      if (tag==='ИП') return 'ip';
-      return '';
+    function openPanel() {
+      panel.classList.add('open');
+      overlay.classList.add('active');
+      fab.style.display = 'none';
+    }
+    function closePanel() {
+      panel.classList.remove('open');
+      overlay.classList.remove('active');
+      fab.style.display = 'flex';
     }
 
+    fab.addEventListener('click', openPanel);
+    overlay.addEventListener('click', closePanel);
+
     async function handleAction(action) {
-      addMessage(`Загружаю "${action}"...`);
+      addResponse('Загружаю...');
       try {
         let result = '';
         const monthStr = new Date().toISOString().slice(0,7);
@@ -495,9 +521,9 @@
           }
           default: result = 'Скоро появится';
         }
-        messagesEl.lastChild.textContent = result;
+        addResponse(result);
       } catch (err) {
-        messagesEl.lastChild.textContent = 'Ошибка получения данных';
+        addResponse('Ошибка получения данных', true);
         console.error(err);
       }
     }
@@ -516,11 +542,9 @@
       }
       document.getElementById('roleBadge').textContent = effectiveRole || 'гость';
       const structure = roleActions[effectiveRole] || [];
-      if (!structure.length) {
-        actionsEl.innerHTML = '<p style="text-align:center;color:var(--text-secondary);">Нет доступных действий</p>';
-        return;
+      if (structure.length) {
+        renderPanel(structure);
       }
-      renderActions(structure);
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         await _supabase.auth.signOut();
         window.location.href = 'login.html';
