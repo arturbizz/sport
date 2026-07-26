@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM v2 (полная загрузка)</title>
+  <title>Тест API AlfaCRM v2 (сохранение с датами)</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
@@ -16,7 +16,7 @@
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM v2 (полная загрузка)</h1>
+  <h1>Тест API AlfaCRM v2 (сохранение в Supabase)</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
     <label>Филиал (branch ID): <input type="text" id="branch" size="10" value="20"></label><br>
@@ -35,7 +35,16 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let fetchedData = [];
 
-    // Загрузка всех страниц
+    // Преобразование даты из DD.MM.YYYY в YYYY-MM-DD
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('.');
+      if (parts.length === 3) {
+        return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      }
+      return dateStr; // если уже в нужном формате
+    }
+
     async function fetchAllPages(proxyUrl, branch, path, initialBody) {
       let allItems = [];
       let page = 0;
@@ -66,17 +75,24 @@
       document.getElementById('status').textContent = 'Загрузка всех операций...';
       try {
         const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {});
-        console.log('Все операции:', items);
-        fetchedData = items.map(item => ({
-          operation_date: item.document_date || '',
-          operation_type: item.income ? 'Доход' : 'Расход',
-          amount: parseFloat(item.income || item.sum || item.amount || 0),
-          category: item.pay_item_id || '',
-          account: item.pay_account_id || ''
-        }));
-        renderTable(fetchedData);
+        console.log('Пример первого элемента:', items[0]); // для отладки
+        fetchedData = items.map(item => {
+          // Сумма: сначала income, потом amount, потом sum (если есть)
+          const amount = parseFloat(item.income || item.amount || item.sum || 0);
+          // Определяем тип: income > 0 => Доход, иначе Расход (или по полю income)
+          const isIncome = item.income > 0 || (item.income === undefined && amount > 0); // если income нет, считаем по сумме
+          const operationType = isIncome ? 'Доход' : 'Расход';
+          return {
+            operation_date: formatDate(item.document_date),
+            operation_type: operationType,
+            amount: amount,
+            category: item.pay_item_id ? String(item.pay_item_id) : '',
+            account: item.pay_account_id ? String(item.pay_account_id) : ''
+          };
+        });
+        renderTable(fetchedData.slice(0, 100)); // показываем первые 100 для скорости
         document.getElementById('saveBtn').disabled = false;
-        document.getElementById('status').textContent = `Загружено ${fetchedData.length} операций.`;
+        document.getElementById('status').textContent = `Загружено ${fetchedData.length} операций. Проверьте таблицу.`;
         document.getElementById('status').classList.add('success');
       } catch (err) {
         document.getElementById('status').textContent = 'Ошибка: ' + err.message;
@@ -86,12 +102,17 @@
 
     document.getElementById('saveBtn').addEventListener('click', async () => {
       if (!fetchedData.length) return;
-      document.getElementById('status').textContent = 'Сохранение в Supabase...';
+      if (!confirm(`Будут удалены все старые данные crm_finance (кроме настроек) и сохранено ${fetchedData.length} записей. Продолжить?`)) return;
+      document.getElementById('status').textContent = 'Сохранение...';
       try {
         await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
-        const { error } = await _supabase.from('crm_finance').insert(fetchedData);
-        if (error) throw error;
-        document.getElementById('status').textContent = `Сохранено ${fetchedData.length} записей.`;
+        // Вставка по частям
+        for (let i = 0; i < fetchedData.length; i += 500) {
+          const chunk = fetchedData.slice(i, i + 500);
+          const { error } = await _supabase.from('crm_finance').insert(chunk);
+          if (error) throw error;
+        }
+        document.getElementById('status').textContent = `Сохранено ${fetchedData.length} записей. Дашборд обновлён.`;
       } catch (err) {
         document.getElementById('status').textContent = 'Ошибка сохранения: ' + err.message;
       }
