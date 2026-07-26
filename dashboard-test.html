@@ -11,7 +11,7 @@
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ddd; padding: 0.4rem; text-align: left; font-size: 0.85rem; }
     th { background: #f8f8f8; }
-    .status { margin: 0.5rem 0; font-weight: 600; }
+    .status { margin: 0.5rem 0; font-weight: 600; white-space: pre-wrap; background: #fef3c7; padding: 0.5rem; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -43,17 +43,24 @@
       }
       document.getElementById('status').textContent = 'Отправляю запрос через ваш прокси...';
       try {
-        // Запрос идёт К ВАШЕЙ Edge Function, а не к AlfaCRM
         const resp = await fetch(proxyUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint })
         });
         const json = await resp.json();
-        if (json.error) throw new Error(json.error);
-        console.log('Ответ от прокси:', json);
 
-        // Ищем массив данных
+        // Если прокси вернул ошибку, показываем всю информацию
+        if (json.error) {
+          let msg = `Ошибка: ${json.error}`;
+          if (json.status) msg += `\nHTTP статус: ${json.status}`;
+          if (json.raw) msg += `\nСырой ответ (первые 500 символов):\n${json.raw}`;
+          if (json.headers) msg += `\nЗаголовки ответа CRM: ${JSON.stringify(json.headers, null, 2)}`;
+          document.getElementById('status').textContent = msg;
+          return;
+        }
+
+        console.log('Ответ от прокси:', json);
         let raw = null;
         if (Array.isArray(json)) raw = json;
         else if (json.data && Array.isArray(json.data)) raw = json.data;
@@ -73,7 +80,7 @@
         document.getElementById('saveBtn').disabled = false;
         document.getElementById('status').textContent = `Загружено ${fetchedData.length} записей.`;
       } catch (err) {
-        document.getElementById('status').textContent = 'Ошибка: ' + err.message;
+        document.getElementById('status').textContent = 'Критическая ошибка: ' + err.message;
         console.error(err);
       }
     });
