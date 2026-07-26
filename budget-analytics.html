@@ -85,7 +85,7 @@
     .forecast-fixed-list span { white-space: nowrap; }
 
     .debug-info {
-      margin-top: 0.5rem; font-size: 0.8rem; color: var(--soft-green);
+      margin-top: 0.5rem; font-size: 0.8rem; color: #0d9488; background: #f0fdfa; padding: 0.5rem; border-radius: 8px;
     }
 
     .kpi-grid {
@@ -321,7 +321,14 @@
 
       const total = totalFixed + avgVariable + avgTeacherSal;
 
-      const debugMsg = `Найдено переменных записей: ${allVariable.length}, из них исключено как постоянные оклады: ${excludedVariable.length}.`;
+      let debugMsg = `Всего записей в crm_finance: ${financeData.length}. `;
+      const lastExpense = financeData.filter(isExpenseOperation).slice(-1)[0];
+      if (lastExpense) {
+        debugMsg += `Пример последней расходной операции: "${lastExpense.operation_type}" от ${lastExpense.operation_date}. `;
+      } else {
+        debugMsg += `Нет ни одной расходной операции. `;
+      }
+      debugMsg += `Переменных за 3 мес: ${allVariable.length}, исключено (оклады): ${excludedVariable.length}.`;
 
       return { totalFixed, avgVariable, avgTeacherSal, total, fixedList, debugMsg };
     }
@@ -370,6 +377,18 @@
           <div class="bar-label">${month.slice(5)}</div>
         </div>`;
       }).join('') || '<div style="color:var(--text-secondary);">Нет данных</div>';
+
+      // Принудительно применяем цвета после рендеринга (на случай кеширования)
+      setTimeout(() => {
+        document.querySelectorAll('.bar-fixed').forEach(el => {
+          el.style.background = 'linear-gradient(180deg, #0d9488 0%, #14b8a6 100%)';
+          el.style.boxShadow = '0 0 6px rgba(13,148,136,0.3)';
+        });
+        document.querySelectorAll('.bar-variable').forEach(el => {
+          el.style.background = 'linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%)';
+          el.style.boxShadow = '0 0 6px rgba(245,158,11,0.3)';
+        });
+      }, 100);
 
       document.getElementById('topCategories').innerHTML = getCategoryBreakdown(selectedMonths)
         .map(([cat, sum]) => `<div class="list-item"><span>${cat}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>`).join('') || 'Нет данных';
