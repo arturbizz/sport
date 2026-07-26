@@ -41,7 +41,12 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
     }
-    .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .back-link, .nav-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .nav-link {
+      padding: 0.5rem 1rem; border-radius: var(--radius-sm);
+      border: 1px solid var(--accent); transition: 0.2s;
+    }
+    .nav-link:hover { background: var(--accent); color: white; }
     h1 {
       font-size: 2rem; font-weight: 700;
       background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
@@ -137,7 +142,10 @@
   <div class="header">
     <a href="index.html" class="back-link">← На главную</a>
     <h1>Бюджет</h1>
-    <button class="btn btn-primary" id="addBtn">+ Добавить платёж</button>
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="budget-pro.html" class="nav-link">Аналитика бюджета</a>
+      <button class="btn btn-primary" id="addBtn">+ Добавить платёж</button>
+    </div>
   </div>
 
   <div class="filters">
@@ -251,7 +259,7 @@
           <div style="font-size:0.8rem; color:var(--text-secondary);">${periodLabel}</div>
           ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:0.75rem; color:var(--accent);">Чек</a>` : ''}
           <div class="card-actions">
-            ${!e.paid ? `<button class="check-btn pay-action" title="Оплатить">💳</button>` : ''}
+            ${!e.paid ? `<button class="check-btn pay-action" title="Оплатить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></button>` : ''}
             <button class="btn edit-btn">Изм.</button>
             <button class="btn btn-danger delete-btn">Уд.</button>
           </div>
@@ -290,7 +298,6 @@
       }
 
       const nextDate = getNextDate(exp.next_payment_date, exp.periodicity);
-      // Создаём следующий платёж
       const newExp = {
         name: exp.name, amount: exp.amount, periodicity: exp.periodicity,
         next_payment_date: nextDate, payment_link: exp.payment_link,
@@ -303,7 +310,6 @@
       }
       const nextId = inserted?.[0]?.id;
 
-      // Помечаем текущий оплаченным
       await _supabase.from('expenses').update({
         paid: true, paid_at: new Date().toISOString(), payment_method: method,
         receipt_url: receiptUrl, previous_id: nextId
@@ -373,7 +379,6 @@
       if (id) {
         await _supabase.from('expenses').update(data).eq('id', id);
       } else {
-        // Добавление нового
         const { error } = await _supabase.from('expenses').insert([{ ...data, paid: false, type: 'monthly' }]);
         if (error) {
           alert('Ошибка добавления: ' + error.message);
