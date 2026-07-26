@@ -175,6 +175,7 @@
 
   <div class="filters" id="periodFilters">
     <button class="filter-btn active" data-months="1">Прошлый месяц</button>
+    <button class="filter-btn" data-months="current">Текущий месяц</button>
     <button class="filter-btn" data-months="3">3 месяца</button>
     <button class="filter-btn" data-months="6">6 месяцев</button>
     <button class="filter-btn" data-months="12">12 месяцев</button>
@@ -223,7 +224,7 @@
 
   <div class="monthly-table" id="monthlyTableContainer">
     <table>
-      <thead><tr><th>Месяц</th><th>Доходы</th><th>Постоянные</th><th>Переменные</th><th>Маркетинг</th><th>Итого расходов</th></tr></thead>
+      <thead><tr><th>Месяц</th><th>Доходы</th><th>Постоянные</th><th>Переменные</th><th>Маркетинг</th><th>Выплаты ЗП</th><th>Итого расходов</th><th>Баланс</th></tr></thead>
       <tbody id="monthlyTableBody"></tbody>
     </table>
   </div>
@@ -253,7 +254,7 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let financeData = [], allExpenses = [], teacherSalaryData = [];
-    let selectedMonths = 1; // по умолчанию прошлый месяц
+    let selectedMonths = '1'; // '1','3','6','12','0','current'
 
     const FIXED_ARTICLES = [
       'Администраторы ЗП',
@@ -348,23 +349,38 @@
       return TEACHER_SALARY_ARTICLES.some(art => (category || '').toLowerCase().includes(art.toLowerCase()));
     }
 
+    function isSalaryPayment(r) {
+      const type = (r.operation_type || '').toLowerCase();
+      const cat = (r.category || '').toLowerCase();
+      return type.includes('выплата') && (cat.includes('зп') || cat.includes('зарплат'));
+    }
+
     function getCutoffDate(monthsBack) {
-      if (monthsBack === 0) return null;
+      if (monthsBack === 'current') {
+        const now = new Date();
+        const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        return {
+          from: startOfCurrent.toISOString().slice(0,10),
+          to: startOfNext.toISOString().slice(0,10)
+        };
+      }
+      if (monthsBack === '0') return null;
       const now = new Date();
-      if (monthsBack === 1) {
+      if (monthsBack === '1') {
         const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfPrevious = new Date(startOfCurrent);
         startOfPrevious.setMonth(startOfPrevious.getMonth() - 1);
         return {
-          from: startOfPrevious.toISOString().slice(0,7),
-          to: startOfCurrent.toISOString().slice(0,7)
+          from: startOfPrevious.toISOString().slice(0,10),
+          to: startOfCurrent.toISOString().slice(0,10)
         };
       }
-      const cutoff = new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
+      const cutoff = new Date(Date.now() - parseInt(monthsBack) * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
       return { from: cutoff, to: null };
     }
 
-    function getMonthlyBreakdown(monthsBack = 0) {
+    function getMonthlyBreakdown(monthsBack = '1') {
       const months = {};
       const cutoff = getCutoffDate(monthsBack);
       const paid = getPaidExpenses();
@@ -372,26 +388,36 @@
       // Доходы
       financeData.filter(isIncomeOperation).forEach(r => {
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-        if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
-        if (cutoff && cutoff.to && m >= cutoff.to) return;
-        if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0 };
+        if (!m || (cutoff && cutoff.from && r.operation_date < cutoff.from)) return;
+        if (cutoff && cutoff.to && r.operation_date >= cutoff.to) return;
+        if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0, salary: 0 };
         months[m].income += parseFloat(r.amount);
       });
 
-      // Постоянные (оплаченные из expenses + категории из crm_finance)
+      // Постоянные (оплаченные из expenses)
       paid.forEach(e => {
-        const m = e.paid_at ? e.paid_at.slice(0,7) : null;
-        if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
-        if (cutoff && cutoff.to && m >= cutoff.to) return;
-        if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0 };
+        const date = e.paid_at ? e.paid_at.slice(0,10) : null;
+        if (!date || (cutoff && cutoff.from && date < cutoff.from)) return;
+        if (cutoff && cutoff.to && date >= cutoff.to) return;
+        const m = date.slice(0,7);
+        if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0, salary: 0 };
         months[m].fixed += parseFloat(e.amount);
       });
 
+      // Расходы из crm_finance
       financeData.filter(isExpenseOperation).forEach(r => {
-        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-        if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
-        if (cutoff && cutoff.to && m >= cutoff.to) return;
-        if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0 };
+        const date = r.operation_date;
+        if (!date || (cutoff && cutoff.from && date < cutoff.from)) return;
+        if (cutoff && cutoff.to && date >= cutoff.to) return;
+        const m = date.slice(0,7);
+        if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0, salary: 0 };
+
+        // Выплаты ЗП
+        if (isSalaryPayment(r)) {
+          months[m].salary += parseFloat(r.amount);
+          return; // не учитываем в fixed/variable
+        }
+
         if (isFixedCategory(r.category)) {
           months[m].fixed += parseFloat(r.amount);
         } else {
@@ -405,15 +431,16 @@
       return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
     }
 
-    function getCategoryAverages(monthsBack = 0) {
+    function getCategoryAverages(monthsBack = '1') {
       const cats = {};
       const cutoff = getCutoffDate(monthsBack);
 
       financeData.filter(isExpenseOperation).forEach(r => {
-        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-        if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
-        if (cutoff && cutoff.to && m >= cutoff.to) return;
+        const date = r.operation_date;
+        if (!date || (cutoff && cutoff.from && date < cutoff.from)) return;
+        if (cutoff && cutoff.to && date >= cutoff.to) return;
         const cat = r.category || 'Без категории';
+        const m = date.slice(0,7);
         if (!cats[cat]) cats[cat] = { total: 0, months: new Set() };
         cats[cat].total += parseFloat(r.amount);
         cats[cat].months.add(m);
@@ -433,7 +460,7 @@
       const totalFixed = activeFixed.reduce((s, e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
-      const threeMonthsAgo = new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
+      const threeMonthsAgo = new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
       let recentOps = financeData.filter(isExpenseOperation).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
         const allOps = financeData.filter(isExpenseOperation).filter(r => r.operation_date);
@@ -441,12 +468,12 @@
           const maxDate = allOps.reduce((max, r) => r.operation_date > max ? r.operation_date : max, '');
           const maxMonth = new Date(maxDate);
           maxMonth.setMonth(maxMonth.getMonth() - 2);
-          const fromMonth = maxMonth.toISOString().slice(0,7);
+          const fromMonth = maxMonth.toISOString().slice(0,10);
           recentOps = allOps.filter(r => r.operation_date >= fromMonth && r.operation_date <= maxDate);
         }
       }
 
-      const variableOps = recentOps.filter(r => !isFixedCategory(r.category) && !isTeacherSalaryCategory(r.category));
+      const variableOps = recentOps.filter(r => !isFixedCategory(r.category) && !isTeacherSalaryCategory(r.category) && !isSalaryPayment(r));
       const totalVariable = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
       const avgVariable = Math.round(totalVariable / monthsCount);
@@ -478,20 +505,24 @@
       const totalIncome = monthly.reduce((s,m) => s + m[1].income, 0);
       const totalFixed = monthly.reduce((s,m) => s + m[1].fixed, 0);
       const totalVariable = monthly.reduce((s,m) => s + m[1].variable, 0);
-      const totalExpenses = totalFixed + totalVariable;
+      const totalSalary = monthly.reduce((s,m) => s + m[1].salary, 0);
+      const totalMarketing = monthly.reduce((s,m) => s + m[1].marketing, 0);
+      const totalExpenses = totalFixed + totalVariable + totalSalary;
       const avgMonthly = monthly.length > 0 ? totalExpenses / monthly.length : 0;
 
       // Предыдущий период для сравнения
-      let prevMonths = selectedMonths === 0 ? 12 : selectedMonths;
-      if (selectedMonths === 1) prevMonths = 2;
+      let prevMonths = selectedMonths === '0' ? '12' : (selectedMonths === '1' ? '2' : selectedMonths);
+      if (selectedMonths === 'current') prevMonths = '1';
       const prevMonthly = getMonthlyBreakdown(prevMonths);
+      const prevTotalExpenses = prevMonthly.reduce((s,m) => s + m[1].fixed + m[1].variable + m[1].salary, 0);
       const prevTotalFixed = prevMonthly.reduce((s,m) => s + m[1].fixed, 0);
       const prevTotalVariable = prevMonthly.reduce((s,m) => s + m[1].variable, 0);
-      const prevTotalExpenses = prevTotalFixed + prevTotalVariable;
+      const prevTotalSalary = prevMonthly.reduce((s,m) => s + m[1].salary, 0);
 
       const expenseChange = computeChange(totalExpenses, prevTotalExpenses);
       const fixedChange = computeChange(totalFixed, prevTotalFixed);
       const variableChange = computeChange(totalVariable, prevTotalVariable);
+      const salaryChange = computeChange(totalSalary, prevTotalSalary);
 
       // Прогноз
       const forecast = computeForecast();
@@ -524,7 +555,7 @@
       `;
 
       // KPI с динамикой
-      const periodLabel = selectedMonths === 1 ? 'MoM' : 'vs пред. период';
+      const periodLabel = selectedMonths === '1' ? 'MoM' : 'vs пред. период';
       document.getElementById('kpiContainer').innerHTML = `
         <div class="kpi-card">
           <div class="kpi-label">Доходы (за период)</div>
@@ -536,6 +567,11 @@
           <div class="kpi-change">${periodLabel}: <span class="${expenseChange.positive ? 'positive' : 'negative'}">${expenseChange.positive ? '↓' : '↑'} ${expenseChange.abs.toLocaleString()} ₽ (${Math.abs(expenseChange.diff)}%)</span></div>
         </div>
         <div class="kpi-card">
+          <div class="kpi-label">Выплаты ЗП (за период)</div>
+          <div class="kpi-value">${totalSalary.toLocaleString()} ₽</div>
+          <div class="kpi-change">${periodLabel}: <span class="${salaryChange.positive ? 'positive' : 'negative'}">${salaryChange.positive ? '↓' : '↑'} ${salaryChange.abs.toLocaleString()} ₽ (${Math.abs(salaryChange.diff)}%)</span></div>
+        </div>
+        <div class="kpi-card">
           <div class="kpi-label">Постоянные расходы (за период)</div>
           <div class="kpi-value">${totalFixed.toLocaleString()} ₽</div>
           <div class="kpi-change">${periodLabel}: <span class="${fixedChange.positive ? 'positive' : 'negative'}">${fixedChange.positive ? '↓' : '↑'} ${fixedChange.abs.toLocaleString()} ₽ (${Math.abs(fixedChange.diff)}%)</span></div>
@@ -544,6 +580,10 @@
           <div class="kpi-label">Переменные расходы (за период)</div>
           <div class="kpi-value">${totalVariable.toLocaleString()} ₽</div>
           <div class="kpi-change">${periodLabel}: <span class="${variableChange.positive ? 'positive' : 'negative'}">${variableChange.positive ? '↓' : '↑'} ${variableChange.abs.toLocaleString()} ₽ (${Math.abs(variableChange.diff)}%)</span></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Маркетинг (за период)</div>
+          <div class="kpi-value">${totalMarketing.toLocaleString()} ₽</div>
         </div>
       `;
 
@@ -567,9 +607,9 @@
       const cats = {};
       const cutoff = getCutoffDate(selectedMonths);
       financeData.filter(isExpenseOperation).forEach(r => {
-        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-        if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
-        if (cutoff && cutoff.to && m >= cutoff.to) return;
+        const date = r.operation_date;
+        if (!date || (cutoff && cutoff.from && date < cutoff.from)) return;
+        if (cutoff && cutoff.to && date >= cutoff.to) return;
         const cat = r.category || 'Без категории';
         cats[cat] = (cats[cat] || 0) + parseFloat(r.amount);
       });
@@ -595,7 +635,7 @@
             category: r.category,
             amount: r.amount,
             account: r.account || '—',
-            type: 'Переменный'
+            type: isSalaryPayment(r) ? 'Выплата ЗП' : 'Переменный'
           }))
       ].sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,150);
 
@@ -616,10 +656,21 @@
         .map(([acc, sum]) => `<div class="list-item"><span>${acc}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>`).join('') || 'Нет данных';
 
       // Помесячная таблица
-      const monthRows = monthly.map(([month, vals]) => `
-        <tr><td>${month}</td><td>${vals.income.toLocaleString()} ₽</td><td>${vals.fixed.toLocaleString()} ₽</td><td>${vals.variable.toLocaleString()} ₽</td><td>${vals.marketing.toLocaleString()} ₽</td><td>${(vals.fixed+vals.variable).toLocaleString()} ₽</td></tr>
-      `).join('');
-      document.getElementById('monthlyTableBody').innerHTML = monthRows || '<tr><td colspan="6">Нет данных</td></tr>';
+      const monthRows = monthly.map(([month, vals]) => {
+        const expenses = vals.fixed + vals.variable + vals.salary;
+        const balance = vals.income - expenses;
+        return `<tr>
+          <td>${month}</td>
+          <td>${vals.income.toLocaleString()} ₽</td>
+          <td>${vals.fixed.toLocaleString()} ₽</td>
+          <td>${vals.variable.toLocaleString()} ₽</td>
+          <td>${vals.marketing.toLocaleString()} ₽</td>
+          <td>${vals.salary.toLocaleString()} ₽</td>
+          <td>${expenses.toLocaleString()} ₽</td>
+          <td style="color:${balance >= 0 ? 'var(--soft-green)' : 'var(--critical)'}">${balance.toLocaleString()} ₽</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('monthlyTableBody').innerHTML = monthRows || '<tr><td colspan="8">Нет данных</td></tr>';
     }
 
     // Сворачивание/разворачивание таблицы транзакций
@@ -634,7 +685,7 @@
       if (e.target.classList.contains('filter-btn')) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
-        selectedMonths = parseInt(e.target.dataset.months) || 0;
+        selectedMonths = e.target.dataset.months;
         renderAll();
       }
     });
