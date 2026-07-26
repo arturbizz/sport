@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Аналитика бюджета PRO — Music Club Орёл</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -203,8 +202,6 @@
   (() => {
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    // Создаём отдельный экземпляр клиента специально для этой страницы
-    const budgetSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let financeData = [], allExpenses = [], teacherSalaryData = [];
     let selectedMonths = 0;
@@ -216,20 +213,38 @@
       'Старший педагог'
     ];
 
+    // Прямые запросы к REST API Supabase, чтобы избежать кэширования
     async function loadData() {
-      const [fin, exp, sal] = await Promise.all([
-        budgetSupabase.from('crm_finance').select('*').limit(5000).order('operation_date', { ascending: true }),
-        budgetSupabase.from('expenses').select('*').limit(5000).order('next_payment_date', { ascending: true }),
-        budgetSupabase.from('teacher_salary').select('*').limit(5000).order('created_at', { ascending: true })
-      ]);
-      financeData = fin.data || [];
-      allExpenses = exp.data || [];
-      teacherSalaryData = sal.data || [];
-      renderAll();
+      const timestamp = Date.now();
+      const headers = {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      };
+
+      try {
+        const [finResp, expResp, salResp] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/crm_finance?select=*&limit=5000&order=operation_date.asc&t=${timestamp}`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/expenses?select=*&limit=5000&order=next_payment_date.asc&t=${timestamp}`, { headers }),
+          fetch(`${SUPABASE_URL}/rest/v1/teacher_salary?select=*&limit=5000&order=created_at.asc&t=${timestamp}`, { headers })
+        ]);
+
+        if (!finResp.ok || !expResp.ok || !salResp.ok) {
+          throw new Error('Ошибка загрузки данных');
+        }
+
+        financeData = await finResp.json();
+        allExpenses = await expResp.json();
+        teacherSalaryData = await salResp.json();
+        renderAll();
+      } catch (err) {
+        console.error('Ошибка загрузки:', err);
+        alert('Не удалось загрузить данные. Проверьте соединение.');
+      }
     }
 
     document.getElementById('refreshBtn').addEventListener('click', () => {
-      loadData().then(() => alert('Данные обновлены'));
+      loadData();
     });
 
     function getPaidExpenses() {
@@ -353,7 +368,7 @@
 
       const total = totalFixed + avgVariable + avgTeacherSal;
 
-      const debugMsg = `Данные загружены из crm_finance. Всего записей: ${financeData.length}. ` +
+      const debugMsg = `Данные загружены напрямую из Supabase. Всего записей в crm_finance: ${financeData.length}. ` +
         `Расходных операций: ${financeData.filter(isExpenseOperation).length}. ` +
         `Последняя дата: ${financeData.length ? financeData[financeData.length-1].operation_date : 'нет'}.`;
 
@@ -397,10 +412,11 @@
       barChart.innerHTML = monthly.map(([month, vals]) => {
         const fixedH = (vals.fixed / maxVal * 100).toFixed(1);
         const varH = (vals.variable / maxVal * 100).toFixed(1);
+        // Сразу задаём цвета инлайн
         return `<div class="bar" style="height:${+fixedH + +varH}%;">
           <div class="bar-tooltip">Пост. ${vals.fixed.toLocaleString()} ₽<br>Перем. ${vals.variable.toLocaleString()} ₽</div>
-          <div class="bar-variable" style="height:${varH}%; background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%); box-shadow: 0 0 6px rgba(245,158,11,0.3);"></div>
-          <div class="bar-fixed" style="height:${fixedH}%; background: linear-gradient(180deg, #0d9488 0%, #14b8a6 100%); box-shadow: 0 0 6px rgba(13,148,136,0.3);"></div>
+          <div class="bar-variable" style="height:${varH}%; background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%) !important; box-shadow: 0 0 6px rgba(245,158,11,0.3) !important;"></div>
+          <div class="bar-fixed" style="height:${fixedH}%; background: linear-gradient(180deg, #0d9488 0%, #14b8a6 100%) !important; box-shadow: 0 0 6px rgba(13,148,136,0.3) !important;"></div>
           <div class="bar-label">${month.slice(5)}</div>
         </div>`;
       }).join('') || '<div style="color:var(--text-secondary);">Нет данных</div>';
@@ -434,6 +450,7 @@
       }
     });
 
+    // Загружаем данные при первом открытии страницы
     loadData();
   })();
 </script>
