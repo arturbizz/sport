@@ -294,29 +294,19 @@
     let selectedMonths = 1;
     let myChart = null;
     const ROYALTY_RATE = 0.08;
-    const ROYALTY_START = '2026-07'; // роялти применяется с июля 2026
+    const ROYALTY_START = '2026-07';
 
     let globalRateCoeff = 1.0;
 
-    const FIXED_ARTICLES = [
-      'Администраторы ЗП','ЗП Менеджеры оклад','Управленец','Старший педагог',
-      'Аренда оборудования','Телефония','Банковское обслуживание','% рассрочка'
-    ];
-    const TEACHER_SALARY_ARTICLES = [
-      'ЗП Педагоги уроки','ЗП Педагоги  уроки','ЗП педагоги пробные','ЗП педагоги  пробные'
-    ];
-
+    // Вспомогательные функции
     const isIncome = r => ['доход','продажа'].some(t => (r.operation_type||'').toLowerCase().includes(t));
     const isExpense = r => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t));
     const isMarketing = r => (r.category||'').toLowerCase().includes('маркетинг');
-    const isFixedCategory = cat => FIXED_ARTICLES.some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
-    const isTeacherCategory = cat => TEACHER_SALARY_ARTICLES.some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
+    const isFixedCategory = cat => ['Администраторы ЗП','ЗП Менеджеры оклад','Управленец','Старший педагог','Аренда оборудования','Телефония','Банковское обслуживание','% рассрочка'].some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
+    const isTeacherCategory = cat => ['ЗП Педагоги уроки','ЗП Педагоги  уроки','ЗП педагоги пробные','ЗП педагоги  пробные'].some(a => (cat||'').toLowerCase().includes(a.toLowerCase()));
 
     function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
-
-    function applyRoyalty(monthStr) {
-      return monthStr >= ROYALTY_START ? ROYALTY_RATE : 0;
-    }
+    function applyRoyalty(monthStr) { return monthStr >= ROYALTY_START ? ROYALTY_RATE : 0; }
 
     function showAlert(msg) {
       document.getElementById('alertMessage').textContent = msg;
@@ -345,15 +335,28 @@
       return allRows;
     }
 
+    // Безопасная загрузка коэффициента – при ошибке просто берём 1.0
     async function loadSettings() {
-      const { data } = await _supabase.from('app_settings').select('value').eq('key', 'teacher_rate_coeff').single();
-      if (data) globalRateCoeff = parseFloat(data.value) || 1.0;
-      else await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' });
+      try {
+        const { data } = await _supabase.from('app_settings').select('value').eq('key', 'teacher_rate_coeff').single();
+        if (data) globalRateCoeff = parseFloat(data.value) || 1.0;
+        else {
+          // Попытаемся создать запись, но если таблицы нет – просто используем 1.0
+          try {
+            await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' });
+          } catch (e) { /* таблицы нет, ничего не делаем */ }
+        }
+      } catch (e) {
+        console.warn('Не удалось загрузить настройки, используется коэффициент 1.0');
+        globalRateCoeff = 1.0;
+      }
     }
 
     async function saveRateCoeff(value) {
       globalRateCoeff = value;
-      await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
+      try {
+        await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
+      } catch (e) { /* игнорируем, если таблицы нет */ }
       updateForecastAndBreakEven();
     }
 
@@ -363,27 +366,23 @@
       const totalIncome = getMonthlyData(selectedMonths).reduce((s,m) => s+m[1].income,0);
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast, totalIncome);
-      // повторно навешиваем обработчик на rateCoeff
+      // Обработчики
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
         rateInput.addEventListener('input', function() {
-          const newVal = parseFloat(this.value) || 1.0;
-          saveRateCoeff(newVal);
+          saveRateCoeff(parseFloat(this.value) || 1.0);
         });
       }
-      // обработчик целевой прибыли
       const targetInput = document.getElementById('targetProfitInput');
       if (targetInput) {
-        targetInput.addEventListener('input', function() {
-          updateTargetIncome();
-        });
+        targetInput.addEventListener('input', updateTargetIncome);
       }
     }
 
     function updateTargetIncome() {
       const targetProfit = parseFloat(document.getElementById('targetProfitInput')?.value) || 0;
       const forecast = computeForecast();
-      const royaltyRate = applyRoyalty(ROYALTY_START); // прогноз на будущий месяц >= ROYALTY_START
+      const royaltyRate = applyRoyalty(ROYALTY_START);
       const neededIncome = (forecast.total + targetProfit) / (1 - royaltyRate);
       const display = document.getElementById('targetIncomeDisplay');
       if (display) display.textContent = Math.round(neededIncome).toLocaleString() + ' ₽';
@@ -407,13 +406,13 @@
     }
 
     function generateBreakEvenHTML(forecast) {
-      const royaltyRate = applyRoyalty(ROYALTY_START); // для прогноза
-      const incomeForZeroProfit = Math.round(forecast.total / (1 - royaltyRate));
+      const royaltyRate = applyRoyalty(ROYALTY_START);
+      const incomeForZero = Math.round(forecast.total / (1 - royaltyRate));
       const targetProfit = parseFloat(document.getElementById('targetProfitInput')?.value) || 100000;
       const incomeForTarget = Math.round((forecast.total + targetProfit) / (1 - royaltyRate));
       return `
         <div class="list-item"><span>Для покрытия расходов (операционный ноль)</span><span class="amount">${forecast.total.toLocaleString()} ₽</span></div>
-        <div class="list-item"><span>Для чистой прибыли = 0</span><span class="amount">${incomeForZeroProfit.toLocaleString()} ₽</span></div>
+        <div class="list-item"><span>Для чистой прибыли = 0</span><span class="amount">${incomeForZero.toLocaleString()} ₽</span></div>
         <div class="list-item" style="flex-wrap: wrap;">
           <span>Для прибыли <input type="number" class="target-profit-input" id="targetProfitInput" value="${targetProfit}" style="width:80px;"> ₽</span>
           <span class="amount" id="targetIncomeDisplay">${incomeForTarget.toLocaleString()} ₽</span>
@@ -599,11 +598,8 @@
       const totalIncome = monthly.reduce((s,m)=>s+m[1].income,0);
       const totalExpense = monthly.reduce((s,m)=>s+m[1].expense,0);
       const totalMarketing = monthly.reduce((s,m)=>s+m[1].marketing,0);
-      // Для сводного роялти считаем с учётом разных месяцев
       let totalRoyalty = 0;
-      monthly.forEach(([month, vals]) => {
-        totalRoyalty += Math.round(vals.income * applyRoyalty(month));
-      });
+      monthly.forEach(([month, vals]) => { totalRoyalty += Math.round(vals.income * applyRoyalty(month)); });
       const operatingProfit = totalIncome - totalExpense;
       const netProfit = operatingProfit - totalRoyalty;
 
@@ -623,7 +619,6 @@
 
       const forecast = computeForecast();
 
-      // KPI
       document.getElementById('kpiContainer').innerHTML = `
         <div class="kpi-card"><div class="kpi-label">Доходы</div><div class="kpi-value">${totalIncome.toLocaleString()} ₽</div><div class="kpi-change">MoM: <span class="${incomeCh.positive?'up':'down'}">${incomeCh.positive?'↑':'↓'} ${incomeCh.abs.toLocaleString()} ₽ (${Math.abs(incomeCh.diff)}%)</span></div></div>
         <div class="kpi-card"><div class="kpi-label">Расходы</div><div class="kpi-value">${totalExpense.toLocaleString()} ₽</div><div class="kpi-change">MoM: <span class="${expenseCh.positive?'up':'down'}">${expenseCh.positive?'↑':'↓'} ${expenseCh.abs.toLocaleString()} ₽ (${Math.abs(expenseCh.diff)}%)</span></div></div>
@@ -633,15 +628,12 @@
         <div class="kpi-card net-profit"><div class="kpi-label">Чистая прибыль</div><div class="kpi-value">${netProfit.toLocaleString()} ₽</div></div>
       `;
 
-      // Прогноз и breakeven
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
-      // вешаем обработчики
+
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
-        rateInput.addEventListener('input', function() {
-          saveRateCoeff(parseFloat(this.value) || 1.0);
-        });
+        rateInput.addEventListener('input', function() { saveRateCoeff(parseFloat(this.value) || 1.0); });
       }
       const targetInput = document.getElementById('targetProfitInput');
       if (targetInput) {
@@ -650,7 +642,6 @@
 
       updateChart(monthly);
 
-      // Остальные виджеты без изменений
       const periodLabels = {'-1':'текущий месяц',1:'прошлый месяц',3:'3 месяца',6:'6 месяцев',12:'12 месяцев',0:'всё время'};
       document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]})`;
       const monthKeys = new Set(monthly.map(([m])=>m));
@@ -730,7 +721,10 @@
         teacherSalaryData = sal;
         await loadSettings();
         renderAll();
-      } catch (err) { console.error(err); showAlert('Не удалось загрузить данные.'); }
+      } catch (err) {
+        console.error(err);
+        showAlert('Не удалось загрузить данные.');
+      }
     }
 
     document.getElementById('uploadBtn').addEventListener('click', uploadFinance);
