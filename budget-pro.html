@@ -286,7 +286,7 @@
       };
     }
 
-    // Пагинированная загрузка всех записей
+    // Пагинированная загрузка всех записей (с очисткой кэша)
     async function fetchAll() {
       const PAGE_SIZE = 1000;
       let allRows = [];
@@ -306,7 +306,7 @@
       return allRows;
     }
 
-    // Загрузка Excel (полный цикл)
+    // Загрузка Excel (полный цикл с перезагрузкой данных)
     function uploadFinance() {
       const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
       input.onchange = async (e) => {
@@ -352,10 +352,9 @@
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
           }
 
-          // Обязательно перечитываем данные после вставки
-          financeData = await fetchAll();
-          renderAll();
-          showAlert(`Загружено ${parsed.length} записей. Аналитика обновлена.`);
+          // Принудительно перечитываем данные и обновляем страницу
+          await loadData();
+          showAlert(`Загружено ${parsed.length} записей.`);
         };
         reader.readAsArrayBuffer(file);
       };
@@ -410,7 +409,6 @@
       return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
     }
 
-    // Правильный MoM: сравниваем с позапрошлым месяцем для selectedMonths=1, иначе с предыдущим аналогичным периодом
     function getPrevPeriodData() {
       if (selectedMonths === 1) {
         const now = new Date();
@@ -616,6 +614,7 @@
       document.getElementById('infoModal').style.display = 'none';
     });
 
+    // Первичная загрузка
     loadData();
   })();
 </script>
