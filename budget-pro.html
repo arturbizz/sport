@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
   <title>Аналитика бюджета PRO — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,7 +19,6 @@
       --accent-light: #ccfbf1;
       --warm-yellow: #f59e0b;
       --soft-green: #10b981;
-      --critical: #ef4444;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -157,9 +155,9 @@
   <div class="header">
     <a href="index.html" class="back-link">← На главную</a>
     <h1>Аналитика бюджета PRO</h1>
-    <button class="btn btn-primary" id="uploadBtn">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      Загрузить Excel
+    <button class="btn btn-primary" id="refreshBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Обновить данные
     </button>
   </div>
 
@@ -205,7 +203,8 @@
   (() => {
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Используем глобальный экземпляр, если он уже есть на странице, иначе создаём новый
+    const _supabase = window._supabase || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let financeData = [], allExpenses = [], teacherSalaryData = [];
     let selectedMonths = 0;
@@ -229,79 +228,7 @@
       renderAll();
     }
 
-    // Загрузка Excel с разбивкой на чанки
-    async function uploadFinance() {
-      const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
-      input.onchange = async (e) => {
-        const file = e.target.files[0]; if(!file) return;
-        const reader = new FileReader();
-        reader.onload = async (ev) => {
-          const data = new Uint8Array(ev.target.result);
-          const wb = XLSX.read(data, {type:'array'});
-          const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-          const headerIdx = rows.findIndex(r => r && r.join('').includes('Дата'));
-          if(headerIdx===-1) { alert('Не найден заголовок'); return; }
-          const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
-          const dateIdx = headers.findIndex(h=>h.startsWith('дата'));
-          const typeIdx = headers.findIndex(h=>h.startsWith('тип'));
-          const amountIdx = headers.findIndex(h=>h.startsWith('сумма'));
-          const catIdx = headers.findIndex(h=>h.startsWith('статья'));
-          const accIdx = headers.findIndex(h=>h.includes('счет')||h.includes('касса'));
-          const payTypeIdx = headers.findIndex(h=>h.includes('тип платежа'));
-          let manIdx = headers.findIndex(h=>h.includes('менеджер (фамилия имя)') || h.includes('менеджер(фамилия имя)'));
-          if (manIdx === -1) manIdx = headers.findIndex(h=>h.includes('менеджер') && !h.includes('ответственный'));
-          let clientIdx = headers.findIndex(h=>h === 'клиент' || h.startsWith('клиент') || h.startsWith('фио клиента') || h === 'плательщик');
-          if (clientIdx === -1) clientIdx = headers.findIndex(h=>h.includes('клиент') || h.includes('плательщик'));
-          const teacherIdx = headers.findIndex(h=>h.includes('педагог'));
-          const periodIdx = headers.findIndex(h=>h.includes('период'));
-
-          const parsed = [];
-          for(let i=headerIdx+1; i<rows.length; i++){
-            const cols=rows[i]; if(!cols) continue;
-            const amt = parseFloat(String(cols[amountIdx]||'0').replace(/\s/g,'').replace(',','.'));
-            if(isNaN(amt)) continue;
-            const row = {
-              operation_date: (String(cols[dateIdx]||'').trim()).split('.').reverse().join('-'),
-              operation_type: String(cols[typeIdx]||'').trim(),
-              amount: amt,
-              category: String(cols[catIdx]||'').trim(),
-              account: accIdx!==-1 ? String(cols[accIdx]||'').trim() : '',
-              payment_type: payTypeIdx!==-1 ? String(cols[payTypeIdx]||'').trim() : '',
-              manager: manIdx!==-1 ? String(cols[manIdx]||'').trim() : '',
-              client: clientIdx!==-1 ? String(cols[clientIdx]||'').trim() : ''
-            };
-            if (teacherIdx !== -1) row.teacher_name = String(cols[teacherIdx]||'').trim() || null;
-            if (periodIdx !== -1) row.period = String(cols[periodIdx]||'').trim() || null;
-            parsed.push(row);
-          }
-          if (parsed.length === 0) { alert('Не найдено записей в файле.'); return; }
-
-          // Удаляем старые данные
-          const { error: delErr } = await _supabase.from('crm_finance').delete().neq('id',0);
-          if (delErr) { alert('Ошибка очистки старых данных: ' + delErr.message); return; }
-
-          // Вставляем частями по 500 записей
-          const CHUNK_SIZE = 500;
-          let inserted = 0;
-          for (let i = 0; i < parsed.length; i += CHUNK_SIZE) {
-            const chunk = parsed.slice(i, i + CHUNK_SIZE);
-            const { error: insErr } = await _supabase.from('crm_finance').insert(chunk);
-            if (insErr) {
-              alert(`Ошибка загрузки на записях ${i+1}-${i+chunk.length}: ${insErr.message}`);
-              return;
-            }
-            inserted += chunk.length;
-          }
-
-          await loadData();
-          alert(`Загружено ${inserted} записей. Аналитика обновлена.`);
-        };
-        reader.readAsArrayBuffer(file);
-      };
-      input.click();
-    }
-
-    document.getElementById('uploadBtn').addEventListener('click', uploadFinance);
+    document.getElementById('refreshBtn').addEventListener('click', loadData);
 
     function getPaidExpenses() {
       return allExpenses.filter(e => e.paid);
@@ -424,11 +351,9 @@
 
       const total = totalFixed + avgVariable + avgTeacherSal;
 
-      const debugMsg = `Всего записей в crm_finance: ${financeData.length}. ` +
-        `Расходных операций всего: ${financeData.filter(isExpenseOperation).length}. ` +
-        `Последняя дата: ${financeData.length ? financeData[financeData.length-1].operation_date : 'нет'}. ` +
-        `Переменных за выбранный период: ${variableSlice.length}, исключено (оклады): ${excludedVariable.length}. ` +
-        `Период: ${variableSlice.length > 0 ? variableSlice[0].operation_date + ' – ' + variableSlice[variableSlice.length-1].operation_date : 'нет данных'}.`;
+      const debugMsg = `Данные загружены из crm_finance. Всего записей: ${financeData.length}. ` +
+        `Расходных операций: ${financeData.filter(isExpenseOperation).length}. ` +
+        `Последняя дата: ${financeData.length ? financeData[financeData.length-1].operation_date : 'нет'}.`;
 
       return { totalFixed, avgVariable, avgTeacherSal, total, fixedList, debugMsg };
     }
