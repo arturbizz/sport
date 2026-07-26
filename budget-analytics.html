@@ -85,7 +85,8 @@
     .forecast-fixed-list span { white-space: nowrap; }
 
     .debug-info {
-      margin-top: 0.5rem; font-size: 0.8rem; color: #0d9488; background: #f0fdfa; padding: 0.5rem; border-radius: 8px;
+      margin-top: 0.8rem; padding: 0.5rem; background: #f0fdfa; border-radius: 8px;
+      font-size: 0.8rem; color: #0d9488; white-space: pre-line;
     }
 
     .kpi-grid {
@@ -304,31 +305,57 @@
       const totalFixed = activeFixed.reduce((s, e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
+      // Определяем период для переменных
       const threeMonthsAgo = new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
-      const allVariable = financeData
+      let variableSlice = financeData
         .filter(isExpenseOperation)
         .filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
-      const excludedVariable = allVariable.filter(r => isFixedSalaryArticle(r.category));
-      const recentVariable = allVariable.filter(r => !isFixedSalaryArticle(r.category));
+
+      // Если данных за последние 3 месяца нет, берём последние доступные 3 месяца
+      if (variableSlice.length === 0) {
+        const allVariable = financeData
+          .filter(isExpenseOperation)
+          .filter(r => r.operation_date);
+        if (allVariable.length > 0) {
+          const maxDate = allVariable.reduce((max, r) => r.operation_date > max ? r.operation_date : max, '');
+          const maxMonth = new Date(maxDate);
+          maxMonth.setMonth(maxMonth.getMonth() - 2);
+          const fromMonth = maxMonth.toISOString().slice(0,7);
+          const maxMonthStr = maxDate.slice(0,7);
+          variableSlice = allVariable.filter(r => r.operation_date >= fromMonth && r.operation_date <= maxMonthStr);
+        }
+      }
+
+      const excludedVariable = variableSlice.filter(r => isFixedSalaryArticle(r.category));
+      const recentVariable = variableSlice.filter(r => !isFixedSalaryArticle(r.category));
 
       const totalVariable = recentVariable.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCount = Math.max(1, new Set(recentVariable.map(r => r.operation_date?.slice(0,7))).size);
       const avgVariable = Math.round(totalVariable / monthsCount);
 
-      const recentTeacherSal = teacherSalaryData.filter(r => r.month && r.month >= threeMonthsAgo);
-      const totalTeacherSal = recentTeacherSal.reduce((s, r) => s + parseFloat(r.amount), 0);
-      const avgTeacherSal = recentTeacherSal.length > 0 ? Math.round(totalTeacherSal / monthsCount) : 0;
+      // Зарплаты педагогов
+      let teacherSlice = teacherSalaryData.filter(r => r.month && r.month >= threeMonthsAgo);
+      if (teacherSlice.length === 0) {
+        const allTeacher = teacherSalaryData.filter(r => r.month);
+        if (allTeacher.length > 0) {
+          const maxMonth = allTeacher.reduce((max, r) => r.month > max ? r.month : max, '');
+          const maxDate = new Date(maxMonth + '-01');
+          maxDate.setMonth(maxDate.getMonth() - 2);
+          const fromMonth = maxDate.toISOString().slice(0,7);
+          teacherSlice = allTeacher.filter(r => r.month >= fromMonth && r.month <= maxMonth);
+        }
+      }
+      const totalTeacherSal = teacherSlice.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const teacherMonthsCount = Math.max(1, new Set(teacherSlice.map(r => r.month)).size);
+      const avgTeacherSal = Math.round(totalTeacherSal / teacherMonthsCount);
 
       const total = totalFixed + avgVariable + avgTeacherSal;
 
-      let debugMsg = `Всего записей в crm_finance: ${financeData.length}. `;
-      const lastExpense = financeData.filter(isExpenseOperation).slice(-1)[0];
-      if (lastExpense) {
-        debugMsg += `Пример последней расходной операции: "${lastExpense.operation_type}" от ${lastExpense.operation_date}. `;
-      } else {
-        debugMsg += `Нет ни одной расходной операции. `;
-      }
-      debugMsg += `Переменных за 3 мес: ${allVariable.length}, исключено (оклады): ${excludedVariable.length}.`;
+      const debugMsg = `Всего записей в crm_finance: ${financeData.length}. ` +
+        `Расходных операций всего: ${financeData.filter(isExpenseOperation).length}. ` +
+        `Последняя дата: ${financeData.length ? financeData[financeData.length-1].operation_date : 'нет'}. ` +
+        `Переменных за выбранный период: ${variableSlice.length}, исключено (оклады): ${excludedVariable.length}. ` +
+        `Период: ${variableSlice.length > 0 ? variableSlice[0].operation_date + ' – ' + variableSlice[variableSlice.length-1].operation_date : 'нет данных'}.`;
 
       return { totalFixed, avgVariable, avgTeacherSal, total, fixedList, debugMsg };
     }
@@ -349,9 +376,9 @@
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.03em;">Прогноз на следующий месяц</div>
           <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
           <div class="forecast-details">
-            <span>Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong></span>
-            <span>Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong></span>
-            <span>ЗП педагоги: <strong>${forecast.avgTeacherSal.toLocaleString()} ₽</strong></span>
+            <span>Постоянные (актуальные): <strong>${forecast.totalFixed.toLocaleString()} ₽</strong></span>
+            <span>Переменные (среднее): <strong>${forecast.avgVariable.toLocaleString()} ₽</strong></span>
+            <span>ЗП педагоги (среднее): <strong>${forecast.avgTeacherSal.toLocaleString()} ₽</strong></span>
           </div>
           <div class="forecast-fixed-list">${fixedListHtml}</div>
           <div class="debug-info">${forecast.debugMsg}</div>
@@ -359,10 +386,10 @@
       `;
 
       document.getElementById('kpiContainer').innerHTML = `
-        <div class="kpi-card"><div class="kpi-label">Всего расходов</div><div class="kpi-value">${(totalFixed+totalVariable).toLocaleString()} ₽</div></div>
-        <div class="kpi-card"><div class="kpi-label">Среднемесячные</div><div class="kpi-value">${Math.round(avgMonthly).toLocaleString()} ₽</div></div>
-        <div class="kpi-card"><div class="kpi-label">Постоянные</div><div class="kpi-value">${totalFixed.toLocaleString()} ₽</div></div>
-        <div class="kpi-card"><div class="kpi-label">Переменные</div><div class="kpi-value">${totalVariable.toLocaleString()} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Всего расходов (истор.)</div><div class="kpi-value">${(totalFixed+totalVariable).toLocaleString()} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Среднемесячные (истор.)</div><div class="kpi-value">${Math.round(avgMonthly).toLocaleString()} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Постоянные (оплач.)</div><div class="kpi-value">${totalFixed.toLocaleString()} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Переменные (истор.)</div><div class="kpi-value">${totalVariable.toLocaleString()} ₽</div></div>
       `;
 
       const maxVal = Math.max(...monthly.map(m => m[1].fixed + m[1].variable), 1);
@@ -378,7 +405,7 @@
         </div>`;
       }).join('') || '<div style="color:var(--text-secondary);">Нет данных</div>';
 
-      // Принудительно применяем цвета после рендеринга (на случай кеширования)
+      // Принудительная перекраска столбцов
       setTimeout(() => {
         document.querySelectorAll('.bar-fixed').forEach(el => {
           el.style.background = 'linear-gradient(180deg, #0d9488 0%, #14b8a6 100%)';
