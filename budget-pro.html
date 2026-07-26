@@ -22,6 +22,7 @@
       --soft-green: #10b981;
       --critical: #ef4444;
       --blue: #3b82f6;
+      --neutral: #8b5cf6;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -85,10 +86,6 @@
     .forecast-details { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
     .forecast-item { font-size: 0.95rem; color: var(--text-secondary); }
     .forecast-item strong { color: var(--text); font-weight: 600; }
-    .forecast-expand { margin-top: 0.3rem; font-size: 0.8rem; color: var(--accent); cursor: pointer; }
-    .forecast-expand:hover { text-decoration: underline; }
-    .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); }
-    .forecast-list.open { display: block; }
 
     .kpi-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -101,9 +98,11 @@
     }
     .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
     .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }
+    .kpi-card.neutral .kpi-value { color: var(--neutral); }
     .kpi-change { font-size: 0.75rem; margin-top: 0.2rem; color: var(--text-secondary); }
     .kpi-change .up { color: var(--soft-green); }
     .kpi-change .down { color: var(--critical); }
+    .kpi-note { font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem; }
 
     .chart-container {
       background: var(--surface); border-radius: var(--radius-lg);
@@ -220,7 +219,7 @@
 
   <div class="widget-grid">
     <div class="widget-card">
-      <div class="widget-title">Топ-10 крупнейших разовых расходов (последние 12 мес.)</div>
+      <div class="widget-title" id="topExpensesTitle">Топ-10 крупнейших разовых расходов</div>
       <div id="topOneTimeExpenses"></div>
     </div>
     <div class="widget-card">
@@ -286,7 +285,7 @@
       };
     }
 
-    // Пагинированная загрузка всех записей (с очисткой кэша)
+    // Пагинированная загрузка всех записей
     async function fetchAll() {
       const PAGE_SIZE = 1000;
       let allRows = [];
@@ -306,7 +305,7 @@
       return allRows;
     }
 
-    // Загрузка Excel (полный цикл с перезагрузкой данных)
+    // Загрузка Excel (полный цикл)
     function uploadFinance() {
       const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
       input.onchange = async (e) => {
@@ -352,9 +351,10 @@
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
           }
 
-          // Принудительно перечитываем данные и обновляем страницу
-          await loadData();
-          showAlert(`Загружено ${parsed.length} записей.`);
+          // Обязательно перечитываем данные после вставки
+          financeData = await fetchAll();
+          renderAll();
+          showAlert(`Загружено ${parsed.length} записей. Аналитика обновлена.`);
         };
         reader.readAsArrayBuffer(file);
       };
@@ -377,6 +377,8 @@
     // Вспомогательные функции
     const isIncome = (r) => ['доход','продажа'].some(t => (r.operation_type||'').toLowerCase().includes(t));
     const isExpense = (r) => ['расход','выплата','инкассация','возврат'].some(t => (r.operation_type||'').toLowerCase().includes(t));
+    // "Корректировка" — не доход и не расход: показываем отдельной строкой в KPI, не смешиваем.
+    const isCorrection = (r) => (r.operation_type||'').toLowerCase().includes('корректир');
     const isMarketing = (r) => {
       const cat = (r.category || '').toLowerCase();
       return cat.includes('маркетинг бюджет') || cat.includes('маркетинг работа');
@@ -399,56 +401,52 @@
       financeData.forEach(r => {
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
         if (!m || (monthsBack && m < from) || (monthsBack === 1 && m >= to)) return;
-        if (!months[m]) months[m] = { income:0, expense:0, marketing:0 };
+        if (!months[m]) months[m] = { income:0, expense:0, marketing:0, correction:0 };
         if (isIncome(r)) months[m].income += r.amount;
         if (isExpense(r)) {
           months[m].expense += r.amount;
           if (isMarketing(r)) months[m].marketing += r.amount;
         }
+        if (isCorrection(r)) months[m].correction += r.amount;
       });
       return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
     }
 
+    // ИСПРАВЛЕНО: раньше возвращался Object.values() — массив объектов без привязки к месяцу.
+    // Из-за этого блок с "MoM под каждым столбцом графика" ниже (который ищет prevData.find(p=>p[0]===month))
+    // никогда не находил совпадение и всегда показывал 0%. Теперь возвращаем словарь {месяц: {...}},
+    // чтобы можно было и просуммировать все значения (для верхних KPI), и найти конкретный месяц (для графика).
     function getPrevPeriodData() {
+      let start, end;
       if (selectedMonths === 1) {
         const now = new Date();
         const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfPrev = new Date(startOfCurrent);
         startOfPrev.setMonth(startOfPrev.getMonth() - 1);
-        const startOfPrevPrev = new Date(startOfPrev);
-        startOfPrevPrev.setMonth(startOfPrevPrev.getMonth() - 1);
-        const prevMonthly = {};
-        financeData.forEach(r => {
-          const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-          if (m && m >= startOfPrevPrev.toISOString().slice(0,7) && m < startOfPrev.toISOString().slice(0,7)) {
-            if (!prevMonthly[m]) prevMonthly[m] = { income:0, expense:0, marketing:0 };
-            if (isIncome(r)) prevMonthly[m].income += r.amount;
-            if (isExpense(r)) {
-              prevMonthly[m].expense += r.amount;
-              if (isMarketing(r)) prevMonthly[m].marketing += r.amount;
-            }
-          }
-        });
-        return Object.values(prevMonthly);
+        end = startOfPrev;
+        start = new Date(startOfPrev);
+        start.setMonth(start.getMonth() - 1);
       } else {
         const length = selectedMonths === 0 ? 12 : selectedMonths;
-        const now = new Date();
-        const end = new Date(Date.now() - selectedMonths * 30 * 24 * 60 * 60 * 1000);
-        const start = new Date(end.getTime() - length * 30 * 24 * 60 * 60 * 1000);
-        const prevMonthly = {};
-        financeData.forEach(r => {
-          const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-          if (m && m >= start.toISOString().slice(0,7) && m < end.toISOString().slice(0,7)) {
-            if (!prevMonthly[m]) prevMonthly[m] = { income:0, expense:0, marketing:0 };
-            if (isIncome(r)) prevMonthly[m].income += r.amount;
-            if (isExpense(r)) {
-              prevMonthly[m].expense += r.amount;
-              if (isMarketing(r)) prevMonthly[m].marketing += r.amount;
-            }
-          }
-        });
-        return Object.values(prevMonthly);
+        end = new Date(Date.now() - selectedMonths * 30 * 24 * 60 * 60 * 1000);
+        start = new Date(end.getTime() - length * 30 * 24 * 60 * 60 * 1000);
       }
+      const fromKey = start.toISOString().slice(0,7);
+      const toKey = end.toISOString().slice(0,7);
+      const prevMonthly = {};
+      financeData.forEach(r => {
+        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+        if (m && m >= fromKey && m < toKey) {
+          if (!prevMonthly[m]) prevMonthly[m] = { income:0, expense:0, marketing:0, correction:0 };
+          if (isIncome(r)) prevMonthly[m].income += r.amount;
+          if (isExpense(r)) {
+            prevMonthly[m].expense += r.amount;
+            if (isMarketing(r)) prevMonthly[m].marketing += r.amount;
+          }
+          if (isCorrection(r)) prevMonthly[m].correction += r.amount;
+        }
+      });
+      return prevMonthly; // { 'YYYY-MM': {income,expense,marketing,correction} }
     }
 
     function computeChange(current, previous) {
@@ -467,13 +465,15 @@
       const totalIncome = monthly.reduce((s,m) => s + m[1].income, 0);
       const totalExpense = monthly.reduce((s,m) => s + m[1].expense, 0);
       const totalMarketing = monthly.reduce((s,m) => s + m[1].marketing, 0);
+      const totalCorrection = monthly.reduce((s,m) => s + m[1].correction, 0);
       const profit = totalIncome - totalExpense;
 
-      // Предыдущий период (правильный MoM)
+      // Предыдущий период (правильный MoM) — теперь словарь {месяц: {...}}
       const prevData = getPrevPeriodData();
-      const prevIncome = prevData.reduce((s,m) => s + (m.income || 0), 0);
-      const prevExpense = prevData.reduce((s,m) => s + (m.expense || 0), 0);
-      const prevMarketing = prevData.reduce((s,m) => s + (m.marketing || 0), 0);
+      const prevValues = Object.values(prevData);
+      const prevIncome = prevValues.reduce((s,m) => s + (m.income || 0), 0);
+      const prevExpense = prevValues.reduce((s,m) => s + (m.expense || 0), 0);
+      const prevMarketing = prevValues.reduce((s,m) => s + (m.marketing || 0), 0);
 
       const incomeChange = computeChange(totalIncome, prevIncome);
       const expenseChange = computeChange(totalExpense, prevExpense);
@@ -519,13 +519,18 @@
           <div class="kpi-label">Прибыль (за период)</div>
           <div class="kpi-value">${profit.toLocaleString()} ₽</div>
         </div>
+        <div class="kpi-card neutral">
+          <div class="kpi-label">Корректировки (за период)</div>
+          <div class="kpi-value">${totalCorrection.toLocaleString()} ₽</div>
+          <div class="kpi-note">Не включены в доходы/расходы — показаны отдельно</div>
+        </div>
       `;
 
       // График
       const maxVal = Math.max(...monthly.map(m => Math.max(m[1].income, m[1].expense, m[1].marketing)), 1);
       const barChart = document.getElementById('barChart');
       barChart.innerHTML = monthly.map(([month, vals]) => {
-        const prevMonthData = prevData.find(p => p[0] === month)?.[1] || { income:0, expense:0, marketing:0 };
+        const prevMonthData = prevData[month] || { income:0, expense:0, marketing:0 };
         const incomeMom = computeChange(vals.income, prevMonthData.income);
         const expenseMom = computeChange(vals.expense, prevMonthData.expense);
         const marketingMom = computeChange(vals.marketing, prevMonthData.marketing);
@@ -544,13 +549,17 @@
         </div>`;
       }).join('');
 
-      // Топ-10 разовых расходов
+      // Топ-10 разовых расходов — ИСПРАВЛЕНО: теперь учитывает выбранный период (селектор фильтров сверху),
+      // а не всегда весь массив данных. Заголовок виджета обновляется под выбранный период.
+      const periodLabels = {1:'прошлый месяц', 3:'3 месяца', 6:'6 месяцев', 12:'12 месяцев', 0:'всё время'};
+      document.getElementById('topExpensesTitle').textContent = `Топ-10 крупнейших разовых расходов (${periodLabels[selectedMonths]})`;
+      const monthKeysInPeriod = new Set(monthly.map(([month]) => month));
       const oneTime = financeData
-        .filter(r => isExpense(r) && r.amount > 20000 && !isMarketing(r))
+        .filter(r => isExpense(r) && r.amount > 20000 && !isMarketing(r) && monthKeysInPeriod.has((r.operation_date||'').slice(0,7)))
         .sort((a,b) => b.amount - a.amount)
         .slice(0,10)
         .map(r => `<div class="list-item"><span>${r.operation_date} — ${r.category}</span><span class="amount">${r.amount.toLocaleString()} ₽</span></div>`).join('');
-      document.getElementById('topOneTimeExpenses').innerHTML = oneTime || 'Нет данных';
+      document.getElementById('topOneTimeExpenses').innerHTML = oneTime || 'Нет данных за выбранный период';
 
       // Маркетинг ROI
       const marketingROI = totalMarketing > 0 ? (totalIncome / totalMarketing).toFixed(1) : '—';
@@ -559,18 +568,19 @@
         <div class="list-item"><span>Доля маркетинга в расходах</span><span class="amount">${totalExpense>0 ? ((totalMarketing/totalExpense)*100).toFixed(1) : 0}%</span></div>
       `;
 
-      // Средние по категориям (последние 6 месяцев)
+      // Средние по категориям (последние 6 месяцев) — ИСПРАВЛЕНО: раньше деструктуризация
+      // "([, vals])" пропускала месяц и сравнивала дату с объектом (m === vals), что никогда
+      // не было true — виджет всегда был пуст. Теперь правильно берём месяц и фильтруем по нему.
       const sixMonthData = getMonthlyData(6);
+      const sixMonthKeys = new Set(sixMonthData.map(([month]) => month));
       const catTotals = {};
-      sixMonthData.forEach(([, vals]) => {
-        financeData.forEach(r => {
-          if (!isExpense(r)) return;
-          const m = r.operation_date?.slice(0,7);
-          if (m === vals) {
-            const cat = r.category || 'Без категории';
-            catTotals[cat] = (catTotals[cat] || 0) + r.amount;
-          }
-        });
+      financeData.forEach(r => {
+        if (!isExpense(r)) return;
+        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+        if (m && sixMonthKeys.has(m)) {
+          const cat = r.category || 'Без категории';
+          catTotals[cat] = (catTotals[cat] || 0) + r.amount;
+        }
       });
       const catList = Object.entries(catTotals).map(([cat, total]) => ({ cat, avg: Math.round(total / Math.max(1, sixMonthData.length)) })).sort((a,b) => b.avg - a.avg).slice(0,10);
       document.getElementById('categoryAverages').innerHTML = catList.map(c => `
@@ -614,7 +624,6 @@
       document.getElementById('infoModal').style.display = 'none';
     });
 
-    // Первичная загрузка
     loadData();
   })();
 </script>
