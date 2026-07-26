@@ -277,6 +277,7 @@
   </div>
 </div>
 
+<!-- Модалка детализации месяца -->
 <div class="modal-overlay" id="monthDetailModal" style="display:none;">
   <div class="modal">
     <button class="modal-close" id="closeMonthDetailBtn">&times;</button>
@@ -285,6 +286,7 @@
   </div>
 </div>
 
+<!-- Уведомление -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
   <div class="modal">
     <button class="modal-close" onclick="document.getElementById('alertModal').style.display='none'">&times;</button>
@@ -438,7 +440,6 @@
 
     function bindExpandButtons() {
       document.querySelectorAll('.forecast-expand').forEach(btn => {
-        // полностью заменяем кнопку, чтобы сбросить все старые обработчики
         const newBtn = btn.cloneNode(true);
         btn.parentNode.replaceChild(newBtn, btn);
         newBtn.addEventListener('click', function(e) {
@@ -476,7 +477,6 @@
 
     function generateForecastHTML(forecast) {
       const fixedListHtml = (forecast.fixedList || []).map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
-      // если topVariable пуст, показываем "Нет данных"
       const topVarHtml = forecast.topVariable && forecast.topVariable.length
         ? forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ')
         : 'Нет данных';
@@ -544,6 +544,7 @@
       return incomes.reduce((a,b) => a+b, 0) / incomes.length;
     }
 
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ computeForecast – используем все исторические данные для переменных расходов
     function computeForecast() {
       const now = new Date();
       const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -551,32 +552,43 @@
       const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
+      // Все расходы для переменных (за всю историю)
+      const allExpenseOps = financeData.filter(isExpense).filter(r => r.operation_date);
+      const allVariableOps = allExpenseOps.filter(r => !isFixedCategory(r.category) && !isTeacherCategory(r.category));
+
+      let avgVariable = 0;
+      let topVar = [];
+      if (allVariableOps.length > 0) {
+        const totalVar = allVariableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
+        const monthsCount = Math.max(1, new Set(allVariableOps.map(r => r.operation_date?.slice(0,7))).size);
+        avgVariable = Math.round((totalVar / monthsCount) * 1.05);
+        topVar = Object.entries(allVariableOps.reduce((acc, r) => {
+          const cat = r.category || 'Без категории';
+          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
+          return acc;
+        }, {})).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      }
+
+      // Для ЗП педагогов и маркетинга используем последние 3 месяца (если есть)
       const threeMonthsAgo = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
       let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
-        const allOps = financeData.filter(isExpense).filter(r => r.operation_date);
-        if (allOps.length) {
-          const maxDate = allOps.reduce((max,r) => r.operation_date>max?r.operation_date:max, '');
-          const maxM = new Date(maxDate); maxM.setMonth(maxM.getMonth()-2);
-          recentOps = allOps.filter(r => r.operation_date >= maxM.toISOString().slice(0,7));
-        }
+        recentOps = allExpenseOps;
       }
-      const variableOps = recentOps.filter(r => !isFixedCategory(r.category) && !isTeacherCategory(r.category));
-      const totalVar = variableOps.reduce((s,r) => s + parseFloat(r.amount),0);
-      const monthsCount = Math.max(1, new Set(variableOps.map(r=>r.operation_date?.slice(0,7))).size);
-      const avgVariable = Math.round((totalVar/monthsCount)*1.05);
-      const topVar = Object.entries(variableOps.reduce((acc,r)=>{
-        const cat = r.category||'Без категории'; acc[cat]=(acc[cat]||0)+parseFloat(r.amount); return acc;
-      },{})).sort((a,b)=>b[1]-a[1]).slice(0,5);
 
-      const teacherOps = recentOps.filter(r=>isTeacherCategory(r.category));
-      const monthlyTeacher = {}; teacherOps.forEach(r=>{ const m=r.operation_date?.slice(0,7); if(m) monthlyTeacher[m]=(monthlyTeacher[m]||0)+parseFloat(r.amount); });
-      const maxTeacher = Math.max(...Object.values(monthlyTeacher),0);
+      const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
+      const monthlyTeacher = {};
+      teacherOps.forEach(r => {
+        const m = r.operation_date?.slice(0,7);
+        if (m) monthlyTeacher[m] = (monthlyTeacher[m] || 0) + parseFloat(r.amount);
+      });
+      const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
       const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff);
 
       const marketingOps = recentOps.filter(isMarketing);
-      const totalMark = marketingOps.reduce((s,r)=>s+parseFloat(r.amount),0);
-      const avgMarketing = Math.round((totalMark/monthsCount)*1.05);
+      const totalMark = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const monthsCountMark = Math.max(1, new Set(marketingOps.map(r => r.operation_date?.slice(0,7))).size);
+      const avgMarketing = Math.round((totalMark / monthsCountMark) * 1.05);
 
       const totalExpensesForecast = totalFixed + avgVariable + avgTeacher;
       const avgIncome = getAvgMonthlyIncome(3);
@@ -783,8 +795,8 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-          // удаляем только операции, но не настройки
-          await _supabase.from('crm_finance').delete().not('operation_type', 'in', '("settings")');
+          // удаляем все, кроме settings
+          await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
           for (let i = 0; i < parsed.length; i += 500) {
             const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
