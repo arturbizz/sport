@@ -74,22 +74,19 @@
         }
         console.log('Ответ:', json);
 
-        // Ищем массив данных
-        let raw = null;
-        if (Array.isArray(json)) raw = json;
-        else if (json.data && Array.isArray(json.data)) raw = json.data;
-        else if (json.items && Array.isArray(json.items)) raw = json.items;
-        else if (json.records && Array.isArray(json.records)) raw = json.records;
-        else raw = Object.values(json).find(v => Array.isArray(v));
+        // Извлекаем массив items
+        const raw = json.items || [];
+        if (!raw.length) throw new Error('Массив items пуст');
 
-        if (!raw) throw new Error('Массив данных не найден. Смотрите консоль (F12).');
+        // Показываем первый элемент для отладки
+        console.log('Первый элемент:', raw[0]);
 
         fetchedData = raw.map(item => ({
           operation_date: item.document_date || item.date || '',
           operation_type: item.income ? 'Доход' : 'Расход',
-          amount: parseFloat(item.income || item.sum || 0),
-          category: item.pay_item_id || '',
-          account: item.pay_account_id || ''
+          amount: parseFloat(item.income || item.sum || item.amount || 0),
+          category: item.pay_item_id || item.category_id || '',
+          account: item.pay_account_id || item.account_id || ''
         }));
         renderTable(fetchedData);
         document.getElementById('saveBtn').disabled = false;
