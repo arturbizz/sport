@@ -12,18 +12,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f8fa;
-      --surface: #ffffff;
-      --border: rgba(15,23,42,0.06);
-      --text: #0f172a;
-      --text-secondary: #475569;
-      --accent: #0d9488;
-      --accent-light: #ccfbf1;
-      --warm-yellow: #f59e0b;
-      --soft-green: #10b981;
-      --critical: #ef4444;
-      --royalty: #8b5cf6;
-      --net-profit: #1e3a8a;
+      --bg: #f7f8fa; --surface: #ffffff; --border: rgba(15,23,42,0.06);
+      --text: #0f172a; --text-secondary: #475569; --accent: #0d9488;
+      --accent-light: #ccfbf1; --warm-yellow: #f59e0b; --soft-green: #10b981;
+      --critical: #ef4444; --royalty: #8b5cf6; --net-profit: #1e3a8a;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -137,10 +129,7 @@
     .nav-btn { padding: 0.45rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--accent); border: 1px solid var(--accent); transition: 0.2s; }
     .nav-btn:hover { background: var(--accent); color: white; }
     .target-profit-input { width: 100px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); text-align: center; }
-    .range-hint {
-      display: inline-block; font-size: 0.8rem; color: var(--text-secondary); cursor: help;
-      margin-left: 0.3rem; font-weight: 600;
-    }
+    .range-hint { display: inline-block; font-size: 0.8rem; color: var(--text-secondary); cursor: help; margin-left: 0.3rem; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -455,7 +444,7 @@
       if (!financeData.length) return;
       const forecast = computeForecast();
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
-      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast, getMonthlyData(selectedMonths).reduce((s,m)=>s+m[1].income,0));
+      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
       const teacherModeContainer = document.getElementById('teacherModeContainer');
@@ -521,12 +510,13 @@
       container.appendChild(widget);
     }
 
-    function generateBreakEvenHTML(forecast, currentIncome) {
+    function generateBreakEvenHTML(forecast) {
       const royaltyRate = applyRoyalty(ROYALTY_START);
       const incomeForZero = Math.round(forecast.total / (1 - royaltyRate));
       const targetProfit = parseFloat(document.getElementById('targetProfitInput')?.value) || 100000;
       const incomeForTarget = Math.round((forecast.total + targetProfit) / (1 - royaltyRate));
-      const netProfitForecast = currentIncome - forecast.total - forecast.royalty;
+      // Исправлено: чистая прибыль прогнозируется на основе среднемесячного дохода
+      const netProfitForecast = forecast.avgIncome - forecast.total - forecast.royalty;
       return `
         <div class="list-item"><span>Для покрытия расходов</span><span class="amount">${forecast.total.toLocaleString()} ₽</span></div>
         <div class="list-item"><span>Для чистой прибыли = 0</span><span class="amount">${incomeForZero.toLocaleString()} ₽</span></div>
@@ -574,20 +564,9 @@
       return incomes.reduce((a,b) => a+b, 0) / incomes.length;
     }
 
-    // Проверенная логика переменных расходов
     function computeForecast() {
       const now = new Date();
-      // ИСПРАВЛЕНО: было `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` —
-      // getMonth() уже 0-индексирован, поэтому +1 давал ТЕКУЩИЙ месяц, а не следующий (и не
-      // переносил год при декабре). Из-за этого проверка роялти и фильтр "активных" постоянных
-      // расходов брали не тот месяц — сейчас это незаметно (роялти уже действует), но сломается
-      // в любой момент ДО начала действия роялти или на стыке декабрь→январь.
       const nextMonth = monthKey(new Date(now.getFullYear(), now.getMonth() + 1, 1));
-
-      // ИСПРАВЛЕНО: раньше "Постоянные" = сумма amount каждой неоплаченной записи expenses,
-      // БЕЗ учёта periodicity. Годовой платёж (страховка и т.п.) целиком попадал в прогноз
-      // одного месяца, а еженедельный — занижался примерно в 4 раза. Теперь каждая запись
-      // приводится к месячному эквиваленту по своей периодичности.
       const MONTHLY_EQUIV = { weekly: 52/12, biweekly: 26/12, monthly: 1, quarterly: 1/3, yearly: 1/12 };
       const activeFixed = allExpenses.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth+'-01'));
       const totalFixed = Math.round(activeFixed.reduce((s,e) => s + parseFloat(e.amount) * (MONTHLY_EQUIV[e.periodicity] ?? 1), 0));
@@ -596,19 +575,12 @@
         amount: Math.round(parseFloat(e.amount) * (MONTHLY_EQUIV[e.periodicity] ?? 1))
       }));
 
-      // Все расходные операции за последние 3 месяца (или больше, если нет)
       const threeMonthsAgo = monthKey(new Date(Date.now() - 3*30*24*60*60*1000));
       let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
         recentOps = financeData.filter(isExpense).filter(r => r.operation_date);
       }
 
-      // ИСПРАВЛЕНО: раньше из "переменных" исключались только категории педагогов
-      // (isTeacherCategory), а FIXED_ARTICLES/isFixedCategory были объявлены, но нигде не
-      // применялись. В итоге аренда, ЗП администраторов/менеджера/старшего педагога, телефония,
-      // банк.обслуживание и % рассрочки считались ДВАЖДЫ: один раз как totalFixed (из таблицы
-      // expenses), второй раз — внутри avgVariable (из истории операций crm_finance), раздувая
-      // прогноз расходов и точку безубыточности.
       const variableOps = recentOps.filter(r => !isTeacherCategory(r.category) && !isFixedCategory(r.category));
       const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthlyVar = {};
@@ -627,7 +599,6 @@
         }, {})
       ).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-      // ЗП педагогов
       const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
       const monthlyTeacher = {};
       teacherOps.forEach(r => {
@@ -637,15 +608,12 @@
       const teacherMonthValues = Object.values(monthlyTeacher);
       const maxTeacher = Math.max(...teacherMonthValues, 0);
       const avgTeacherRaw = teacherMonthValues.length ? teacherMonthValues.reduce((a,b)=>a+b,0)/teacherMonthValues.length : 0;
-      // Переключатель "среднее / максимум" — среднее реалистичнее, максимум даёт запас прочности
-      // на случай, если один из последних месяцев был нетипично высоким.
       const teacherBase = teacherForecastMode === 'max' ? maxTeacher : avgTeacherRaw;
       const avgTeacher = Math.round(teacherBase * 1.05 * globalRateCoeff);
       const teacherRange = teacherMonthValues.length > 1
         ? { min: Math.round(Math.min(...teacherMonthValues) * globalRateCoeff), max: Math.round(maxTeacher * globalRateCoeff) }
         : null;
 
-      // Маркетинг
       const marketingOps = recentOps.filter(isMarketing);
       const totalMark = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCountMark = Math.max(1, new Set(marketingOps.map(r => r.operation_date?.slice(0,7))).size);
@@ -656,9 +624,6 @@
       const royaltyRate = applyRoyalty(nextMonth);
       const royalty = Math.round(avgIncome * royaltyRate);
 
-      // Доверительный интервал прогноза: постоянные расходы считаем неизменными (низкая
-      // волатильность), а разброс переменных и ЗП педагогов за последние месяцы даёт вилку
-      // "пессимистично / оптимистично" вместо одной точечной цифры.
       const totalRange = (variableRange || teacherRange)
         ? {
             min: totalFixed + (variableRange?.min ?? avgVariable) + (teacherRange?.min ?? avgTeacher),
@@ -666,7 +631,6 @@
           }
         : null;
 
-      // Сезонность: тот же месяц год назад — если данных хватает на полный год истории.
       const nextMonthNum = parseInt(nextMonth.split('-')[1], 10);
       const nextMonthYear = parseInt(nextMonth.split('-')[0], 10);
       const sameMonthLastYear = `${nextMonthYear-1}-${String(nextMonthNum).padStart(2,'0')}`;
@@ -677,10 +641,9 @@
         expense: Math.round(lastYearData[1].expense)
       } : null;
 
-      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty, totalRange, seasonality, teacherForecastMode };
+      return { totalFixed, avgVariable, avgTeacher, avgMarketing, total: totalExpensesForecast, fixedList, topVar, royalty, totalRange, seasonality, teacherForecastMode, avgIncome };
     }
 
-    // Детализация месяца
     function showMonthDetail(monthKey) {
       const monthIncome = financeData.filter(r => isIncome(r) && (r.operation_date||'').startsWith(monthKey)).reduce((s,r)=>s+r.amount,0);
       const monthExpense = financeData.filter(r => isExpense(r) && (r.operation_date||'').startsWith(monthKey));
@@ -720,7 +683,6 @@
     function updateChart(monthlyData) {
       if (!myChart) {
         myChart = echarts.init(document.getElementById('mainChart'));
-        // Обработчик клика для детализации
         myChart.on('click', params => {
           if (params.componentType === 'series' && params.seriesType === 'bar') {
             const month = params.name;
@@ -771,11 +733,6 @@
       myChart.setOption(option);
     }
 
-    // --- План vs факт: снимок прогноза ---
-    // Раз в месяц сохраняем прогноз "на следующий месяц" в саму базу (тем же способом, что и
-    // коэффициент), чтобы потом можно было сверить, насколько прогноз совпал с реальностью.
-    // Снимок делаем ОДИН раз на месяц (если уже есть — не перезаписываем, иначе план "задним
-    // числом" подгонялся бы под факт и сравнение потеряло бы смысл).
     async function snapshotForecastIfNeeded(forecast) {
       const now = new Date();
       const targetMonth = monthKey(new Date(now.getFullYear(), now.getMonth() + 1, 1));
@@ -813,10 +770,6 @@
       }).join('');
     }
 
-    // --- Прогноз кассового разрыва на 30 дней вперёд ---
-    // Строим по фактически запланированным платежам (expenses.next_payment_date) — это единственные
-    // точно известные будущие даты трат. Доход внутри периода не имеет точных дат, поэтому
-    // раскладываем его равномерно (avgIncome/30) как условное допущение — явно об этом пишем.
     function renderCashFlow() {
       const el = document.getElementById('cashFlowForecast');
       const today = new Date();
@@ -842,9 +795,6 @@
       el.innerHTML = `<div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.6rem;">Допущение: доход распределён равномерно по дням (≈${Math.round(avgDailyIncome).toLocaleString()} ₽/день по среднему за 3 мес.). Точных дат поступлений система не знает.</div>` + rows;
     }
 
-    // --- Доходный потенциал воронки лидов ---
-    // Best-effort: если таблица leads недоступна или в ней нет узнаваемых стадий — просто
-    // показываем базовую сводку без домыслов о конверсии.
     function renderLeadsForecast() {
       const el = document.getElementById('leadsForecast');
       if (!leadsData.length) {
@@ -910,7 +860,7 @@
       `;
 
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
-      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast, totalIncome);
+      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
 
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
@@ -922,6 +872,10 @@
       if (targetInput) targetInput.addEventListener('input', updateTargetIncome);
 
       updateChart(monthly);
+      snapshotForecastIfNeeded(forecast);
+      renderForecastAccuracy();
+      renderCashFlow();
+      renderLeadsForecast();
 
       const periodLabels = {'-1':'текущий месяц',1:'прошлый месяц',3:'3 месяца',6:'6 месяцев',12:'12 месяцев',0:'всё время'};
       document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]})`;
@@ -1000,8 +954,6 @@
         financeData = fin;
         allExpenses = exp;
         teacherSalaryData = sal;
-        // Лиды — best-effort: если таблицы нет или к ней нет доступа, просто не показываем
-        // виджет воронки, не роняя всю страницу.
         try { leadsData = await fetchAll('leads', 'date_added'); } catch(e) { leadsData = []; console.warn('Лиды недоступны:', e); }
         await loadSettings();
         renderAll();
