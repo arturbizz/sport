@@ -203,8 +203,8 @@
   (() => {
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    // Используем глобальный экземпляр, если он уже есть на странице, иначе создаём новый
-    const _supabase = window._supabase || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Создаём отдельный экземпляр клиента специально для этой страницы
+    const budgetSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let financeData = [], allExpenses = [], teacherSalaryData = [];
     let selectedMonths = 0;
@@ -218,9 +218,9 @@
 
     async function loadData() {
       const [fin, exp, sal] = await Promise.all([
-        _supabase.from('crm_finance').select('*').limit(5000).order('operation_date', { ascending: true }),
-        _supabase.from('expenses').select('*').limit(5000).order('next_payment_date', { ascending: true }),
-        _supabase.from('teacher_salary').select('*').limit(5000).order('created_at', { ascending: true })
+        budgetSupabase.from('crm_finance').select('*').limit(5000).order('operation_date', { ascending: true }),
+        budgetSupabase.from('expenses').select('*').limit(5000).order('next_payment_date', { ascending: true }),
+        budgetSupabase.from('teacher_salary').select('*').limit(5000).order('created_at', { ascending: true })
       ]);
       financeData = fin.data || [];
       allExpenses = exp.data || [];
@@ -228,7 +228,9 @@
       renderAll();
     }
 
-    document.getElementById('refreshBtn').addEventListener('click', loadData);
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      loadData().then(() => alert('Данные обновлены'));
+    });
 
     function getPaidExpenses() {
       return allExpenses.filter(e => e.paid);
@@ -397,22 +399,11 @@
         const varH = (vals.variable / maxVal * 100).toFixed(1);
         return `<div class="bar" style="height:${+fixedH + +varH}%;">
           <div class="bar-tooltip">Пост. ${vals.fixed.toLocaleString()} ₽<br>Перем. ${vals.variable.toLocaleString()} ₽</div>
-          <div class="bar-variable" style="height:${varH}%;"></div>
-          <div class="bar-fixed" style="height:${fixedH}%;"></div>
+          <div class="bar-variable" style="height:${varH}%; background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%); box-shadow: 0 0 6px rgba(245,158,11,0.3);"></div>
+          <div class="bar-fixed" style="height:${fixedH}%; background: linear-gradient(180deg, #0d9488 0%, #14b8a6 100%); box-shadow: 0 0 6px rgba(13,148,136,0.3);"></div>
           <div class="bar-label">${month.slice(5)}</div>
         </div>`;
       }).join('') || '<div style="color:var(--text-secondary);">Нет данных</div>';
-
-      setTimeout(() => {
-        document.querySelectorAll('.bar-fixed').forEach(el => {
-          el.style.background = 'linear-gradient(180deg, #0d9488 0%, #14b8a6 100%)';
-          el.style.boxShadow = '0 0 6px rgba(13,148,136,0.3)';
-        });
-        document.querySelectorAll('.bar-variable').forEach(el => {
-          el.style.background = 'linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%)';
-          el.style.boxShadow = '0 0 6px rgba(245,158,11,0.3)';
-        });
-      }, 100);
 
       document.getElementById('topCategories').innerHTML = getCategoryBreakdown(selectedMonths)
         .map(([cat, sum]) => `<div class="list-item"><span>${cat}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>`).join('') || 'Нет данных';
