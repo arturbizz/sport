@@ -17,241 +17,106 @@
       --text-secondary: #475569;
       --accent: #0d9488;
       --accent-soft: #e6f7f5;
-      --radius-xl: 28px;
-      --radius-lg: 20px;
-      --radius-sm: 14px;
+      --radius-xl: 28px; --radius-lg: 20px; --radius-sm: 14px;
       --shadow-xs: 0 1px 2px rgba(0,0,0,0.02);
       --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
       --shadow-md: 0 8px 20px rgba(0,0,0,0.06);
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; caret-color: transparent; }
     body {
       font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-      cursor: default;
+      min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 1rem;
       -webkit-tap-highlight-color: transparent;
     }
     .copilot {
-      width: 100%;
-      max-width: 440px;
-      background: rgba(255,255,255,0.8);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-radius: var(--radius-xl);
-      border: 1px solid rgba(255,255,255,0.7);
+      width: 100%; max-width: 440px;
+      background: rgba(255,255,255,0.8); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-radius: var(--radius-xl); border: 1px solid rgba(255,255,255,0.7);
       box-shadow: var(--shadow-md), 0 0 0 1px rgba(255,255,255,0.5) inset;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      height: 90vh;
-      max-height: 800px;
-      position: relative;
+      display: flex; flex-direction: column; overflow: hidden;
+      height: 90vh; max-height: 800px; position: relative;
     }
-    /* Шапка */
     .hero {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: flex; flex-direction: column; align-items: center;
       padding: 1.5rem 1.5rem 1rem;
       background: linear-gradient(180deg, rgba(204,251,241,0.6) 0%, rgba(255,255,255,0) 100%);
       flex-shrink: 0;
     }
-    .avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: white;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-      margin-bottom: 0.6rem;
-      object-fit: cover;
-      border: 2px solid white;
-    }
-    .greeting {
-      font-size: 1.2rem;
-      font-weight: 650;
-      color: var(--text);
-    }
-    .role-badge {
-      display: inline-block;
-      margin-top: 0.3rem;
-      padding: 0.25rem 1rem;
-      background: var(--accent-soft);
-      color: var(--accent);
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-    }
-    /* Область ответа */
-    .response-area {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 1.5rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-    }
-    .response-card {
-      background: #f8fafc;
-      border-radius: var(--radius-lg);
-      padding: 1rem 1.2rem;
-      white-space: pre-wrap;
-      line-height: 1.5;
-      box-shadow: var(--shadow-xs);
-      animation: fadeIn 0.2s ease;
-    }
+    .avatar { width: 80px; height: 80px; border-radius: 50%; background: white; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 0.6rem; object-fit: cover; border: 2px solid white; }
+    .greeting { font-size: 1.2rem; font-weight: 650; }
+    .role-badge { display: inline-block; margin-top: 0.3rem; padding: 0.25rem 1rem; background: var(--accent-soft); color: var(--accent); border-radius: 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.02em; }
+    .response-area { flex: 1; overflow-y: auto; padding: 0 1.5rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary); }
+    .response-card { background: #f8fafc; border-radius: var(--radius-lg); padding: 1rem 1.2rem; white-space: pre-wrap; line-height: 1.5; box-shadow: var(--shadow-xs); animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } }
     .response-card.error { background: #fee2e2; }
-    .empty-state {
-      text-align: center;
-      color: var(--text-secondary);
-      margin-top: 2rem;
-      font-size: 0.9rem;
-    }
-    /* Плавающая кнопка вызова меню */
+    .empty-state { text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 0.9rem; }
     .fab {
-      position: absolute;
-      bottom: 1.5rem;
-      right: 1.5rem;
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: white;
-      border: none;
-      box-shadow: 0 8px 20px rgba(13,148,136,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 20;
-      transition: transform 0.2s;
-      font-size: 28px;
-      font-weight: 400;
+      position: absolute; bottom: 1.5rem; right: 1.5rem; width: 56px; height: 56px;
+      border-radius: 50%; background: var(--accent); color: white; border: none;
+      box-shadow: 0 8px 20px rgba(13,148,136,0.3); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 20; transition: transform 0.2s; font-size: 28px; font-weight: 400;
     }
     .fab:active { transform: scale(0.95); }
-    /* Панель действий (выезжает снизу) */
     .actions-panel {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border);
-      border-radius: 20px 20px 0 0;
-      padding: 1.2rem 1.2rem 1.5rem;
-      box-shadow: 0 -10px 30px rgba(0,0,0,0.06);
-      z-index: 30;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
-      max-height: 70vh;
-      overflow-y: auto;
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border); border-radius: 20px 20px 0 0;
+      padding: 1.2rem 1.2rem 1.5rem; box-shadow: 0 -10px 30px rgba(0,0,0,0.06);
+      z-index: 30; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1);
+      max-height: 70vh; overflow-y: auto;
     }
-    .actions-panel.open {
-      transform: translateY(0);
-    }
-    .action-group-title {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-secondary);
-      margin: 0.8rem 0 0.4rem 0.3rem;
-    }
+    .actions-panel.open { transform: translateY(0); }
+    .action-group-title { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); margin: 0.8rem 0 0.4rem 0.3rem; }
     .action-btn {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-      padding: 0.8rem 0.8rem;
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      margin-bottom: 0.5rem;
-      transition: background 0.2s;
-      cursor: pointer;
-      position: relative;
+      display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem 0.8rem;
+      background: white; border: 1px solid var(--border); border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem; transition: background 0.2s; cursor: pointer; position: relative;
     }
     .action-btn:active { background: #f8fafc; }
-    .action-icon {
-      width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
+    .action-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .action-icon svg { width: 24px; height: 24px; }
     .action-text { flex:1; font-size: 0.9rem; font-weight: 500; }
-    /* Премиум-метка (золотая звезда) */
-    .premium-dot {
-      width: 16px; height: 16px;
-      background: linear-gradient(135deg, #fbbf24, #f59e0b);
-      border-radius: 4px;
-      box-shadow: 0 2px 6px rgba(245,158,11,0.4);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.55rem;
-      color: white;
-      font-weight: 700;
-      position: absolute;
-      top: -4px; right: -4px;
+    .role-tags { display: flex; gap: 3px; position: absolute; top: -6px; right: -6px; }
+    .role-tag {
+      width: 18px; height: 18px; border-radius: 4px; font-size: 0.6rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; color: white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-transform: uppercase;
     }
-    /* Затемнение фона при открытой панели */
-    .overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.15);
-      z-index: 15;
-      display: none;
-    }
+    .role-tag.owner { background: #0d9488; }
+    .role-tag.booker { background: #8b5cf6; }
+    .role-tag.manager { background: #3b82f6; }
+    .role-tag.admin { background: #f59e0b; }
+    .role-tag.teacher { background: #ec4899; }
+    .role-tag.ip { background: #64748b; }
+    .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.15); z-index: 15; display: none; }
     .overlay.active { display: block; }
-    /* Кнопка выхода */
-    .logout-area {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      z-index: 5;
+    .top-buttons { position: absolute; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; z-index: 5; }
+    .top-btn {
+      background: rgba(255,255,255,0.7); border: 1px solid var(--border); border-radius: 10px;
+      padding: 0.4rem 0.8rem; font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);
+      cursor: pointer; backdrop-filter: blur(8px); text-decoration: none; transition: 0.2s;
     }
-    .logout-btn {
-      background: rgba(255,255,255,0.7);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.4rem 0.8rem;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-      cursor: pointer;
-      backdrop-filter: blur(8px);
-    }
+    .top-btn:active { background: rgba(0,0,0,0.03); }
   </style>
 </head>
 <body>
   <div class="copilot" id="app">
-    <!-- Затемнение -->
     <div class="overlay" id="overlay"></div>
-    <!-- Кнопка выхода -->
-    <div class="logout-area">
-      <button class="logout-btn" id="logoutBtn">Выйти</button>
+    <div class="top-buttons">
+      <a href="index.html" class="top-btn">На главную</a>
+      <button class="top-btn" id="logoutBtn">Выйти</button>
     </div>
-    <!-- Шапка -->
     <div class="hero">
       <img src="mascot.png" class="avatar" alt="Маскотик" onerror="this.style.display='none'">
       <div class="greeting" id="greeting">Привет!</div>
       <div class="role-badge" id="roleBadge">роль</div>
     </div>
-    <!-- Область ответа -->
     <div class="response-area" id="responseArea">
       <div class="empty-state">Нажмите <strong>+</strong> чтобы выбрать действие</div>
     </div>
-    <!-- Плавающая кнопка -->
     <button class="fab" id="fabBtn">+</button>
-    <!-- Панель действий -->
     <div class="actions-panel" id="actionsPanel"></div>
   </div>
 
@@ -269,7 +134,6 @@
     const fab = document.getElementById('fabBtn');
     const responseArea = document.getElementById('responseArea');
 
-    // Иконки (премиальные SVG)
     const icons = {
       kpi: `<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>`,
       cashflow: `<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>`,
@@ -292,82 +156,69 @@
       iptax: `<svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M4 4h16v16H4z"/><line x1="8 8h8"/><line x1="8 12h8"/><line x1="8 16h4"/></svg>`,
     };
 
-    // Структура кнопок по ролям (с метками и группировкой)
     const roleActions = {
       'Управляющий': [
-        { group: 'Финансы',
-          items: [
-            { action:'kpi', label:'Сводка KPI', icon: icons.kpi },
-            { action:'cashflow', label:'Кассовый разрыв 7 дн.', icon: icons.cashflow },
-            { action:'breakeven', label:'Точка безубыточности', icon: icons.breakeven },
-            { action:'unpaid', label:'Предстоящие платежи', icon: icons.unpaid },
-            { action:'regular', label:'Ежемесячные платежи', icon: icons.regular },
-            { action:'salaries', label:'Зарплаты', icon: icons.salaries },
-            { action:'tax', label:'Налоги/роялти', icon: icons.tax },
-            { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts },
-          ]
-        },
-        { group: 'Маркетинг и лиды',
-          items: [
-            { action:'leads', label:'Воронка лидов', icon: icons.leads },
-          ]
-        }
+        { group: 'Ключевые показатели', items: [
+          { action:'kpi', label:'Сводка KPI', icon: icons.kpi, tags: ['У'] },
+          { action:'leads', label:'Воронка лидов', icon: icons.leads, tags: ['У'] },
+        ]},
+        { group: 'Финансы', items: [
+          { action:'cashflow', label:'Кассовый разрыв 7 дн.', icon: icons.cashflow, tags: ['У','Б'] },
+          { action:'breakeven', label:'Точка безубыточности', icon: icons.breakeven, tags: ['У','Б'] },
+          { action:'unpaid', label:'Платежи в ближ. 5 дн.', icon: icons.unpaid, tags: ['У','Б'] },
+          { action:'regular', label:'Ежемесячные платежи', icon: icons.regular, tags: ['У','Б'] },
+          { action:'salaries15', label:'Зарплаты 1–15', icon: icons.salaries, tags: ['У','Б'] },
+          { action:'salaries31', label:'Зарплаты 16–31', icon: icons.salaries, tags: ['У','Б'] },
+          { action:'tax', label:'Налоги/роялти', icon: icons.tax, tags: ['У','Б'] },
+          { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts, tags: ['У','Б'] },
+        ]},
       ],
       'Бухгалтер': [
-        { group: 'Платежи и зарплаты',
-          items: [
-            { action:'unpaid', label:'Предстоящие платежи', icon: icons.unpaid },
-            { action:'regular', label:'Ежемесячные платежи', icon: icons.regular },
-            { action:'salaries', label:'Зарплаты', icon: icons.salaries },
-            { action:'tax', label:'Налоги/роялти', icon: icons.tax },
-            { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts },
-          ]
-        }
+        { group: 'Платежи и зарплаты', items: [
+          { action:'unpaid', label:'Платежи в ближ. 5 дн.', icon: icons.unpaid, tags: ['Б'] },
+          { action:'regular', label:'Ежемесячные платежи', icon: icons.regular, tags: ['Б'] },
+          { action:'salaries15', label:'Зарплаты 1–15', icon: icons.salaries, tags: ['Б'] },
+          { action:'salaries31', label:'Зарплаты 16–31', icon: icons.salaries, tags: ['Б'] },
+          { action:'tax', label:'Налоги/роялти', icon: icons.tax, tags: ['Б'] },
+          { action:'receipts', label:'Чеки за 30 дн.', icon: icons.receipts, tags: ['Б'] },
+        ]},
       ],
       'Менеджер': [
-        { group: 'Личные показатели',
-          items: [
-            { action:'mysales', label:'Мои продажи', icon: icons.mysales },
-            { action:'mysalary', label:'Моя зарплата', icon: icons.mysalary },
-            { action:'myconversion', label:'Моя конверсия', icon: icons.myconversion },
-            { action:'graph', label:'График работы', icon: icons.graph },
-            { action:'mytasks', label:'Мои задачи', icon: icons.mytasks },
-          ]
-        }
+        { group: 'Личные показатели', items: [
+          { action:'mysales', label:'Мои продажи', icon: icons.mysales, tags: ['М'] },
+          { action:'mysalary', label:'Моя зарплата', icon: icons.mysalary, tags: ['М'] },
+          { action:'myconversion', label:'Моя конверсия', icon: icons.myconversion, tags: ['М'] },
+          { action:'graph', label:'График работы', icon: icons.graph, tags: ['М'] },
+          { action:'mytasks', label:'Мои задачи', icon: icons.mytasks, tags: ['М'] },
+        ]},
       ],
       'Администратор': [
-        { group: 'Оперативное',
-          items: [
-            { action:'todaygraph', label:'График на сегодня', icon: icons.graph },
-            { action:'todayleads', label:'Лиды за сегодня', icon: icons.leads },
-            { action:'todaytasks', label:'Задачи на сегодня', icon: icons.mytasks },
-          ]
-        }
+        { group: 'Оперативное', items: [
+          { action:'todaygraph', label:'График на сегодня', icon: icons.graph, tags: ['А'] },
+          { action:'todayleads', label:'Лиды за сегодня', icon: icons.leads, tags: ['А'] },
+          { action:'todaytasks', label:'Задачи на сегодня', icon: icons.mytasks, tags: ['А'] },
+        ]},
       ],
       'Преподаватель': [
-        { group: 'Мои данные',
-          items: [
-            { action:'teachersalary', label:'Моя зарплата', icon: icons.teachersalary },
-            { action:'teacherschedule', label:'Моё расписание', icon: icons.teacherschedule },
-          ]
-        }
+        { group: 'Мои данные', items: [
+          { action:'teachersalary', label:'Моя зарплата', icon: icons.teachersalary, tags: ['П'] },
+          { action:'teacherschedule', label:'Моё расписание', icon: icons.teacherschedule, tags: ['П'] },
+        ]},
       ],
       'ИП': [
-        { group: 'Финансы ИП',
-          items: [
-            { action:'ipincome', label:'Доходы за месяц', icon: icons.ipincome },
-            { action:'ipexpense', label:'Расходы за месяц', icon: icons.ipexpense },
-            { action:'iptax', label:'Предстоящие налоги', icon: icons.iptax },
-          ]
-        }
+        { group: 'Финансы ИП', items: [
+          { action:'ipincome', label:'Доходы за месяц', icon: icons.ipincome, tags: ['ИП'] },
+          { action:'ipexpense', label:'Расходы за месяц', icon: icons.ipexpense, tags: ['ИП'] },
+          { action:'iptax', label:'Предстоящие налоги', icon: icons.iptax, tags: ['ИП'] },
+        ]},
       ]
     };
 
     function addResponse(text, isError=false) {
       const card = document.createElement('div');
       card.className = `response-card${isError?' error':''}`;
-      card.textContent = text;
-      responseArea.innerHTML = ''; // очищаем предыдущий ответ
+      card.innerHTML = text;
+      responseArea.innerHTML = '';
       responseArea.appendChild(card);
     }
 
@@ -384,27 +235,22 @@
           btn.innerHTML = `
             <div class="action-icon">${item.icon}</div>
             <span class="action-text">${item.label}</span>
-            <div class="premium-dot">★</div>
+            <div class="role-tags">${item.tags.map(tag => `<span class="role-tag ${getTagClass(tag)}">${tag}</span>`).join('')}</div>
           `;
-          btn.addEventListener('click', () => {
-            closePanel();
-            handleAction(item.action);
-          });
+          btn.addEventListener('click', () => { closePanel(); handleAction(item.action); });
           panel.appendChild(btn);
         });
       });
     }
 
-    function openPanel() {
-      panel.classList.add('open');
-      overlay.classList.add('active');
-      fab.style.display = 'none';
+    function getTagClass(tag) {
+      if (tag==='У') return 'owner'; if (tag==='Б') return 'booker'; if (tag==='М') return 'manager';
+      if (tag==='А') return 'admin'; if (tag==='П') return 'teacher'; if (tag==='ИП') return 'ip';
+      return '';
     }
-    function closePanel() {
-      panel.classList.remove('open');
-      overlay.classList.remove('active');
-      fab.style.display = 'flex';
-    }
+
+    function openPanel() { panel.classList.add('open'); overlay.classList.add('active'); fab.style.display = 'none'; }
+    function closePanel() { panel.classList.remove('open'); overlay.classList.remove('active'); fab.style.display = 'flex'; }
 
     fab.addEventListener('click', openPanel);
     overlay.addEventListener('click', closePanel);
@@ -418,25 +264,36 @@
         const end = monthStr + '-31';
         switch (action) {
           case 'kpi': {
-            const [inc, exp] = await Promise.all([
+            const [inc, exp, leadsToday, leadsMonth] = await Promise.all([
               _supabase.from('crm_finance').select('amount').gte('operation_date', start).or('operation_type.ilike.%доход%,operation_type.ilike.%продажа%'),
-              _supabase.from('crm_finance').select('amount').gte('operation_date', start).or('operation_type.ilike.%расход%,operation_type.ilike.%выплата%')
+              _supabase.from('crm_finance').select('amount').gte('operation_date', start).or('operation_type.ilike.%расход%,operation_type.ilike.%выплата%'),
+              _supabase.from('leads').select('stage').gte('date_added', new Date().toISOString().slice(0,10)),
+              _supabase.from('leads').select('stage').gte('date_added', start)
             ]);
             const income = (inc.data||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
             const expense = (exp.data||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
-            result = `Доходы: ${income.toLocaleString()} ₽\nРасходы: ${expense.toLocaleString()} ₽\nЧистая прибыль: ${(income-expense).toLocaleString()} ₽`;
+            const cleanToday = (leadsToday.data||[]).filter(l=>!l.stage?.includes('Дубль')&&!l.stage?.includes('Некорректные'));
+            const cleanMonth = (leadsMonth.data||[]).filter(l=>!l.stage?.includes('Дубль')&&!l.stage?.includes('Некорректные'));
+            const convMonth = cleanMonth.filter(l=>l.stage?.includes('ПУ состоялся'));
+            result = `<b>Доходы:</b> ${income.toLocaleString()} ₽\n<b>Расходы:</b> ${expense.toLocaleString()} ₽\n<b>Чистая прибыль:</b> ${(income-expense).toLocaleString()} ₽\n<b>Лидов сегодня:</b> ${cleanToday.length}\n<b>Лидов за месяц:</b> ${cleanMonth.length}\n<b>Конверсия в ПУ:</b> ${cleanMonth.length?(convMonth.length/cleanMonth.length*100).toFixed(1):0}%`;
+            break;
+          }
+          case 'leads': {
+            const today = new Date().toISOString().slice(0,10);
+            const [leadsToday, leadsMonth] = await Promise.all([
+              _supabase.from('leads').select('stage').gte('date_added', today),
+              _supabase.from('leads').select('stage').gte('date_added', start)
+            ]);
+            const cleanToday = (leadsToday.data||[]).filter(l=>!l.stage?.includes('Дубль')&&!l.stage?.includes('Некорректные'));
+            const cleanMonth = (leadsMonth.data||[]).filter(l=>!l.stage?.includes('Дубль')&&!l.stage?.includes('Некорректные'));
+            const booked = cleanMonth.filter(l=>l.stage?.includes('Запись на ПУ'));
+            const pu = cleanMonth.filter(l=>l.stage?.includes('ПУ состоялся'));
+            result = `<b>Новых лидов сегодня:</b> ${cleanToday.length}\n<b>За месяц:</b> ${cleanMonth.length}\n<b>Записано на ПУ:</b> ${booked.length} (${cleanMonth.length?(booked.length/cleanMonth.length*100).toFixed(1):0}%)\n<b>ПУ состоялся:</b> ${pu.length} (${cleanMonth.length?(pu.length/cleanMonth.length*100).toFixed(1):0}%)`;
             break;
           }
           case 'cashflow': {
             const { data } = await _supabase.from('expenses').select('name,amount,next_payment_date').eq('paid',false).lte('next_payment_date', new Date(Date.now()+7*86400000).toISOString().slice(0,10)).order('next_payment_date');
-            result = data?.length ? data.map(e=>`• ${e.next_payment_date}: ${e.name} — ${e.amount} ₽`).join('\n') : 'На 7 дней платежей нет.';
-            break;
-          }
-          case 'leads': {
-            const { data } = await _supabase.from('leads').select('stage').gte('date_added', new Date(Date.now()-30*86400000).toISOString());
-            const clean = (data||[]).filter(l=>!l.stage?.includes('Дубль')&&!l.stage?.includes('Некорректные'));
-            const conv = clean.filter(l=>l.stage?.includes('ПУ состоялся'));
-            result = `Лидов: ${clean.length}\nКонверсия: ${clean.length?(conv.length/clean.length*100).toFixed(1):0}%`;
+            result = data?.length ? data.map(e=>`<b>${e.next_payment_date}</b> — ${e.name}: ${e.amount} ₽`).join('<br>') : 'На 7 дней платежей нет.';
             break;
           }
           case 'breakeven': {
@@ -444,49 +301,34 @@
             const eq = {weekly:52/12,biweekly:26/12,monthly:1,quarterly:1/3,yearly:1/12};
             const total = Math.round((data||[]).reduce((s,e)=>s+parseFloat(e.amount)*(eq[e.periodicity]??1),0));
             const breakeven = Math.round(total/0.92);
-            result = `Покрыть расходы: ${total.toLocaleString()} ₽\nС учётом роялти: ${breakeven.toLocaleString()} ₽`;
+            result = `Покрыть расходы: ${total.toLocaleString()} ₽<br>С учётом роялти: ${breakeven.toLocaleString()} ₽`;
             break;
           }
           case 'unpaid': {
-            const { data } = await _supabase.from('expenses').select('name,amount,next_payment_date').eq('paid',false).order('next_payment_date');
-            result = data?.length ? data.map(e=>`• ${e.next_payment_date||'—'}: ${e.name} — ${e.amount} ₽`).join('\n') : 'Всё оплачено.';
+            const { data } = await _supabase.from('expenses').select('name,amount,next_payment_date').eq('paid',false).lte('next_payment_date', new Date(Date.now()+5*86400000).toISOString().slice(0,10)).order('next_payment_date');
+            result = data?.length ? data.map(e=>`<b>${e.next_payment_date}</b> — ${e.name}: ${e.amount} ₽`).join('<br>') : 'На 5 дней платежей нет.';
             break;
           }
           case 'regular': {
-            const { data } = await _supabase.from('expenses').select('name,amount,periodicity').eq('paid',false);
-            result = data?.length ? data.map(e=>`• ${e.name} — ${e.amount} ₽ (${e.periodicity})`).join('\n') + `\n\nОбщая сумма: ${data.reduce((s,e)=>s+parseFloat(e.amount),0).toLocaleString()} ₽` : 'Нет платежей.';
+            const { data } = await _supabase.from('expenses').select('name,amount,periodicity,next_payment_date').eq('paid',false);
+            const formatDate = (d) => d ? new Date(d).toLocaleDateString('ru', {day:'numeric', month:'long'}) : '—';
+            result = data?.length ? data.map(e=>`<b>${formatDate(e.next_payment_date)}</b> — ${e.name}: ${e.amount} ₽`).join('<br>') + `<br><br><b>Общая сумма:</b> ${data.reduce((s,e)=>s+parseFloat(e.amount),0).toLocaleString()} ₽` : 'Нет платежей.';
             break;
           }
-          case 'salaries': {
-            const { data:emps } = await _supabase.from('employees').select('id,name,role');
-            const { data:params } = await _supabase.from('salary_params').select('*').eq('month',monthStr);
-            const { data:logs } = await _supabase.from('worklog').select('*').gte('date',start).lte('date',end);
-            const lines = [];
-            for (const emp of (emps||[])) {
-              const p = (params||[]).find(x=>x.emp_id===emp.id)||{};
-              const w = (logs||[]).filter(l=>l.emp_id===emp.id && l.status==='working');
-              const worked = w.length;
-              const rates = {'Менеджер':20000,'Администратор':25000,'Управляющий':50000};
-              const base = rates[emp.role] ? (rates[emp.role]/(p.norm_days||22))*worked : 0;
-              let bonus = 0;
-              if (emp.role==='Менеджер') {
-                const sales = w.reduce((s,l)=>s+(l.daily_sales||0),0);
-                bonus = sales * ((p.plan_fulfilled?7:5)/100);
-              }
-              lines.push(`${emp.name}: ${Math.round(base+bonus).toLocaleString()} ₽`);
-            }
-            result = lines.join('\n') || 'Нет данных.';
-            break;
-          }
+          case 'salaries15': await handleSalary('1-15'); return;
+          case 'salaries31': await handleSalary('16-31'); return;
           case 'tax': {
-            const { data:inc } = await _supabase.from('crm_finance').select('amount').gte('operation_date',start).or('operation_type.ilike.%доход%,operation_type.ilike.%продажа%');
-            const income = (inc?.data||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
-            result = `Роялти 8%: ${Math.round(income*0.08).toLocaleString()} ₽`;
+            const [inc] = await Promise.all([
+              _supabase.from('crm_finance').select('amount').gte('operation_date', start).or('operation_type.ilike.%доход%,operation_type.ilike.%продажа%')
+            ]);
+            const income = (inc.data||[]).reduce((s,r)=>s+parseFloat(r.amount),0);
+            const royalty = new Date().toISOString().slice(0,7) >= '2026-07' ? Math.round(income * 0.08) : 0;
+            result = `<b>Доходы за месяц:</b> ${income.toLocaleString()} ₽\n<b>Роялти 8%:</b> ${royalty.toLocaleString()} ₽`;
             break;
           }
           case 'receipts': {
-            const { data } = await _supabase.from('expenses').select('name,receipt_url,paid_at').not('receipt_url','is',null).gte('paid_at', new Date(Date.now()-30*86400000).toISOString()).order('paid_at',{ascending:false});
-            result = data?.length ? data.map(e=>`• ${new Date(e.paid_at).toLocaleDateString('ru')}: ${e.name} — чек`).join('\n') : 'Чеков нет.';
+            const { data } = await _supabase.from('expenses').select('name,amount,receipt_url,paid_at,details').not('receipt_url','is',null).gte('paid_at', new Date(Date.now()-30*86400000).toISOString()).order('paid_at',{ascending:false});
+            result = data?.length ? data.map(e=>`<b>${new Date(e.paid_at).toLocaleDateString('ru')}</b> — ${e.name}: ${e.amount} ₽<br>${e.details ? e.details+'<br>' : ''}<a href="${e.receipt_url}" target="_blank">Скачать чек</a>`).join('<br><br>') : 'Чеков нет.';
             break;
           }
           case 'mysales': {
@@ -512,18 +354,61 @@
             result = `Смен: ${worked}\nБазовая: ${Math.round(base).toLocaleString()} ₽\nБонус: ${Math.round(bonus).toLocaleString()} ₽\nИтого: ${Math.round(base+bonus).toLocaleString()} ₽`;
             break;
           }
-          case 'myconversion': {
-            const { data:leads } = await _supabase.from('leads').select('stage').gte('date_added',new Date(Date.now()-30*86400000).toISOString());
-            const clean = (leads||[]).filter(l=>!l.stage?.includes('Дубль')&&!l.stage?.includes('Некорректные'));
-            const conv = clean.filter(l=>l.stage?.includes('ПУ состоялся'));
-            result = `Конверсия: ${clean.length?(conv.length/clean.length*100).toFixed(1):0}% (${conv.length}/${clean.length})`;
-            break;
-          }
           default: result = 'Скоро появится';
         }
         addResponse(result);
       } catch (err) {
         addResponse('Ошибка получения данных', true);
+        console.error(err);
+      }
+    }
+
+    async function handleSalary(period) {
+      addResponse('Загружаю...');
+      const monthStr = new Date().toISOString().slice(0,7);
+      const start = monthStr + '-01';
+      const end = monthStr + '-31';
+      const isFirstHalf = period === '1-15';
+      const dayStart = isFirstHalf ? 1 : 16;
+      const dayEnd = isFirstHalf ? 15 : 31;
+      try {
+        const [emps, params, worklog, teacherSalary] = await Promise.all([
+          _supabase.from('employees').select('id,name,role'),
+          _supabase.from('salary_params').select('*').eq('month', monthStr),
+          _supabase.from('worklog').select('*').gte('date', start).lte('date', end),
+          _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', period)
+        ]);
+        let result = '';
+        // Менеджеры/админы
+        const staff = (emps.data||[]).filter(e=>['Менеджер','Администратор','Управляющий'].includes(e.role));
+        staff.forEach(emp => {
+          const p = (params.data||[]).find(x=>x.emp_id===emp.id) || {};
+          const logs = (worklog.data||[]).filter(l=>{
+            if (l.emp_id!==emp.id || l.status!=='working') return false;
+            const day = parseInt(l.date.split('-')[2],10);
+            return day >= dayStart && day <= dayEnd;
+          });
+          const worked = logs.length;
+          const rates = {'Менеджер':20000,'Администратор':25000,'Управляющий':50000};
+          const normDays = p.norm_days || 22;
+          const dailyRate = rates[emp.role] ? rates[emp.role]/normDays : 0;
+          let base = Math.round(dailyRate * worked);
+          let bonus = 0;
+          if (emp.role==='Менеджер' && !isFirstHalf) {
+            const totalSales = logs.reduce((s,l)=>s+(l.daily_sales||0),0);
+            const plan = p.plan_amount||0;
+            bonus = Math.round(totalSales * ((plan>0 && totalSales>=plan)?0.07:0.05));
+          }
+          result += `<b>${emp.name}</b>: ${(base+bonus).toLocaleString()} ₽\n`;
+        });
+        // Преподаватели
+        (teacherSalary.data||[]).forEach(t => {
+          result += `<b>${t.teacher_name}</b>: ${parseFloat(t.amount).toLocaleString()} ₽\n`;
+        });
+        if (!result) result = 'Нет данных.';
+        addResponse(result);
+      } catch (err) {
+        addResponse('Ошибка загрузки зарплат', true);
         console.error(err);
       }
     }
@@ -542,9 +427,7 @@
       }
       document.getElementById('roleBadge').textContent = effectiveRole || 'гость';
       const structure = roleActions[effectiveRole] || [];
-      if (structure.length) {
-        renderPanel(structure);
-      }
+      if (structure.length) { renderPanel(structure); }
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         await _supabase.auth.signOut();
         window.location.href = 'login.html';
