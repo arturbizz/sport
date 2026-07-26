@@ -3,126 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тест API AlfaCRM v2 (постраничная загрузка)</title>
+  <title>Тест API AlfaCRM v2 – полные данные</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
+    body { font-family: 'Inter', sans-serif; max-width: 1200px; margin: 2rem auto; padding: 1rem; }
     input, button, select, textarea { padding: 0.5rem; margin: 0.3rem; font-size: 0.9rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ddd; padding: 0.4rem; text-align: left; font-size: 0.85rem; }
     th { background: #f8f8f8; }
     .status { margin: 0.5rem 0; font-weight: 600; white-space: pre-wrap; background: #fef3c7; padding: 0.5rem; border-radius: 8px; }
+    .summary { background: #e0f2fe; padding: 0.5rem; border-radius: 8px; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-  <h1>Тест API AlfaCRM v2 (постранично)</h1>
-  <p style="color: #475569; font-size: 0.9rem;">Данные не сохраняются в Supabase. Можно безопасно тестировать.</p>
+  <h1>Тест API AlfaCRM v2 – все данные</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
     <label>Филиал (branch ID): <input type="text" id="branch" size="10" value="20"></label><br>
-    <label>Путь API:
-      <select id="apiPath">
-        <option value="pay/index">pay/index (финансы)</option>
-        <option value="pay-item/index">pay-item/index (статьи)</option>
-        <option value="pay-account/index">pay-account/index (счета)</option>
-        <option value="customer/index">customer/index (клиенты)</option>
-      </select>
-    </label><br>
-    <label>Фильтр (JSON, необязательно):<br>
-      <textarea id="requestBody" rows="3" cols="60">{"page":0}</textarea>
-    </label><br>
-    <button id="loadAllBtn">Загрузить ВСЕ страницы</button>
-    <span id="pageInfo"></span>
+    <button id="loadAllBtn">Загрузить все операции из CRM</button>
+    <button id="saveBtn" disabled>Сохранить в Supabase (осторожно!)</button>
   </div>
+  <div class="summary" id="summary"></div>
   <div class="status" id="status"></div>
   <table id="dataTable">
-    <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья (ID)</th><th>Счёт (ID)</th></tr></thead>
+    <thead><tr><th>Дата</th><th>Тип</th><th>Сумма</th><th>Статья</th><th>Счёт</th><th>Клиент</th><th>Преподаватель</th><th>Примечание</th></tr></thead>
     <tbody></tbody>
   </table>
 
   <script>
-    const proxyUrlInput = document.getElementById('proxyUrl');
-    const branchInput = document.getElementById('branch');
-    const apiPathSelect = document.getElementById('apiPath');
-    const requestBodyTextarea = document.getElementById('requestBody');
-    const loadAllBtn = document.getElementById('loadAllBtn');
-    const statusDiv = document.getElementById('status');
-    const pageInfoSpan = document.getElementById('pageInfo');
-    const dataTableBody = document.querySelector('#dataTable tbody');
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let fetchedData = [];
 
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      const parts = dateStr.split('.');
-      if (parts.length === 3) {
-        return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-      }
-      return dateStr;
-    }
-
-    async function loadAll() {
-      const proxyUrl = proxyUrlInput.value.trim();
-      const branch = branchInput.value.trim();
-      const path = apiPathSelect.value;
-      let bodyTemplate;
-      try {
-        bodyTemplate = JSON.parse(requestBodyTextarea.value || '{}');
-      } catch (e) {
-        statusDiv.textContent = 'Ошибка: невалидный JSON';
-        return;
-      }
-      if (!proxyUrl || !branch || !path) {
-        statusDiv.textContent = 'Заполните все поля';
-        return;
-      }
-      statusDiv.textContent = 'Начинаю загрузку всех страниц...';
+    // Загружаем все страницы
+    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate) {
       let allItems = [];
       let page = 0;
       let total = null;
+      while (true) {
+        const body = { ...bodyTemplate, page };
+        const resp = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ branch, path, body })
+        });
+        const json = await resp.json();
+        if (json.error) throw new Error(json.error);
+        if (total === null) total = json.total;
+        const items = json.items || [];
+        allItems = allItems.concat(items);
+        document.getElementById('status').textContent = `Загружено ${allItems.length} из ${total}...`;
+        if (items.length === 0 || allItems.length >= total) break;
+        page++;
+      }
+      return allItems;
+    }
+
+    // Преобразование даты
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('.');
+      if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      return dateStr;
+    }
+
+    document.getElementById('loadAllBtn').addEventListener('click', async () => {
+      const proxyUrl = document.getElementById('proxyUrl').value.trim();
+      const branch = document.getElementById('branch').value.trim();
+      if (!proxyUrl || !branch) return;
+      document.getElementById('status').textContent = 'Загрузка операций...';
       try {
-        while (true) {
-          const body = { ...bodyTemplate, page };
-          const resp = await fetch(proxyUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ branch, path, body })
-          });
-          const json = await resp.json();
-          if (json.error) throw new Error(json.error);
-          if (total === null) total = json.total;
-          const items = json.items || [];
-          allItems = allItems.concat(items);
-          pageInfoSpan.textContent = `Загружено ${allItems.length} из ${total}`;
-          statusDiv.textContent = `Страница ${page}: получено ${items.length} записей`;
-          if (items.length === 0 || allItems.length >= total) break;
-          page++;
-        }
-        renderTable(allItems);
-        statusDiv.textContent = `Готово! Всего загружено ${allItems.length} записей.`;
+        const items = await fetchAllPages(proxyUrl, branch, 'pay/index', {});
+        console.log('Пример первого элемента:', items[0]); // для отладки
+
+        // Сводка
+        let totalIncome = 0, totalExpense = 0, salesCount = 0;
+        items.forEach(item => {
+          const amount = parseFloat(item.income || item.amount || 0);
+          if (amount > 0) { totalIncome += amount; salesCount++; }
+          else totalExpense += Math.abs(amount);
+        });
+
+        document.getElementById('summary').innerHTML = `
+          <strong>Сводка по загруженным данным:</strong><br>
+          • Всего операций: ${items.length}<br>
+          • Доходных операций (продаж): ${salesCount}<br>
+          • Сумма доходов: ${totalIncome.toLocaleString()} ₽<br>
+          • Сумма расходов: ${totalExpense.toLocaleString()} ₽<br>
+          • Прибыль: ${(totalIncome - totalExpense).toLocaleString()} ₽
+        `;
+
+        fetchedData = items.map(item => ({
+          operation_date: formatDate(item.document_date),
+          operation_type: (parseFloat(item.income || item.amount || 0) > 0) ? 'Доход' : 'Расход',
+          amount: parseFloat(item.income || item.amount || 0),
+          category: item.pay_item_id || '',
+          account: item.pay_account_id || '',
+          customer: item.customer_id || '',
+          teacher: item.teacher_id || '',
+          note: item.note || ''
+        }));
+
+        renderTable(fetchedData.slice(0, 200)); // первые 200 для обзора
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('status').textContent = `Загружено ${fetchedData.length} операций.`;
       } catch (err) {
-        statusDiv.textContent = 'Ошибка: ' + err.message;
+        document.getElementById('status').textContent = 'Ошибка: ' + err.message;
         console.error(err);
       }
-    }
+    });
 
-    function renderTable(items) {
-      dataTableBody.innerHTML = items.map(item => {
-        const date = formatDate(item.document_date);
-        const amount = parseFloat(item.income || item.amount || 0);
-        const type = amount > 0 ? 'Доход' : 'Расход';
-        const category = item.pay_item_id || '';
-        const account = item.pay_account_id || '';
-        return `<tr>
-          <td>${date}</td>
-          <td>${type}</td>
-          <td>${amount.toLocaleString()} ₽</td>
-          <td>${category}</td>
-          <td>${account}</td>
-        </tr>`;
-      }).join('');
-    }
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      if (!fetchedData.length) return;
+      if (!confirm(`Будут удалены ВСЕ данные в crm_finance (кроме настроек) и сохранено ${fetchedData.length} записей. Продолжить?`)) return;
+      document.getElementById('status').textContent = 'Сохранение...';
+      try {
+        await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
+        for (let i = 0; i < fetchedData.length; i += 500) {
+          const chunk = fetchedData.slice(i, i + 500);
+          const { error } = await _supabase.from('crm_finance').insert(chunk);
+          if (error) throw error;
+        }
+        document.getElementById('status').textContent = `Сохранено ${fetchedData.length} записей. Основной дашборд можно обновить.`;
+      } catch (err) {
+        document.getElementById('status').textContent = 'Ошибка сохранения: ' + err.message;
+      }
+    });
 
-    loadAllBtn.addEventListener('click', loadAll);
-    // автоматически загружаем первую страницу при открытии
-    loadAll();
+    function renderTable(data) {
+      const tbody = document.querySelector('#dataTable tbody');
+      tbody.innerHTML = data.map(r => `<tr>
+        <td>${r.operation_date}</td>
+        <td>${r.operation_type}</td>
+        <td>${r.amount.toLocaleString()} ₽</td>
+        <td>${r.category}</td>
+        <td>${r.account}</td>
+        <td>${r.customer}</td>
+        <td>${r.teacher}</td>
+        <td>${r.note}</td>
+      </tr>`).join('');
+    }
   </script>
 </body>
 </html>
