@@ -81,7 +81,7 @@
     .forecast-details { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
     .forecast-item { font-size: 0.95rem; color: var(--text-secondary); display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
     .forecast-item strong { color: var(--text); font-weight: 600; }
-    .forecast-expand { margin-top: 0.3rem; font-size: 0.8rem; color: var(--accent); cursor: pointer; }
+    .forecast-expand { margin-left: 0.3rem; font-size: 0.8rem; color: var(--accent); cursor: pointer; user-select: none; }
     .forecast-expand:hover { text-decoration: underline; }
     .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); width: 100%; }
     .forecast-list.open { display: block; }
@@ -307,7 +307,6 @@
     const ROYALTY_RATE = 0.08;
     const ROYALTY_START = '2026-07';
 
-    // Коэффициент из crm_finance (settings)
     let globalRateCoeff = 1.0;
 
     const FIXED_ARTICLES = [
@@ -354,7 +353,6 @@
       return allRows;
     }
 
-    // Загрузка коэффициента из crm_finance
     async function loadSettings() {
       try {
         const { data, error } = await _supabase
@@ -366,7 +364,6 @@
           .limit(1);
         if (error || !data || data.length === 0) {
           globalRateCoeff = 1.0;
-          // Попытаемся создать запись с 1.0
           try {
             await _supabase.from('crm_finance').insert([{
               operation_date: new Date().toISOString().split('T')[0],
@@ -384,13 +381,10 @@
       }
     }
 
-    // Сохранение коэффициента в crm_finance
     async function saveRateCoeff(value) {
       globalRateCoeff = value;
       try {
-        // Удаляем старые настройки
         await _supabase.from('crm_finance').delete().eq('category', 'teacher_rate_coeff').eq('operation_type', 'settings');
-        // Вставляем новую
         await _supabase.from('crm_finance').insert([{
           operation_date: new Date().toISOString().split('T')[0],
           operation_type: 'settings',
@@ -444,6 +438,18 @@
       });
     }
 
+    // Привязываем раскрытие списков
+    function bindExpandButtons() {
+      document.querySelectorAll('.forecast-expand').forEach(btn => {
+        btn.onclick = () => {
+          const list = btn.nextElementSibling;
+          if (list && list.classList.contains('forecast-list')) {
+            list.classList.toggle('open');
+          }
+        };
+      });
+    }
+
     function updateForecastAndBreakEven() {
       if (!financeData.length) return;
       const forecast = computeForecast();
@@ -451,6 +457,7 @@
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
+      bindExpandButtons();
 
       const targetInput = document.getElementById('targetProfitInput');
       if (targetInput) {
@@ -475,8 +482,8 @@
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Прогноз на следующий месяц</div>
           <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
           <div class="forecast-details">
-            <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸</span><div class="forecast-list">${fixedListHtml}</div></div>
-            <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸</span><div class="forecast-list">${topVarHtml}</div></div>
+            <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${fixedListHtml}</div></div>
+            <div class="forecast-item">Переменные: <strong>${forecast.avgVariable.toLocaleString()} ₽</strong> <span class="forecast-expand">▸</span><div class="forecast-list">${topVarHtml}</div></div>
             <div class="forecast-item">ЗП педагогов: <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong> <span style="margin-left:0.5rem;">Коэфф. <span id="coeffContainer"></span></span></div>
             <div class="forecast-item">Маркетинг: <strong>${forecast.avgMarketing.toLocaleString()} ₽</strong></div>
             <div class="forecast-item" style="color:var(--royalty);">Роялти: <strong>${forecast.royalty.toLocaleString()} ₽</strong></div>
@@ -711,6 +718,7 @@
 
       const coeffContainer = document.getElementById('coeffContainer');
       if (coeffContainer) buildCoeffWidget(coeffContainer);
+      bindExpandButtons();
 
       const targetInput = document.getElementById('targetProfitInput');
       if (targetInput) {
@@ -719,6 +727,7 @@
 
       updateChart(monthly);
 
+      // остальные виджеты без изменений
       const periodLabels = {'-1':'текущий месяц',1:'прошлый месяц',3:'3 месяца',6:'6 месяцев',12:'12 месяцев',0:'всё время'};
       document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]})`;
       const monthKeys = new Set(monthly.map(([m])=>m));
@@ -772,8 +781,7 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-          await _supabase.from('crm_finance').delete().eq('operation_type', 'in');
-          await _supabase.from('crm_finance').delete().eq('operation_type', 'out');
+          await _supabase.from('crm_finance').delete().neq('id',0);
           for (let i = 0; i < parsed.length; i += 500) {
             const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
