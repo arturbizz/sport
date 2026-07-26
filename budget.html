@@ -41,12 +41,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
     }
-    .back-link, .nav-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-    .nav-link {
-      padding: 0.5rem 1rem; border-radius: var(--radius-sm);
-      border: 1px solid var(--accent); transition: 0.2s;
-    }
-    .nav-link:hover { background: var(--accent); color: white; }
+    .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
     h1 {
       font-size: 2rem; font-weight: 700;
       background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
@@ -93,6 +88,7 @@
       padding: 1.2rem; border: 1px solid var(--border);
       box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
       display: flex; flex-direction: column; gap: 0.6rem;
+      cursor: pointer;
     }
     .payment-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
     .payment-card.overdue { border-color: var(--critical); }
@@ -123,6 +119,9 @@
       width: 100%; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid var(--border);
       border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
     }
+    .modal input[readonly], .modal textarea[readonly], .modal select[disabled] {
+      background: #f8fafc; color: var(--text); cursor: default;
+    }
     .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
     .required { border-color: var(--critical) !important; }
     .coin {
@@ -143,7 +142,7 @@
     <a href="index.html" class="back-link">← На главную</a>
     <h1>Бюджет</h1>
     <div style="display: flex; gap: 0.5rem;">
-      <a href="budget-pro.html" class="nav-link">Аналитика бюджета</a>
+      <a href="budget-pro.html" class="nav-link" style="color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--accent); padding: 0.45rem 1rem; border-radius: var(--radius-sm);">Аналитика бюджета</a>
       <button class="btn btn-primary" id="addBtn">+ Добавить платёж</button>
     </div>
   </div>
@@ -179,10 +178,10 @@
   </div>
 </div>
 
-<!-- Модалка редактирования -->
+<!-- Модалка просмотра/редактирования -->
 <div class="modal-overlay" id="editModal" style="display:none;">
   <div class="modal">
-    <h2 id="editModalTitle">Редактировать платёж</h2>
+    <h2 id="editModalTitle">Платёж</h2>
     <input type="text" id="editName" placeholder="Название">
     <input type="number" id="editAmount" placeholder="Сумма">
     <select id="editPeriodicity">
@@ -196,7 +195,11 @@
     <input type="text" id="editLink" placeholder="Ссылка на оплату">
     <textarea id="editDetails" rows="2" placeholder="Реквизиты"></textarea>
     <textarea id="editNote" rows="2" placeholder="Примечание"></textarea>
-    <div class="modal-actions">
+    <div class="modal-actions" id="viewActions" style="display:none;">
+      <button class="btn" id="enableEditBtn">Редактировать</button>
+      <button class="btn" id="cancelViewBtn">Закрыть</button>
+    </div>
+    <div class="modal-actions" id="editActions">
       <button class="btn btn-primary" id="saveEditBtn">Сохранить</button>
       <button class="btn btn-danger" id="deleteEditBtn">Удалить</button>
       <button class="btn" id="cancelEditBtn">Отмена</button>
@@ -266,15 +269,32 @@
         </div>`;
       }).join('');
 
-      container.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', () => openPayModal(b.closest('.payment-card').dataset.id)));
-      container.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', () => openEditModal(b.closest('.payment-card').dataset.id)));
-      container.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async () => {
+      // Отдельные обработчики на кнопки
+      container.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openPayModal(b.closest('.payment-card').dataset.id);
+      }));
+      container.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(b.closest('.payment-card').dataset.id, false);
+      }));
+      container.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
         const id = b.closest('.payment-card').dataset.id;
         if (confirm('Удалить платёж?')) {
           await _supabase.from('expenses').delete().eq('id', id);
           await loadExpenses();
         }
       }));
+
+      // Клик по всей карточке открывает просмотр
+      container.querySelectorAll('.payment-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          // Не реагируем, если кликнули по кнопке или ссылке внутри
+          if (e.target.closest('button') || e.target.closest('a')) return;
+          openEditModal(card.dataset.id, true);
+        });
+      });
     }
 
     function renderAll() { renderSummary(); renderCards(); }
@@ -335,11 +355,11 @@
       return d.toISOString().split('T')[0];
     }
 
-    // Редактирование / Добавление
-    function openEditModal(id) {
-      document.getElementById('editModalTitle').textContent = 'Редактировать платёж';
+    // Редактирование / Просмотр
+    function openEditModal(id, readOnly = false) {
       const exp = expenses.find(e => e.id == id);
       if (!exp) return;
+      document.getElementById('editModalTitle').textContent = readOnly ? 'Просмотр платежа' : 'Редактировать платёж';
       document.getElementById('editName').value = exp.name;
       document.getElementById('editAmount').value = exp.amount;
       document.getElementById('editPeriodicity').value = exp.periodicity;
@@ -348,9 +368,31 @@
       document.getElementById('editDetails').value = exp.details || '';
       document.getElementById('editNote').value = exp.note || '';
       document.getElementById('editModal').dataset.id = id;
+      document.getElementById('editModal').dataset.readOnly = readOnly;
+
+      // Переключение режимов
+      const isReadOnly = readOnly;
+      document.getElementById('editName').readOnly = isReadOnly;
+      document.getElementById('editAmount').readOnly = isReadOnly;
+      document.getElementById('editPeriodicity').disabled = isReadOnly;
+      document.getElementById('editNextDate').readOnly = isReadOnly;
+      document.getElementById('editLink').readOnly = isReadOnly;
+      document.getElementById('editDetails').readOnly = isReadOnly;
+      document.getElementById('editNote').readOnly = isReadOnly;
+
+      document.getElementById('viewActions').style.display = isReadOnly ? 'flex' : 'none';
+      document.getElementById('editActions').style.display = isReadOnly ? 'none' : 'flex';
+
       document.getElementById('editModal').style.display = 'flex';
     }
 
+    // Кнопка "Редактировать" в режиме просмотра
+    document.getElementById('enableEditBtn').addEventListener('click', () => {
+      const id = document.getElementById('editModal').dataset.id;
+      openEditModal(id, false);
+    });
+
+    document.getElementById('cancelViewBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
     document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
 
     document.getElementById('saveEditBtn').addEventListener('click', async () => {
@@ -410,6 +452,17 @@
       document.getElementById('editDetails').value = '';
       document.getElementById('editNote').value = '';
       delete document.getElementById('editModal').dataset.id;
+      document.getElementById('editModal').dataset.readOnly = false;
+      // Режим редактирования
+      document.getElementById('editName').readOnly = false;
+      document.getElementById('editAmount').readOnly = false;
+      document.getElementById('editPeriodicity').disabled = false;
+      document.getElementById('editNextDate').readOnly = false;
+      document.getElementById('editLink').readOnly = false;
+      document.getElementById('editDetails').readOnly = false;
+      document.getElementById('editNote').readOnly = false;
+      document.getElementById('viewActions').style.display = 'none';
+      document.getElementById('editActions').style.display = 'flex';
       document.getElementById('editModal').style.display = 'flex';
     });
 
