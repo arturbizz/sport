@@ -12,26 +12,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f8fa;
-      --surface: #ffffff;
-      --border: rgba(15,23,42,0.06);
-      --text: #0f172a;
-      --text-secondary: #475569;
-      --accent: #0d9488;
-      --accent-light: #ccfbf1;
-      --warm-yellow: #f59e0b;
-      --soft-green: #10b981;
-      --critical: #ef4444;
-      --royalty: #8b5cf6;
-      --net-profit: #1e3a8a;
+      --bg: #f7f8fa; --surface: #ffffff; --border: rgba(15,23,42,0.06);
+      --text: #0f172a; --text-secondary: #475569; --accent: #0d9488;
+      --accent-light: #ccfbf1; --warm-yellow: #f59e0b; --soft-green: #10b981;
+      --critical: #ef4444; --royalty: #8b5cf6; --net-profit: #1e3a8a;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
-      color: var(--text);
-      min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
+      color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
       cursor: default; caret-color: transparent;
     }
     input, select { cursor: text; caret-color: auto; }
@@ -41,17 +32,9 @@
       padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
       border: 1px solid var(--border); backdrop-filter: blur(12px);
     }
-    .header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
-    }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
     .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-    h1 {
-      font-size: 2rem; font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
+    h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--warm-yellow)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .btn {
       padding: 0.5rem 1.2rem; border-radius: var(--radius-sm);
       font-weight: 600; cursor: pointer; font-size: 0.85rem;
@@ -62,20 +45,16 @@
     .btn-primary:hover { background: #0f766e; }
     .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); font-size: 1.2rem; padding: 0.2rem; transition: color 0.2s; }
     .icon-btn:hover { color: var(--accent); }
-
     .filters { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
     .filter-btn {
       padding: 0.35rem 0.9rem; border-radius: 20px;
       border: 1px solid var(--border); background: var(--surface);
-      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
-      color: var(--text-secondary);
+      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s; color: var(--text-secondary);
     }
     .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
     .forecast-card {
       background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%);
-      border: 1px solid rgba(13,148,136,0.2);
-      border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem;
+      border: 1px solid rgba(13,148,136,0.2); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem;
     }
     .forecast-total { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
     .forecast-details { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem; }
@@ -85,17 +64,14 @@
     .forecast-expand:hover { text-decoration: underline; }
     .forecast-list { display: none; margin-top: 0.3rem; padding-left: 1rem; font-size: 0.8rem; color: var(--text-secondary); width: 100%; }
     .forecast-list.open { display: block; }
-
     .coeff-widget {
       display: inline-flex; align-items: center; gap: 4px;
-      background: var(--surface); border-radius: 10px;
-      border: 1px solid var(--border); padding: 2px;
+      background: var(--surface); border-radius: 10px; border: 1px solid var(--border); padding: 2px;
     }
     .coeff-btn {
       width: 32px; height: 32px; border: none; background: transparent;
       font-size: 18px; font-weight: 600; color: var(--accent);
-      cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-      transition: 0.2s;
+      cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: 0.2s;
     }
     .coeff-btn:hover { background: var(--accent-light); }
     .coeff-value {
@@ -105,103 +81,54 @@
     }
     .coeff-value::-webkit-outer-spin-button,
     .coeff-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-
-    .kpi-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem; margin-bottom: 2rem;
-    }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
     .kpi-card {
       background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1.2rem; border: 1px solid var(--border);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-      min-width: 0;
+      padding: 1.2rem; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02); min-width: 0;
     }
     .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
     .kpi-value {
-      font-size: clamp(1.4rem, 1.8rem, 5vw);
-      font-weight: 700; color: var(--accent); margin-top: 0.3rem;
+      font-size: clamp(1.4rem, 1.8rem, 5vw); font-weight: 700; color: var(--accent); margin-top: 0.3rem;
       word-break: break-word; overflow-wrap: break-word; max-width: 100%;
     }
     .kpi-card.net-profit .kpi-value { color: var(--net-profit); font-size: clamp(1.5rem, 2rem, 5vw); }
     .kpi-change { font-size: 0.75rem; margin-top: 0.2rem; color: var(--text-secondary); word-break: break-word; }
     .kpi-change .up { color: var(--soft-green); }
     .kpi-change .down { color: var(--critical); }
-
     .chart-container {
       background: var(--surface); border-radius: var(--radius-lg);
       padding: 1.5rem; border: 1px solid var(--border); margin-bottom: 2rem;
     }
-    .chart-title {
-      font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary);
-      display: flex; justify-content: space-between; align-items: center;
-    }
+    .chart-title { font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary); display: flex; justify-content: space-between; align-items: center; }
     .chart-period-btns { display: flex; gap: 0.3rem; }
     .chart-period-btns button {
       padding: 0.2rem 0.6rem; border-radius: 14px;
       border: 1px solid var(--border); background: var(--surface);
-      font-size: 0.75rem; font-weight: 500; cursor: pointer;
-      color: var(--text-secondary); transition: 0.2s;
+      font-size: 0.75rem; font-weight: 500; cursor: pointer; color: var(--text-secondary); transition: 0.2s;
     }
     .chart-period-btns button.active { background: var(--accent); color: white; border-color: var(--accent); }
     #mainChart { width: 100%; height: 400px; }
-
-    .widget-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1rem; margin-bottom: 1.5rem;
-    }
-    .widget-card {
-      background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1.2rem; border: 1px solid var(--border);
-    }
+    .widget-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .widget-card { background: var(--surface); border-radius: var(--radius-lg); padding: 1.2rem; border: 1px solid var(--border); }
     .widget-title { font-weight: 600; margin-bottom: 0.8rem; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; }
     .list-item { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(0,0,0,0.03); font-size: 0.9rem; }
     .list-item:last-child { border: none; }
     .list-item .amount { font-weight: 600; }
-
-    .table-container {
-      background: var(--surface); border-radius: var(--radius-lg);
-      border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem;
-      display: none;
-    }
+    .table-container { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem; display: none; }
     .table-container.open { display: block; }
-
     table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     th { text-align: left; padding: 0.6rem; background: #f8fafc; color: var(--text-secondary); font-weight: 600; }
     td { padding: 0.6rem; border-top: 1px solid rgba(0,0,0,0.03); }
     tr:hover td { background: #f8fafc; }
-
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .modal {
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(12px);
-      border-radius: var(--radius-xl);
-      padding: 2rem;
-      max-width: 600px; width: 90%;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
-      animation: slideUp 0.25s ease-out;
-      max-height: 80vh; overflow-y: auto;
-      position: relative;
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); border-radius: var(--radius-xl); padding: 2rem; max-width: 600px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset; animation: slideUp 0.25s ease-out; max-height: 80vh; overflow-y: auto; position: relative; }
     @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-    .modal-close {
-      position: absolute; top: 16px; right: 16px;
-      background: none; border: none; cursor: pointer;
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-secondary); font-size: 18px;
-    }
+    .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 18px; }
     .modal-close:hover { background: rgba(0,0,0,0.05); color: var(--text); }
     .header-actions { display: flex; gap: 0.5rem; align-items: center; }
-    .nav-btn {
-      padding: 0.45rem 1rem; border-radius: var(--radius-sm); font-weight: 600;
-      font-size: 0.85rem; text-decoration: none; color: var(--accent);
-      border: 1px solid var(--accent); transition: 0.2s;
-    }
+    .nav-btn { padding: 0.45rem 1rem; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.85rem; text-decoration: none; color: var(--accent); border: 1px solid var(--accent); transition: 0.2s; }
     .nav-btn:hover { background: var(--accent); color: white; }
+    .target-profit-input { width: 100px; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border); text-align: center; }
   </style>
 </head>
 <body>
@@ -292,7 +219,6 @@
   </div>
 </div>
 
-<!-- Уведомление -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
   <div class="modal">
     <button class="modal-close" onclick="document.getElementById('alertModal').style.display='none'">&times;</button>
@@ -402,24 +328,7 @@
         showAlert('Ошибка сохранения коэффициента.');
         console.error(e);
       }
-      // Перерисовать только прогноз и точку безубыточности
       updateForecastAndBreakEven();
-    }
-
-    function updateForecastAndBreakEven() {
-      if (!financeData.length) return;
-      const forecast = computeForecast();
-      document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
-      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast, getMonthlyData(selectedMonths).reduce((s,m)=>s+m[1].income,0));
-      // Перепривязать кастомный коэффициент
-      const coeffContainer = document.getElementById('coeffContainer');
-      if (coeffContainer) buildCoeffWidget(coeffContainer);
-      bindExpandButtons();
-
-      const targetInput = document.getElementById('targetProfitInput');
-      if (targetInput) {
-        targetInput.addEventListener('input', updateTargetIncome);
-      }
     }
 
     function buildCoeffWidget(container) {
@@ -472,6 +381,21 @@
           }
         });
       });
+    }
+
+    function updateForecastAndBreakEven() {
+      if (!financeData.length) return;
+      const forecast = computeForecast();
+      document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
+      document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast, getMonthlyData(selectedMonths).reduce((s,m)=>s+m[1].income,0));
+      const coeffContainer = document.getElementById('coeffContainer');
+      if (coeffContainer) buildCoeffWidget(coeffContainer);
+      bindExpandButtons();
+
+      const targetInput = document.getElementById('targetProfitInput');
+      if (targetInput) {
+        targetInput.addEventListener('input', updateTargetIncome);
+      }
     }
 
     function updateTargetIncome() {
@@ -555,7 +479,7 @@
       return incomes.reduce((a,b) => a+b, 0) / incomes.length;
     }
 
-    // Улучшенный прогноз с исключением выбросов
+    // ИСХОДНАЯ ЛОГИКА ПЕРЕМЕННЫХ РАСХОДОВ – гарантированно работает
     function computeForecast() {
       const now = new Date();
       const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
@@ -563,48 +487,24 @@
       const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
-      // Берём данные за последние 6 месяцев для анализа переменных расходов
-      const sixMonthsAgo = new Date(Date.now() - 6*30*24*60*60*1000).toISOString().slice(0,7);
-      let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= sixMonthsAgo);
+      const threeMonthsAgo = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
+      let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
         recentOps = financeData.filter(isExpense).filter(r => r.operation_date);
       }
 
-      // Группируем переменные расходы по категориям и месяцам
-      const variableByMonthCategory = {};
-      recentOps.forEach(r => {
-        if (isFixedCategory(r.category) || isTeacherCategory(r.category)) return;
-        const m = r.operation_date?.slice(0,7);
-        if (!m) return;
-        const cat = r.category || 'Без категории';
-        if (!variableByMonthCategory[cat]) variableByMonthCategory[cat] = {};
-        variableByMonthCategory[cat][m] = (variableByMonthCategory[cat][m] || 0) + parseFloat(r.amount);
-      });
+      const variableOps = recentOps.filter(r => !isFixedCategory(r.category) && !isTeacherCategory(r.category));
+      const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
+      const avgVariable = Math.round((totalVar / monthsCount) * 1.05);
+      const topVar = Object.entries(
+        variableOps.reduce((acc, r) => {
+          const cat = r.category || 'Без категории';
+          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
+          return acc;
+        }, {})
+      ).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
-      // Для каждой категории вычисляем среднее, исключая выбросы
-      const categoryAverages = {};
-      Object.entries(variableByMonthCategory).forEach(([cat, monthlyValues]) => {
-        const values = Object.values(monthlyValues);
-        if (values.length === 0) return;
-        // Сортируем для расчёта квартилей
-        const sorted = [...values].sort((a,b)=>a-b);
-        const q1 = sorted[Math.floor(sorted.length * 0.25)];
-        const q3 = sorted[Math.floor(sorted.length * 0.75)];
-        const iqr = q3 - q1;
-        const lower = q1 - 1.5 * iqr;
-        const upper = q3 + 1.5 * iqr;
-        const filtered = values.filter(v => v >= lower && v <= upper);
-        const cleanValues = filtered.length > 0 ? filtered : values; // если все выбросы, берём исходные
-        const avg = cleanValues.reduce((s,v)=>s+v,0) / cleanValues.length;
-        categoryAverages[cat] = Math.round(avg * 1.05); // +5% запас
-      });
-
-      // Суммируем прогноз переменных по категориям
-      const avgVariable = Object.values(categoryAverages).reduce((s,v)=>s+v, 0);
-      // Топ-5 категорий по прогнозной сумме
-      const topVar = Object.entries(categoryAverages).sort((a,b)=>b[1]-a[1]).slice(0,5);
-
-      // ЗП педагогов (по максимуму из последних месяцев)
       const teacherOps = recentOps.filter(r => isTeacherCategory(r.category));
       const monthlyTeacher = {};
       teacherOps.forEach(r => {
@@ -614,7 +514,6 @@
       const maxTeacher = Math.max(...Object.values(monthlyTeacher), 0);
       const avgTeacher = Math.round(maxTeacher * 1.05 * globalRateCoeff);
 
-      // Маркетинг
       const marketingOps = recentOps.filter(isMarketing);
       const totalMark = marketingOps.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCountMark = Math.max(1, new Set(marketingOps.map(r => r.operation_date?.slice(0,7))).size);
@@ -629,9 +528,7 @@
     }
 
     function updateChart(monthlyData) {
-      if (!myChart) {
-        myChart = echarts.init(document.getElementById('mainChart'));
-      }
+      if (!myChart) myChart = echarts.init(document.getElementById('mainChart'));
 
       const months = monthlyData.map(([m]) => m);
       const incomes = monthlyData.map(([,v]) => v.income);
@@ -724,13 +621,10 @@
       bindExpandButtons();
 
       const targetInput = document.getElementById('targetProfitInput');
-      if (targetInput) {
-        targetInput.addEventListener('input', updateTargetIncome);
-      }
+      if (targetInput) targetInput.addEventListener('input', updateTargetIncome);
 
       updateChart(monthly);
 
-      // Остальные виджеты
       const periodLabels = {'-1':'текущий месяц',1:'прошлый месяц',3:'3 месяца',6:'6 месяцев',12:'12 месяцев',0:'всё время'};
       document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]})`;
       const monthKeys = new Set(monthly.map(([m])=>m));
