@@ -77,8 +77,16 @@
     .forecast-total { font-size: 2.2rem; font-weight: 700; color: var(--accent); }
     .forecast-details { display: flex; gap: 2rem; flex-wrap: wrap; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary); }
     .forecast-details strong { color: var(--text); }
-    .forecast-fixed-list { margin-top: 0.8rem; font-size: 0.85rem; color: var(--text-secondary); }
-    .forecast-fixed-list span { margin-right: 1rem; white-space: nowrap; }
+    .forecast-fixed-list {
+      margin-top: 0.8rem; font-size: 0.85rem; color: var(--text-secondary);
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem;
+      max-height: 120px; overflow-y: auto;
+    }
+    .forecast-fixed-list span { white-space: nowrap; }
+
+    .debug-info {
+      margin-top: 0.5rem; font-size: 0.8rem; color: var(--soft-green);
+    }
 
     .kpi-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -104,12 +112,12 @@
     }
     .bar:hover { filter: brightness(1.05); transform: scaleY(1.03); }
     .bar-fixed {
-      background: linear-gradient(180deg, #0d9488 0%, #14b8a6 100%);
-      box-shadow: 0 0 6px rgba(13,148,136,0.3);
+      background: linear-gradient(180deg, #0d9488 0%, #14b8a6 100%) !important;
+      box-shadow: 0 0 6px rgba(13,148,136,0.3) !important;
     }
     .bar-variable {
-      background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%);
-      box-shadow: 0 0 6px rgba(245,158,11,0.3);
+      background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%) !important;
+      box-shadow: 0 0 6px rgba(245,158,11,0.3) !important;
     }
     .bar-tooltip {
       position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%);
@@ -198,7 +206,6 @@
     let financeData = [], allExpenses = [], teacherSalaryData = [];
     let selectedMonths = 0;
 
-    // Статьи, которые считаем постоянными (исключаем из переменных)
     const FIXED_SALARY_ARTICLES = [
       'Администраторы ЗП',
       'ЗП Менеджеры оклад',
@@ -246,7 +253,7 @@
       financeData.filter(isExpenseOperation).forEach(r => {
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
         if (!m || (cutoff && m < cutoff)) return;
-        if (isFixedSalaryArticle(r.category)) return; // исключаем постоянные оклады
+        if (isFixedSalaryArticle(r.category)) return;
         if (!months[m]) months[m] = { fixed: 0, variable: 0 };
         months[m].variable += parseFloat(r.amount);
       });
@@ -298,10 +305,11 @@
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
       const threeMonthsAgo = new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
-      const recentVariable = financeData
+      const allVariable = financeData
         .filter(isExpenseOperation)
-        .filter(r => r.operation_date && r.operation_date >= threeMonthsAgo)
-        .filter(r => !isFixedSalaryArticle(r.category)); // исключаем постоянные оклады
+        .filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
+      const excludedVariable = allVariable.filter(r => isFixedSalaryArticle(r.category));
+      const recentVariable = allVariable.filter(r => !isFixedSalaryArticle(r.category));
 
       const totalVariable = recentVariable.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCount = Math.max(1, new Set(recentVariable.map(r => r.operation_date?.slice(0,7))).size);
@@ -313,7 +321,9 @@
 
       const total = totalFixed + avgVariable + avgTeacherSal;
 
-      return { totalFixed, avgVariable, avgTeacherSal, total, fixedList };
+      const debugMsg = `Найдено переменных записей: ${allVariable.length}, из них исключено как постоянные оклады: ${excludedVariable.length}.`;
+
+      return { totalFixed, avgVariable, avgTeacherSal, total, fixedList, debugMsg };
     }
 
     function renderAll() {
@@ -337,6 +347,7 @@
             <span>ЗП педагоги: <strong>${forecast.avgTeacherSal.toLocaleString()} ₽</strong></span>
           </div>
           <div class="forecast-fixed-list">${fixedListHtml}</div>
+          <div class="debug-info">${forecast.debugMsg}</div>
         </div>
       `;
 
