@@ -145,11 +145,14 @@
     td { padding: 0.6rem; border-top: 1px solid rgba(0,0,0,0.03); }
     tr:hover td { background: #f8fafc; }
 
+    /* ---- Модальные окна ---- */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.3);
       backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center; z-index: 1000;
+      animation: fadeIn 0.2s ease;
     }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .modal {
       background: rgba(255,255,255,0.9);
       backdrop-filter: blur(12px);
@@ -159,10 +162,20 @@
       box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
       animation: slideUp 0.25s ease-out;
       max-height: 80vh; overflow-y: auto;
+      position: relative;
     }
     @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
     .modal p { margin-bottom: 1rem; font-size: 14px; color: var(--text); }
     .modal .btn { margin: 0 4px; }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; cursor: pointer;
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); transition: 0.2s;
+      font-size: 18px; line-height: 1;
+    }
+    .modal-close:hover { background: rgba(0,0,0,0.05); color: var(--text); }
     .header-actions { display: flex; gap: 0.5rem; align-items: center; }
     .nav-btn {
       padding: 0.45rem 1rem; border-radius: var(--radius-sm); font-weight: 600;
@@ -255,27 +268,29 @@
   </div>
 </div>
 
-<!-- Техническая информация -->
-<div class="modal-overlay" id="infoModal" style="display:none;">
-  <div class="modal">
-    <h2 style="margin-bottom:1rem; font-size:1.2rem; color:var(--accent);">Техническая информация</h2>
-    <div id="infoContent" style="text-align:left; font-size:0.9rem; color:var(--text-secondary); line-height:1.6;"></div>
-    <button class="btn btn-primary" id="closeInfoBtn" style="margin-top:1.5rem;">Закрыть</button>
-  </div>
-</div>
-
 <!-- Модалка детализации месяца -->
 <div class="modal-overlay" id="monthDetailModal" style="display:none;">
   <div class="modal">
-    <h2 id="monthDetailTitle" style="margin-bottom:1rem;"></h2>
+    <button class="modal-close" id="closeMonthDetailBtn">&times;</button>
+    <h2 id="monthDetailTitle" style="margin-bottom:1rem; padding-right: 2rem;"></h2>
     <div id="monthDetailContent"></div>
-    <button class="btn btn-primary" id="closeMonthDetailBtn">Закрыть</button>
   </div>
 </div>
 
-<!-- Премиум уведомление -->
+<!-- Техническая информация -->
+<div class="modal-overlay" id="infoModal" style="display:none;">
+  <div class="modal">
+    <button class="modal-close" id="closeInfoBtn">&times;</button>
+    <h2 style="margin-bottom:1rem; font-size:1.2rem; color:var(--accent);">Техническая информация</h2>
+    <div id="infoContent" style="text-align:left; font-size:0.9rem; color:var(--text-secondary); line-height:1.6;"></div>
+    <button class="btn btn-primary" style="margin-top:1.5rem;">Закрыть</button>
+  </div>
+</div>
+
+<!-- Уведомление -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
   <div class="modal">
+    <button class="modal-close" id="closeAlertBtn">&times;</button>
     <p id="alertMessage"></p>
     <button class="btn btn-primary" id="alertOkBtn">OK</button>
   </div>
@@ -290,6 +305,10 @@
     let financeData = [], allExpenses = [], teacherSalaryData = [];
     let selectedMonths = 1;
     let myChart = null;
+
+    // Сохранённый коэффициент
+    const STORED_RATE_KEY = 'budget_pro_rate_coeff';
+    let rateCoeff = parseFloat(localStorage.getItem(STORED_RATE_KEY)) || 1.0;
 
     const FIXED_ARTICLES = [
       'Администраторы ЗП',
@@ -316,6 +335,14 @@
         document.getElementById('alertModal').style.display = 'none';
       };
     }
+
+    // Закрытие модалок по клику вне окна
+    document.addEventListener('click', (e) => {
+      const modals = document.querySelectorAll('.modal-overlay');
+      modals.forEach(overlay => {
+        if (e.target === overlay) overlay.style.display = 'none';
+      });
+    });
 
     async function fetchAll(table, orderColumn = 'operation_date') {
       const PAGE_SIZE = 1000;
@@ -419,10 +446,6 @@
     const isTeacherCategory = (cat) => TEACHER_SALARY_ARTICLES.some(a => (cat || '').toLowerCase().includes(a.toLowerCase()));
 
     function monthKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); }
-    function prevMonthKey(monthKeyStr) {
-      const [y, m] = monthKeyStr.split('-').map(Number);
-      return monthKey(new Date(y, m - 2, 1));
-    }
 
     function getMonthTotals(monthKeyStr) {
       const result = { income:0, expense:0, marketing:0 };
@@ -472,7 +495,7 @@
       return { diff: diff.toFixed(1), abs: Math.abs(current - previous), positive: diff >= 0 };
     }
 
-    function computeForecast(rateCoeff = 1.0) {
+    function computeForecast() {
       const now = new Date();
       const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
 
@@ -579,7 +602,6 @@
       const incomes = monthlyData.map(([, v]) => v.income);
       const expenses = monthlyData.map(([, v]) => v.expense);
       const marketings = monthlyData.map(([, v]) => v.marketing);
-      const profits = monthlyData.map(([, v]) => v.income - v.expense);
 
       const option = {
         tooltip: {
@@ -695,8 +717,7 @@
       const expenseChange = computeChange(totalExpense, prevExpense);
       const marketingChange = computeChange(totalMarketing, prevMarketing);
 
-      const rateCoeff = parseFloat(document.getElementById('rateCoeff')?.value || 1.0);
-      const forecast = computeForecast(rateCoeff);
+      const forecast = computeForecast();
       const fixedListHtml = forecast.fixedList.map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
       const topVarHtml = forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ');
 
@@ -730,11 +751,14 @@
         </div>
       `;
 
-      // Навешиваем обработчик на rateCoeff
+      // Сохранение коэффициента
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
-        rateInput.addEventListener('change', renderAll);
-        rateInput.addEventListener('input', renderAll);
+        rateInput.addEventListener('input', function() {
+          rateCoeff = parseFloat(this.value) || 1.0;
+          localStorage.setItem(STORED_RATE_KEY, rateCoeff);
+          renderAll();
+        });
       }
 
       // KPI
