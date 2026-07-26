@@ -239,7 +239,6 @@
     <div id="mainChart"></div>
   </div>
 
-  <!-- Изменён порядок: сначала маркетинг, средние, безубыточность, потом категории и топ-10 -->
   <div class="widget-grid">
     <div class="widget-card">
       <div class="widget-title">Анализ влияния маркетинга</div>
@@ -441,8 +440,11 @@
 
     function bindExpandButtons() {
       document.querySelectorAll('.forecast-expand').forEach(btn => {
-        // Убираем старый обработчик, чтобы не дублировался
-        btn.onclick = null;
+        // Удаляем старые обработчики, чтобы избежать дублирования
+        btn.replaceWith(btn.cloneNode(true));
+      });
+      // Вешаем заново
+      document.querySelectorAll('.forecast-expand').forEach(btn => {
         btn.addEventListener('click', function(e) {
           const list = this.nextElementSibling;
           if (list && list.classList.contains('forecast-list')) {
@@ -478,9 +480,10 @@
 
     function generateForecastHTML(forecast) {
       const fixedListHtml = (forecast.fixedList || []).map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
-      // Если топ переменных пуст, не показываем кнопку и список
-      const hasVarData = forecast.topVariable && forecast.topVariable.length > 0;
-      const topVarHtml = hasVarData ? forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ') : '';
+      const topVar = forecast.topVariable || [];
+      const hasVarData = topVar.length > 0;
+      const topVarHtml = hasVarData ? topVar.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ') : '';
+      
       return `
         <div class="forecast-card">
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase;">Прогноз на следующий месяц</div>
@@ -731,7 +734,6 @@
 
       updateChart(monthly);
 
-      // Остальные виджеты (теперь порядок тот, который нужен)
       const periodLabels = {'-1':'текущий месяц',1:'прошлый месяц',3:'3 месяца',6:'6 месяцев',12:'12 месяцев',0:'всё время'};
       document.getElementById('periodCategoryTitle').textContent = `Расходы по категориям (${periodLabels[selectedMonths]})`;
       const monthKeys = new Set(monthly.map(([m])=>m));
@@ -785,8 +787,8 @@
             });
           }
           if (parsed.length === 0) { showAlert('Не найдено записей в файле.'); return; }
-          // Удаляем только операционные данные, настройки не трогаем
-          await _supabase.from('crm_finance').delete().not('operation_type', 'in', 'settings');
+          // Удаляем только операционные данные (не настройки)
+          await _supabase.from('crm_finance').delete().not('operation_type', 'in', '("settings")');
           for (let i = 0; i < parsed.length; i += 500) {
             const { error } = await _supabase.from('crm_finance').insert(parsed.slice(i, i+500));
             if (error) { showAlert(`Ошибка загрузки: ${error.message}`); return; }
