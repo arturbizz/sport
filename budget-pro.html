@@ -98,11 +98,20 @@
       background: var(--surface); border-radius: var(--radius-lg);
       padding: 1.2rem; border: 1px solid var(--border);
       box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      min-width: 0; /* важно для предотвращения переполнения */
     }
     .kpi-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em; }
-    .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }
-    .kpi-card.net-profit .kpi-value { color: var(--net-profit); font-size: 2rem; }
-    .kpi-change { font-size: 0.75rem; margin-top: 0.2rem; color: var(--text-secondary); }
+    .kpi-value {
+      font-size: clamp(1.4rem, 1.8rem, 5vw);
+      font-weight: 700;
+      color: var(--accent);
+      margin-top: 0.3rem;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
+    }
+    .kpi-card.net-profit .kpi-value { color: var(--net-profit); font-size: clamp(1.5rem, 2rem, 5vw); }
+    .kpi-change { font-size: 0.75rem; margin-top: 0.2rem; color: var(--text-secondary); word-break: break-word; }
     .kpi-change .up { color: var(--soft-green); }
     .kpi-change .down { color: var(--critical); }
 
@@ -284,9 +293,9 @@
     let selectedMonths = 1;
     let myChart = null;
     const ROYALTY_RATE = 0.08;
-    const ROYALTY_START = '2026-07'; // роялти с июля 2026
+    const ROYALTY_START = '2026-07';
 
-    // Коэффициент из БД (общий для всех)
+    // Глобальный коэффициент (загружается из Supabase)
     let globalRateCoeff = 1.0;
 
     const FIXED_ARTICLES = [
@@ -333,14 +342,13 @@
       return allRows;
     }
 
-    // Загрузка коэффициента из app_settings (без падений)
+    // Загрузка коэффициента из app_settings
     async function loadSettings() {
       try {
         const { data, error } = await _supabase.from('app_settings').select('value').eq('key', 'teacher_rate_coeff').single();
         if (error || !data) {
-          // попробуем создать запись
-          try { await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: '1.0' }); } catch(e){}
           globalRateCoeff = 1.0;
+          // Не пытаемся создать запись, просто используем 1.0
         } else {
           globalRateCoeff = parseFloat(data.value) || 1.0;
         }
@@ -349,11 +357,20 @@
       }
     }
 
+    // Сохранение коэффициента в app_settings с уведомлением об ошибке
     async function saveRateCoeff(value) {
       globalRateCoeff = value;
       try {
-        await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
-      } catch (e) { /* тихо */ }
+        const { error } = await _supabase.from('app_settings').upsert({ key: 'teacher_rate_coeff', value: String(value) });
+        if (error) {
+          showAlert('Не удалось сохранить коэффициент. Проверьте, создана ли таблица app_settings и отключён ли Row Level Security.');
+          console.error('Ошибка сохранения коэффициента:', error);
+        }
+      } catch (e) {
+        showAlert('Ошибка соединения при сохранении коэффициента.');
+        console.error(e);
+      }
+      // Обновляем только прогноз и точку безубыточности
       updateForecastAndBreakEven();
     }
 
@@ -362,7 +379,7 @@
       const forecast = computeForecast();
       document.getElementById('forecastContainer').innerHTML = generateForecastHTML(forecast);
       document.getElementById('breakeven').innerHTML = generateBreakEvenHTML(forecast);
-      // Обработчики для нового поля
+      // Перепривязываем обработчики
       const rateInput = document.getElementById('rateCoeff');
       if (rateInput) {
         rateInput.addEventListener('input', function() {
@@ -717,7 +734,7 @@
         financeData = fin;
         allExpenses = exp;
         teacherSalaryData = sal;
-        await loadSettings(); // грузим коэффициент
+        await loadSettings();
         renderAll();
       } catch (err) {
         console.error(err);
