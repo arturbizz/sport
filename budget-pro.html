@@ -108,36 +108,25 @@
       padding: 1.5rem; border: 1px solid var(--border); margin-bottom: 2rem;
     }
     .chart-title { font-weight: 600; margin-bottom: 1rem; color: var(--text-secondary); }
-    .bar-chart { display: flex; gap: 6px; align-items: flex-end; height: 220px; padding: 0 0.5rem; position: relative; }
-    .bar {
-      flex: 1; border-radius: 8px 8px 0 0; transition: 0.25s; position: relative;
-      display: flex; flex-direction: column-reverse; cursor: pointer;
+    .chart-grid { display: flex; gap: 12px; align-items: flex-end; justify-content: center; }
+    .chart-month { flex: 1; text-align: center; }
+    .chart-bars { display: flex; gap: 4px; justify-content: center; align-items: flex-end; height: 200px; margin-bottom: 8px; }
+    .chart-bar {
+      width: 18px; border-radius: 6px 6px 0 0; transition: 0.25s; position: relative; cursor: pointer;
     }
-    .bar:hover { filter: brightness(1.05); transform: scaleY(1.03); }
-    .bar-income {
-      background: linear-gradient(180deg, #0d9488 0%, #14b8a6 100%) !important;
-      box-shadow: 0 0 6px rgba(13,148,136,0.3) !important;
+    .chart-bar:hover { filter: brightness(1.1); transform: scaleY(1.02); }
+    .chart-bar.income { background: linear-gradient(180deg, #0d9488, #14b8a6); box-shadow: 0 0 6px rgba(13,148,136,0.3); }
+    .chart-bar.expense { background: linear-gradient(180deg, #f59e0b, #fbbf24); box-shadow: 0 0 6px rgba(245,158,11,0.3); }
+    .chart-tooltip {
+      position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      background: rgba(15,23,42,0.85); color: white; font-size: 0.7rem; padding: 3px 8px; border-radius: 6px;
+      white-space: nowrap; pointer-events: none; display: none;
     }
-    .bar-fixed {
-      background: linear-gradient(180deg, #0d9488 0%, #14b8a6 100%) !important;
-      box-shadow: 0 0 6px rgba(13,148,136,0.3) !important;
-    }
-    .bar-variable {
-      background: linear-gradient(180deg, #f59e0b 0%, #fbbf24 100%) !important;
-      box-shadow: 0 0 6px rgba(245,158,11,0.3) !important;
-    }
-    .bar-marketing {
-      background: linear-gradient(180deg, #ef4444 0%, #f87171 100%) !important;
-      box-shadow: 0 0 6px rgba(239,68,68,0.3) !important;
-    }
-    .bar-tooltip {
-      position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%);
-      background: rgba(15,23,42,0.85); color: white; font-size: 0.7rem;
-      padding: 3px 8px; border-radius: 6px; white-space: nowrap; display: none;
-      pointer-events: none;
-    }
-    .bar:hover .bar-tooltip { display: block; }
-    .bar-label { position: absolute; bottom: -22px; width: 100%; text-align: center; font-size: 0.65rem; color: var(--text-secondary); }
+    .chart-bar:hover .chart-tooltip { display: block; }
+    .chart-label { font-size: 0.65rem; color: var(--text-secondary); margin-top: 4px; }
+    .chart-change { font-size: 0.6rem; color: var(--text-secondary); }
+    .chart-change.positive { color: var(--soft-green); }
+    .chart-change.negative { color: var(--critical); }
 
     .widget-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -172,22 +161,8 @@
     td { padding: 0.6rem; border-top: 1px solid rgba(0,0,0,0.03); }
     tr:hover td { background: #f8fafc; }
 
-    /* Премиум модальное окно */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .modal {
-      background: rgba(255,255,255,0.9);
-      backdrop-filter: blur(12px);
-      border-radius: var(--radius-xl);
-      padding: 2rem;
-      max-width: 400px; width: 90%;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
-      animation: slideUp 0.25s ease-out;
-      text-align: center;
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); border-radius: var(--radius-xl); padding: 2rem; max-width: 400px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset; animation: slideUp 0.25s ease-out; text-align: center; }
     @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
     .modal p { margin-bottom: 1.5rem; font-size: 16px; color: var(--text); }
     .modal .btn { margin: 0 4px; }
@@ -222,8 +197,8 @@
   <div class="kpi-grid" id="kpiContainer"></div>
 
   <div class="chart-container">
-    <div class="chart-title">Динамика по месяцам (доходы, постоянные, переменные, маркетинг)</div>
-    <div class="bar-chart" id="barChart"></div>
+    <div class="chart-title">Динамика по месяцам (доходы и расходы)</div>
+    <div class="chart-grid" id="chartGrid"></div>
   </div>
 
   <div class="widget-grid">
@@ -243,7 +218,7 @@
 
   <div class="table-container" id="transactionTable">
     <table>
-      <thead><tr><th>Дата</th><th>Тип операции</th><th>Категория</th><th>Сумма</th><th>Счёт</th><th>Тип</th></tr></thead>
+      <thead><tr><th>Дата</th><th>Тип операции</th><th>Статья</th><th>Сумма</th><th>Счёт</th></tr></thead>
       <tbody id="tableBody"></tbody>
     </table>
   </div>
@@ -263,7 +238,6 @@
   </div>
 </div>
 
-<!-- Техническая информация -->
 <div class="modal-overlay" id="infoModal" style="display:none;">
   <div class="modal">
     <h2 style="margin-bottom:1rem; font-size:1.2rem; color:var(--accent);">Техническая информация</h2>
@@ -272,7 +246,6 @@
   </div>
 </div>
 
-<!-- Премиум уведомление -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
   <div class="modal">
     <p id="alertMessage"></p>
@@ -287,9 +260,9 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let financeData = [], allExpenses = [], teacherSalaryData = [];
-    let selectedMonths = 1; // по умолчанию прошлый месяц
+    let selectedMonths = 1;
 
-    // Категории, которые считаем постоянными (оклады и регулярные платежи)
+    // Точные названия для сопоставления
     const FIXED_ARTICLES = [
       'Администраторы ЗП',
       'ЗП Менеджеры оклад',
@@ -301,12 +274,9 @@
       '% рассрочка'
     ];
 
-    // Статьи, относящиеся к зарплате преподавателей (из crm_finance)
     const TEACHER_SALARY_ARTICLES = [
       'ЗП Педагоги уроки',
-      'ЗП Педагоги  уроки',
-      'ЗП педагоги пробные',
-      'ЗП педагоги  пробные'
+      'ЗП педагоги пробные'
     ];
 
     function showAlert(msg) {
@@ -361,28 +331,27 @@
       return allExpenses.filter(e => e.paid);
     }
 
-    function isExpenseOrSalaryOperation(r) {
-      const type = (r.operation_type || '').toLowerCase();
-      // Учитываем и "Расход", и "Выплата ЗП" как расходные операции
-      return type.includes('расход') || type.includes('выплата') || type.includes('инкассация') || type.includes('возврат');
+    function isIncomeType(type) {
+      const t = (type || '').trim();
+      return t === 'Доход' || t === 'Продажа товара';
     }
 
-    function isIncomeOperation(r) {
-      const type = (r.operation_type || '').toLowerCase();
-      return type.includes('доход') || type.includes('продажа');
+    function isExpenseType(type) {
+      const t = (type || '').trim();
+      return t === 'Расход' || t === 'Выплата ЗП' || t === 'Возврат средств' || t === 'Инкассация расход';
     }
 
     function isMarketingCategory(category) {
-      const c = (category || '').toLowerCase();
-      return c.includes('маркетинг бюджет') || c.includes('маркетинг работа');
+      const c = (category || '').trim();
+      return c === 'Маркетинг бюджет' || c === 'Маркетинг работа';
     }
 
     function isFixedCategory(category) {
-      return FIXED_ARTICLES.some(art => (category || '').toLowerCase().includes(art.toLowerCase()));
+      return FIXED_ARTICLES.includes((category || '').trim());
     }
 
     function isTeacherSalaryCategory(category) {
-      return TEACHER_SALARY_ARTICLES.some(art => (category || '').toLowerCase().includes(art.toLowerCase()));
+      return TEACHER_SALARY_ARTICLES.includes((category || '').trim());
     }
 
     function getCutoffDate(monthsBack) {
@@ -392,10 +361,7 @@
         const startOfCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfPrevious = new Date(startOfCurrent);
         startOfPrevious.setMonth(startOfPrevious.getMonth() - 1);
-        return {
-          from: startOfPrevious.toISOString().slice(0,7),
-          to: startOfCurrent.toISOString().slice(0,7)
-        };
+        return { from: startOfPrevious.toISOString().slice(0,7), to: startOfCurrent.toISOString().slice(0,7) };
       }
       const cutoff = new Date(Date.now() - monthsBack * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
       return { from: cutoff, to: null };
@@ -406,83 +372,57 @@
       const cutoff = getCutoffDate(monthsBack);
       const paid = getPaidExpenses();
 
-      // Доходы
-      financeData.filter(isIncomeOperation).forEach(r => {
+      // Доходы (только точные типы "Доход" или "Продажа товара")
+      financeData.forEach(r => {
+        if (!isIncomeType(r.operation_type)) return;
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
         if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
         if (cutoff && cutoff.to && m >= cutoff.to) return;
         if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0 };
-        months[m].income += parseFloat(r.amount);
+        months[m].income += parseFloat(r.amount || 0);
       });
 
-      // Постоянные (оплаченные из expenses + категории из crm_finance)
+      // Постоянные из expenses (оплаченные)
       paid.forEach(e => {
         const m = e.paid_at ? e.paid_at.slice(0,7) : null;
         if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
         if (cutoff && cutoff.to && m >= cutoff.to) return;
         if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0 };
-        months[m].fixed += parseFloat(e.amount);
+        months[m].fixed += parseFloat(e.amount || 0);
       });
 
-      // Расходы из crm_finance (включая Выплаты ЗП)
-      financeData.filter(isExpenseOrSalaryOperation).forEach(r => {
+      // Расходы из crm_finance (включая "Выплата ЗП", "Возврат средств", "Инкассация расход")
+      financeData.forEach(r => {
+        if (!isExpenseType(r.operation_type)) return;
         const m = r.operation_date ? r.operation_date.slice(0,7) : null;
         if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
         if (cutoff && cutoff.to && m >= cutoff.to) return;
         if (!months[m]) months[m] = { income: 0, fixed: 0, variable: 0, marketing: 0 };
 
-        // Постоянные категории (оклады менеджеров, админов и т.д.)
         if (isFixedCategory(r.category)) {
-          months[m].fixed += parseFloat(r.amount);
+          months[m].fixed += parseFloat(r.amount || 0);
         } else {
-          // Всё остальное — переменные (включая ЗП педагогов, маркетинг и т.п.)
-          months[m].variable += parseFloat(r.amount);
+          months[m].variable += parseFloat(r.amount || 0);
         }
 
-        // Отдельно учитываем маркетинг
         if (isMarketingCategory(r.category)) {
-          months[m].marketing += parseFloat(r.amount);
+          months[m].marketing += parseFloat(r.amount || 0);
         }
       });
 
       return Object.entries(months).sort((a,b) => a[0].localeCompare(b[0]));
     }
 
-    function getCategoryAverages(monthsBack = 0) {
-      const cats = {};
-      const cutoff = getCutoffDate(monthsBack);
-
-      financeData.filter(isExpenseOrSalaryOperation).forEach(r => {
-        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
-        if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
-        if (cutoff && cutoff.to && m >= cutoff.to) return;
-        const cat = r.category || 'Без категории';
-        if (!cats[cat]) cats[cat] = { total: 0, months: new Set() };
-        cats[cat].total += parseFloat(r.amount);
-        cats[cat].months.add(m);
-      });
-
-      const result = {};
-      Object.entries(cats).forEach(([cat, data]) => {
-        result[cat] = Math.round(data.total / Math.max(1, data.months.size));
-      });
-      return result;
-    }
-
     function computeForecast() {
       const now = new Date();
       const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
-
-      // Постоянные из бюджета (актуальные неоплаченные)
       const activeFixed = allExpenses.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth));
-      const totalFixed = activeFixed.reduce((s, e) => s + parseFloat(e.amount), 0);
-      const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
+      const totalFixed = activeFixed.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
 
-      // Период для расчёта средних (последние 3 месяца)
       const threeMonthsAgo = new Date(Date.now() - 3 * 30 * 24 * 60 * 60 * 1000).toISOString().slice(0,7);
-      let recentOps = financeData.filter(isExpenseOrSalaryOperation).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
+      let recentOps = financeData.filter(r => isExpenseType(r.operation_type) && r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
-        const allOps = financeData.filter(isExpenseOrSalaryOperation).filter(r => r.operation_date);
+        const allOps = financeData.filter(r => isExpenseType(r.operation_type) && r.operation_date);
         if (allOps.length > 0) {
           const maxDate = allOps.reduce((max, r) => r.operation_date > max ? r.operation_date : max, '');
           const maxMonth = new Date(maxDate);
@@ -492,30 +432,21 @@
         }
       }
 
-      // Переменные (исключая постоянные и зарплаты педагогов)
       const variableOps = recentOps.filter(r => !isFixedCategory(r.category) && !isTeacherSalaryCategory(r.category));
-      const totalVariable = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
+      const totalVariable = variableOps.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
       const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
-      // Среднее с запасом +5%
       const avgVariable = Math.round((totalVariable / monthsCount) * 1.05);
 
-      // ЗП преподавателей из crm_finance
       const teacherOps = recentOps.filter(r => isTeacherSalaryCategory(r.category));
-      const totalTeacher = teacherOps.reduce((s, r) => s + parseFloat(r.amount), 0);
-      // Среднее с запасом +5%
+      const totalTeacher = teacherOps.reduce((s, r) => s + parseFloat(r.amount || 0), 0);
       const avgTeacher = Math.round((totalTeacher / monthsCount) * 1.05);
 
-      const total = totalFixed + avgVariable + avgTeacher;
-
-      const topVariable = Object.entries(
-        variableOps.reduce((acc, r) => {
-          const cat = r.category || 'Без категории';
-          acc[cat] = (acc[cat] || 0) + parseFloat(r.amount);
-          return acc;
-        }, {})
-      ).sort((a,b) => b[1] - a[1]).slice(0,5);
-
-      return { totalFixed, avgVariable, avgTeacher, total, fixedList, topVariable };
+      return {
+        totalFixed,
+        avgVariable,
+        avgTeacher,
+        total: totalFixed + avgVariable + avgTeacher
+      };
     }
 
     function computeChange(currentVal, previousVal) {
@@ -531,169 +462,121 @@
       const totalVariable = monthly.reduce((s,m) => s + m[1].variable, 0);
       const totalMarketing = monthly.reduce((s,m) => s + m[1].marketing, 0);
       const totalExpenses = totalFixed + totalVariable;
-      const avgMonthly = monthly.length > 0 ? totalExpenses / monthly.length : 0;
 
-      // Предыдущий период для сравнения
+      // Предыдущий период
       let prevMonths = selectedMonths === 0 ? 12 : selectedMonths;
       if (selectedMonths === 1) prevMonths = 2;
       const prevMonthly = getMonthlyBreakdown(prevMonths);
-      const prevTotalIncome = prevMonthly.reduce((s,m) => s + m[1].income, 0);
-      const prevTotalFixed = prevMonthly.reduce((s,m) => s + m[1].fixed, 0);
-      const prevTotalVariable = prevMonthly.reduce((s,m) => s + m[1].variable, 0);
-      const prevTotalExpenses = prevTotalFixed + prevTotalVariable;
+      const prevIncome = prevMonthly.reduce((s,m) => s + m[1].income, 0);
+      const prevFixed = prevMonthly.reduce((s,m) => s + m[1].fixed, 0);
+      const prevVariable = prevMonthly.reduce((s,m) => s + m[1].variable, 0);
+      const prevExpenses = prevFixed + prevVariable;
 
-      const incomeChange = computeChange(totalIncome, prevTotalIncome);
-      const expenseChange = computeChange(totalExpenses, prevTotalExpenses);
-      const fixedChange = computeChange(totalFixed, prevTotalFixed);
-      const variableChange = computeChange(totalVariable, prevTotalVariable);
+      const incomeChange = computeChange(totalIncome, prevIncome);
+      const expenseChange = computeChange(totalExpenses, prevExpenses);
+      const fixedChange = computeChange(totalFixed, prevFixed);
+      const variableChange = computeChange(totalVariable, prevVariable);
 
       // Прогноз
       const forecast = computeForecast();
-      const fixedListHtml = forecast.fixedList.map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
-      const topVarHtml = forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ');
+      const fixedList = allExpenses.filter(e => !e.paid).map(e => `<span>${e.name}: ${parseFloat(e.amount).toLocaleString()} ₽</span>`).join(', ');
 
       document.getElementById('forecastContainer').innerHTML = `
         <div class="forecast-card">
           <div style="font-size:0.85rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.03em;">Прогноз на следующий месяц</div>
           <div class="forecast-total">${forecast.total.toLocaleString()} ₽</div>
           <div class="forecast-details">
-            <div class="forecast-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              Постоянные (из бюджета): <strong>${forecast.totalFixed.toLocaleString()} ₽</strong>
-              <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸ состав</span>
-              <div class="forecast-list">${fixedListHtml}</div>
-            </div>
-            <div class="forecast-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-              Переменные (среднее +5%): <strong>${forecast.avgVariable.toLocaleString()} ₽</strong>
-              <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸ топ-5</span>
-              <div class="forecast-list">${topVarHtml}</div>
-            </div>
-            <div class="forecast-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              ЗП преподавателей (среднее +5%): <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong>
-            </div>
+            <div class="forecast-item">Постоянные: <strong>${forecast.totalFixed.toLocaleString()} ₽</strong> <span class="forecast-expand" onclick="this.nextElementSibling.classList.toggle('open')">▸ состав</span><div class="forecast-list">${fixedList}</div></div>
+            <div class="forecast-item">Переменные (среднее +5%): <strong>${forecast.avgVariable.toLocaleString()} ₽</strong></div>
+            <div class="forecast-item">ЗП преподавателей (среднее +5%): <strong>${forecast.avgTeacher.toLocaleString()} ₽</strong></div>
           </div>
         </div>
       `;
 
-      // KPI с динамикой
       const periodLabel = selectedMonths === 1 ? 'MoM' : 'vs пред. период';
       document.getElementById('kpiContainer').innerHTML = `
-        <div class="kpi-card">
-          <div class="kpi-label">Доходы (за период)</div>
-          <div class="kpi-value">${totalIncome.toLocaleString()} ₽</div>
-          <div class="kpi-change">${periodLabel}: <span class="${incomeChange.positive ? 'positive' : 'negative'}">${incomeChange.positive ? '↓' : '↑'} ${incomeChange.abs.toLocaleString()} ₽ (${Math.abs(incomeChange.diff)}%)</span></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Расходы всего (за период)</div>
-          <div class="kpi-value">${totalExpenses.toLocaleString()} ₽</div>
-          <div class="kpi-change">${periodLabel}: <span class="${expenseChange.positive ? 'positive' : 'negative'}">${expenseChange.positive ? '↓' : '↑'} ${expenseChange.abs.toLocaleString()} ₽ (${Math.abs(expenseChange.diff)}%)</span></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Постоянные расходы (за период)</div>
-          <div class="kpi-value">${totalFixed.toLocaleString()} ₽</div>
-          <div class="kpi-change">${periodLabel}: <span class="${fixedChange.positive ? 'positive' : 'negative'}">${fixedChange.positive ? '↓' : '↑'} ${fixedChange.abs.toLocaleString()} ₽ (${Math.abs(fixedChange.diff)}%)</span></div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Переменные расходы (за период)</div>
-          <div class="kpi-value">${totalVariable.toLocaleString()} ₽</div>
-          <div class="kpi-change">${periodLabel}: <span class="${variableChange.positive ? 'positive' : 'negative'}">${variableChange.positive ? '↓' : '↑'} ${variableChange.abs.toLocaleString()} ₽ (${Math.abs(variableChange.diff)}%)</span></div>
-        </div>
+        <div class="kpi-card"><div class="kpi-label">Доходы (за период)</div><div class="kpi-value">${totalIncome.toLocaleString()} ₽</div><div class="kpi-change">${periodLabel}: <span class="${incomeChange.positive ? 'positive' : 'negative'}">${incomeChange.positive ? '↓' : '↑'} ${incomeChange.abs.toLocaleString()} ₽ (${Math.abs(incomeChange.diff)}%)</span></div></div>
+        <div class="kpi-card"><div class="kpi-label">Расходы всего (за период)</div><div class="kpi-value">${totalExpenses.toLocaleString()} ₽</div><div class="kpi-change">${periodLabel}: <span class="${expenseChange.positive ? 'positive' : 'negative'}">${expenseChange.positive ? '↓' : '↑'} ${expenseChange.abs.toLocaleString()} ₽ (${Math.abs(expenseChange.diff)}%)</span></div></div>
+        <div class="kpi-card"><div class="kpi-label">Постоянные (за период)</div><div class="kpi-value">${totalFixed.toLocaleString()} ₽</div><div class="kpi-change">${periodLabel}: <span class="${fixedChange.positive ? 'positive' : 'negative'}">${fixedChange.positive ? '↓' : '↑'} ${fixedChange.abs.toLocaleString()} ₽ (${Math.abs(fixedChange.diff)}%)</span></div></div>
+        <div class="kpi-card"><div class="kpi-label">Переменные (за период)</div><div class="kpi-value">${totalVariable.toLocaleString()} ₽</div><div class="kpi-change">${periodLabel}: <span class="${variableChange.positive ? 'positive' : 'negative'}">${variableChange.positive ? '↓' : '↑'} ${variableChange.abs.toLocaleString()} ₽ (${Math.abs(variableChange.diff)}%)</span></div></div>
       `;
 
       // График
-      const maxVal = Math.max(...monthly.map(m => Math.max(m[1].income, m[1].fixed + m[1].variable, m[1].marketing)), 1);
-      const barChart = document.getElementById('barChart');
-      barChart.innerHTML = monthly.map(([month, vals]) => {
+      const fullMonthly = getMonthlyBreakdown(0); // все месяцы для графика
+      const maxVal = Math.max(...fullMonthly.map(m => Math.max(m[1].income, m[1].fixed + m[1].variable)), 1);
+      const chartGrid = document.getElementById('chartGrid');
+      chartGrid.innerHTML = fullMonthly.map(([month, vals], idx, arr) => {
+        const prev = arr[idx - 1];
         const incomeH = (vals.income / maxVal * 100).toFixed(1);
-        const expensesH = ((vals.fixed + vals.variable) / maxVal * 100).toFixed(1);
-        const marketingH = (vals.marketing / maxVal * 100).toFixed(1);
-        return `<div class="bar" style="height:${Math.max(incomeH, expensesH)}%;">
-          <div class="bar-tooltip">
-            Доходы: ${vals.income.toLocaleString()} ₽<br>
-            Расходы: ${(vals.fixed+vals.variable).toLocaleString()} ₽<br>
-            Маркетинг: ${vals.marketing.toLocaleString()} ₽
+        const expenseH = ((vals.fixed + vals.variable) / maxVal * 100).toFixed(1);
+        let incomeMoM = '', expenseMoM = '';
+        if (prev) {
+          const incCh = computeChange(vals.income, prev[1].income);
+          const expCh = computeChange(vals.fixed + vals.variable, prev[1].fixed + prev[1].variable);
+          incomeMoM = `<span class="chart-change ${incCh.positive ? 'positive' : 'negative'}">Доход ${incCh.positive ? '↓' : '↑'}${Math.abs(incCh.diff)}%</span>`;
+          expenseMoM = `<span class="chart-change ${expCh.positive ? 'positive' : 'negative'}">Расход ${expCh.positive ? '↓' : '↑'}${Math.abs(expCh.diff)}%</span>`;
+        }
+        return `<div class="chart-month">
+          <div class="chart-bars">
+            <div class="chart-bar income" style="height:${incomeH}%;"><div class="chart-tooltip">Доходы: ${vals.income.toLocaleString()} ₽</div></div>
+            <div class="chart-bar expense" style="height:${expenseH}%;"><div class="chart-tooltip">Расходы: ${(vals.fixed+vals.variable).toLocaleString()} ₽</div></div>
           </div>
-          <div class="bar-marketing" style="height:${marketingH}%;"></div>
-          <div class="bar-variable" style="height:${Math.max(0, +expensesH - marketingH)}%;"></div>
-          <div class="bar-income" style="height:${incomeH}%;"></div>
-          <div class="bar-label">${month.slice(5)}</div>
+          <div class="chart-label">${month.slice(5)}</div>
+          ${incomeMoM ? '<div>' + incomeMoM + '</div>' : ''}
+          ${expenseMoM ? '<div>' + expenseMoM + '</div>' : ''}
         </div>`;
-      }).join('') || '<div style="color:var(--text-secondary);">Нет данных</div>';
+      }).join('');
 
-      // Средние по категориям
-      const averages = getCategoryAverages(selectedMonths);
-      const topAverages = Object.entries(averages).sort((a,b) => b[1] - a[1]).slice(0,10);
-      document.getElementById('categoryAverages').innerHTML = topAverages
-        .map(([cat, sum]) => `<div class="list-item"><span>${cat}</span><span class="amount">${sum.toLocaleString()} ₽/мес.</span></div>`).join('') || 'Нет данных';
+      // Категории
+      const cats = {};
+      const cutoff = getCutoffDate(selectedMonths);
+      financeData.filter(r => isExpenseType(r.operation_type)).forEach(r => {
+        const m = r.operation_date ? r.operation_date.slice(0,7) : null;
+        if (!m || (cutoff && cutoff.from && m < cutoff.from)) return;
+        if (cutoff && cutoff.to && m >= cutoff.to) return;
+        const cat = r.category || 'Без категории';
+        if (!cats[cat]) cats[cat] = { total: 0, months: new Set() };
+        cats[cat].total += parseFloat(r.amount || 0);
+        cats[cat].months.add(m);
+      });
+      const topAverages = Object.entries(cats).sort((a,b) => b[1].total - a[1].total).slice(0,10).map(([cat, data]) => [cat, Math.round(data.total / Math.max(1, data.months.size))]);
+      document.getElementById('categoryAverages').innerHTML = topAverages.map(([cat, sum]) => `<div class="list-item"><span>${cat}</span><span class="amount">${sum.toLocaleString()} ₽/мес.</span></div>`).join('') || 'Нет данных';
 
-      // Дополнительные метрики
-      const fixedCount = monthly.reduce((s,m) => s + (m[1].fixed > 0 ? 1 : 0), 0);
-      const avgFixedCheck = fixedCount > 0 ? Math.round(totalFixed / fixedCount) : 0;
-      const shareFixed = totalExpenses > 0 ? ((totalFixed/totalExpenses)*100).toFixed(1) : 0;
+      // Метрики
       document.getElementById('additionalMetrics').innerHTML = `
-        <div class="list-item"><span>Средний чек постоянного платежа</span><span class="amount">${avgFixedCheck.toLocaleString()} ₽</span></div>
-        <div class="list-item"><span>Доля постоянных в общих расходах</span><span class="amount">${shareFixed}%</span></div>
-        <div class="list-item"><span>Динамика переменных (${periodLabel})</span><span class="amount" style="color:${variableChange.positive ? 'var(--soft-green)' : 'var(--critical)'};">${variableChange.positive ? '↓' : '↑'} ${variableChange.abs.toLocaleString()} ₽ (${Math.abs(variableChange.diff)}%)</span></div>
+        <div class="list-item"><span>Средний чек пост. платежа</span><span class="amount">${totalFixed > 0 ? Math.round(totalFixed / monthly.filter(m => m[1].fixed > 0).length).toLocaleString() : 0} ₽</span></div>
+        <div class="list-item"><span>Доля постоянных</span><span class="amount">${totalExpenses > 0 ? (totalFixed/totalExpenses*100).toFixed(1) : 0}%</span></div>
+        <div class="list-item"><span>Маркетинг за период</span><span class="amount">${totalMarketing.toLocaleString()} ₽</span></div>
       `;
 
       // Таблица транзакций
-      const cutoff = getCutoffDate(selectedMonths);
       const paid = getPaidExpenses();
       const allTransactions = [
-        ...paid.filter(e => !cutoff || !cutoff.from || (e.paid_at && e.paid_at >= cutoff.from)).map(e => ({
-          date: e.paid_at ? e.paid_at.slice(0,10) : '',
-          type: 'Постоянный',
-          category: e.name,
-          amount: e.amount,
-          account: 'Постоянный',
-          expenseType: 'Постоянный'
-        })),
-        ...financeData.filter(isExpenseOrSalaryOperation)
-          .filter(r => !cutoff || !cutoff.from || (r.operation_date && r.operation_date >= cutoff.from))
-          .filter(r => !cutoff || !cutoff.to || (r.operation_date && r.operation_date < cutoff.to))
-          .map(r => ({
-            date: r.operation_date,
-            type: r.operation_type,
-            category: r.category,
-            amount: r.amount,
-            account: r.account || '—',
-            expenseType: isFixedCategory(r.category) ? 'Постоянный' : 'Переменный'
-          }))
-      ].sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,150);
+        ...paid.filter(e => !cutoff || !cutoff.from || (e.paid_at && e.paid_at >= cutoff.from)).map(e => ({ date: e.paid_at?.slice(0,10), type: 'Постоянный', category: e.name, amount: e.amount, account: 'Постоянный' })),
+        ...financeData.filter(r => isExpenseType(r.operation_type) && (!cutoff || !cutoff.from || (r.operation_date && r.operation_date >= cutoff.from)) && (!cutoff || !cutoff.to || r.operation_date < cutoff.to)).map(r => ({ date: r.operation_date, type: r.operation_type, category: r.category, amount: r.amount, account: r.account || '—' }))
+      ].sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,200);
+      document.getElementById('tableBody').innerHTML = allTransactions.map(t => `<tr><td>${t.date}</td><td>${t.type}</td><td>${t.category}</td><td>${parseFloat(t.amount).toLocaleString()} ₽</td><td>${t.account}</td></tr>`).join('');
 
-      document.getElementById('tableBody').innerHTML = allTransactions.map(t =>
-        `<tr><td>${t.date}</td><td>${t.type || ''}</td><td>${t.category || ''}</td><td>${parseFloat(t.amount).toLocaleString()} ₽</td><td>${t.account}</td><td>${t.expenseType}</td></tr>`
-      ).join('') || '<tr><td colspan="6">Нет данных</td></tr>';
-
-      // Расходы по счетам
+      // Счета
       const accs = {};
-      financeData.filter(isExpenseOrSalaryOperation).forEach(r => {
+      financeData.filter(r => isExpenseType(r.operation_type)).forEach(r => {
         if (cutoff && cutoff.from && r.operation_date && r.operation_date < cutoff.from) return;
         if (cutoff && cutoff.to && r.operation_date && r.operation_date >= cutoff.to) return;
         const acc = r.account || 'Не указан';
-        accs[acc] = (accs[acc] || 0) + parseFloat(r.amount);
+        accs[acc] = (accs[acc] || 0) + parseFloat(r.amount || 0);
       });
-      const topAccounts = Object.entries(accs).sort((a,b) => b[1] - a[1]).slice(0,10);
-      document.getElementById('byAccount').innerHTML = topAccounts
-        .map(([acc, sum]) => `<div class="list-item"><span>${acc}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>`).join('') || 'Нет данных';
+      document.getElementById('byAccount').innerHTML = Object.entries(accs).sort((a,b) => b[1] - a[1]).slice(0,10).map(([acc, sum]) => `<div class="list-item"><span>${acc}</span><span class="amount">${sum.toLocaleString()} ₽</span></div>`).join('');
 
-      // Помесячная таблица
-      const monthRows = monthly.map(([month, vals]) => `
-        <tr><td>${month}</td><td>${vals.income.toLocaleString()} ₽</td><td>${vals.fixed.toLocaleString()} ₽</td><td>${vals.variable.toLocaleString()} ₽</td><td>${vals.marketing.toLocaleString()} ₽</td><td>${(vals.fixed+vals.variable).toLocaleString()} ₽</td></tr>
-      `).join('');
-      document.getElementById('monthlyTableBody').innerHTML = monthRows || '<tr><td colspan="6">Нет данных</td></tr>';
+      // Таблица месяцев
+      document.getElementById('monthlyTableBody').innerHTML = monthly.map(([m, v]) => `<tr><td>${m}</td><td>${v.income.toLocaleString()} ₽</td><td>${v.fixed.toLocaleString()} ₽</td><td>${v.variable.toLocaleString()} ₽</td><td>${v.marketing.toLocaleString()} ₽</td><td>${(v.fixed+v.variable).toLocaleString()} ₽</td></tr>`).join('');
     }
 
-    // Сворачивание/разворачивание таблицы транзакций
     document.getElementById('toggleTableBtn').addEventListener('click', function() {
-      const table = document.getElementById('transactionTable');
-      table.classList.toggle('open');
-      this.textContent = table.classList.contains('open') ? 'Скрыть таблицу транзакций' : 'Показать таблицу транзакций';
+      const t = document.getElementById('transactionTable');
+      t.classList.toggle('open');
+      this.textContent = t.classList.contains('open') ? 'Скрыть таблицу транзакций' : 'Показать таблицу транзакций';
     });
 
-    // Фильтры
     document.getElementById('periodFilters').addEventListener('click', (e) => {
       if (e.target.classList.contains('filter-btn')) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -703,15 +586,11 @@
       }
     });
 
-    // Техническая информация
     document.getElementById('infoBtn').addEventListener('click', () => {
-      const msg = `Всего записей в crm_finance: ${financeData.length}\nРасходных операций (включая Выплаты ЗП): ${financeData.filter(isExpenseOrSalaryOperation).length}\nПоследняя дата: ${financeData.length ? financeData[financeData.length-1].operation_date : 'нет'}\nЗаписей в expenses: ${allExpenses.length}\nЗаписей в teacher_salary: ${teacherSalaryData.length}`;
-      document.getElementById('infoContent').innerText = msg;
+      document.getElementById('infoContent').innerText = `Записей в crm_finance: ${financeData.length}\nРасходных (включая Выплаты): ${financeData.filter(r => isExpenseType(r.operation_type)).length}\nПоследняя дата: ${financeData.length ? financeData[financeData.length-1].operation_date : '—'}`;
       document.getElementById('infoModal').style.display = 'flex';
     });
-    document.getElementById('closeInfoBtn').addEventListener('click', () => {
-      document.getElementById('infoModal').style.display = 'none';
-    });
+    document.getElementById('closeInfoBtn').addEventListener('click', () => document.getElementById('infoModal').style.display = 'none');
 
     loadData();
   })();
