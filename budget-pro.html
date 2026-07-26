@@ -431,8 +431,8 @@
 
     function generateForecastHTML(forecast) {
       const fixedListHtml = (forecast.fixedList || []).map(e => `<span>${e.name}: ${e.amount.toLocaleString()} ₽</span>`).join(', ');
-      const topVarHtml = forecast.topVariable && forecast.topVariable.length
-        ? forecast.topVariable.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ')
+      const topVarHtml = forecast.topVar && forecast.topVar.length
+        ? forecast.topVar.map(([cat, sum]) => `<span>${cat}: ${sum.toLocaleString()} ₽</span>`).join(', ')
         : 'Нет данных';
       return `
         <div class="forecast-card">
@@ -504,20 +504,30 @@
     // Проверенная логика переменных расходов
     function computeForecast() {
       const now = new Date();
-      const nextMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      // ИСПРАВЛЕНО: было `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}` —
+      // getMonth() уже 0-индексирован, поэтому +1 давал ТЕКУЩИЙ месяц, а не следующий (и не
+      // переносил год при декабре). Из-за этого проверка роялти и фильтр "активных" постоянных
+      // расходов брали не тот месяц — сейчас это незаметно (роялти уже действует), но сломается
+      // в любой момент ДО начала действия роялти или на стыке декабрь→январь.
+      const nextMonth = monthKey(new Date(now.getFullYear(), now.getMonth() + 1, 1));
       const activeFixed = allExpenses.filter(e => !e.paid || (e.next_payment_date && e.next_payment_date >= nextMonth+'-01'));
       const totalFixed = activeFixed.reduce((s,e) => s + parseFloat(e.amount), 0);
       const fixedList = activeFixed.map(e => ({ name: e.name, amount: parseFloat(e.amount) }));
 
       // Все расходные операции за последние 3 месяца (или больше, если нет)
-      const threeMonthsAgo = new Date(Date.now() - 3*30*24*60*60*1000).toISOString().slice(0,7);
+      const threeMonthsAgo = monthKey(new Date(Date.now() - 3*30*24*60*60*1000));
       let recentOps = financeData.filter(isExpense).filter(r => r.operation_date && r.operation_date >= threeMonthsAgo);
       if (recentOps.length === 0) {
         recentOps = financeData.filter(isExpense).filter(r => r.operation_date);
       }
 
-      // Переменные = все расходы, не относящиеся к учителям
-      const variableOps = recentOps.filter(r => !isTeacherCategory(r.category));
+      // ИСПРАВЛЕНО: раньше из "переменных" исключались только категории педагогов
+      // (isTeacherCategory), а FIXED_ARTICLES/isFixedCategory были объявлены, но нигде не
+      // применялись. В итоге аренда, ЗП администраторов/менеджера/старшего педагога, телефония,
+      // банк.обслуживание и % рассрочки считались ДВАЖДЫ: один раз как totalFixed (из таблицы
+      // expenses), второй раз — внутри avgVariable (из истории операций crm_finance), раздувая
+      // прогноз расходов и точку безубыточности.
+      const variableOps = recentOps.filter(r => !isTeacherCategory(r.category) && !isFixedCategory(r.category));
       const totalVar = variableOps.reduce((s, r) => s + parseFloat(r.amount), 0);
       const monthsCount = Math.max(1, new Set(variableOps.map(r => r.operation_date?.slice(0,7))).size);
       const avgVariable = Math.round((totalVar / monthsCount) * 1.05);
