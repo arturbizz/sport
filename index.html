@@ -75,7 +75,7 @@
     @media (max-width: 768px) {
       .desktop-content { display: none; }
       .mobile-warning {
-        display: flex;
+        display: none; /* изначально скрыто, будет показано если не админ */
         flex-direction: column;
         align-items: center;
         justify-content: center;
@@ -84,6 +84,9 @@
         padding: 2rem;
         font-family: 'Inter', sans-serif;
         background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
+      }
+      .mobile-warning.show {
+        display: flex;
       }
       .mobile-warning h2 { font-size: 1.8rem; margin-bottom: 1rem; }
       .mobile-warning p { color: #475569; margin-bottom: 2rem; }
@@ -125,20 +128,17 @@
     </div>
   </div>
 
-  <div class="mobile-warning" style="display: none;">
+  <div class="mobile-warning" id="mobileWarning">
     <h2>Мобильная версия ограничена</h2>
     <p>Эта страница не оптимизирована для телефона. Пожалуйста, используйте Маскотик для быстрого доступа к данным.</p>
     <a href="mascot.html">Открыть Маскотик</a>
   </div>
 
   <script>
-    if (window.innerWidth <= 768) {
-      document.querySelector('.mobile-warning').style.display = 'flex';
-    }
-
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
     const sections = [
       { id: 'schedule', title: 'График работы', desc: 'Расписание, зарплата', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] },
@@ -217,7 +217,7 @@
         userInfo.textContent = `${currentUser.email} (${effectiveRole})`;
       }
       const impBtn = document.getElementById('impersonateBtn');
-      if (currentUser?.email === 'arturgalkin.ru@mail.ru') {
+      if (currentUser?.email === ADMIN_EMAIL) {
         impBtn.style.display = 'inline-block';
         if (impersonatedRole) {
           impBtn.classList.add('active');
@@ -242,13 +242,26 @@
       currentUser = session.user;
       currentToken = session.access_token;
 
+      // Проверка на мобильное устройство и права администратора
+      if (window.innerWidth <= 768) {
+        if (currentUser.email === ADMIN_EMAIL) {
+          // Администратор – показываем десктопную версию
+          document.querySelector('.desktop-content').style.display = 'block';
+          document.getElementById('mobileWarning').classList.remove('show');
+        } else {
+          // Обычный пользователь – показываем предупреждение
+          document.getElementById('mobileWarning').classList.add('show');
+          return; // Прерываем выполнение, чтобы не инициализировать карточки
+        }
+      }
+
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         localStorage.removeItem('impersonated_role');
         await _supabase.auth.signOut();
         window.location.href = 'login.html';
       });
 
-      if (currentUser.email === 'arturgalkin.ru@mail.ru') {
+      if (currentUser.email === ADMIN_EMAIL) {
         const savedRole = localStorage.getItem('impersonated_role');
         if (savedRole) impersonatedRole = savedRole;
         document.getElementById('impersonateBtn').addEventListener('click', () => {
