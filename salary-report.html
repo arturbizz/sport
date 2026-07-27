@@ -352,4 +352,48 @@
         'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
         'Телефон': item.payoutData?.phone || '', 'Банк': item.payoutData?.bank || ''
       }));
-      rows.push({ 'Сотрудник
+      rows.push({ 'Сотрудник': 'ИТОГО', 'Сумма': list.reduce((s, i) => s + i.amount, 0) });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Зарплатная ведомость');
+      XLSX.writeFile(wb, `ЗП_${currentPeriod}_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
+    }
+
+    function showAlert(msg) { document.getElementById('alertMessage').textContent = msg; document.getElementById('alertModal').style.display = 'flex'; document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none'; }
+
+    document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+
+    document.querySelectorAll('.filter-btn[data-period]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn[data-period]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPeriod = btn.dataset.period;
+        loadData();
+      });
+    });
+
+    document.querySelectorAll('.filter-btn[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn[data-role]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentRoleFilter = btn.dataset.role;
+        renderAll();
+      });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderAll);
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      selectedMonth--; if (selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
+      loadData();
+    });
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      selectedMonth++; if (selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
+      loadData();
+    });
+
+    loadData();
+  })();
+</script>
+</body>
+</html>
