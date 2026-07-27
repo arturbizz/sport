@@ -104,6 +104,13 @@
       box-shadow: none;
     }
     .btn-outline:hover { background: var(--violet); color: white; }
+    .btn-primary {
+      background: var(--violet);
+      border: none;
+      color: white;
+      box-shadow: 0 6px 14px rgba(124,92,231,0.3);
+    }
+    .btn-primary:hover { background: #5b4cc4; }
 
     .filters {
       display: flex; gap: 0.5rem; flex-wrap: wrap;
@@ -244,6 +251,15 @@
       margin: 0.3rem 0;
       font-size: 0.9rem;
     }
+    /* Модальное окно уведомлений */
+    .alert-modal-content {
+      text-align: center;
+    }
+    .alert-modal-content p {
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
@@ -321,6 +337,14 @@
     </div>
   </div>
 
+  <!-- Уведомление (alert) -->
+  <div class="modal-overlay" id="alertModal" style="display:none;">
+    <div class="modal alert-modal-content">
+      <p id="alertMessage"></p>
+      <button class="btn btn-primary" id="alertOkBtn">OK</button>
+    </div>
+  </div>
+
   <script>
     (function() {
       const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
@@ -332,8 +356,16 @@
       let currentYear, currentMonth, currentPeriod = 'full';
       let selectedEmployeeIds = new Set();
       let currentRoleFilter = 'all';
-      // Роли, которые отображаются в графике (преподаватели исключены)
       const DISPLAY_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
+
+      // Кастомное уведомление
+      function showAlert(message) {
+        document.getElementById('alertMessage').textContent = message;
+        document.getElementById('alertModal').style.display = 'flex';
+        document.getElementById('alertOkBtn').onclick = function() {
+          document.getElementById('alertModal').style.display = 'none';
+        };
+      }
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -352,11 +384,9 @@
 
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
-        // Оставляем только сотрудников с ролями из DISPLAY_ROLES
         employees = (data || []).filter(e => DISPLAY_ROLES.includes(e.role));
         const emp = employees.find(e => e.email === currentUserEmail);
         currentEmployee = emp || null;
-        // Если текущий пользователь не владелец, он не видит управляющих
         if (currentUserEmail !== OWNER_EMAIL) {
           employees = employees.filter(e => e.role !== 'Управляющий');
         }
@@ -529,7 +559,6 @@
         DISPLAY_ROLES.forEach(role => {
           const group = filtered.filter(e => e.role === role);
           if (!group.length) return;
-          // Подкрашенная строка с названием должности
           html += `<tr class="role-header"><td colspan="${daysInMonth + 3}">${role === 'Управляющий' ? 'Управляющие' : (role === 'Менеджер' ? 'Менеджеры' : 'Администраторы')}</td></tr>`;
           group.forEach(emp => {
             let cells = '', worked = 0;
@@ -595,11 +624,24 @@
         const comment = document.getElementById('dayComment').value.trim();
         const data = { emp_id: empId, date, status, comment };
         if (document.getElementById('dailySales')) data.daily_sales = parseFloat(document.getElementById('dailySales').value) || 0;
-        const { error } = await _supabase.from('worklog').upsert(data, { onConflict: 'emp_id, date' });
-        if (error) { alert('Ошибка: ' + error.message); return; }
-        document.getElementById('dayModal').style.display = 'none';
-        await loadWorklog();
-        renderSchedule();
+
+        try {
+          const { error } = await _supabase.from('worklog').upsert(data, { onConflict: 'emp_id, date' });
+          if (error) {
+            if (error.code === '42501' || error.message.includes('row-level security')) {
+              showAlert('У вас нет прав на редактирование данных другого сотрудника.');
+            } else {
+              showAlert('Ошибка: ' + error.message);
+            }
+            return;
+          }
+          document.getElementById('dayModal').style.display = 'none';
+          await loadWorklog();
+          renderSchedule();
+        } catch (err) {
+          showAlert('Не удалось сохранить изменения. Возможно, у вас недостаточно прав.');
+          console.error(err);
+        }
       });
 
       document.getElementById('cancelDayBtn').addEventListener('click', () => document.getElementById('dayModal').style.display = 'none');
@@ -675,7 +717,14 @@
           plan_amount: planAmount
         };
         const { error } = await _supabase.from('salary_params').upsert(data, { onConflict: 'emp_id, month' });
-        if (error) { alert('Ошибка: ' + error.message); return; }
+        if (error) {
+          if (error.code === '42501' || error.message.includes('row-level security')) {
+            showAlert('У вас нет прав изменять зарплатные параметры.');
+          } else {
+            showAlert('Ошибка: ' + error.message);
+          }
+          return;
+        }
         document.getElementById('salaryModal').style.display = 'none';
         await loadSalaryParams();
         renderSchedule();
