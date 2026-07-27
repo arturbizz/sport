@@ -109,6 +109,17 @@
       updateStatus('Справочники загружены (базовый набор).');
     }
 
+    // Вспомогательная функция для проверки даты на июль 2026
+    function isJuly2026(dateStr) {
+      if (!dateStr) return false;
+      const parts = dateStr.split('.');
+      if (parts.length !== 3) return false;
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const year = parseInt(parts[2], 10);
+      return year === 2026 && month === 7;
+    }
+
     document.getElementById('loadBtn').addEventListener('click', async () => {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
       const branch = document.getElementById('branch').value.trim();
@@ -119,22 +130,25 @@
 
         // Загружаем операции с фильтром по дате (если работает) или без, но с лимитом страниц
         updateStatus('Загрузка операций за июль 2026...');
-        let items = await fetchWithLimit(proxyUrl, branch, 'pay/index', {
+        let rawItems = await fetchWithLimit(proxyUrl, branch, 'pay/index', {
           document_date_from: '01.07.2026',
           document_date_to: '31.07.2026'
         }, 50, 'Операции');
 
-        // Если фильтр не дал результатов, загружаем без фильтра и фильтруем на клиенте (ограниченно)
-        if (items.length === 0) {
+        // Если фильтр не дал результатов, загружаем без фильтра и фильтруем на клиенте
+        if (rawItems.length === 0) {
           updateStatus('Фильтр по дате не сработал, загружаем общий список (до 2000 записей)...');
-          const all = await fetchWithLimit(proxyUrl, branch, 'pay/index', {}, 40, 'Все операции');
-          items = all.filter(item => {
-            const d = item.document_date;
-            if (!d) return false;
-            const [day, month, year] = d.split('.').map(Number);
-            return year === 2026 && month === 7;
-          });
-          updateStatus(`Отфильтровано ${items.length} записей за июль.`);
+          rawItems = await fetchWithLimit(proxyUrl, branch, 'pay/index', {}, 40, 'Все операции');
+        }
+
+        // ВСЕГДА фильтруем по июлю 2026 на клиенте (даже если серверный фильтр сработал, для надёжности)
+        const julyItems = rawItems.filter(item => isJuly2026(item.document_date));
+        updateStatus(`Найдено ${julyItems.length} операций за июль 2026 (из ${rawItems.length} загруженных).`);
+
+        // Для отладки покажем несколько примеров дат, которые не прошли фильтр
+        const notJulyDates = [...new Set(rawItems.filter(item => !isJuly2026(item.document_date)).map(item => item.document_date))].slice(0,10);
+        if (notJulyDates.length > 0) {
+          console.log('Примеры дат, которые НЕ попали в июль (первые 10):', notJulyDates);
         }
 
         // Анализ
@@ -143,7 +157,7 @@
         const categoryExpenses = {};
         const oneTimeExpenses = [];
 
-        items.forEach(item => {
+        julyItems.forEach(item => {
           const amount = parseFloat(item.income || item.amount || 0);
           const typeId = item.pay_type_id;
           const typeName = dicts.payTypes[typeId] || '';
@@ -156,7 +170,7 @@
           } else if (isExpense) {
             totalExpense += amount;
             const catId = item.pay_item_id;
-            const catName = dicts.payItems[catId] || `ID ${catId}`;
+            const catName = dicts.payItems[catId] || (catId ? `ID ${catId}` : 'Без категории');
             if (catName.toLowerCase().includes('маркетинг') || catName.toLowerCase().includes('лидмаркет')) totalMarketing += amount;
             categoryExpenses[catName] = (categoryExpenses[catName] || 0) + amount;
             if (amount > 1000) oneTimeExpenses.push({ date: item.document_date, category: catName, amount });
@@ -177,7 +191,7 @@
         document.getElementById('kpiRoyalty').textContent = royalty.toLocaleString() + ' ₽';
         document.getElementById('kpiOperProfit').textContent = operatingProfit.toLocaleString() + ' ₽';
         document.getElementById('kpiNetProfit').textContent = netProfit.toLocaleString() + ' ₽';
-        document.getElementById('kpiCount').textContent = items.length;
+        document.getElementById('kpiCount').textContent = julyItems.length;
         document.getElementById('kpiSalesCount').textContent = salesCount;
         document.getElementById('kpiAvgCheck').textContent = avgCheck.toLocaleString() + ' ₽';
         document.getElementById('kpiROI').textContent = roi;
@@ -191,7 +205,7 @@
         const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
         document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
 
-        updateStatus(`Готово. За июль 2026: ${items.length} операций.`);
+        updateStatus(`Готово. За июль 2026: ${julyItems.length} операций.`);
       } catch (err) {
         updateStatus('Ошибка: ' + err.message);
         console.error(err);
