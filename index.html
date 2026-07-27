@@ -70,34 +70,72 @@
     }
     .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
     .impersonate-menu button { width: 100%; margin-top: 4px; }
+
+    /* Стили для мобильного предупреждения */
+    @media (max-width: 768px) {
+      .desktop-content { display: none; }
+      .mobile-warning {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        text-align: center;
+        padding: 2rem;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
+      }
+      .mobile-warning h2 { font-size: 1.8rem; margin-bottom: 1rem; }
+      .mobile-warning p { color: #475569; margin-bottom: 2rem; }
+      .mobile-warning a {
+        padding: 0.8rem 2rem;
+        background: #0d9488;
+        color: white;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="user-bar" id="userBar" style="position:relative;">
-      <span id="userInfo"></span>
-      <button class="btn-impersonate" id="impersonateBtn" style="display:none;">Тестовый просмотр</button>
-      <button class="btn-logout" id="logoutBtn">Выйти</button>
-      <div class="impersonate-menu" id="impersonateMenu">
-        <select id="roleSelect">
-          <option value="">Выберите роль</option>
-          <option>Управляющий</option>
-          <option>Менеджер</option>
-          <option>Администратор</option>
-          <option>Преподаватель</option>
-          <option>Бухгалтер</option>
-          <option>ИП</option>
-        </select>
-        <button class="btn-logout" id="applyImpersonate">Смотреть</button>
-        <button class="btn-logout" id="resetImpersonate" style="display:none;">Вернуться к своей роли</button>
+  <div class="desktop-content">
+    <div class="container">
+      <div class="user-bar" id="userBar" style="position:relative;">
+        <span id="userInfo"></span>
+        <button class="btn-impersonate" id="impersonateBtn" style="display:none;">Тестовый просмотр</button>
+        <button class="btn-logout" id="logoutBtn">Выйти</button>
+        <div class="impersonate-menu" id="impersonateMenu">
+          <select id="roleSelect">
+            <option value="">Выберите роль</option>
+            <option>Управляющий</option>
+            <option>Менеджер</option>
+            <option>Администратор</option>
+            <option>Преподаватель</option>
+            <option>Бухгалтер</option>
+            <option>ИП</option>
+          </select>
+          <button class="btn-logout" id="applyImpersonate">Смотреть</button>
+          <button class="btn-logout" id="resetImpersonate" style="display:none;">Вернуться к своей роли</button>
+        </div>
       </div>
+      <h1>Music Club Орёл</h1>
+      <p class="subtitle">Платформа управления музыкальной школой</p>
+      <div class="cards" id="mainCards"></div>
     </div>
-    <h1>Music Club Орёл</h1>
-    <p class="subtitle">Платформа управления музыкальной школой</p>
-    <div class="cards" id="mainCards"></div>
+  </div>
+
+  <div class="mobile-warning" style="display: none;">
+    <h2>Мобильная версия ограничена</h2>
+    <p>Эта страница не оптимизирована для телефона. Пожалуйста, используйте Маскотик для быстрого доступа к данным.</p>
+    <a href="mascot.html">Открыть Маскотик</a>
   </div>
 
   <script>
+    if (window.innerWidth <= 768) {
+      document.querySelector('.mobile-warning').style.display = 'flex';
+    }
+
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
