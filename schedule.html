@@ -185,6 +185,12 @@
     .day-cell.vacation { background: #e0e7ff; color: #3730a3; }
     .day-cell.leave { background: #ffedd5; color: #9a3412; }
     .summary-cell { font-weight: 600; background: #fafafa; }
+    .role-header td {
+      background: #f4f0ff; font-weight: 700; color: var(--violet);
+      text-align: left; padding: 0.6rem 1rem; font-size: 0.9rem;
+      border-bottom: 2px solid var(--violet);
+      letter-spacing: 0.03em;
+    }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.35);
@@ -211,7 +217,6 @@
     }
     .label-row input { width: 100px; margin-left: 0.5rem; }
 
-    /* Стили прогресс-бара */
     .progress-container {
       width: 100%;
       background: #f0f0f0;
@@ -268,7 +273,6 @@
         <button class="role-btn" data-role="Управляющий">Управляющие</button>
         <button class="role-btn" data-role="Менеджер">Менеджеры</button>
         <button class="role-btn" data-role="Администратор">Администраторы</button>
-        <button class="role-btn" data-role="Преподаватель">Преподаватели</button>
       </div>
       <div class="emp-filter-wrap" id="empFilterWrap">
         <div class="emp-filter-btn" id="empFilterBtn">Сотрудники ▾</div>
@@ -328,6 +332,8 @@
       let currentYear, currentMonth, currentPeriod = 'full';
       let selectedEmployeeIds = new Set();
       let currentRoleFilter = 'all';
+      // Роли, которые отображаются в графике (преподаватели исключены)
+      const DISPLAY_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
 
       async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
@@ -346,9 +352,14 @@
 
       async function loadEmployees() {
         const { data } = await _supabase.from('employees').select('*');
-        employees = data || [];
+        // Оставляем только сотрудников с ролями из DISPLAY_ROLES
+        employees = (data || []).filter(e => DISPLAY_ROLES.includes(e.role));
         const emp = employees.find(e => e.email === currentUserEmail);
         currentEmployee = emp || null;
+        // Если текущий пользователь не владелец, он не видит управляющих
+        if (currentUserEmail !== OWNER_EMAIL) {
+          employees = employees.filter(e => e.role !== 'Управляющий');
+        }
         if (selectedEmployeeIds.size === 0) {
           employees.forEach(e => selectedEmployeeIds.add(e.id));
         }
@@ -433,7 +444,6 @@
         return params.norm_days || 22;
       }
 
-      // Выручка за выбранный период
       function getPeriodSales(emp, period) {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
         let total = 0;
@@ -449,7 +459,7 @@
 
       function getSalary(emp) {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-        let worked = 0, indiv = 0, group = 0, sales = 0;
+        let worked = 0, sales = 0;
         for (let d = 1; d <= daysInMonth; d++) {
           const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
           const rec = worklog[`${emp.id}_${dateStr}`];
@@ -457,10 +467,6 @@
           if (emp.role === 'Менеджер') sales += rec.daily_sales || 0;
           if ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16)) {
             worked++;
-            if (emp.role === 'Преподаватель') {
-              indiv += rec.indiv || 0;
-              group += rec.group_total || 0;
-            }
           }
         }
         const params = salaryParams[emp.id] || {};
@@ -469,11 +475,6 @@
         const dailyRate = (rates[emp.role] || 0) / norm;
         let base = dailyRate * worked;
 
-        if (emp.role === 'Преподаватель') {
-          const iRate = params.indiv_rate || 400;
-          const gRate = params.group_rate || 500;
-          return indiv * iRate + group * gRate;
-        }
         if (emp.role === 'Менеджер') {
           const plan = params.plan_amount || 0;
           const bonusPercent = (plan > 0 && sales >= plan) ? 7 : 5;
@@ -525,11 +526,11 @@
         }
         html += '<th>Смен</th><th>ЗП</th></tr></thead><tbody>';
 
-        ['Управляющий','Менеджер','Администратор','Преподаватель'].forEach(role => {
+        DISPLAY_ROLES.forEach(role => {
           const group = filtered.filter(e => e.role === role);
           if (!group.length) return;
-          const roleNames = { 'Управляющий': 'Управляющие', 'Менеджер': 'Менеджеры', 'Администратор': 'Администраторы', 'Преподаватель': 'Преподаватели' };
-          html += `<tr><td colspan="${daysInMonth + 3}" style="background:#fafafa; font-weight:600; text-align:left; padding:0.5rem 1rem;">${roleNames[role]}</td></tr>`;
+          // Подкрашенная строка с названием должности
+          html += `<tr class="role-header"><td colspan="${daysInMonth + 3}">${role === 'Управляющий' ? 'Управляющие' : (role === 'Менеджер' ? 'Менеджеры' : 'Администраторы')}</td></tr>`;
           group.forEach(emp => {
             let cells = '', worked = 0;
             for (let d = 1; d <= daysInMonth; d++) {
@@ -543,7 +544,6 @@
               let content = '';
               if (status === 'working') {
                 if (emp.role === 'Менеджер') content = rec.daily_sales > 0 ? '₽' : 'Д';
-                else if (emp.role === 'Преподаватель') content = `Д<br><small>${rec.indiv||0}/${rec.group_total||0}</small>`;
                 else content = 'Д';
               } else if (status === 'dayoff') content = 'В';
               else if (status === 'sick') content = 'Б';
@@ -582,9 +582,7 @@
         document.getElementById('dayComment').value = rec.comment || '';
         document.getElementById('dayDynamicFields').innerHTML = emp.role === 'Менеджер'
           ? `<input type="number" id="dailySales" value="${rec.daily_sales || ''}" placeholder="Выручка">`
-          : (emp.role === 'Преподаватель'
-            ? `<div style="display:flex; gap:0.5rem;"><input type="number" id="indiv" value="${rec.indiv || ''}" placeholder="Инд."><input type="number" id="groupTotal" value="${rec.group_total || ''}" placeholder="Групп."></div>`
-            : '');
+          : '';
         document.getElementById('dayModal').dataset.emp = empId;
         document.getElementById('dayModal').dataset.date = date;
         document.getElementById('dayModal').style.display = 'flex';
@@ -597,10 +595,6 @@
         const comment = document.getElementById('dayComment').value.trim();
         const data = { emp_id: empId, date, status, comment };
         if (document.getElementById('dailySales')) data.daily_sales = parseFloat(document.getElementById('dailySales').value) || 0;
-        if (document.getElementById('indiv')) {
-          data.indiv = parseInt(document.getElementById('indiv').value) || 0;
-          data.group_total = parseInt(document.getElementById('groupTotal').value) || 0;
-        }
         const { error } = await _supabase.from('worklog').upsert(data, { onConflict: 'emp_id, date' });
         if (error) { alert('Ошибка: ' + error.message); return; }
         document.getElementById('dayModal').style.display = 'none';
@@ -631,7 +625,6 @@
         </select>`;
         html += `<div class="label-row"><span>Норма дней:</span><input type="number" id="normDays" value="${params.norm_days || getNormDays(emp.role, params)}" style="width:80px;"></div>`;
 
-        // Статистика для менеджера и управляющего
         if (emp.role === 'Менеджер' || emp.role === 'Управляющий') {
           const totalSales = (emp.role === 'Менеджер') ? getPeriodSales(emp, currentPeriod) : employees.filter(e=>e.role==='Менеджер').reduce((sum,m)=>sum+getPeriodSales(m, currentPeriod),0);
           const plan = params.plan_amount || 0;
@@ -657,10 +650,6 @@
           html += `<div class="label-row"><span>План продаж:</span><input type="number" id="planAmount" value="${params.plan_amount || ''}" style="width:120px;"></div>`;
         }
 
-        if (emp.role === 'Преподаватель') {
-          html += `<div class="label-row"><span>Ставка инд.:</span><input type="number" id="indivRate" value="${params.indiv_rate || 400}" style="width:80px;"></div>`;
-          html += `<div class="label-row"><span>Ставка групп.:</span><input type="number" id="groupRate" value="${params.group_rate || 500}" style="width:80px;"></div>`;
-        }
         if (emp.role === 'Администратор') {
           const managersSales = employees.filter(e => e.role === 'Менеджер')
             .reduce((sum, m) => sum + getFullMonthSales(m), 0);
@@ -679,15 +668,11 @@
         const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
         const normDays = parseInt(document.getElementById('normDays')?.value) || getNormDays(emp.role, salaryParams[empId] || {});
         const planAmount = parseFloat(document.getElementById('planAmount')?.value) || null;
-        const indivRate = parseInt(document.getElementById('indivRate')?.value) || null;
-        const groupRate = parseInt(document.getElementById('groupRate')?.value) || null;
         const data = {
           emp_id: empId,
           month: monthStr,
           norm_days: normDays,
-          plan_amount: planAmount,
-          indiv_rate: indivRate,
-          group_rate: groupRate
+          plan_amount: planAmount
         };
         const { error } = await _supabase.from('salary_params').upsert(data, { onConflict: 'emp_id, month' });
         if (error) { alert('Ошибка: ' + error.message); return; }
