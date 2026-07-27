@@ -50,14 +50,11 @@
     }
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
     .btn-primary:hover { background: #0f766e; }
-    .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
     .status { font-size: 0.9rem; color: var(--text-secondary); margin: 1rem 0; padding: 0.8rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.02); white-space: pre-wrap; }
     .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.8rem; margin: 1rem 0; }
     .kpi-item { background: rgba(204,251,241,0.4); border-radius: var(--radius-sm); padding: 0.8rem; text-align: center; }
     .kpi-item .label { font-size: 0.75rem; color: var(--text-secondary); }
     .kpi-item .value { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
-    label { display: block; font-size: 0.85rem; margin: 0.5rem 0 0.2rem; color: var(--text-secondary); }
-    input[type="date"] { width: 100%; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; }
   </style>
 </head>
 <body>
@@ -65,12 +62,9 @@
     <a href="index.html" class="back-link">← На главную</a>
     <div class="header"><h1>CRM Синхронизация</h1></div>
     <div class="card">
-      <label>Дата С</label>
-      <input type="date" id="dateFrom" value="2026-07-01">
-      <label>Дата ПО</label>
-      <input type="date" id="dateTo" value="2026-07-31">
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;">
-        <button class="btn btn-primary" id="loadFullBtn">Загрузить всё за период</button>
+      <p style="text-align:center; color:var(--text-secondary); margin-bottom:1rem;">Всегда загружает полностью все данные из CRM</p>
+      <div style="display:flex; justify-content:center;">
+        <button class="btn btn-primary" id="loadAllBtn">Загрузить все данные</button>
       </div>
       <div id="status" class="status"></div>
       <div class="kpi" id="kpiContainer"></div>
@@ -89,11 +83,10 @@
 
     function updateStatus(msg) { statusDiv.textContent = msg; console.log(msg); }
 
-    // Кэш справочников (один раз загружаются и хранятся в памяти)
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
 
     async function loadDictionaries() {
-      if (Object.keys(dicts.payItems).length > 0) return; // уже загружены
+      if (Object.keys(dicts.payItems).length > 0) return;
       updateStatus('Загрузка справочников...');
       const payItems = await fetchAllPages('pay-item/index', {}, 3);
       payItems.forEach(i => dicts.payItems[i.id] = i.name);
@@ -101,6 +94,7 @@
       payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
       const payTypes = await fetchAllPages('pay-type/index', {}, 1);
       payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
+      updateStatus('Справочники загружены.');
     }
 
     async function fetchPage(path, body) {
@@ -124,6 +118,7 @@
         allItems = allItems.concat(items);
         if (items.length < 50 || (total && allItems.length >= total)) break;
         page++;
+        updateStatus(`Загружено ${allItems.length}${total ? ' из ' + total : ''} записей...`);
       }
       return allItems;
     }
@@ -134,34 +129,13 @@
       return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : d;
     }
 
-    function toCRMDateFormat(iso) { return iso.split('-').reverse().join('.'); }
-
-    async function syncData() {
-      const dateFrom = document.getElementById('dateFrom').value;
-      const dateTo = document.getElementById('dateTo').value;
-      if (!dateFrom || !dateTo) { updateStatus('Выберите даты.'); return; }
-
-      updateStatus('Загрузка данных...');
+    document.getElementById('loadAllBtn').addEventListener('click', async () => {
+      updateStatus('Загрузка всех данных из CRM...');
       kpiDiv.innerHTML = '';
 
       try {
         await loadDictionaries();
-
-        const filters = {
-          document_date_from: toCRMDateFormat(dateFrom),
-          document_date_to: toCRMDateFormat(dateTo)
-        };
-
-        let rawItems = await fetchAllPages('pay/index', filters, 50);
-
-        // Фильтруем на клиенте (на случай, если серверный фильтр не сработал)
-        rawItems = rawItems.filter(item => {
-          const d = item.document_date;
-          if (!d) return false;
-          const [day, month, year] = d.split('.').map(Number);
-          const date = new Date(year, month-1, day);
-          return date >= new Date(dateFrom) && date <= new Date(dateTo);
-        });
+        const rawItems = await fetchAllPages('pay/index', {}, 200);
 
         const rows = rawItems.map(item => {
           const amount = parseFloat(item.income || item.amount || 0);
@@ -177,14 +151,15 @@
           };
         });
 
-        // Полная перезапись данных за выбранный период
+        // Полная перезапись всех данных
+        updateStatus('Сохранение в базу данных...');
         await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
         for (let i = 0; i < rows.length; i += 500) {
           const chunk = rows.slice(i, i + 500);
           await _supabase.from('crm_finance').insert(chunk);
         }
 
-        // Вывод ключевых показателей
+        // Ключевые показатели
         let income = 0, expense = 0, marketing = 0, sales = 0;
         rows.forEach(r => {
           if (r.operation_type === 'Доход') { income += r.amount; sales++; }
@@ -195,17 +170,15 @@
           <div class="kpi-item"><div class="label">Расходы</div><div class="value">${expense.toLocaleString()} ₽</div></div>
           <div class="kpi-item"><div class="label">Маркетинг</div><div class="value">${marketing.toLocaleString()} ₽</div></div>
           <div class="kpi-item"><div class="label">Прибыль</div><div class="value">${(income-expense).toLocaleString()} ₽</div></div>
-          <div class="kpi-item"><div class="label">Операций</div><div class="value">${rows.length}</div></div>
+          <div class="kpi-item"><div class="label">Всего операций</div><div class="value">${rows.length}</div></div>
           <div class="kpi-item"><div class="label">Продаж</div><div class="value">${sales}</div></div>
         `;
-        updateStatus(`Загружено ${rows.length} записей за период ${dateFrom} – ${dateTo}.`);
+        updateStatus(`✅ Готово! Загружено ${rows.length} записей. Дашборды обновлены.`);
       } catch (e) {
         updateStatus('Ошибка: ' + e.message);
         console.error(e);
       }
-    }
-
-    document.getElementById('loadFullBtn').addEventListener('click', syncData);
+    });
   </script>
 </body>
 </html>
