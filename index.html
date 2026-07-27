@@ -71,38 +71,32 @@
     .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
     .impersonate-menu button { width: 100%; margin-top: 4px; }
 
-    /* Стили для мобильного предупреждения */
-    @media (max-width: 768px) {
-      .desktop-content { display: none; }
-      .mobile-warning {
-        display: none; /* изначально скрыто, будет показано если не админ */
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        text-align: center;
-        padding: 2rem;
-        font-family: 'Inter', sans-serif;
-        background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
-      }
-      .mobile-warning.show {
-        display: flex;
-      }
-      .mobile-warning h2 { font-size: 1.8rem; margin-bottom: 1rem; }
-      .mobile-warning p { color: #475569; margin-bottom: 2rem; }
-      .mobile-warning a {
-        padding: 0.8rem 2rem;
-        background: #0d9488;
-        color: white;
-        border-radius: 12px;
-        text-decoration: none;
-        font-weight: 600;
-      }
+    /* Мобильное предупреждение (скрыто по умолчанию) */
+    .mobile-warning {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 2rem;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
+    }
+    .mobile-warning h2 { font-size: 1.8rem; margin-bottom: 1rem; }
+    .mobile-warning p { color: #475569; margin-bottom: 2rem; }
+    .mobile-warning a {
+      padding: 0.8rem 2rem;
+      background: #0d9488;
+      color: white;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
-  <div class="desktop-content">
+  <div class="desktop-content" id="desktopContent">
     <div class="container">
       <div class="user-bar" id="userBar" style="position:relative;">
         <span id="userInfo"></span>
@@ -242,18 +236,19 @@
       currentUser = session.user;
       currentToken = session.access_token;
 
-      // Проверка на мобильное устройство и права администратора
-      if (window.innerWidth <= 768) {
-        if (currentUser.email === ADMIN_EMAIL) {
-          // Администратор – показываем десктопную версию
-          document.querySelector('.desktop-content').style.display = 'block';
-          document.getElementById('mobileWarning').classList.remove('show');
-        } else {
-          // Обычный пользователь – показываем предупреждение
-          document.getElementById('mobileWarning').classList.add('show');
-          return; // Прерываем выполнение, чтобы не инициализировать карточки
-        }
+      // Проверка мобильного устройства ТОЛЬКО для не-администраторов
+      const isMobile = window.innerWidth <= 768 && 'maxTouchPoints' in navigator && navigator.maxTouchPoints > 0;
+
+      if (isMobile && currentUser.email !== ADMIN_EMAIL) {
+        // Обычный пользователь на мобильном устройстве – показываем предупреждение
+        document.getElementById('desktopContent').style.display = 'none';
+        document.getElementById('mobileWarning').style.display = 'flex';
+        return;
       }
+
+      // Во всех остальных случаях показываем десктопную версию
+      document.getElementById('desktopContent').style.display = 'block';
+      document.getElementById('mobileWarning').style.display = 'none';
 
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         localStorage.removeItem('impersonated_role');
