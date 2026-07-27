@@ -58,6 +58,18 @@
     .btn-primary:hover { background: #0f766e; }
     .btn-danger { background: var(--critical); color: white; border-color: var(--critical); }
     .btn-danger:hover { background: #dc2626; }
+    .btn-excel {
+      background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      box-shadow: 0 4px 12px rgba(124,92,231,0.15), 0 0 0 1px rgba(124,92,231,0.1) inset;
+    }
+    .btn-excel:hover {
+      background: linear-gradient(135deg, var(--accent), #0f766e);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 8px 24px rgba(13,148,136,0.3);
+    }
 
     .filters {
       display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
@@ -76,32 +88,34 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid var(--border);
       display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;
     }
+    .summary-item { display: flex; align-items: baseline; gap: 0.5rem; }
     .summary-label { font-size: 0.85rem; color: var(--text-secondary); }
     .summary-value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
 
-    .cards-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1rem;
+    .table-container {
+      background: var(--surface); border-radius: var(--radius-lg);
+      border: 1px solid var(--border); overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
-    .payment-card {
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { text-align: left; padding: 0.8rem 1rem; background: #f8fafc; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border); }
+    td { padding: 0.8rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.03); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(0,0,0,0.01); }
+    .actions-cell { display: flex; gap: 0.4rem; }
+
+    .salary-card {
       background: var(--surface); border-radius: var(--radius-lg);
       padding: 1.2rem; border: 1px solid var(--border);
       box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
-      display: flex; flex-direction: column; gap: 0.6rem;
-      cursor: default;
+      display: flex; align-items: center; gap: 1rem;
     }
-    .payment-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
-    .payment-card.overdue { border-color: var(--critical); }
-    .payment-card.paid { opacity: 0.8; background: #f0fdfa; }
-    .card-title { font-weight: 600; font-size: 1.1rem; }
-    .card-amount { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-    .card-date { font-size: 0.8rem; color: var(--text-secondary); }
-    .card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.3rem; }
-    .check-btn {
-      background: none; border: none; cursor: pointer; font-size: 1.3rem;
-      color: var(--accent); transition: 0.2s; padding: 0; line-height: 1;
-    }
-    .check-btn:hover { color: #0f766e; }
+    .salary-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
+    .salary-info { flex: 1; }
+    .salary-name { font-weight: 600; }
+    .salary-amount { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+    .salary-status { font-size: 0.8rem; color: var(--text-secondary); }
+    .salary-actions { display: flex; gap: 0.5rem; }
 
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.3);
@@ -121,29 +135,6 @@
     }
     .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
     .required { border-color: var(--critical) !important; }
-    .coin {
-      position: fixed; width: 16px; height: 16px;
-      background: radial-gradient(circle at 30% 30%, #f59e0b, #b45309);
-      border-radius: 50%; box-shadow: 0 0 6px rgba(245,158,11,0.6);
-      animation: coinDrop 0.7s ease-out forwards; z-index: 9999; pointer-events: none;
-    }
-    @keyframes coinDrop {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(80px) rotate(360deg); opacity: 0; }
-    }
-
-    .salary-card {
-      background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1.2rem; border: 1px solid var(--border);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
-      display: flex; align-items: center; gap: 1rem;
-    }
-    .salary-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
-    .salary-info { flex: 1; }
-    .salary-name { font-weight: 600; }
-    .salary-amount { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
-    .salary-status { font-size: 0.8rem; color: var(--text-secondary); }
-    .salary-actions { display: flex; gap: 0.5rem; }
   </style>
 </head>
 <body>
@@ -159,7 +150,9 @@
 
   <div class="filters">
     <button class="filter-btn active" data-filter="regular">Регулярные</button>
+    <button class="filter-btn" data-filter="salary5">ЗП 5 число</button>
     <button class="filter-btn" data-filter="salary10">ЗП 10 число</button>
+    <button class="filter-btn" data-filter="salary20">ЗП 20 число</button>
     <button class="filter-btn" data-filter="salary25">ЗП 25 число</button>
     <button class="filter-btn" data-filter="salary_all">Все ЗП</button>
   </div>
@@ -228,8 +221,9 @@
     <div style="margin:0.5rem 0;">
       <input type="file" id="salaryReceiptFile" accept="image/*,.pdf">
     </div>
-    <div class="modal-actions">
-      <button class="btn btn-primary" id="saveSalaryBtn">Сохранить реквизиты и отметить выплату</button>
+    <div class="modal-actions" style="justify-content: space-between;">
+      <button class="btn btn-excel" id="saveSalaryDetailsBtn">Сохранить реквизиты</button>
+      <button class="btn btn-excel" id="confirmSalaryPayBtn">Подтвердить выплату</button>
       <button class="btn" id="cancelSalaryBtn">Отмена</button>
     </div>
   </div>
@@ -241,7 +235,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let expenses = [], employees = [], worklog = [], salaryParams = [], teacherSalaryData = [], salaryPayouts = [];
-    let currentFilter = 'regular'; // 'regular', 'salary10', 'salary25', 'salary_all'
+    let currentFilter = 'regular';
     let currentUserRole = null;
 
     async function checkAccess() {
@@ -272,11 +266,6 @@
       teacherSalaryData = ts.data || [];
       salaryPayouts = spayouts.data || [];
       renderAll();
-    }
-
-    function getFilteredExpenses() {
-      if (currentFilter !== 'regular') return []; // не показываем регулярные в режиме ЗП
-      return expenses; // можно вернуть фильтр по paid, но для упрощения показываем все
     }
 
     function calculateSalary(employee, period) {
@@ -322,14 +311,30 @@
 
     function getSalaryList(period) {
       const monthStr = new Date().toISOString().slice(0,7);
-      const staff = employees.filter(e => ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role));
+      let staff = [];
+
+      if (period === '5' || period === '20') {
+        // Специальные дни: 5 число — управляющий Артур, 20 число — администратор Екатерина
+        if (period === '5') {
+          staff = employees.filter(e => e.name === 'Артур' || e.role === 'Управляющий');
+        } else {
+          staff = employees.filter(e => e.name === 'Екатерина' || e.role === 'Администратор');
+        }
+      } else {
+        // Остальные периоды: менеджеры, преподаватели и оставшиеся
+        staff = employees.filter(e => {
+          if (e.name === 'Артур' || e.name === 'Екатерина') return false; // их уже убрали
+          return ['Менеджер','Преподаватель'].includes(e.role);
+        });
+      }
+
       return staff.map(emp => {
         let amount = 0;
         if (emp.role === 'Преподаватель') {
           const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === period);
           amount = teacherRows.reduce((s, t) => s + parseFloat(t.amount), 0);
         } else {
-          amount = calculateSalary(emp, period);
+          amount = calculateSalary(emp, period === '5' || period === '10' ? '1-15' : '16-31');
         }
         const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
         return {
@@ -338,7 +343,7 @@
           paid: payout ? payout.paid : false,
           payoutData: payout || null
         };
-      }).filter(item => item.amount > 0); // показываем только тех, у кого есть начисления
+      }).filter(item => item.amount > 0);
     }
 
     function renderAll() {
@@ -347,23 +352,40 @@
       document.getElementById('addBtn').style.display = (currentFilter === 'regular' && canEdit()) ? 'inline-flex' : 'none';
 
       if (currentFilter === 'regular') {
-        // Регулярные платежи
-        const filtered = expenses; // можно фильтровать по paid/unpaid, но оставим все
-        const total = filtered.reduce((s,e) => s + parseFloat(e.amount), 0);
-        summaryDiv.innerHTML = `<div><span class="summary-label">Сумма всех регулярных платежей</span><span class="summary-value">${total.toLocaleString()} ₽</span></div>`;
-        contentDiv.innerHTML = `<div class="cards-grid" id="cardsContainer"></div>`;
-        renderRegularCards(filtered);
+        // Регулярные платежи — таблица
+        const total = expenses.reduce((s,e) => s + parseFloat(e.amount), 0);
+        summaryDiv.innerHTML = `
+          <div class="summary-item"><span class="summary-label">Сумма всех регулярных платежей</span> <span class="summary-value">${total.toLocaleString()} ₽</span></div>
+        `;
+        contentDiv.innerHTML = `
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Название</th><th>Сумма</th><th>Дата</th><th>Период</th><th>Действия</th></tr></thead>
+              <tbody id="regularTableBody"></tbody>
+            </table>
+          </div>`;
+        renderRegularTable(expenses);
       } else {
         // Зарплатные выплаты
-        let period = '1-15';
-        if (currentFilter === 'salary25') period = '16-31';
+        let period = '10'; // значение по умолчанию
+        switch (currentFilter) {
+          case 'salary5': period = '5'; break;
+          case 'salary10': period = '10'; break;
+          case 'salary20': period = '20'; break;
+          case 'salary25': period = '25'; break;
+          case 'salary_all':
+            // для всех показываем всех сотрудников без фильтра
+            contentDiv.innerHTML = '<p>Фильтр "Все ЗП" временно показывает общий список.</p>';
+            return;
+        }
+
         const list = getSalaryList(period);
         const totalToPay = list.reduce((s, i) => s + i.amount, 0);
         const paidAmount = list.filter(i => i.paid).reduce((s, i) => s + i.amount, 0);
         summaryDiv.innerHTML = `
-          <div><span class="summary-label">К выплате</span><span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
-          <div><span class="summary-label">Выплачено</span><span class="summary-value">${paidAmount.toLocaleString()} ₽</span></div>
-          <div><span class="summary-label">Остаток</span><span class="summary-value" style="color:${totalToPay-paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">${(totalToPay-paidAmount).toLocaleString()} ₽</span></div>
+          <div class="summary-item"><span class="summary-label">К выплате</span> <span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
+          <div class="summary-item"><span class="summary-label">Выплачено</span> <span class="summary-value">${paidAmount.toLocaleString()} ₽</span></div>
+          <div class="summary-item"><span class="summary-label">Остаток</span> <span class="summary-value" style="color:${totalToPay-paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">${(totalToPay-paidAmount).toLocaleString()} ₽</span></div>
         `;
         contentDiv.innerHTML = list.map(item => {
           const emp = item.employee;
@@ -378,13 +400,56 @@
                 ${payout ? `<div style="font-size:0.75rem; color:var(--text-secondary);">Тел: ${payout.phone || '—'} | Банк: ${payout.bank || '—'}</div>` : ''}
               </div>
               <div class="salary-actions">
-                <button class="btn salary-req-btn" data-employee='${JSON.stringify(emp)}' data-period="${period}">Реквизиты</button>
-                ${!paid ? `<button class="btn btn-primary salary-pay-btn" data-employee='${JSON.stringify(emp)}' data-period="${period}" data-amount="${item.amount}">Выплатить</button>` : ''}
+                <button class="btn btn-excel salary-req-btn" data-employee='${JSON.stringify(emp)}' data-period="${period}">Реквизиты</button>
+                ${!paid ? `<button class="btn btn-excel salary-pay-btn" data-employee='${JSON.stringify(emp)}' data-period="${period}" data-amount="${item.amount}">Выплатить</button>` : ''}
               </div>
             </div>`;
         }).join('');
         bindSalaryButtons();
       }
+    }
+
+    function renderRegularTable(expenses) {
+      const tbody = document.getElementById('regularTableBody');
+      tbody.innerHTML = expenses.map(e => {
+        const overdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < new Date();
+        const periodLabel = { monthly:'Ежемес.', weekly:'Еженед.', biweekly:'Раз в 2 нед.', quarterly:'Кварт.', yearly:'Ежегод.' }[e.periodicity] || '';
+        return `<tr>
+          <td>${e.name}</td>
+          <td>${e.amount.toLocaleString()} ₽</td>
+          <td>${e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru') : '—'}</td>
+          <td>${periodLabel}</td>
+          <td class="actions-cell">
+            ${canEdit() && !e.paid ? `<button class="btn btn-excel pay-action" data-id="${e.id}">Оплатить</button>` : ''}
+            ${canEdit() ? `<button class="btn edit-btn" data-id="${e.id}">Изм.</button>` : ''}
+            ${canEdit() ? `<button class="btn btn-danger delete-btn" data-id="${e.id}">Уд.</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+      // Привязываем события
+      document.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openPayModal(b.dataset.id);
+      }));
+      document.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(b.dataset.id, false);
+      }));
+      document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (confirm('Удалить платёж?')) {
+          await _supabase.from('expenses').delete().eq('id', b.dataset.id);
+          await loadData();
+        }
+      }));
+      // Клик по строке открывает просмотр
+      document.querySelectorAll('tbody tr').forEach(row => {
+        row.addEventListener('click', (e) => {
+          if (e.target.closest('button')) return;
+          const id = row.querySelector('.edit-btn')?.dataset.id;
+          if (id) openEditModal(id, true);
+        });
+      });
     }
 
     function bindSalaryButtons() {
@@ -408,7 +473,7 @@
     function openSalaryModal(emp, period, amount = 0, markPaid = false) {
       const monthStr = new Date().toISOString().slice(0,7);
       const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
-      document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role}) – ${period === '1-15' ? '1–15' : '16–31'} число`;
+      document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role}) – ${getPeriodLabel(period)}`;
       document.getElementById('salaryPhone').value = existing?.phone || '';
       document.getElementById('salaryBank').value = existing?.bank || '';
       document.getElementById('salaryComment').value = existing?.comment || '';
@@ -419,12 +484,26 @@
       document.getElementById('salaryModal').style.display = 'flex';
     }
 
-    document.getElementById('saveSalaryBtn').addEventListener('click', async () => {
+    function getPeriodLabel(period) {
+      const labels = { '5': '5 число', '10': '10 число', '20': '20 число', '25': '25 число' };
+      return labels[period] || period;
+    }
+
+    // Сохранить реквизиты (без отметки о выплате)
+    document.getElementById('saveSalaryDetailsBtn').addEventListener('click', async () => {
+      await saveSalaryPayout(false);
+    });
+
+    // Подтвердить выплату (с отметкой о выплате)
+    document.getElementById('confirmSalaryPayBtn').addEventListener('click', async () => {
+      await saveSalaryPayout(true);
+    });
+
+    async function saveSalaryPayout(markPaid) {
       const modal = document.getElementById('salaryModal');
       const employeeId = modal.dataset.employeeId;
       const period = modal.dataset.period;
       const amount = parseFloat(modal.dataset.amount) || 0;
-      const markPaid = modal.dataset.markPaid === 'true';
       const phone = document.getElementById('salaryPhone').value.trim();
       const bank = document.getElementById('salaryBank').value.trim();
       const comment = document.getElementById('salaryComment').value.trim();
@@ -432,7 +511,7 @@
 
       let receiptUrl = '';
       const file = document.getElementById('salaryReceiptFile').files[0];
-      if (file) {
+      if (file && markPaid) {
         const fileName = `salary_receipts/${employeeId}_${Date.now()}.${file.name.split('.').pop()}`;
         const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
         if (error) {
@@ -452,7 +531,7 @@
         comment,
         paid: markPaid,
         paid_at: markPaid ? new Date().toISOString() : null,
-        receipt_url: receiptUrl
+        receipt_url: receiptUrl || (modal.dataset.existingReceiptUrl || '')
       };
 
       const { error } = await _supabase.from('salary_payouts').upsert(payload, { onConflict: 'employee_id, period, month' });
@@ -462,61 +541,11 @@
       }
       modal.style.display = 'none';
       loadData();
-      showCoins();
-    });
+    }
 
     document.getElementById('cancelSalaryBtn').addEventListener('click', () => {
       document.getElementById('salaryModal').style.display = 'none';
     });
-
-    // Регулярные платежи (аналогично предыдущей версии, но с улучшенными карточками)
-    function renderRegularCards(filtered) {
-      const container = document.getElementById('cardsContainer');
-      container.innerHTML = filtered.map(e => {
-        const overdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < new Date();
-        const cardClass = e.paid ? 'payment-card paid' : (overdue ? 'payment-card overdue' : 'payment-card');
-        const periodLabel = { monthly:'Ежемес.', weekly:'Еженед.', biweekly:'Раз в 2 нед.', quarterly:'Кварт.', yearly:'Ежегод.' }[e.periodicity] || '';
-        return `
-          <div class="${cardClass}" data-id="${e.id}">
-            <div class="card-title">${e.name}</div>
-            <div class="card-amount">${e.amount.toLocaleString()} ₽</div>
-            <div class="card-date">${e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru') : '—'}</div>
-            <div style="font-size:0.8rem; color:var(--text-secondary);">${periodLabel}</div>
-            ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:0.75rem; color:var(--accent);">Чек</a>` : ''}
-            <div class="card-actions">
-              ${canEdit() && !e.paid ? `<button class="check-btn pay-action" title="Оплатить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></button>` : ''}
-              ${canEdit() ? `<button class="btn edit-btn">Изм.</button>` : ''}
-              ${canEdit() ? `<button class="btn btn-danger delete-btn">Уд.</button>` : ''}
-            </div>
-          </div>`;
-      }).join('');
-      bindRegularEvents();
-    }
-
-    function bindRegularEvents() {
-      document.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openPayModal(b.closest('.payment-card').dataset.id);
-      }));
-      document.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(b.closest('.payment-card').dataset.id, false);
-      }));
-      document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = b.closest('.payment-card').dataset.id;
-        if (confirm('Удалить платёж?')) {
-          await _supabase.from('expenses').delete().eq('id', id);
-          await loadData();
-        }
-      }));
-      document.querySelectorAll('.payment-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-          if (e.target.closest('button') || e.target.closest('a')) return;
-          openEditModal(card.dataset.id, true);
-        });
-      });
-    }
 
     // Оплата регулярного (аналогично)
     let pendingPayId = null;
