@@ -87,17 +87,16 @@
 
     // Справочники (финансы)
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
-    // Справочники (лиды)
-    const leadDicts = { statuses: {}, sources: {} };
 
     async function fetchPage(path, body) {
+      const url = `https://musicclubmsk.s20.online/v2api/${BRANCH}/${path}`;
       const resp = await fetch(PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ branch: BRANCH, path, body })
       });
       const json = await resp.json();
-      if (json.error) throw new Error(json.error);
+      if (json.error) throw new Error(`${json.error} (URL: ${url})`);
       return json;
     }
 
@@ -182,67 +181,75 @@
       }
     });
 
-    // ====== ЗАГРУЗКА ЛИДОВ (с перебором эндпоинтов) ======
-    async function loadLeadDictionaries() {
-      if (Object.keys(leadDicts.statuses).length === 0) {
-        updateStatus('Загрузка справочников статусов и источников...');
-        const statuses = await fetchAllPages('customer-status/index', {}, 2);
-        statuses.forEach(s => { leadDicts.statuses[s.id] = s.name; });
-        const sources = await fetchAllPages('source/index', {}, 2);
-        sources.forEach(s => { leadDicts.sources[s.id] = s.name; });
-      }
-    }
-
+    // ====== ЗАГРУЗКА ЛИДОВ (с диагностикой) ======
     document.getElementById('loadLeadsBtn').addEventListener('click', async () => {
-      updateStatus('Загрузка всех клиентов (лидов) из CRM...');
+      updateStatus('Поиск правильного эндпоинта для клиентов...');
       kpiDiv.innerHTML = '';
-      try {
-        await loadLeadDictionaries();
 
-        let rawCustomers = [];
-        const endpoints = ['customer/index', 'customer', 'customer/list'];
+      const endpoints = [
+        'client/index',
+        'client',
+        'customer',
+        'customer/index',
+        'lead/index',
+        'lead',
+        'customer/list',
+        'client/list'
+      ];
 
-        for (const ep of endpoints) {
-          try {
-            rawCustomers = await fetchAllPages(ep, {}, 200);
-            if (rawCustomers.length > 0) break;
-          } catch (e) {
-            console.warn(`Эндпоинт ${ep} не сработал:`, e.message);
+      let rawCustomers = null;
+      let lastError = '';
+
+      for (const ep of endpoints) {
+        const url = `https://musicclubmsk.s20.online/v2api/${BRANCH}/${ep}`;
+        updateStatus(`Пробую ${ep}...`);
+        try {
+          const json = await fetchPage(ep, {});
+          if (json.items && json.items.length > 0) {
+            rawCustomers = json.items;
+            updateStatus(`Успех! Эндпоинт ${ep} вернул ${rawCustomers.length} записей.`);
+            break;
+          } else {
+            lastError = `${ep}: ответ получен, но items пуст или отсутствует.`;
           }
+        } catch (e) {
+          lastError = `${ep}: ${e.message}`;
+          console.warn(lastError);
         }
-
-        if (rawCustomers.length === 0) throw new Error('Ни один эндпоинт клиентов не вернул данные.');
-
-        const rows = rawCustomers.map(item => ({
-          date_added: formatDate(item.created_at) || new Date().toISOString().split('T')[0],
-          name: item.name || '',
-          stage: leadDicts.statuses[item.status_id] || item.status_id || '',
-          source: leadDicts.sources[item.source_id] || item.source_id || '',
-          is_duplicate: false,
-          is_bad_contact: false
-        }));
-
-        updateStatus(`Сохранение ${rows.length} записей...`);
-        await _supabase.from('leads').delete().neq('id', 0);
-        for (let i = 0; i < rows.length; i += 500) {
-          const chunk = rows.slice(i, i + 500);
-          await _supabase.from('leads').insert(chunk);
-        }
-
-        const total = rows.length;
-        const puCount = rows.filter(l => l.stage === 'ПУ состоялся' || l.stage?.includes('ПУ')).length;
-        const conversion = total ? ((puCount / total) * 100).toFixed(1) : 0;
-
-        kpiDiv.innerHTML = `
-          <div class="kpi-item"><div class="label">Всего лидов</div><div class="value">${total}</div></div>
-          <div class="kpi-item"><div class="label">Успешных (ПУ)</div><div class="value">${puCount}</div></div>
-          <div class="kpi-item"><div class="label">Конверсия</div><div class="value">${conversion}%</div></div>
-        `;
-        updateStatus(`Готово. Лиды загружены: ${total} записей.`);
-      } catch (e) {
-        updateStatus('Ошибка: ' + e.message);
-        console.error(e);
       }
+
+      if (!rawCustomers) {
+        updateStatus(`Не удалось найти рабочий эндпоинт. Последняя ошибка:\n${lastError}\n\nОткройте консоль (F12) для подробностей.`);
+        return;
+      }
+
+      // Сохраняем в leads
+      const rows = rawCustomers.map(item => ({
+        date_added: formatDate(item.created_at) || new Date().toISOString().split('T')[0],
+        name: item.name || '',
+        stage: item.status || item.stage || '',
+        source: item.source || '',
+        is_duplicate: false,
+        is_bad_contact: false
+      }));
+
+      updateStatus(`Сохранение ${rows.length} записей...`);
+      await _supabase.from('leads').delete().neq('id', 0);
+      for (let i = 0; i < rows.length; i += 500) {
+        const chunk = rows.slice(i, i + 500);
+        await _supabase.from('leads').insert(chunk);
+      }
+
+      const total = rows.length;
+      const puCount = rows.filter(l => l.stage === 'ПУ состоялся' || l.stage?.includes('ПУ')).length;
+      const conversion = total ? ((puCount / total) * 100).toFixed(1) : 0;
+
+      kpiDiv.innerHTML = `
+        <div class="kpi-item"><div class="label">Всего лидов</div><div class="value">${total}</div></div>
+        <div class="kpi-item"><div class="label">Успешных (ПУ)</div><div class="value">${puCount}</div></div>
+        <div class="kpi-item"><div class="label">Конверсия</div><div class="value">${conversion}%</div></div>
+      `;
+      updateStatus(`Готово. Лиды загружены: ${total} записей.`);
     });
   </script>
 </body>
