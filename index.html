@@ -75,7 +75,6 @@
     .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
     .impersonate-menu button { width: 100%; margin-top: 4px; }
 
-    /* Мобильное предупреждение */
     .mobile-warning {
       display: none;
       flex-direction: column;
@@ -141,7 +140,6 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
     const sections = [
       { id: 'schedule', title: 'График работы', desc: 'Расписание, зарплата', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] },
@@ -189,13 +187,9 @@
     async function fetchRole() {
       if (impersonatedRole) return impersonatedRole;
       if (!currentUser) return 'Менеджер';
-      try {
-        const { data, error } = await _supabase.from('employees').select('role').eq('email', currentUser.email).single();
-        if (error || !data) return 'Менеджер';
-        return data.role;
-      } catch {
-        return 'Менеджер';
-      }
+      const { data, error } = await _supabase.from('employees').select('role').eq('email', currentUser.email).single();
+      if (error || !data) return 'Менеджер';
+      return data.role;
     }
 
     function renderCards() {
@@ -222,7 +216,7 @@
         userInfo.textContent = `${currentUser.email} (${effectiveRole})`;
       }
       const impBtn = document.getElementById('impersonateBtn');
-      if (currentUser?.email === ADMIN_EMAIL) {
+      if (currentUser?.email === 'arturgalkin.ru@mail.ru') {
         impBtn.style.display = 'inline-block';
         if (impersonatedRole) {
           impBtn.classList.add('active');
@@ -248,7 +242,7 @@
       currentToken = session.access_token;
 
       const isMobile = window.innerWidth <= 768 && 'maxTouchPoints' in navigator && navigator.maxTouchPoints > 0;
-      if (isMobile && currentUser.email !== ADMIN_EMAIL) {
+      if (isMobile && currentUser.email !== 'arturgalkin.ru@mail.ru') {
         document.getElementById('desktopContent').style.display = 'none';
         document.getElementById('mobileWarning').style.display = 'flex';
         return;
@@ -263,7 +257,7 @@
         window.location.href = 'login.html';
       });
 
-      if (currentUser.email === ADMIN_EMAIL) {
+      if (currentUser.email === 'arturgalkin.ru@mail.ru') {
         const savedRole = localStorage.getItem('impersonated_role');
         if (savedRole) impersonatedRole = savedRole;
         document.getElementById('impersonateBtn').addEventListener('click', () => {
