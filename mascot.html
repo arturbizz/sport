@@ -586,15 +586,12 @@
       const email = currentUser.email;
       document.getElementById('greeting').textContent = `Привет, ${email.split('@')[0]}!`;
 
-      // Проверяем роль
       if (email === ADMIN_EMAIL) {
         effectiveRole = 'Управляющий';
-        // Показываем кнопку "Главное меню" только для администратора
         document.getElementById('homeLink').style.display = 'flex';
       } else {
         const { data: emp } = await _supabase.from('employees').select('role').eq('email', email).single();
         effectiveRole = emp?.role || '';
-        // Скрываем кнопку для всех остальных
         document.getElementById('homeLink').style.display = 'none';
       }
 
