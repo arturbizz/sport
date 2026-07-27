@@ -122,7 +122,9 @@
   </div>
 
   <div class="filters">
-    <button class="filter-btn active" data-role="all">Все</button>
+    <button class="filter-btn active" data-period="1-15">1–15 число</button>
+    <button class="filter-btn" data-period="16-31">16–31 число</button>
+    <button class="filter-btn" data-role="all">Все</button>
     <button class="filter-btn" data-role="Управляющий">Управляющий</button>
     <button class="filter-btn" data-role="Менеджер">Менеджеры</button>
     <button class="filter-btn" data-role="Администратор">Администраторы</button>
@@ -170,6 +172,7 @@
     let employees = [], teacherSalaryData = [], managerSalaryData = [], salaryPayouts = [];
     let selectedYear = new Date().getFullYear();
     let selectedMonth = new Date().getMonth() + 1;
+    let currentPeriod = '1-15'; // по умолчанию первая половина месяца
     let currentRoleFilter = 'all';
     const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
@@ -178,9 +181,9 @@
       const start = `${monthStr}-01`;
       const [emp, ts, ms, sp] = await Promise.all([
         _supabase.from('employees').select('*'),
-        _supabase.from('teacher_salary').select('*').eq('month', monthStr),
-        _supabase.from('manager_salary').select('*').eq('period_start', start),
-        _supabase.from('salary_payouts').select('*').eq('month', monthStr)
+        _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', currentPeriod),
+        _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`),
+        _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod)
       ]);
       employees = emp.data || [];
       teacherSalaryData = ts.data || [];
@@ -197,15 +200,19 @@
       return staff.map(emp => {
         let amount = 0;
         if (emp.role === 'Преподаватель') {
-          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name);
+          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === currentPeriod);
           amount = teacherRows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
         } else {
-          const salaryRecord = managerSalaryData.find(m => m.employee_name === emp.name && m.role === emp.role);
+          // Для менеджеров, администраторов и управляющего ищем запись в manager_salary за нужный период
+          const salaryRecord = managerSalaryData.find(m => {
+            return m.employee_name === emp.name && m.role === emp.role &&
+                   (currentPeriod === '1-15' ? m.period_start === `${monthStr}-01` : m.period_start !== `${monthStr}-01`);
+          });
           if (salaryRecord) {
             amount = parseFloat(salaryRecord.total_salary) || 0;
           }
         }
-        const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr);
+        const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr && p.period === currentPeriod);
         return {
           employee: emp,
           amount,
@@ -229,7 +236,7 @@
       const totalToPay = filtered.reduce((s, i) => s + i.amount, 0);
       const paidAmount = filtered.filter(i => i.paid).reduce((s, i) => s + i.amount, 0);
       document.getElementById('summaryContainer').innerHTML = `
-        <div class="summary-item"><span class="summary-label">К выплате</span> <span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
+        <div class="summary-item"><span class="summary-label">К выплате (${currentPeriod === '1-15' ? '1–15' : '16–31'})</span> <span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
         <div class="summary-item"><span class="summary-label">Выплачено</span> <span class="summary-value">${paidAmount.toLocaleString()} ₽</span></div>
         <div class="summary-item"><span class="summary-label">Остаток</span> <span class="summary-value" style="color:${totalToPay-paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">${(totalToPay-paidAmount).toLocaleString()} ₽</span></div>
       `;
@@ -273,7 +280,7 @@
 
     function openSalaryModal(emp, amount = 0, markPaid = false) {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr);
+      const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr && p.period === currentPeriod);
       document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role})`;
       document.getElementById('salaryPhone').value = existing?.phone || '';
       document.getElementById('salaryBank').value = existing?.bank || '';
@@ -306,10 +313,22 @@
         receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
       }
 
-      const { data: existing } = await _supabase.from('salary_payouts')
-        .select('id').eq('employee_id', employeeId).eq('month', monthStr).single();
+      const payload = {
+        employee_id: employeeId,
+        period: currentPeriod,  // обязательно заполняем период
+        month: monthStr,
+        amount,
+        phone,
+        bank,
+        comment,
+        paid: markPaid,
+        paid_at: markPaid ? new Date().toISOString() : null,
+        receipt_url: receiptUrl
+      };
 
-      const payload = { employee_id: employeeId, month: monthStr, amount, phone, bank, comment, paid: markPaid, paid_at: markPaid ? new Date().toISOString() : null, receipt_url: receiptUrl };
+      const { data: existing } = await _supabase.from('salary_payouts')
+        .select('id').eq('employee_id', employeeId).eq('period', currentPeriod).eq('month', monthStr).single();
+
       let error;
       if (existing) {
         const { error: updateError } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id);
@@ -337,16 +356,25 @@
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Зарплатная ведомость');
-      XLSX.writeFile(wb, `Зарплатная_ведомость_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
+      XLSX.writeFile(wb, `ЗП_${currentPeriod}_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
     }
 
     function showAlert(msg) { document.getElementById('alertMessage').textContent = msg; document.getElementById('alertModal').style.display = 'flex'; document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none'; }
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    document.querySelectorAll('.filter-btn[data-period]').forEach(btn => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn[data-period]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentPeriod = btn.dataset.period;
+        loadData();
+      });
+    });
+
+    document.querySelectorAll('.filter-btn[data-role]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn[data-role]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentRoleFilter = btn.dataset.role;
         renderAll();
