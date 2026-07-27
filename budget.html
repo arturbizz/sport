@@ -231,7 +231,6 @@
     let expenses = [], employees = [], worklog = [], salaryParams = [], teacherSalaryData = [], salaryPayouts = [];
     let currentFilter = 'regular';
     let currentUserRole = null;
-    // Текущий выбранный месяц (по умолчанию – текущий)
     let selectedYear = new Date().getFullYear();
     let selectedMonth = new Date().getMonth() + 1;
     const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
@@ -270,43 +269,55 @@
       renderAll();
     }
 
+    function getFullMonthSales(empId) {
+      const logs = worklog.filter(l => l.emp_id === empId && l.status === 'working');
+      return logs.reduce((sum, l) => sum + (l.daily_sales || 0), 0);
+    }
+
+    // Точная логика из графика работы (schedule.html)
     function calculateSalary(employee, period) {
+      const params = salaryParams.find(p => p.emp_id === employee.id) || {};
       const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
       const isFirstHalf = period === '1-15';
       const dayStart = isFirstHalf ? 1 : 16;
       const dayEnd = isFirstHalf ? 15 : daysInMonth;
-      const empId = employee.id;
+
       const logs = worklog.filter(l => {
-        if (l.emp_id !== empId || l.status !== 'working') return false;
+        if (l.emp_id !== employee.id || l.status !== 'working') return false;
         const day = parseInt(l.date.split('-')[2], 10);
         return day >= dayStart && day <= dayEnd;
       });
+
       const worked = logs.length;
       const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
-      const params = salaryParams.find(p => p.emp_id === empId) || {};
+
+      if (employee.role === 'Преподаватель') {
+        // Для преподавателей берём данные из teacher_salary
+        const rows = teacherSalaryData.filter(t => t.teacher_name === employee.name && t.period === period);
+        return rows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+      }
+
       const normDays = employee.role === 'Менеджер' ? Math.round(daysInMonth * 0.5) : (params.norm_days || 22);
-      const dailyRate = rates[employee.role] || 0;
-      let base = Math.round((dailyRate / normDays) * worked);
+      const dailyRate = (rates[employee.role] || 0) / Math.max(normDays, 1);
+      let base = Math.round(dailyRate * worked);
       let bonus = 0;
+
       if (employee.role === 'Менеджер') {
+        const sales = logs.reduce((s, l) => s + (l.daily_sales || 0), 0);
         const plan = params.plan_amount || 0;
-        const totalSales = logs.reduce((s, l) => s + (l.daily_sales || 0), 0);
-        bonus = Math.round(totalSales * ((plan > 0 && totalSales >= plan) ? 0.07 : 0.05));
+        bonus = Math.round(sales * ((plan > 0 && sales >= plan) ? 0.07 : 0.05));
       } else if (employee.role === 'Администратор') {
-        const managersSales = employees.filter(e => e.role === 'Менеджер').reduce((sum, man) => {
-          const manLogs = worklog.filter(l => l.emp_id === man.id && l.status === 'working');
-          return sum + manLogs.reduce((s, l) => s + (l.daily_sales || 0), 0);
-        }, 0);
+        const managersSales = employees.filter(e => e.role === 'Менеджер')
+          .reduce((sum, man) => sum + getFullMonthSales(man.id), 0);
         bonus = Math.round(managersSales * 0.01);
       } else if (employee.role === 'Управляющий') {
-        const managersSales = employees.filter(e => e.role === 'Менеджер').reduce((sum, man) => {
-          const manLogs = worklog.filter(l => l.emp_id === man.id && l.status === 'working');
-          return sum + manLogs.reduce((s, l) => s + (l.daily_sales || 0), 0);
-        }, 0);
+        const managersSales = employees.filter(e => e.role === 'Менеджер')
+          .reduce((sum, man) => sum + getFullMonthSales(man.id), 0);
         const plan = params.plan_amount || 0;
         bonus = (plan > 0 && managersSales >= plan) ? Math.round(managersSales * 0.01) : 0;
       }
-      if (isFirstHalf) bonus = 0;
+
+      if (isFirstHalf) bonus = 0; // бонусы только во второй половине
       return base + bonus;
     }
 
@@ -314,26 +325,21 @@
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
       let staff = [];
 
-      if (period === '5') {
+      if (period === '5' || period === '20') {
+        // 5 и 20 числа – Артур, Ирина и преподаватели (вторая половина месяца)
         staff = employees.filter(e => e.name === 'Артур' || e.name === 'Ирина' || e.role === 'Управляющий');
-      } else if (period === '20') {
-        staff = employees.filter(e => e.name === 'Екатерина');
+        if (period === '20') {
+          // Добавляем преподавателей (только если есть данные за вторую половину)
+          staff = staff.concat(employees.filter(e => e.role === 'Преподаватель'));
+        }
       } else {
-        staff = employees.filter(e => {
-          if (e.name === 'Артур' || e.name === 'Ирина' || e.name === 'Екатерина') return false;
-          return ['Менеджер','Преподаватель'].includes(e.role);
-        });
+        // 10 и 25 числа – менеджеры и преподаватели
+        staff = employees.filter(e => ['Менеджер','Преподаватель'].includes(e.role));
       }
 
       return staff.map(emp => {
-        let amount = 0;
-        if (emp.role === 'Преподаватель') {
-          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === period);
-          amount = teacherRows.reduce((s, t) => s + parseFloat(t.amount), 0);
-        } else {
-          const subPeriod = (period === '5' || period === '10') ? '1-15' : '16-31';
-          amount = calculateSalary(emp, subPeriod);
-        }
+        const subPeriod = (period === '5' || period === '10') ? '1-15' : '16-31';
+        const amount = calculateSalary(emp, subPeriod);
         const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
         return {
           employee: emp,
@@ -341,7 +347,7 @@
           paid: payout ? payout.paid : false,
           payoutData: payout || null
         };
-      }).filter(item => true); // показываем всех, даже с нулевой суммой
+      }).filter(item => item.amount >= 0); // показываем всех, включая нулевые суммы
     }
 
     function renderAll() {
@@ -508,6 +514,10 @@
     document.getElementById('cancelSalaryBtn').addEventListener('click', () => { document.getElementById('salaryModal').style.display = 'none'; });
 
     function exportSalary(list, periodLabel) {
+      if (!list.length) {
+        showAlert('Нет данных для экспорта.');
+        return;
+      }
       const rows = list.map(item => ({
         'Сотрудник': item.employee.name, 'Роль': item.employee.role, 'Сумма': item.amount,
         'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
