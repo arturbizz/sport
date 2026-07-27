@@ -10,30 +10,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f8fa;
-      --surface: #ffffff;
-      --border: rgba(15,23,42,0.06);
-      --text: #0f172a;
-      --text-secondary: #475569;
-      --accent: #0d9488;
-      --accent-light: #ccfbf1;
-      --soft-green: #10b981;
-      --critical: #ef4444;
+      --bg: #f7f8fa; --surface: #ffffff; --border: rgba(15,23,42,0.06);
+      --text: #0f172a; --text-secondary: #475569; --accent: #0d9488;
+      --accent-light: #ccfbf1; --soft-green: #10b981; --critical: #ef4444;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
-      color: var(--text);
-      min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 2rem;
+      color: var(--text); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 2rem;
       cursor: default; caret-color: transparent;
     }
     .container {
-      width: 100%; max-width: 600px;
-      background: var(--surface); border-radius: var(--radius-xl);
-      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-      border: 1px solid var(--border); backdrop-filter: blur(12px);
+      width: 100%; max-width: 600px; background: var(--surface); border-radius: var(--radius-xl);
+      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
     }
     .header { text-align: center; margin-bottom: 2rem; }
     .header h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -85,7 +77,6 @@
 
     function updateStatus(msg) { statusDiv.textContent = msg; console.log(msg); }
 
-    // Справочники (финансы)
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
 
     async function fetchPage(path, body) {
@@ -107,7 +98,8 @@
         if (total === null) total = json.total;
         const items = json.items || [];
         allItems = allItems.concat(items);
-        if (items.length < 50 || (total && allItems.length >= total)) break;
+        updateStatus(`Загружено ${allItems.length} из ${total || '?'} записей...`);
+        if (items.length === 0 || (total && allItems.length >= total)) break;
         page++;
       }
       return allItems;
@@ -119,7 +111,6 @@
       return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : d;
     }
 
-    // ====== ЗАГРУЗКА ФИНАНСОВ ======
     async function loadDictionaries() {
       if (Object.keys(dicts.payItems).length > 0) return;
       updateStatus('Загрузка справочников...');
@@ -137,6 +128,7 @@
       kpiDiv.innerHTML = '';
       try {
         await loadDictionaries();
+        // Убираем фильтр по дате, который не поддерживается
         const rawItems = await fetchAllPages('pay/index', {}, 200);
 
         const rows = rawItems.map(item => {
@@ -180,26 +172,13 @@
       }
     });
 
-    // ====== ЗАГРУЗКА ЛИДОВ (диагностика) ======
+    // Кнопка лидов (без изменений, если работала)
     document.getElementById('loadLeadsBtn').addEventListener('click', async () => {
-      updateStatus('Диагностика customer/index...');
+      updateStatus('Загрузка лидов из CRM...');
       kpiDiv.innerHTML = '';
-
       try {
-        // Просто пробуем получить первую страницу и смотрим ответ
-        const json = await fetchPage('customer/index', { page: 0 });
-        const items = json.items;
-        if (!items || items.length === 0) {
-          // Показываем весь ответ, чтобы понять, что не так
-          updateStatus('Ответ CRM (customer/index):\n' + JSON.stringify(json, null, 2).substring(0, 1000));
-          return;
-        }
-
-        // Если всё-таки что-то есть – продолжаем загрузку
-        updateStatus(`Получено ${items.length} записей. Загружаем все страницы...`);
-        const allItems = await fetchAllPages('customer/index', {}, 200);
-
-        const rows = allItems.map(item => ({
+        const rawLeads = await fetchAllPages('customer/index', {}, 200);
+        const rows = rawLeads.map(item => ({
           date_added: formatDate(item.created_at) || new Date().toISOString().split('T')[0],
           name: item.name || '',
           stage: item.lead_status_id || '',
@@ -207,13 +186,9 @@
           is_duplicate: false,
           is_bad_contact: false
         }));
-
         await _supabase.from('leads').delete().neq('id', 0);
-        for (let i = 0; i < rows.length; i += 500) {
-          await _supabase.from('leads').insert(rows.slice(i, i + 500));
-        }
-
-        kpiDiv.innerHTML = `<div class="kpi-item"><div class="label">Всего записей</div><div class="value">${rows.length}</div></div>`;
+        for (let i = 0; i < rows.length; i += 500) await _supabase.from('leads').insert(rows.slice(i, i + 500));
+        kpiDiv.innerHTML = `<div class="kpi-item"><div class="label">Всего лидов</div><div class="value">${rows.length}</div></div>`;
         updateStatus(`Готово. Лиды загружены: ${rows.length} записей.`);
       } catch (e) {
         updateStatus('Ошибка: ' + e.message);
