@@ -12,6 +12,8 @@
     th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; font-size: 0.9rem; }
     th { background: #f3f4f6; }
     .status { background: #fef3c7; padding: 0.5rem; border-radius: 8px; margin: 0.5rem 0; white-space: pre-wrap; }
+    .save-btn { background: #0d9488; color: white; border: none; margin-left: 1rem; }
+    .save-btn:disabled { background: #94a3b8; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -20,6 +22,7 @@
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
     <label>Филиал: <input type="text" id="branch" size="10" value="20"></label><br>
     <button id="loadBtn">Загрузить данные из CRM</button>
+    <button id="saveBtn" class="save-btn" disabled>Сохранить в Supabase</button>
     <div id="status" class="status"></div>
   </div>
 
@@ -60,6 +63,7 @@
 
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
     const statusDiv = document.getElementById('status');
+    let currentFetchedData = []; // сохраняем загруженные данные для возможности сохранения
 
     function updateStatus(msg) {
       statusDiv.innerHTML = msg;
@@ -77,7 +81,6 @@
       return json;
     }
 
-    // Загрузка с жёстким лимитом страниц
     async function fetchWithLimit(proxyUrl, branch, path, bodyTemplate, maxPages, description) {
       let allItems = [];
       let page = 0;
@@ -109,7 +112,6 @@
       updateStatus('Справочники загружены (базовый набор).');
     }
 
-    // Вспомогательная функция для проверки даты на июль 2026
     function isJuly2026(dateStr) {
       if (!dateStr) return false;
       const parts = dateStr.split('.');
@@ -120,6 +122,15 @@
       return year === 2026 && month === 7;
     }
 
+    // Функция форматирования даты из DD.MM.YYYY в YYYY-MM-DD
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('.');
+      if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      return dateStr;
+    }
+
+    // Загрузка данных из CRM и отображение
     document.getElementById('loadBtn').addEventListener('click', async () => {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
       const branch = document.getElementById('branch').value.trim();
@@ -128,52 +139,56 @@
       try {
         await loadDictionaries(proxyUrl, branch);
 
-        // Загружаем операции с фильтром по дате (если работает) или без, но с лимитом страниц
         updateStatus('Загрузка операций за июль 2026...');
         let rawItems = await fetchWithLimit(proxyUrl, branch, 'pay/index', {
           document_date_from: '01.07.2026',
           document_date_to: '31.07.2026'
         }, 50, 'Операции');
 
-        // Если фильтр не дал результатов, загружаем без фильтра и фильтруем на клиенте
         if (rawItems.length === 0) {
           updateStatus('Фильтр по дате не сработал, загружаем общий список (до 2000 записей)...');
           rawItems = await fetchWithLimit(proxyUrl, branch, 'pay/index', {}, 40, 'Все операции');
         }
 
-        // ВСЕГДА фильтруем по июлю 2026 на клиенте (даже если серверный фильтр сработал, для надёжности)
         const julyItems = rawItems.filter(item => isJuly2026(item.document_date));
         updateStatus(`Найдено ${julyItems.length} операций за июль 2026 (из ${rawItems.length} загруженных).`);
 
-        // Для отладки покажем несколько примеров дат, которые не прошли фильтр
-        const notJulyDates = [...new Set(rawItems.filter(item => !isJuly2026(item.document_date)).map(item => item.document_date))].slice(0,10);
-        if (notJulyDates.length > 0) {
-          console.log('Примеры дат, которые НЕ попали в июль (первые 10):', notJulyDates);
-        }
+        // Формируем данные для сохранения (поля как в crm_finance)
+        currentFetchedData = julyItems.map(item => {
+          const amount = parseFloat(item.income || item.amount || 0);
+          const typeId = item.pay_type_id;
+          const typeName = dicts.payTypes[typeId] || '';
+          const isIncome = typeName.toLowerCase().includes('доход') || typeName.toLowerCase().includes('приход');
+          return {
+            operation_date: formatDate(item.document_date),
+            operation_type: isIncome ? 'Доход' : 'Расход',
+            amount: amount,
+            category: dicts.payItems[item.pay_item_id] || `ID ${item.pay_item_id || ''}`,
+            account: dicts.payAccounts[item.pay_account_id] || `ID ${item.pay_account_id || ''}`,
+            manager: '', // пока нет менеджера в данных
+            payment_type: '',
+            client: '',
+            teacher_name: dicts.teachers?.[item.teacher_id] || '',
+            period: ''
+          };
+        });
 
-        // Анализ
+        // Анализ для отображения
         let totalIncome = 0, totalExpense = 0, totalMarketing = 0;
         let salesCount = 0;
         const categoryExpenses = {};
         const oneTimeExpenses = [];
 
-        julyItems.forEach(item => {
-          const amount = parseFloat(item.income || item.amount || 0);
-          const typeId = item.pay_type_id;
-          const typeName = dicts.payTypes[typeId] || '';
-          const isIncome = typeName.toLowerCase().includes('доход') || typeName.toLowerCase().includes('приход');
-          const isExpense = typeName.toLowerCase().includes('расход') || typeName.toLowerCase().includes('выплата');
-
-          if (isIncome) {
-            totalIncome += amount;
+        currentFetchedData.forEach(item => {
+          if (item.operation_type === 'Доход') {
+            totalIncome += item.amount;
             salesCount++;
-          } else if (isExpense) {
-            totalExpense += amount;
-            const catId = item.pay_item_id;
-            const catName = dicts.payItems[catId] || (catId ? `ID ${catId}` : 'Без категории');
-            if (catName.toLowerCase().includes('маркетинг') || catName.toLowerCase().includes('лидмаркет')) totalMarketing += amount;
-            categoryExpenses[catName] = (categoryExpenses[catName] || 0) + amount;
-            if (amount > 1000) oneTimeExpenses.push({ date: item.document_date, category: catName, amount });
+          } else {
+            totalExpense += item.amount;
+            const catName = item.category || 'Без категории';
+            if (catName.toLowerCase().includes('маркетинг') || catName.toLowerCase().includes('лидмаркет')) totalMarketing += item.amount;
+            categoryExpenses[catName] = (categoryExpenses[catName] || 0) + item.amount;
+            if (item.amount > 1000) oneTimeExpenses.push({ date: item.operation_date, category: catName, amount: item.amount });
           }
         });
 
@@ -191,7 +206,7 @@
         document.getElementById('kpiRoyalty').textContent = royalty.toLocaleString() + ' ₽';
         document.getElementById('kpiOperProfit').textContent = operatingProfit.toLocaleString() + ' ₽';
         document.getElementById('kpiNetProfit').textContent = netProfit.toLocaleString() + ' ₽';
-        document.getElementById('kpiCount').textContent = julyItems.length;
+        document.getElementById('kpiCount').textContent = currentFetchedData.length;
         document.getElementById('kpiSalesCount').textContent = salesCount;
         document.getElementById('kpiAvgCheck').textContent = avgCheck.toLocaleString() + ' ₽';
         document.getElementById('kpiROI').textContent = roi;
@@ -201,14 +216,44 @@
         const sortedCats = Object.entries(categoryExpenses).sort((a,b) => b[1] - a[1]).slice(0,10);
         document.querySelector('#categoryTable tbody').innerHTML = sortedCats.map(([cat, sum]) => `<tr><td>${cat}</td><td>${sum.toLocaleString()} ₽</td></tr>`).join('');
 
-        // Топ-10 расходов (только за июль)
+        // Топ-10 расходов
         const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
         document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
 
-        updateStatus(`Готово. За июль 2026: ${julyItems.length} операций.`);
+        document.getElementById('saveBtn').disabled = false;
+        updateStatus(`Готово. За июль 2026: ${currentFetchedData.length} операций. Можно сохранить в Supabase.`);
       } catch (err) {
         updateStatus('Ошибка: ' + err.message);
         console.error(err);
+      }
+    });
+
+    // Сохранение в Supabase
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      if (!currentFetchedData.length) {
+        updateStatus('Нет данных для сохранения.');
+        return;
+      }
+      if (!confirm(`ВНИМАНИЕ: Будут удалены все старые данные о финансах (кроме настроек коэффициентов).\nБудет сохранено ${currentFetchedData.length} записей из CRM.\n\nПродолжить?`)) return;
+
+      document.getElementById('saveBtn').disabled = true;
+      updateStatus('Сохранение в Supabase...');
+      try {
+        // Удаляем все записи, кроме настроек
+        await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
+
+        // Вставляем новые данные порциями по 500
+        for (let i = 0; i < currentFetchedData.length; i += 500) {
+          const chunk = currentFetchedData.slice(i, i + 500);
+          const { error } = await _supabase.from('crm_finance').insert(chunk);
+          if (error) throw error;
+        }
+
+        updateStatus(`✅ Успешно сохранено ${currentFetchedData.length} записей.\nТеперь откройте «Аналитика бюджета» — данные обновятся автоматически.\nЕсли что-то пойдёт не так, загрузите Excel-файл вручную на странице аналитики.`);
+      } catch (err) {
+        updateStatus('Ошибка сохранения: ' + err.message);
+        console.error(err);
+        document.getElementById('saveBtn').disabled = false;
       }
     });
   </script>
