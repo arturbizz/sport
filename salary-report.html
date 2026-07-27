@@ -109,10 +109,6 @@
       border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
     }
     .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
-    .diagnostic {
-      background: #fef3c7; padding: 0.5rem; border-radius: 8px; margin: 1rem 0;
-      font-size: 0.8rem; white-space: pre-wrap; max-height: 200px; overflow-y: auto;
-    }
   </style>
 </head>
 <body>
@@ -122,7 +118,6 @@
     <h1>Зарплатная ведомость</h1>
     <div>
       <button class="btn btn-excel" id="exportExcelBtn">Excel</button>
-      <button class="btn" id="diagnosticBtn">Диагностика</button>
     </div>
   </div>
 
@@ -144,10 +139,9 @@
 
   <div class="summary" id="summaryContainer"></div>
   <div id="contentContainer"></div>
-  <div id="diagnosticContainer" class="diagnostic" style="display:none;"></div>
 </div>
 
-<!-- Модалка реквизитов и выплаты -->
+<!-- Модалка реквизитов и выплаты (оставлена как была, без изменений дизайна) -->
 <div class="modal-overlay" id="salaryModal" style="display:none;">
   <div class="modal">
     <h2 id="salaryModalTitle">Сотрудник</h2>
@@ -175,8 +169,6 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    // Делаем _supabase доступным глобально для консоли
-    window._supabase = _supabase;
 
     let employees = [], teacherSalaryData = [], managerSalaryData = [], salaryPayouts = [];
     let selectedYear = new Date().getFullYear();
@@ -191,7 +183,6 @@
       const [emp, ts, ms, sp] = await Promise.all([
         _supabase.from('employees').select('*'),
         _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', currentPeriod),
-        // Исправлено: ищем записи, у которых period_start начинается с месяца
         _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`),
         _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod)
       ]);
@@ -361,66 +352,4 @@
         'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
         'Телефон': item.payoutData?.phone || '', 'Банк': item.payoutData?.bank || ''
       }));
-      rows.push({ 'Сотрудник': 'ИТОГО', 'Сумма': list.reduce((s, i) => s + i.amount, 0) });
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Зарплатная ведомость');
-      XLSX.writeFile(wb, `ЗП_${currentPeriod}_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
-    }
-
-    function showAlert(msg) { document.getElementById('alertMessage').textContent = msg; document.getElementById('alertModal').style.display = 'flex'; document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none'; }
-
-    document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
-
-    // Кнопка диагностики
-    document.getElementById('diagnosticBtn').addEventListener('click', async () => {
-      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const start = `${monthStr}-01`;
-      const [ms, ts] = await Promise.all([
-        _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`),
-        _supabase.from('teacher_salary').select('*').eq('month', monthStr)
-      ]);
-      const container = document.getElementById('diagnosticContainer');
-      container.style.display = 'block';
-      container.innerHTML = `
-        <strong>Диагностика за ${monthStr} (период ${currentPeriod})</strong><br>
-        manager_salary (все записи за месяц): ${JSON.stringify(ms.data, null, 2).substring(0, 500)}<br>
-        teacher_salary (за месяц, все периоды): ${JSON.stringify(ts.data, null, 2).substring(0, 500)}<br>
-        <br>Если manager_salary пуст, зайдите в дашборд (вкладка "ЗП сотрудники") и нажмите "Сохранить".
-      `;
-    });
-
-    document.querySelectorAll('.filter-btn[data-period]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn[data-period]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentPeriod = btn.dataset.period;
-        loadData();
-      });
-    });
-
-    document.querySelectorAll('.filter-btn[data-role]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn[data-role]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentRoleFilter = btn.dataset.role;
-        renderAll();
-      });
-    });
-
-    document.getElementById('searchInput').addEventListener('input', renderAll);
-
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-      selectedMonth--; if (selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
-      loadData();
-    });
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-      selectedMonth++; if (selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
-      loadData();
-    });
-
-    loadData();
-  })();
-</script>
-</body>
-</html>
+      rows.push({ 'Сотрудник
