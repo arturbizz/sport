@@ -2,12 +2,12 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Бюджет — Music Club Орёл</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Club Орёл — Платформа управления</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f7f8fa;
@@ -18,8 +18,6 @@
       --accent: #0d9488;
       --accent-light: #ccfbf1;
       --warm-yellow: #f59e0b;
-      --soft-green: #10b981;
-      --critical: #ef4444;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -27,675 +25,262 @@
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
       color: var(--text);
-      min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
+      min-height: 100vh;
+      display: flex; justify-content: center; align-items: center; padding: 2rem;
       cursor: default; caret-color: transparent;
     }
     input, textarea, select { cursor: text; caret-color: auto; }
-    .container {
-      width: 100%; max-width: 1100px;
-      background: var(--surface); border-radius: var(--radius-xl);
-      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-      border: 1px solid var(--border); backdrop-filter: blur(12px);
+    .container { width: 100%; max-width: 900px; }
+    .user-bar {
+      display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
-    .header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    .user-bar span { font-weight: 500; color: var(--text-secondary); }
+    .btn-logout, .btn-impersonate {
+      background: var(--surface); border: 1px solid var(--border); padding: 0.4rem 1rem;
+      border-radius: 10px; cursor: pointer; font-weight: 500; font-size: 0.85rem;
+      transition: 0.2s; color: var(--text); caret-color: transparent;
     }
-    .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .btn-logout:hover, .btn-impersonate:hover { background: #f1f5f9; }
+    .btn-impersonate.active { background: var(--accent); color: white; border-color: var(--accent); }
     h1 {
-      font-size: 2rem; font-weight: 700;
+      text-align: center; font-size: 2.5rem; font-weight: 800;
       background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      margin-bottom: 0.5rem;
     }
-    .btn {
-      padding: 0.5rem 1.2rem; border-radius: var(--radius-sm);
-      font-weight: 600; cursor: pointer; font-size: 0.85rem;
-      border: 1px solid var(--border); background: var(--surface);
-      color: var(--text); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;
+    .subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 3rem; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .card {
+      background: var(--surface); border-radius: var(--radius-xl); padding: 2rem;
+      text-decoration: none; color: inherit;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid var(--border);
+      transition: 0.3s; display: flex; flex-direction: column; align-items: center; text-align: center;
+      cursor: pointer; caret-color: transparent;
     }
-    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
-    .btn-primary:hover { background: #0f766e; }
-    .btn-danger { background: var(--critical); color: white; border-color: var(--critical); }
-    .btn-danger:hover { background: #dc2626; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.04); }
+    .card-icon { margin-bottom: 1rem; }
+    .card h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .card p { color: var(--text-secondary); font-size: 0.9rem; }
 
-    .filters {
-      display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
+    .impersonate-menu {
+      position: absolute; top: 100%; right: 0; background: white; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+      padding: 8px; display: none; z-index: 50; min-width: 200px;
     }
-    .filter-btn {
-      padding: 0.35rem 0.9rem; border-radius: 20px;
-      border: 1px solid var(--border); background: var(--surface);
-      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
-      color: var(--text-secondary);
-    }
-    .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .impersonate-menu select { width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+    .impersonate-menu button { width: 100%; margin-top: 4px; }
 
-    .summary {
-      background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1rem 1.5rem; margin-bottom: 1.5rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid var(--border);
-      display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;
+    /* Мобильное предупреждение (скрыто по умолчанию) */
+    .mobile-warning {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      padding: 2rem;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
     }
-    .summary-label { font-size: 0.85rem; color: var(--text-secondary); }
-    .summary-value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-
-    .cards-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 1rem;
+    .mobile-warning h2 { font-size: 1.8rem; margin-bottom: 1rem; }
+    .mobile-warning p { color: #475569; margin-bottom: 2rem; }
+    .mobile-warning a {
+      padding: 0.8rem 2rem;
+      background: #0d9488;
+      color: white;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
     }
-    .payment-card {
-      background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1.2rem; border: 1px solid var(--border);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
-      display: flex; flex-direction: column; gap: 0.6rem;
-      cursor: default;
-    }
-    .payment-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); transform: translateY(-1px); }
-    .payment-card.overdue { border-color: var(--critical); }
-    .payment-card.paid { opacity: 0.8; background: #f0fdfa; }
-    .card-title { font-weight: 600; font-size: 1.1rem; }
-    .card-amount { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
-    .card-date { font-size: 0.8rem; color: var(--text-secondary); }
-    .card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.3rem; }
-    .check-btn {
-      background: none; border: none; cursor: pointer; font-size: 1.3rem;
-      color: var(--accent); transition: 0.2s; padding: 0; line-height: 1;
-    }
-    .check-btn:hover { color: #0f766e; }
-
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000;
-    }
-    .modal {
-      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
-      border-radius: var(--radius-xl); padding: 2rem; max-width: 450px; width: 90%;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
-      animation: slideUp 0.25s ease-out;
-    }
-    @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-    .modal h2 { margin-bottom: 1rem; }
-    .modal input, .modal select, .modal textarea {
-      width: 100%; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid var(--border);
-      border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
-    }
-    .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
-    .required { border-color: var(--critical) !important; }
-    .coin {
-      position: fixed; width: 16px; height: 16px;
-      background: radial-gradient(circle at 30% 30%, #f59e0b, #b45309);
-      border-radius: 50%; box-shadow: 0 0 6px rgba(245,158,11,0.6);
-      animation: coinDrop 0.7s ease-out forwards; z-index: 9999; pointer-events: none;
-    }
-    @keyframes coinDrop {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(80px) rotate(360deg); opacity: 0; }
-    }
-
-    .salary-card {
-      background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1.2rem; border: 1px solid var(--border);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
-      display: flex; align-items: center; gap: 1rem;
-    }
-    .salary-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
-    .salary-info { flex: 1; }
-    .salary-name { font-weight: 600; }
-    .salary-amount { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
-    .salary-status { font-size: 0.8rem; color: var(--text-secondary); }
-    .salary-actions { display: flex; gap: 0.5rem; }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <a href="index.html" class="back-link">← На главную</a>
-    <h1>Бюджет</h1>
-    <div style="display: flex; gap: 0.5rem;">
-      <a href="budget-pro.html" class="nav-link" style="color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--accent); padding: 0.45rem 1rem; border-radius: var(--radius-sm);">Аналитика бюджета</a>
-      <button class="btn btn-primary" id="addBtn">+ Добавить платёж</button>
+  <div class="desktop-content" id="desktopContent">
+    <div class="container">
+      <div class="user-bar" id="userBar" style="position:relative;">
+        <span id="userInfo"></span>
+        <button class="btn-impersonate" id="impersonateBtn" style="display:none;">Тестовый просмотр</button>
+        <button class="btn-logout" id="logoutBtn">Выйти</button>
+        <div class="impersonate-menu" id="impersonateMenu">
+          <select id="roleSelect">
+            <option value="">Выберите роль</option>
+            <option>Управляющий</option>
+            <option>Менеджер</option>
+            <option>Администратор</option>
+            <option>Преподаватель</option>
+            <option>Бухгалтер</option>
+            <option>ИП</option>
+          </select>
+          <button class="btn-logout" id="applyImpersonate">Смотреть</button>
+          <button class="btn-logout" id="resetImpersonate" style="display:none;">Вернуться к своей роли</button>
+        </div>
+      </div>
+      <h1>Music Club Орёл</h1>
+      <p class="subtitle">Платформа управления музыкальной школой</p>
+      <div class="cards" id="mainCards"></div>
     </div>
   </div>
 
-  <div class="filters">
-    <button class="filter-btn active" data-filter="regular">Регулярные</button>
-    <button class="filter-btn" data-filter="salary10">ЗП 10 число</button>
-    <button class="filter-btn" data-filter="salary25">ЗП 25 число</button>
-    <button class="filter-btn" data-filter="salary_all">Все ЗП</button>
+  <div class="mobile-warning" id="mobileWarning">
+    <h2>Мобильная версия ограничена</h2>
+    <p>Эта страница не оптимизирована для телефона. Пожалуйста, используйте Маскотик для быстрого доступа к данным.</p>
+    <a href="mascot.html">Открыть Маскотик</a>
   </div>
 
-  <div class="summary" id="summaryContainer"></div>
-  <div id="contentContainer"></div>
-</div>
-
-<!-- Модалка оплаты регулярного платежа -->
-<div class="modal-overlay" id="payModal" style="display:none;">
-  <div class="modal" style="text-align:center;">
-    <h2>Подтверждение оплаты</h2>
-    <p id="payModalTitle" style="font-weight:600;"></p>
-    <select id="payMethod">
-      <option value="">Способ оплаты</option>
-      <option value="card">С карты</option>
-      <option value="account">Со счёта</option>
-      <option value="cash">Наличные</option>
-      <option value="other">Другое</option>
-    </select>
-    <input type="file" id="receiptFile" accept="image/*,.pdf">
-    <textarea id="payComment" rows="2" placeholder="Комментарий"></textarea>
-    <div class="modal-actions">
-      <button class="btn btn-primary" id="confirmPayBtn">Оплатить</button>
-      <button class="btn" id="cancelPayBtn">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Модалка редактирования регулярного платежа -->
-<div class="modal-overlay" id="editModal" style="display:none;">
-  <div class="modal">
-    <h2 id="editModalTitle">Платёж</h2>
-    <input type="text" id="editName" placeholder="Название">
-    <input type="number" id="editAmount" placeholder="Сумма">
-    <select id="editPeriodicity">
-      <option value="monthly">Ежемесячно</option>
-      <option value="weekly">Еженедельно</option>
-      <option value="biweekly">Раз в 2 недели</option>
-      <option value="quarterly">Ежеквартально</option>
-      <option value="yearly">Ежегодно</option>
-    </select>
-    <input type="date" id="editNextDate" placeholder="Дата следующего платежа">
-    <input type="text" id="editLink" placeholder="Ссылка на оплату">
-    <textarea id="editDetails" rows="2" placeholder="Реквизиты"></textarea>
-    <textarea id="editNote" rows="2" placeholder="Примечание"></textarea>
-    <div class="modal-actions" id="viewActions" style="display:none;">
-      <button class="btn" id="enableEditBtn">Редактировать</button>
-      <button class="btn" id="cancelViewBtn">Закрыть</button>
-    </div>
-    <div class="modal-actions" id="editActions">
-      <button class="btn btn-primary" id="saveEditBtn">Сохранить</button>
-      <button class="btn btn-danger" id="deleteEditBtn">Удалить</button>
-      <button class="btn" id="cancelEditBtn">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<!-- Модалка реквизитов и выплаты ЗП -->
-<div class="modal-overlay" id="salaryModal" style="display:none;">
-  <div class="modal">
-    <h2 id="salaryModalTitle">Сотрудник</h2>
-    <input type="text" id="salaryPhone" placeholder="Номер телефона">
-    <input type="text" id="salaryBank" placeholder="Банк">
-    <textarea id="salaryComment" rows="2" placeholder="Комментарий"></textarea>
-    <div style="margin:0.5rem 0;">
-      <input type="file" id="salaryReceiptFile" accept="image/*,.pdf">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-primary" id="saveSalaryBtn">Сохранить реквизиты и отметить выплату</button>
-      <button class="btn" id="cancelSalaryBtn">Отмена</button>
-    </div>
-  </div>
-</div>
-
-<script>
-  (() => {
+  <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let expenses = [], employees = [], worklog = [], salaryParams = [], teacherSalaryData = [], salaryPayouts = [];
-    let currentFilter = 'regular'; // 'regular', 'salary10', 'salary25', 'salary_all'
-    let currentUserRole = null;
+    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
-    async function checkAccess() {
-      const { data: { session } } = await _supabase.auth.getSession();
-      if (!session) { window.location.href = 'login.html'; return; }
-      const email = session.user.email;
-      if (email === 'arturgalkin.ru@mail.ru') { currentUserRole = 'Управляющий'; return; }
-      const { data: emp } = await _supabase.from('employees').select('role').eq('email', email).single();
-      currentUserRole = emp?.role || null;
-    }
-    function canEdit() { return currentUserRole === 'Управляющий' || currentUserRole === 'Бухгалтер'; }
+    const sections = [
+      { id: 'schedule', title: 'График работы', desc: 'Расписание, зарплата', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] },
+      { id: 'vacations', title: 'График отпусков', desc: 'Планирование отпусков', roles: ['Управляющий','Менеджер','Администратор'] },
+      { id: 'teacher-schedule', title: 'Расписание преподавателей', desc: 'Доступность и занятость', roles: ['Управляющий','Менеджер','Администратор','Преподаватель'] },
+      { id: 'tasks', title: 'Управление задачами', desc: 'Идеи и планы', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] },
+      { id: 'nps', title: 'NPS / Отзывы', desc: 'Сбор обратной связи', roles: ['Управляющий','Менеджер'] },
+      { id: 'contests', title: 'Конкурсы', desc: 'Скоро открытие', roles: ['Управляющий','Менеджер','Администратор'] },
+      { id: 'employees', title: 'Сотрудники', desc: 'Управление персоналом', roles: ['Управляющий'], admin: true },
+      { id: 'budget', title: 'Бюджет', desc: 'Расходы и платежи', roles: ['Управляющий','Бухгалтер'], admin: true },
+      { id: 'budget-pro', title: 'Аналитика бюджета', desc: 'Расходы и прогноз', roles: ['Управляющий','Бухгалтер'], admin: true },
+      { id: 'admin', title: 'Мониторинг', desc: 'Логи и активность', roles: ['Управляющий','Администратор'], admin: true },
+      { id: 'dashboard', title: 'Дашборд', desc: 'Аналитика и финансы', roles: ['Управляющий','Менеджер','Администратор','Бухгалтер'], admin: true },
+      { id: 'dashboard2', title: 'Лиды', desc: 'Аналитика по лидам', roles: ['Управляющий','Менеджер'], admin: true },
+      { id: 'knowledge', title: 'База знаний', desc: 'Обучение ассистента', roles: ['Управляющий'], admin: true },
+      { id: 'mascot', title: 'Маскотик', desc: 'Быстрый помощник', roles: ['Управляющий','Менеджер','Администратор','Преподаватель','Бухгалтер','ИП'] },
+      { id: 'dashboard-test', title: 'CRM Синхронизация', desc: 'Загрузка данных из AlfaCRM', roles: ['Управляющий'], admin: true }
+    ];
 
-    async function loadData() {
-      const now = new Date();
-      const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-      const [exp, emp, wl, sp, ts, spayouts] = await Promise.all([
-        _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true }),
-        _supabase.from('employees').select('*'),
-        _supabase.from('worklog').select('*').gte('date', `${monthStr}-01`).lte('date', `${monthStr}-31`),
-        _supabase.from('salary_params').select('*').eq('month', monthStr),
-        _supabase.from('teacher_salary').select('*').eq('month', monthStr),
-        _supabase.from('salary_payouts').select('*').eq('month', monthStr)
-      ]);
-      expenses = exp.data || [];
-      employees = emp.data || [];
-      worklog = wl.data || [];
-      salaryParams = sp.data || [];
-      teacherSalaryData = ts.data || [];
-      salaryPayouts = spayouts.data || [];
-      renderAll();
-    }
+    const iconPaths = {
+      schedule: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+      vacations: '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+      'teacher-schedule': '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+      tasks: '<path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 14l2 2 4-4"/>',
+      nps: '<path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14Z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>',
+      contests: '<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+      employees: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+      budget: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/>',
+      'budget-pro': '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+      admin: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+      dashboard: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+      dashboard2: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+      knowledge: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
+      mascot: '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>',
+      'dashboard-test': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'
+    };
 
-    function getFilteredExpenses() {
-      if (currentFilter !== 'regular') return []; // не показываем регулярные в режиме ЗП
-      return expenses; // можно вернуть фильтр по paid, но для упрощения показываем все
-    }
+    let currentUser = null;
+    let currentToken = null;
+    let impersonatedRole = null;
+    let effectiveRole = '';
 
-    function calculateSalary(employee, period) {
-      const monthStr = new Date().toISOString().slice(0,7);
-      const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-      const isFirstHalf = period === '1-15';
-      const dayStart = isFirstHalf ? 1 : 16;
-      const dayEnd = isFirstHalf ? 15 : daysInMonth;
-      const empId = employee.id;
-      const logs = worklog.filter(l => {
-        if (l.emp_id !== empId || l.status !== 'working') return false;
-        const day = parseInt(l.date.split('-')[2], 10);
-        return day >= dayStart && day <= dayEnd;
-      });
-      const worked = logs.length;
-      const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
-      const params = salaryParams.find(p => p.emp_id === empId) || {};
-      const normDays = employee.role === 'Менеджер' ? Math.round(daysInMonth * 0.5) : (params.norm_days || 22);
-      const dailyRate = rates[employee.role] || 0;
-      let base = Math.round((dailyRate / normDays) * worked);
-      let bonus = 0;
-      if (employee.role === 'Менеджер') {
-        const plan = params.plan_amount || 0;
-        const totalSales = logs.reduce((s, l) => s + (l.daily_sales || 0), 0);
-        bonus = Math.round(totalSales * ((plan > 0 && totalSales >= plan) ? 0.07 : 0.05));
-      } else if (employee.role === 'Администратор') {
-        const managersSales = employees.filter(e => e.role === 'Менеджер').reduce((sum, man) => {
-          const manLogs = worklog.filter(l => l.emp_id === man.id && l.status === 'working');
-          return sum + manLogs.reduce((s, l) => s + (l.daily_sales || 0), 0);
-        }, 0);
-        bonus = Math.round(managersSales * 0.01);
-      } else if (employee.role === 'Управляющий') {
-        const managersSales = employees.filter(e => e.role === 'Менеджер').reduce((sum, man) => {
-          const manLogs = worklog.filter(l => l.emp_id === man.id && l.status === 'working');
-          return sum + manLogs.reduce((s, l) => s + (l.daily_sales || 0), 0);
-        }, 0);
-        const plan = params.plan_amount || 0;
-        bonus = (plan > 0 && managersSales >= plan) ? Math.round(managersSales * 0.01) : 0;
+    async function fetchRole() {
+      if (impersonatedRole) return impersonatedRole;
+      if (!currentUser) return 'Менеджер';
+      try {
+        const { data, error } = await _supabase.from('employees').select('role').eq('email', currentUser.email).single();
+        if (error || !data) return 'Менеджер';
+        return data.role;
+      } catch {
+        return 'Менеджер';
       }
-      if (isFirstHalf) bonus = 0;
-      return base + bonus;
     }
 
-    function getSalaryList(period) {
-      const monthStr = new Date().toISOString().slice(0,7);
-      const staff = employees.filter(e => ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role));
-      return staff.map(emp => {
-        let amount = 0;
-        if (emp.role === 'Преподаватель') {
-          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === period);
-          amount = teacherRows.reduce((s, t) => s + parseFloat(t.amount), 0);
+    function renderCards() {
+      const container = document.getElementById('mainCards');
+      if (!container) return;
+      container.innerHTML = '';
+      sections.forEach(s => {
+        const show = s.roles.includes(effectiveRole) || (s.admin && effectiveRole === 'Управляющий');
+        if (show) {
+          const card = document.createElement('a');
+          card.className = 'card';
+          card.href = `${s.id}.html`;
+          card.innerHTML = `<div class="card-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2">${iconPaths[s.id]}</svg></div><h2>${s.title}</h2><p>${s.desc}</p>`;
+          container.appendChild(card);
+        }
+      });
+    }
+
+    async function refreshUI() {
+      effectiveRole = await fetchRole();
+      renderCards();
+      const userInfo = document.getElementById('userInfo');
+      if (userInfo && currentUser) {
+        userInfo.textContent = `${currentUser.email} (${effectiveRole})`;
+      }
+      const impBtn = document.getElementById('impersonateBtn');
+      if (currentUser?.email === ADMIN_EMAIL) {
+        impBtn.style.display = 'inline-block';
+        if (impersonatedRole) {
+          impBtn.classList.add('active');
+          impBtn.textContent = `Просмотр: ${impersonatedRole}`;
+          document.getElementById('resetImpersonate').style.display = 'block';
         } else {
-          amount = calculateSalary(emp, period);
+          impBtn.classList.remove('active');
+          impBtn.textContent = 'Тестовый просмотр';
+          document.getElementById('resetImpersonate').style.display = 'none';
         }
-        const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
-        return {
-          employee: emp,
-          amount,
-          paid: payout ? payout.paid : false,
-          payoutData: payout || null
-        };
-      }).filter(item => item.amount > 0); // показываем только тех, у кого есть начисления
-    }
-
-    function renderAll() {
-      const summaryDiv = document.getElementById('summaryContainer');
-      const contentDiv = document.getElementById('contentContainer');
-      document.getElementById('addBtn').style.display = (currentFilter === 'regular' && canEdit()) ? 'inline-flex' : 'none';
-
-      if (currentFilter === 'regular') {
-        // Регулярные платежи
-        const filtered = expenses; // можно фильтровать по paid/unpaid, но оставим все
-        const total = filtered.reduce((s,e) => s + parseFloat(e.amount), 0);
-        summaryDiv.innerHTML = `<div><span class="summary-label">Сумма всех регулярных платежей</span><span class="summary-value">${total.toLocaleString()} ₽</span></div>`;
-        contentDiv.innerHTML = `<div class="cards-grid" id="cardsContainer"></div>`;
-        renderRegularCards(filtered);
       } else {
-        // Зарплатные выплаты
-        let period = '1-15';
-        if (currentFilter === 'salary25') period = '16-31';
-        const list = getSalaryList(period);
-        const totalToPay = list.reduce((s, i) => s + i.amount, 0);
-        const paidAmount = list.filter(i => i.paid).reduce((s, i) => s + i.amount, 0);
-        summaryDiv.innerHTML = `
-          <div><span class="summary-label">К выплате</span><span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
-          <div><span class="summary-label">Выплачено</span><span class="summary-value">${paidAmount.toLocaleString()} ₽</span></div>
-          <div><span class="summary-label">Остаток</span><span class="summary-value" style="color:${totalToPay-paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">${(totalToPay-paidAmount).toLocaleString()} ₽</span></div>
-        `;
-        contentDiv.innerHTML = list.map(item => {
-          const emp = item.employee;
-          const payout = item.payoutData;
-          const paid = item.paid;
-          return `
-            <div class="salary-card">
-              <div class="salary-info">
-                <div class="salary-name">${emp.name} (${emp.role})</div>
-                <div class="salary-amount">${item.amount.toLocaleString()} ₽</div>
-                <div class="salary-status">${paid ? 'Выплачено' : 'Не выплачено'}</div>
-                ${payout ? `<div style="font-size:0.75rem; color:var(--text-secondary);">Тел: ${payout.phone || '—'} | Банк: ${payout.bank || '—'}</div>` : ''}
-              </div>
-              <div class="salary-actions">
-                <button class="btn salary-req-btn" data-employee='${JSON.stringify(emp)}' data-period="${period}">Реквизиты</button>
-                ${!paid ? `<button class="btn btn-primary salary-pay-btn" data-employee='${JSON.stringify(emp)}' data-period="${period}" data-amount="${item.amount}">Выплатить</button>` : ''}
-              </div>
-            </div>`;
-        }).join('');
-        bindSalaryButtons();
+        impBtn.style.display = 'none';
       }
     }
 
-    function bindSalaryButtons() {
-      document.querySelectorAll('.salary-req-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const emp = JSON.parse(btn.dataset.employee);
-          const period = btn.dataset.period;
-          openSalaryModal(emp, period);
-        });
-      });
-      document.querySelectorAll('.salary-pay-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const emp = JSON.parse(btn.dataset.employee);
-          const period = btn.dataset.period;
-          const amount = parseFloat(btn.dataset.amount);
-          openSalaryModal(emp, period, amount, true);
-        });
-      });
-    }
-
-    function openSalaryModal(emp, period, amount = 0, markPaid = false) {
-      const monthStr = new Date().toISOString().slice(0,7);
-      const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
-      document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role}) – ${period === '1-15' ? '1–15' : '16–31'} число`;
-      document.getElementById('salaryPhone').value = existing?.phone || '';
-      document.getElementById('salaryBank').value = existing?.bank || '';
-      document.getElementById('salaryComment').value = existing?.comment || '';
-      document.getElementById('salaryModal').dataset.employeeId = emp.id;
-      document.getElementById('salaryModal').dataset.period = period;
-      document.getElementById('salaryModal').dataset.amount = amount;
-      document.getElementById('salaryModal').dataset.markPaid = markPaid;
-      document.getElementById('salaryModal').style.display = 'flex';
-    }
-
-    document.getElementById('saveSalaryBtn').addEventListener('click', async () => {
-      const modal = document.getElementById('salaryModal');
-      const employeeId = modal.dataset.employeeId;
-      const period = modal.dataset.period;
-      const amount = parseFloat(modal.dataset.amount) || 0;
-      const markPaid = modal.dataset.markPaid === 'true';
-      const phone = document.getElementById('salaryPhone').value.trim();
-      const bank = document.getElementById('salaryBank').value.trim();
-      const comment = document.getElementById('salaryComment').value.trim();
-      const monthStr = new Date().toISOString().slice(0,7);
-
-      let receiptUrl = '';
-      const file = document.getElementById('salaryReceiptFile').files[0];
-      if (file) {
-        const fileName = `salary_receipts/${employeeId}_${Date.now()}.${file.name.split('.').pop()}`;
-        const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
-        if (error) {
-          alert('Ошибка загрузки чека: ' + error.message);
-          return;
-        }
-        receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
-      }
-
-      const payload = {
-        employee_id: employeeId,
-        period,
-        month: monthStr,
-        amount,
-        phone,
-        bank,
-        comment,
-        paid: markPaid,
-        paid_at: markPaid ? new Date().toISOString() : null,
-        receipt_url: receiptUrl
-      };
-
-      const { error } = await _supabase.from('salary_payouts').upsert(payload, { onConflict: 'employee_id, period, month' });
-      if (error) {
-        alert('Ошибка сохранения: ' + error.message);
+    async function init() {
+      const { data: { session }, error } = await _supabase.auth.getSession();
+      if (error || !session) {
+        window.location.href = 'login.html';
         return;
       }
-      modal.style.display = 'none';
-      loadData();
-      showCoins();
-    });
+      currentUser = session.user;
+      currentToken = session.access_token;
 
-    document.getElementById('cancelSalaryBtn').addEventListener('click', () => {
-      document.getElementById('salaryModal').style.display = 'none';
-    });
+      // Проверка мобильного устройства ТОЛЬКО для не-администраторов
+      const isMobile = window.innerWidth <= 768 && 'maxTouchPoints' in navigator && navigator.maxTouchPoints > 0;
 
-    // Регулярные платежи (аналогично предыдущей версии, но с улучшенными карточками)
-    function renderRegularCards(filtered) {
-      const container = document.getElementById('cardsContainer');
-      container.innerHTML = filtered.map(e => {
-        const overdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < new Date();
-        const cardClass = e.paid ? 'payment-card paid' : (overdue ? 'payment-card overdue' : 'payment-card');
-        const periodLabel = { monthly:'Ежемес.', weekly:'Еженед.', biweekly:'Раз в 2 нед.', quarterly:'Кварт.', yearly:'Ежегод.' }[e.periodicity] || '';
-        return `
-          <div class="${cardClass}" data-id="${e.id}">
-            <div class="card-title">${e.name}</div>
-            <div class="card-amount">${e.amount.toLocaleString()} ₽</div>
-            <div class="card-date">${e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru') : '—'}</div>
-            <div style="font-size:0.8rem; color:var(--text-secondary);">${periodLabel}</div>
-            ${e.receipt_url ? `<a href="${e.receipt_url}" target="_blank" style="font-size:0.75rem; color:var(--accent);">Чек</a>` : ''}
-            <div class="card-actions">
-              ${canEdit() && !e.paid ? `<button class="check-btn pay-action" title="Оплатить"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg></button>` : ''}
-              ${canEdit() ? `<button class="btn edit-btn">Изм.</button>` : ''}
-              ${canEdit() ? `<button class="btn btn-danger delete-btn">Уд.</button>` : ''}
-            </div>
-          </div>`;
-      }).join('');
-      bindRegularEvents();
-    }
-
-    function bindRegularEvents() {
-      document.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openPayModal(b.closest('.payment-card').dataset.id);
-      }));
-      document.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(b.closest('.payment-card').dataset.id, false);
-      }));
-      document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        const id = b.closest('.payment-card').dataset.id;
-        if (confirm('Удалить платёж?')) {
-          await _supabase.from('expenses').delete().eq('id', id);
-          await loadData();
-        }
-      }));
-      document.querySelectorAll('.payment-card').forEach(card => {
-        card.addEventListener('click', (e) => {
-          if (e.target.closest('button') || e.target.closest('a')) return;
-          openEditModal(card.dataset.id, true);
-        });
-      });
-    }
-
-    // Оплата регулярного (аналогично)
-    let pendingPayId = null;
-    function openPayModal(id) { pendingPayId = id; document.getElementById('payModal').style.display = 'flex'; }
-    document.getElementById('cancelPayBtn').addEventListener('click', () => document.getElementById('payModal').style.display = 'none');
-    document.getElementById('confirmPayBtn').addEventListener('click', async () => {
-      const method = document.getElementById('payMethod').value;
-      if (!method) return alert('Выберите способ оплаты');
-      const exp = expenses.find(e => e.id == pendingPayId);
-      if (!exp) return;
-
-      let receiptUrl = exp.receipt_url || '';
-      const file = document.getElementById('receiptFile').files[0];
-      if (file) {
-        const fileName = `receipts/${exp.id}_${Date.now()}.${file.name.split('.').pop()}`;
-        const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
-        if (!error) receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
-      }
-
-      const nextDate = getNextDate(exp.next_payment_date, exp.periodicity);
-      const newExp = {
-        name: exp.name, amount: exp.amount, periodicity: exp.periodicity,
-        next_payment_date: nextDate, payment_link: exp.payment_link,
-        details: exp.details, note: exp.note, paid: false, type: 'monthly'
-      };
-      const { data: inserted, error: insertError } = await _supabase.from('expenses').insert([newExp]).select();
-      if (insertError) {
-        alert('Ошибка создания следующего платежа: ' + insertError.message);
+      if (isMobile && currentUser.email !== ADMIN_EMAIL) {
+        // Обычный пользователь на мобильном устройстве – показываем предупреждение
+        document.getElementById('desktopContent').style.display = 'none';
+        document.getElementById('mobileWarning').style.display = 'flex';
         return;
       }
-      const nextId = inserted?.[0]?.id;
-      await _supabase.from('expenses').update({
-        paid: true, paid_at: new Date().toISOString(), payment_method: method,
-        receipt_url: receiptUrl, previous_id: nextId
-      }).eq('id', pendingPayId);
 
-      document.getElementById('payModal').style.display = 'none';
-      showCoins();
-      await loadData();
-      alert('Платёж оплачен, следующий создан на ' + (nextDate ? new Date(nextDate).toLocaleDateString('ru') : '—'));
-    });
+      // Во всех остальных случаях показываем десктопную версию
+      document.getElementById('desktopContent').style.display = 'block';
+      document.getElementById('mobileWarning').style.display = 'none';
 
-    function getNextDate(dateStr, periodicity) {
-      if (!dateStr) return null;
-      const d = new Date(dateStr);
-      switch (periodicity) {
-        case 'weekly': d.setDate(d.getDate()+7); break;
-        case 'biweekly': d.setDate(d.getDate()+14); break;
-        case 'monthly': d.setMonth(d.getMonth()+1); break;
-        case 'quarterly': d.setMonth(d.getMonth()+3); break;
-        case 'yearly': d.setFullYear(d.getFullYear()+1); break;
-        default: d.setMonth(d.getMonth()+1);
-      }
-      return d.toISOString().split('T')[0];
-    }
-
-    function openEditModal(id, readOnly = false) {
-      const exp = expenses.find(e => e.id == id);
-      if (!exp) return;
-      const isReadOnly = readOnly || !canEdit();
-      document.getElementById('editModalTitle').textContent = isReadOnly ? 'Просмотр платежа' : 'Редактировать платёж';
-      document.getElementById('editName').value = exp.name;
-      document.getElementById('editAmount').value = exp.amount;
-      document.getElementById('editPeriodicity').value = exp.periodicity;
-      document.getElementById('editNextDate').value = exp.next_payment_date || '';
-      document.getElementById('editLink').value = exp.payment_link || '';
-      document.getElementById('editDetails').value = exp.details || '';
-      document.getElementById('editNote').value = exp.note || '';
-      document.getElementById('editModal').dataset.id = id;
-
-      document.getElementById('editName').readOnly = isReadOnly;
-      document.getElementById('editAmount').readOnly = isReadOnly;
-      document.getElementById('editPeriodicity').disabled = isReadOnly;
-      document.getElementById('editNextDate').readOnly = isReadOnly;
-      document.getElementById('editLink').readOnly = isReadOnly;
-      document.getElementById('editDetails').readOnly = isReadOnly;
-      document.getElementById('editNote').readOnly = isReadOnly;
-
-      document.getElementById('viewActions').style.display = isReadOnly ? 'flex' : 'none';
-      document.getElementById('editActions').style.display = isReadOnly ? 'none' : 'flex';
-      document.getElementById('enableEditBtn').style.display = canEdit() ? 'inline-flex' : 'none';
-
-      document.getElementById('editModal').style.display = 'flex';
-    }
-
-    document.getElementById('enableEditBtn').addEventListener('click', () => {
-      const id = document.getElementById('editModal').dataset.id;
-      openEditModal(id, false);
-    });
-    document.getElementById('cancelViewBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
-    document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
-
-    document.getElementById('saveEditBtn').addEventListener('click', async () => {
-      const name = document.getElementById('editName').value.trim();
-      const amount = parseFloat(document.getElementById('editAmount').value) || 0;
-      const nextDate = document.getElementById('editNextDate').value;
-      if (!name || !amount) return alert('Заполните название и сумму');
-      if (!nextDate) {
-        document.getElementById('editNextDate').classList.add('required');
-        return alert('Укажите дату следующего платежа');
-      }
-      const data = {
-        name, amount,
-        periodicity: document.getElementById('editPeriodicity').value,
-        next_payment_date: nextDate || null,
-        payment_link: document.getElementById('editLink').value.trim(),
-        details: document.getElementById('editDetails').value.trim(),
-        note: document.getElementById('editNote').value.trim()
-      };
-      const id = document.getElementById('editModal').dataset.id;
-      if (id) {
-        await _supabase.from('expenses').update(data).eq('id', id);
-      } else {
-        const { error } = await _supabase.from('expenses').insert([{ ...data, paid: false, type: 'monthly' }]);
-        if (error) { alert('Ошибка добавления: ' + error.message); return; }
-      }
-      document.getElementById('editModal').style.display = 'none';
-      await loadData();
-    });
-
-    document.getElementById('deleteEditBtn').addEventListener('click', async () => {
-      const id = document.getElementById('editModal').dataset.id;
-      if (!id) return;
-      if (confirm('Удалить платёж?')) {
-        await _supabase.from('expenses').delete().eq('id', id);
-        document.getElementById('editModal').style.display = 'none';
-        await loadData();
-      }
-    });
-
-    document.getElementById('addBtn').addEventListener('click', () => {
-      document.getElementById('editModalTitle').textContent = 'Новый платёж';
-      document.getElementById('editName').value = '';
-      document.getElementById('editAmount').value = '';
-      document.getElementById('editPeriodicity').value = 'monthly';
-      document.getElementById('editNextDate').value = '';
-      document.getElementById('editLink').value = '';
-      document.getElementById('editDetails').value = '';
-      document.getElementById('editNote').value = '';
-      delete document.getElementById('editModal').dataset.id;
-      document.getElementById('editName').readOnly = false;
-      document.getElementById('editAmount').readOnly = false;
-      document.getElementById('editPeriodicity').disabled = false;
-      document.getElementById('editNextDate').readOnly = false;
-      document.getElementById('editLink').readOnly = false;
-      document.getElementById('editDetails').readOnly = false;
-      document.getElementById('editNote').readOnly = false;
-      document.getElementById('viewActions').style.display = 'none';
-      document.getElementById('editActions').style.display = 'flex';
-      document.getElementById('editModal').style.display = 'flex';
-    });
-
-    function showCoins() {
-      for (let i=0; i<20; i++) {
-        setTimeout(() => {
-          const coin = document.createElement('div');
-          coin.className = 'coin';
-          coin.style.left = Math.random()*100 + '%';
-          coin.style.top = Math.random()*40 + '%';
-          document.body.appendChild(coin);
-          setTimeout(() => coin.remove(), 700);
-        }, i*40);
-      }
-    }
-
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = btn.dataset.filter;
-        renderAll();
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        localStorage.removeItem('impersonated_role');
+        await _supabase.auth.signOut();
+        window.location.href = 'login.html';
       });
-    });
 
-    (async () => {
-      await checkAccess();
-      await loadData();
-    })();
-  })();
-</script>
+      if (currentUser.email === ADMIN_EMAIL) {
+        const savedRole = localStorage.getItem('impersonated_role');
+        if (savedRole) impersonatedRole = savedRole;
+        document.getElementById('impersonateBtn').addEventListener('click', () => {
+          document.getElementById('impersonateMenu').style.display = 'block';
+        });
+        document.getElementById('applyImpersonate').addEventListener('click', () => {
+          const role = document.getElementById('roleSelect').value;
+          if (!role) return;
+          impersonatedRole = role;
+          localStorage.setItem('impersonated_role', role);
+          document.getElementById('impersonateMenu').style.display = 'none';
+          refreshUI();
+        });
+        document.getElementById('resetImpersonate').addEventListener('click', () => {
+          impersonatedRole = null;
+          localStorage.removeItem('impersonated_role');
+          refreshUI();
+        });
+      }
+
+      await refreshUI();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
 </body>
 </html>
