@@ -85,20 +85,10 @@
 
     function updateStatus(msg) { statusDiv.textContent = msg; console.log(msg); }
 
-    // Справочники для финансов
+    // Справочники (финансы)
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
-
-    async function loadDictionaries() {
-      if (Object.keys(dicts.payItems).length > 0) return;
-      updateStatus('Загрузка справочников...');
-      const payItems = await fetchAllPages('pay-item/index', {}, 3);
-      payItems.forEach(i => dicts.payItems[i.id] = i.name);
-      const payAccounts = await fetchAllPages('pay-account/index', {}, 3);
-      payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
-      const payTypes = await fetchAllPages('pay-type/index', {}, 1);
-      payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
-      updateStatus('Справочники загружены.');
-    }
+    // Справочники (лиды)
+    const leadDicts = { statuses: {}, sources: {} };
 
     async function fetchPage(path, body) {
       const resp = await fetch(PROXY_URL, {
@@ -131,7 +121,19 @@
       return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : d;
     }
 
-    // ====== ЗАГРУЗКА ФИНАНСОВ ======
+    // ====== ЗАГРУЗКА ФИНАНСОВ (без изменений) ======
+    async function loadDictionaries() {
+      if (Object.keys(dicts.payItems).length > 0) return;
+      updateStatus('Загрузка справочников...');
+      const payItems = await fetchAllPages('pay-item/index', {}, 3);
+      payItems.forEach(i => dicts.payItems[i.id] = i.name);
+      const payAccounts = await fetchAllPages('pay-account/index', {}, 3);
+      payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
+      const payTypes = await fetchAllPages('pay-type/index', {}, 1);
+      payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
+      updateStatus('Справочники загружены.');
+    }
+
     document.getElementById('loadFinanceBtn').addEventListener('click', async () => {
       updateStatus('Загрузка всех финансов из CRM...');
       kpiDiv.innerHTML = '';
@@ -180,23 +182,35 @@
       }
     });
 
-    // ====== ЗАГРУЗКА ЛИДОВ ======
+    // ====== ЗАГРУЗКА ЛИДОВ (исправлено на customer/index) ======
+    async function loadLeadDictionaries() {
+      if (Object.keys(leadDicts.statuses).length === 0) {
+        updateStatus('Загрузка справочников статусов и источников...');
+        const statuses = await fetchAllPages('customer-status/index', {}, 2);
+        statuses.forEach(s => { leadDicts.statuses[s.id] = s.name; });
+        const sources = await fetchAllPages('source/index', {}, 2);
+        sources.forEach(s => { leadDicts.sources[s.id] = s.name; });
+      }
+    }
+
     document.getElementById('loadLeadsBtn').addEventListener('click', async () => {
-      updateStatus('Загрузка всех лидов из CRM...');
+      updateStatus('Загрузка всех клиентов (лидов) из CRM...');
       kpiDiv.innerHTML = '';
       try {
-        const rawLeads = await fetchAllPages('lead/index', {}, 200);
+        await loadLeadDictionaries();
+        const rawCustomers = await fetchAllPages('customer/index', {}, 200);
 
-        const rows = rawLeads.map(item => ({
-          date_added: formatDate(item.date_added) || new Date().toISOString().split('T')[0],
+        // Преобразуем поля CRM в структуру таблицы leads
+        const rows = rawCustomers.map(item => ({
+          date_added: formatDate(item.created_at) || new Date().toISOString().split('T')[0],
           name: item.name || '',
-          stage: item.stage || '',
-          source: item.source || '',
+          stage: leadDicts.statuses[item.status_id] || item.status_id || '',
+          source: leadDicts.sources[item.source_id] || item.source_id || '',
           is_duplicate: false,
           is_bad_contact: false
         }));
 
-        updateStatus(`Сохранение ${rows.length} лидов...`);
+        updateStatus(`Сохранение ${rows.length} записей...`);
         await _supabase.from('leads').delete().neq('id', 0);
         for (let i = 0; i < rows.length; i += 500) {
           const chunk = rows.slice(i, i + 500);
@@ -204,7 +218,7 @@
         }
 
         const total = rows.length;
-        const puCount = rows.filter(l => l.stage?.includes('ПУ состоялся')).length;
+        const puCount = rows.filter(l => l.stage === 'ПУ состоялся' || l.stage?.includes('ПУ')).length;
         const conversion = total ? ((puCount / total) * 100).toFixed(1) : 0;
 
         kpiDiv.innerHTML = `
