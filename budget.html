@@ -11,32 +11,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f8fa;
-      --surface: #ffffff;
-      --border: rgba(15,23,42,0.06);
-      --text: #0f172a;
-      --text-secondary: #475569;
-      --accent: #0d9488;
-      --accent-light: #ccfbf1;
-      --warm-yellow: #f59e0b;
-      --soft-green: #10b981;
-      --critical: #ef4444;
+      --bg: #f7f8fa; --surface: #ffffff; --border: rgba(15,23,42,0.06);
+      --text: #0f172a; --text-secondary: #475569; --accent: #0d9488;
+      --accent-light: #ccfbf1; --warm-yellow: #f59e0b; --soft-green: #10b981; --critical: #ef4444;
       --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
-      color: var(--text);
-      min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
+      color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
       cursor: default; caret-color: transparent;
     }
     input, textarea, select { cursor: text; caret-color: auto; }
     .container {
-      width: 100%; max-width: 1100px;
-      background: var(--surface); border-radius: var(--radius-xl);
-      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-      border: 1px solid var(--border); backdrop-filter: blur(12px);
+      width: 100%; max-width: 1100px; background: var(--surface); border-radius: var(--radius-xl);
+      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
     }
     .header {
       display: flex; justify-content: space-between; align-items: center;
@@ -46,57 +37,47 @@
     h1 {
       font-size: 2rem; font-weight: 700;
       background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
     .btn {
-      padding: 0.5rem 1.2rem; border-radius: var(--radius-sm);
-      font-weight: 600; cursor: pointer; font-size: 0.85rem;
-      border: 1px solid var(--border); background: var(--surface);
+      padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;
+      font-size: 0.85rem; border: 1px solid var(--border); background: var(--surface);
       color: var(--text); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;
     }
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
     .btn-primary:hover { background: #0f766e; }
-    .btn-danger { background: var(--critical); color: white; border-color: var(--critical); }
-    .btn-danger:hover { background: #dc2626; }
     .btn-excel {
       background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
-      color: var(--accent);
-      border: 1px solid var(--accent);
+      color: var(--accent); border: 1px solid var(--accent);
       box-shadow: 0 4px 12px rgba(124,92,231,0.15), 0 0 0 1px rgba(124,92,231,0.1) inset;
     }
     .btn-excel:hover {
-      background: linear-gradient(135deg, var(--accent), #0f766e);
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 8px 24px rgba(13,148,136,0.3);
+      background: linear-gradient(135deg, var(--accent), #0f766e); color: white;
+      border-color: transparent; box-shadow: 0 8px 24px rgba(13,148,136,0.3);
     }
-
     .filters {
       display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
     }
     .filter-btn {
-      padding: 0.35rem 0.9rem; border-radius: 20px;
-      border: 1px solid var(--border); background: var(--surface);
-      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
-      color: var(--text-secondary);
+      padding: 0.35rem 0.9rem; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--surface); cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      transition: 0.2s; color: var(--text-secondary);
     }
     .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-
+    .month-nav { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+    .month-nav button { background: var(--surface); border: 1px solid var(--border); padding: 0.3rem 0.8rem; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    .month-title { min-width: 120px; text-align: center; font-weight: 600; background: var(--surface); padding: 0.3rem 0.8rem; border-radius: 10px; border: 1px solid var(--border); }
     .summary {
-      background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1rem 1.5rem; margin-bottom: 1.5rem;
+      background: var(--surface); border-radius: var(--radius-lg); padding: 1rem 1.5rem; margin-bottom: 1.5rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid var(--border);
       display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;
     }
     .summary-item { display: flex; align-items: baseline; gap: 0.5rem; }
     .summary-label { font-size: 0.85rem; color: var(--text-secondary); }
     .summary-value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
-
     .table-container {
-      background: var(--surface); border-radius: var(--radius-lg);
-      border: 1px solid var(--border); overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border);
+      overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.02);
     }
     table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     th { text-align: left; padding: 0.8rem 1rem; background: #f8fafc; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border); }
@@ -104,17 +85,11 @@
     tr:last-child td { border-bottom: none; }
     tr:hover td { background: rgba(0,0,0,0.01); }
     .actions-cell { display: flex; gap: 0.4rem; align-items: center; }
-    .icon-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--text-secondary); padding: 0.2rem;
-      transition: color 0.2s;
-    }
+    .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-secondary); padding: 0.2rem; }
     .icon-btn:hover { color: var(--critical); }
-
     .salary-card {
-      background: var(--surface); border-radius: var(--radius-lg);
-      padding: 1.2rem; border: 1px solid var(--border);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: 0.2s;
+      background: var(--surface); border-radius: var(--radius-lg); padding: 1.2rem;
+      border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02);
       display: flex; align-items: center; gap: 1rem;
     }
     .salary-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
@@ -129,11 +104,10 @@
       backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000;
     }
     .modal {
-      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
-      border-radius: var(--radius-xl); padding: 2rem; max-width: 450px; width: 90%;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-radius: var(--radius-xl);
+      padding: 2rem; max-width: 450px; width: 90%;
       box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
-      animation: slideUp 0.25s ease-out;
-      text-align: center;
+      animation: slideUp 0.25s ease-out; text-align: center;
     }
     @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
     .modal h2 { margin-bottom: 1rem; }
@@ -142,7 +116,6 @@
       border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
     }
     .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
-    .required { border-color: var(--critical) !important; }
   </style>
 </head>
 <body>
@@ -162,6 +135,11 @@
     <button class="filter-btn" data-filter="salary10">ЗП 10 число</button>
     <button class="filter-btn" data-filter="salary20">ЗП 20 число</button>
     <button class="filter-btn" data-filter="salary25">ЗП 25 число</button>
+    <div class="month-nav">
+      <button id="prevMonthBtn">←</button>
+      <span class="month-title" id="monthTitle"></span>
+      <button id="nextMonthBtn">→</button>
+    </div>
   </div>
 
   <div class="summary" id="summaryContainer"></div>
@@ -238,21 +216,11 @@
 
 <!-- Модалка уведомлений -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
-  <div class="modal">
-    <p id="alertMessage"></p>
-    <button class="btn btn-primary" id="alertOkBtn">OK</button>
-  </div>
+  <div class="modal"><p id="alertMessage"></p><button class="btn btn-primary" id="alertOkBtn">OK</button></div>
 </div>
-
 <!-- Модалка подтверждения -->
 <div class="modal-overlay" id="confirmModal" style="display:none;">
-  <div class="modal">
-    <p id="confirmMessage"></p>
-    <div class="modal-actions">
-      <button class="btn btn-primary" id="confirmYesBtn">Да</button>
-      <button class="btn" id="confirmNoBtn">Нет</button>
-    </div>
-  </div>
+  <div class="modal"><p id="confirmMessage"></p><div class="modal-actions"><button class="btn btn-primary" id="confirmYesBtn">Да</button><button class="btn" id="confirmNoBtn">Нет</button></div></div>
 </div>
 
 <script>
@@ -263,6 +231,10 @@
     let expenses = [], employees = [], worklog = [], salaryParams = [], teacherSalaryData = [], salaryPayouts = [];
     let currentFilter = 'regular';
     let currentUserRole = null;
+    // Текущий выбранный месяц (по умолчанию – текущий)
+    let selectedYear = new Date().getFullYear();
+    let selectedMonth = new Date().getMonth() + 1;
+    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
     async function checkAccess() {
       const { data: { session } } = await _supabase.auth.getSession();
@@ -274,28 +246,16 @@
     }
     function canEdit() { return currentUserRole === 'Управляющий' || currentUserRole === 'Бухгалтер'; }
 
-    // Премиум-уведомления
-    function showAlert(msg) {
-      document.getElementById('alertMessage').textContent = msg;
-      document.getElementById('alertModal').style.display = 'flex';
-      document.getElementById('alertOkBtn').onclick = () => { document.getElementById('alertModal').style.display = 'none'; };
-    }
-    function showConfirm(msg) {
-      return new Promise(resolve => {
-        document.getElementById('confirmMessage').textContent = msg;
-        document.getElementById('confirmModal').style.display = 'flex';
-        document.getElementById('confirmYesBtn').onclick = () => { document.getElementById('confirmModal').style.display = 'none'; resolve(true); };
-        document.getElementById('confirmNoBtn').onclick = () => { document.getElementById('confirmModal').style.display = 'none'; resolve(false); };
-      });
-    }
-
     async function loadData() {
-      const now = new Date();
-      const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
+      const start = `${monthStr}-01`;
+      const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
+      const end = `${monthStr}-${String(lastDay).padStart(2,'0')}`;
+
       const [exp, emp, wl, sp, ts, spayouts] = await Promise.all([
         _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true }),
         _supabase.from('employees').select('*'),
-        _supabase.from('worklog').select('*').gte('date', `${monthStr}-01`).lte('date', `${monthStr}-31`),
+        _supabase.from('worklog').select('*').gte('date', start).lte('date', end),
         _supabase.from('salary_params').select('*').eq('month', monthStr),
         _supabase.from('teacher_salary').select('*').eq('month', monthStr),
         _supabase.from('salary_payouts').select('*').eq('month', monthStr)
@@ -306,12 +266,12 @@
       salaryParams = sp.data || [];
       teacherSalaryData = ts.data || [];
       salaryPayouts = spayouts.data || [];
+      document.getElementById('monthTitle').textContent = `${monthNames[selectedMonth-1]} ${selectedYear}`;
       renderAll();
     }
 
     function calculateSalary(employee, period) {
-      const monthStr = new Date().toISOString().slice(0,7);
-      const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+      const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
       const isFirstHalf = period === '1-15';
       const dayStart = isFirstHalf ? 1 : 16;
       const dayEnd = isFirstHalf ? 15 : daysInMonth;
@@ -351,17 +311,14 @@
     }
 
     function getSalaryList(period) {
-      const monthStr = new Date().toISOString().slice(0,7);
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
       let staff = [];
 
       if (period === '5') {
-        // 5 число: управляющий Артур и администратор Ирина
         staff = employees.filter(e => e.name === 'Артур' || e.name === 'Ирина' || e.role === 'Управляющий');
       } else if (period === '20') {
-        // 20 число: администратор Екатерина
         staff = employees.filter(e => e.name === 'Екатерина');
       } else {
-        // 10 и 25 числа: менеджеры и преподаватели (исключая тех, кто уже на 5 или 20)
         staff = employees.filter(e => {
           if (e.name === 'Артур' || e.name === 'Ирина' || e.name === 'Екатерина') return false;
           return ['Менеджер','Преподаватель'].includes(e.role);
@@ -384,7 +341,7 @@
           paid: payout ? payout.paid : false,
           payoutData: payout || null
         };
-      }).filter(item => item.amount > 0);
+      }).filter(item => true); // показываем всех, даже с нулевой суммой
     }
 
     function renderAll() {
@@ -404,8 +361,7 @@
           </div>`;
         renderRegularTable(expenses);
       } else {
-        let periodLabel = '';
-        let period = '';
+        let period = '', periodLabel = '';
         switch (currentFilter) {
           case 'salary5': period = '5'; periodLabel = '5 число'; break;
           case 'salary10': period = '10'; periodLabel = '10 число'; break;
@@ -450,11 +406,9 @@
     function renderRegularTable(expenses) {
       const tbody = document.getElementById('regularTableBody');
       tbody.innerHTML = expenses.map(e => {
-        const overdue = !e.paid && e.next_payment_date && new Date(e.next_payment_date) < new Date();
         const periodLabel = { monthly:'Ежемес.', weekly:'Еженед.', biweekly:'Раз в 2 нед.', quarterly:'Кварт.', yearly:'Ежегод.' }[e.periodicity] || '';
         return `<tr>
-          <td>${e.name}</td>
-          <td>${e.amount.toLocaleString()} ₽</td>
+          <td>${e.name}</td><td>${e.amount.toLocaleString()} ₽</td>
           <td>${e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru') : '—'}</td>
           <td>${periodLabel}</td>
           <td class="actions-cell">
@@ -465,29 +419,14 @@
         </tr>`;
       }).join('');
 
-      document.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openPayModal(b.dataset.id);
-      }));
-      document.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(b.dataset.id, false);
-      }));
+      document.querySelectorAll('.pay-action').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openPayModal(b.dataset.id); }));
+      document.querySelectorAll('.edit-btn').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(b.dataset.id, false); }));
       document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', async (e) => {
         e.stopPropagation();
-        const id = b.dataset.id;
-        const confirmed = await showConfirm('Удалить платёж?');
-        if (confirmed) {
-          await _supabase.from('expenses').delete().eq('id', id);
-          await loadData();
-        }
+        if (await showConfirm('Удалить платёж?')) { await _supabase.from('expenses').delete().eq('id', b.dataset.id); await loadData(); }
       }));
       document.querySelectorAll('tbody tr').forEach(row => {
-        row.addEventListener('click', (e) => {
-          if (e.target.closest('button')) return;
-          const id = row.querySelector('.edit-btn')?.dataset.id;
-          if (id) openEditModal(id, true);
-        });
+        row.addEventListener('click', (e) => { if (!e.target.closest('button')) { const id = row.querySelector('.edit-btn')?.dataset.id; if (id) openEditModal(id, true); } });
       });
     }
 
@@ -495,22 +434,19 @@
       document.querySelectorAll('.salary-req-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const emp = JSON.parse(btn.dataset.employee);
-          const period = btn.dataset.period;
-          openSalaryModal(emp, period);
+          openSalaryModal(emp, btn.dataset.period);
         });
       });
       document.querySelectorAll('.salary-pay-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const emp = JSON.parse(btn.dataset.employee);
-          const period = btn.dataset.period;
-          const amount = parseFloat(btn.dataset.amount);
-          openSalaryModal(emp, period, amount, true);
+          openSalaryModal(emp, btn.dataset.period, parseFloat(btn.dataset.amount), true);
         });
       });
     }
 
     function openSalaryModal(emp, period, amount = 0, markPaid = false) {
-      const monthStr = new Date().toISOString().slice(0,7);
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
       const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
       document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role}) – ${getPeriodLabel(period)}`;
       document.getElementById('salaryPhone').value = existing?.phone || '';
@@ -529,7 +465,6 @@
       return labels[period] || period;
     }
 
-    // Сохранение реквизитов
     document.getElementById('saveSalaryDetailsBtn').addEventListener('click', () => saveSalaryPayout(false));
     document.getElementById('confirmSalaryPayBtn').addEventListener('click', () => saveSalaryPayout(true));
 
@@ -541,41 +476,21 @@
       const phone = document.getElementById('salaryPhone').value.trim();
       const bank = document.getElementById('salaryBank').value.trim();
       const comment = document.getElementById('salaryComment').value.trim();
-      const monthStr = new Date().toISOString().slice(0,7);
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
 
       let receiptUrl = modal.dataset.existingReceiptUrl || '';
       const file = document.getElementById('salaryReceiptFile').files[0];
       if (file && markPaid) {
         const fileName = `salary_receipts/${employeeId}_${Date.now()}.${file.name.split('.').pop()}`;
         const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
-        if (error) {
-          showAlert('Ошибка загрузки чека: ' + error.message);
-          return;
-        }
+        if (error) { showAlert('Ошибка загрузки чека: ' + error.message); return; }
         receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
       }
 
-      // Проверяем существующую запись
       const { data: existing } = await _supabase.from('salary_payouts')
-        .select('id')
-        .eq('employee_id', employeeId)
-        .eq('period', period)
-        .eq('month', monthStr)
-        .single();
+        .select('id').eq('employee_id', employeeId).eq('period', period).eq('month', monthStr).single();
 
-      const payload = {
-        employee_id: employeeId,
-        period,
-        month: monthStr,
-        amount,
-        phone,
-        bank,
-        comment,
-        paid: markPaid,
-        paid_at: markPaid ? new Date().toISOString() : null,
-        receipt_url: receiptUrl
-      };
-
+      const payload = { employee_id: employeeId, period, month: monthStr, amount, phone, bank, comment, paid: markPaid, paid_at: markPaid ? new Date().toISOString() : null, receipt_url: receiptUrl };
       let error;
       if (existing) {
         const { error: updateError } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id);
@@ -585,45 +500,26 @@
         error = insertError;
       }
 
-      if (error) {
-        showAlert('Ошибка сохранения: ' + error.message);
-        return;
-      }
-
+      if (error) { showAlert('Ошибка сохранения: ' + error.message); return; }
       modal.style.display = 'none';
       loadData();
     }
 
-    document.getElementById('cancelSalaryBtn').addEventListener('click', () => {
-      document.getElementById('salaryModal').style.display = 'none';
-    });
+    document.getElementById('cancelSalaryBtn').addEventListener('click', () => { document.getElementById('salaryModal').style.display = 'none'; });
 
-    // Экспорт в Excel
     function exportSalary(list, periodLabel) {
       const rows = list.map(item => ({
-        'Сотрудник': item.employee.name,
-        'Роль': item.employee.role,
-        'Сумма': item.amount,
+        'Сотрудник': item.employee.name, 'Роль': item.employee.role, 'Сумма': item.amount,
         'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
-        'Телефон': item.payoutData?.phone || '',
-        'Банк': item.payoutData?.bank || ''
+        'Телефон': item.payoutData?.phone || '', 'Банк': item.payoutData?.bank || ''
       }));
-      const totalRow = {
-        'Сотрудник': 'ИТОГО',
-        'Сумма': list.reduce((s, i) => s + i.amount, 0),
-        'Статус': '',
-        'Телефон': '',
-        'Банк': ''
-      };
-      rows.push(totalRow);
-
+      rows.push({ 'Сотрудник': 'ИТОГО', 'Сумма': list.reduce((s, i) => s + i.amount, 0) });
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, `ЗП ${periodLabel}`);
-      XLSX.writeFile(wb, `ЗП_${periodLabel}_${new Date().toISOString().slice(0,7)}.xlsx`);
+      XLSX.writeFile(wb, `ЗП_${periodLabel}_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
     }
 
-    // Оплата регулярного
     let pendingPayId = null;
     function openPayModal(id) { pendingPayId = id; document.getElementById('payModal').style.display = 'flex'; }
     document.getElementById('cancelPayBtn').addEventListener('click', () => document.getElementById('payModal').style.display = 'none');
@@ -642,22 +538,10 @@
       }
 
       const nextDate = getNextDate(exp.next_payment_date, exp.periodicity);
-      const newExp = {
-        name: exp.name, amount: exp.amount, periodicity: exp.periodicity,
-        next_payment_date: nextDate, payment_link: exp.payment_link,
-        details: exp.details, note: exp.note, paid: false, type: 'monthly'
-      };
+      const newExp = { name: exp.name, amount: exp.amount, periodicity: exp.periodicity, next_payment_date: nextDate, payment_link: exp.payment_link, details: exp.details, note: exp.note, paid: false, type: 'monthly' };
       const { data: inserted, error: insertError } = await _supabase.from('expenses').insert([newExp]).select();
-      if (insertError) {
-        showAlert('Ошибка создания следующего платежа: ' + insertError.message);
-        return;
-      }
-      const nextId = inserted?.[0]?.id;
-      await _supabase.from('expenses').update({
-        paid: true, paid_at: new Date().toISOString(), payment_method: method,
-        receipt_url: receiptUrl, previous_id: nextId
-      }).eq('id', pendingPayId);
-
+      if (insertError) { showAlert('Ошибка создания следующего платежа: ' + insertError.message); return; }
+      await _supabase.from('expenses').update({ paid: true, paid_at: new Date().toISOString(), payment_method: method, receipt_url: receiptUrl, previous_id: inserted?.[0]?.id }).eq('id', pendingPayId);
       document.getElementById('payModal').style.display = 'none';
       showCoins();
       await loadData();
@@ -683,8 +567,7 @@
       if (!exp) return;
       const isReadOnly = readOnly || !canEdit();
       document.getElementById('editModalTitle').textContent = isReadOnly ? 'Просмотр платежа' : 'Редактировать платёж';
-      document.getElementById('editName').value = exp.name;
-      document.getElementById('editAmount').value = exp.amount;
+      document.getElementById('editName').value = exp.name; document.getElementById('editAmount').value = exp.amount;
       document.getElementById('editPeriodicity').value = exp.periodicity;
       document.getElementById('editNextDate').value = exp.next_payment_date || '';
       document.getElementById('editLink').value = exp.payment_link || '';
@@ -707,10 +590,7 @@
       document.getElementById('editModal').style.display = 'flex';
     }
 
-    document.getElementById('enableEditBtn').addEventListener('click', () => {
-      const id = document.getElementById('editModal').dataset.id;
-      openEditModal(id, false);
-    });
+    document.getElementById('enableEditBtn').addEventListener('click', () => openEditModal(document.getElementById('editModal').dataset.id, false));
     document.getElementById('cancelViewBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
     document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
 
@@ -719,74 +599,38 @@
       const amount = parseFloat(document.getElementById('editAmount').value) || 0;
       const nextDate = document.getElementById('editNextDate').value;
       if (!name || !amount) return showAlert('Заполните название и сумму');
-      if (!nextDate) {
-        document.getElementById('editNextDate').classList.add('required');
-        return showAlert('Укажите дату следующего платежа');
-      }
-      const data = {
-        name, amount,
-        periodicity: document.getElementById('editPeriodicity').value,
-        next_payment_date: nextDate || null,
-        payment_link: document.getElementById('editLink').value.trim(),
-        details: document.getElementById('editDetails').value.trim(),
-        note: document.getElementById('editNote').value.trim()
-      };
+      if (!nextDate) { document.getElementById('editNextDate').classList.add('required'); return showAlert('Укажите дату следующего платежа'); }
+      const data = { name, amount, periodicity: document.getElementById('editPeriodicity').value, next_payment_date: nextDate || null, payment_link: document.getElementById('editLink').value.trim(), details: document.getElementById('editDetails').value.trim(), note: document.getElementById('editNote').value.trim() };
       const id = document.getElementById('editModal').dataset.id;
-      if (id) {
-        await _supabase.from('expenses').update(data).eq('id', id);
-      } else {
-        const { error } = await _supabase.from('expenses').insert([{ ...data, paid: false, type: 'monthly' }]);
-        if (error) { showAlert('Ошибка добавления: ' + error.message); return; }
-      }
+      if (id) { await _supabase.from('expenses').update(data).eq('id', id); }
+      else { const { error } = await _supabase.from('expenses').insert([{ ...data, paid: false, type: 'monthly' }]); if (error) { showAlert('Ошибка добавления: ' + error.message); return; } }
       document.getElementById('editModal').style.display = 'none';
       await loadData();
     });
 
     document.getElementById('deleteEditBtn').addEventListener('click', async () => {
-      const id = document.getElementById('editModal').dataset.id;
-      if (!id) return;
-      const confirmed = await showConfirm('Удалить платёж?');
-      if (confirmed) {
-        await _supabase.from('expenses').delete().eq('id', id);
-        document.getElementById('editModal').style.display = 'none';
-        await loadData();
-      }
+      if (await showConfirm('Удалить платёж?')) { await _supabase.from('expenses').delete().eq('id', document.getElementById('editModal').dataset.id); document.getElementById('editModal').style.display = 'none'; await loadData(); }
     });
 
     document.getElementById('addBtn').addEventListener('click', () => {
       document.getElementById('editModalTitle').textContent = 'Новый платёж';
-      document.getElementById('editName').value = '';
-      document.getElementById('editAmount').value = '';
-      document.getElementById('editPeriodicity').value = 'monthly';
-      document.getElementById('editNextDate').value = '';
-      document.getElementById('editLink').value = '';
-      document.getElementById('editDetails').value = '';
+      document.getElementById('editName').value = ''; document.getElementById('editAmount').value = '';
+      document.getElementById('editPeriodicity').value = 'monthly'; document.getElementById('editNextDate').value = '';
+      document.getElementById('editLink').value = ''; document.getElementById('editDetails').value = '';
       document.getElementById('editNote').value = '';
       delete document.getElementById('editModal').dataset.id;
-      document.getElementById('editName').readOnly = false;
-      document.getElementById('editAmount').readOnly = false;
-      document.getElementById('editPeriodicity').disabled = false;
-      document.getElementById('editNextDate').readOnly = false;
-      document.getElementById('editLink').readOnly = false;
-      document.getElementById('editDetails').readOnly = false;
+      document.getElementById('editName').readOnly = false; document.getElementById('editAmount').readOnly = false;
+      document.getElementById('editPeriodicity').disabled = false; document.getElementById('editNextDate').readOnly = false;
+      document.getElementById('editLink').readOnly = false; document.getElementById('editDetails').readOnly = false;
       document.getElementById('editNote').readOnly = false;
-      document.getElementById('viewActions').style.display = 'none';
-      document.getElementById('editActions').style.display = 'flex';
+      document.getElementById('viewActions').style.display = 'none'; document.getElementById('editActions').style.display = 'flex';
       document.getElementById('editModal').style.display = 'flex';
     });
 
-    function showCoins() {
-      for (let i=0; i<20; i++) {
-        setTimeout(() => {
-          const coin = document.createElement('div');
-          coin.className = 'coin';
-          coin.style.left = Math.random()*100 + '%';
-          coin.style.top = Math.random()*40 + '%';
-          document.body.appendChild(coin);
-          setTimeout(() => coin.remove(), 700);
-        }, i*40);
-      }
-    }
+    function showCoins() { for (let i=0; i<20; i++) { setTimeout(() => { const coin = document.createElement('div'); coin.className = 'coin'; coin.style.left = Math.random()*100 + '%'; coin.style.top = Math.random()*40 + '%'; document.body.appendChild(coin); setTimeout(() => coin.remove(), 700); }, i*40); } }
+
+    function showAlert(msg) { document.getElementById('alertMessage').textContent = msg; document.getElementById('alertModal').style.display = 'flex'; document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none'; }
+    function showConfirm(msg) { return new Promise(resolve => { document.getElementById('confirmMessage').textContent = msg; document.getElementById('confirmModal').style.display = 'flex'; document.getElementById('confirmYesBtn').onclick = () => { document.getElementById('confirmModal').style.display = 'none'; resolve(true); }; document.getElementById('confirmNoBtn').onclick = () => { document.getElementById('confirmModal').style.display = 'none'; resolve(false); }; }); }
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -797,10 +641,16 @@
       });
     });
 
-    (async () => {
-      await checkAccess();
-      await loadData();
-    })();
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      selectedMonth--; if (selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
+      loadData();
+    });
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      selectedMonth++; if (selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
+      loadData();
+    });
+
+    (async () => { await checkAccess(); await loadData(); })();
   })();
 </script>
 </body>
