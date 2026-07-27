@@ -50,6 +50,7 @@
     }
     .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
     .btn-primary:hover { background: #0f766e; }
+    .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
     .status { font-size: 0.9rem; color: var(--text-secondary); margin: 1rem 0; padding: 0.8rem; border-radius: var(--radius-sm); background: rgba(0,0,0,0.02); white-space: pre-wrap; }
     .kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.8rem; margin: 1rem 0; }
     .kpi-item { background: rgba(204,251,241,0.4); border-radius: var(--radius-sm); padding: 0.8rem; text-align: center; }
@@ -62,9 +63,10 @@
     <a href="index.html" class="back-link">← На главную</a>
     <div class="header"><h1>CRM Синхронизация</h1></div>
     <div class="card">
-      <p style="text-align:center; color:var(--text-secondary); margin-bottom:1rem;">Всегда загружает полностью все данные из CRM</p>
-      <div style="display:flex; justify-content:center;">
-        <button class="btn btn-primary" id="loadAllBtn">Загрузить все данные</button>
+      <p style="text-align:center; color:var(--text-secondary); margin-bottom:0.5rem;">Загрузка данных из AlfaCRM</p>
+      <div style="display:flex; justify-content:center; gap:1rem; flex-wrap:wrap;">
+        <button class="btn btn-primary" id="loadFinanceBtn">Загрузить финансы</button>
+        <button class="btn btn-outline" id="loadLeadsBtn">Загрузить лиды</button>
       </div>
       <div id="status" class="status"></div>
       <div class="kpi" id="kpiContainer"></div>
@@ -83,6 +85,7 @@
 
     function updateStatus(msg) { statusDiv.textContent = msg; console.log(msg); }
 
+    // Справочники для финансов
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
 
     async function loadDictionaries() {
@@ -118,7 +121,6 @@
         allItems = allItems.concat(items);
         if (items.length < 50 || (total && allItems.length >= total)) break;
         page++;
-        updateStatus(`Загружено ${allItems.length}${total ? ' из ' + total : ''} записей...`);
       }
       return allItems;
     }
@@ -129,10 +131,10 @@
       return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : d;
     }
 
-    document.getElementById('loadAllBtn').addEventListener('click', async () => {
-      updateStatus('Загрузка всех данных из CRM...');
+    // ====== ЗАГРУЗКА ФИНАНСОВ ======
+    document.getElementById('loadFinanceBtn').addEventListener('click', async () => {
+      updateStatus('Загрузка всех финансов из CRM...');
       kpiDiv.innerHTML = '';
-
       try {
         await loadDictionaries();
         const rawItems = await fetchAllPages('pay/index', {}, 200);
@@ -151,15 +153,13 @@
           };
         });
 
-        // Полная перезапись всех данных
-        updateStatus('Сохранение в базу данных...');
+        updateStatus('Сохранение в базу...');
         await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
         for (let i = 0; i < rows.length; i += 500) {
           const chunk = rows.slice(i, i + 500);
           await _supabase.from('crm_finance').insert(chunk);
         }
 
-        // Ключевые показатели
         let income = 0, expense = 0, marketing = 0, sales = 0;
         rows.forEach(r => {
           if (r.operation_type === 'Доход') { income += r.amount; sales++; }
@@ -170,10 +170,49 @@
           <div class="kpi-item"><div class="label">Расходы</div><div class="value">${expense.toLocaleString()} ₽</div></div>
           <div class="kpi-item"><div class="label">Маркетинг</div><div class="value">${marketing.toLocaleString()} ₽</div></div>
           <div class="kpi-item"><div class="label">Прибыль</div><div class="value">${(income-expense).toLocaleString()} ₽</div></div>
-          <div class="kpi-item"><div class="label">Всего операций</div><div class="value">${rows.length}</div></div>
+          <div class="kpi-item"><div class="label">Операций</div><div class="value">${rows.length}</div></div>
           <div class="kpi-item"><div class="label">Продаж</div><div class="value">${sales}</div></div>
         `;
-        updateStatus(`✅ Готово! Загружено ${rows.length} записей. Дашборды обновлены.`);
+        updateStatus(`✅ Финансы загружены: ${rows.length} записей.`);
+      } catch (e) {
+        updateStatus('Ошибка: ' + e.message);
+        console.error(e);
+      }
+    });
+
+    // ====== ЗАГРУЗКА ЛИДОВ ======
+    document.getElementById('loadLeadsBtn').addEventListener('click', async () => {
+      updateStatus('Загрузка всех лидов из CRM...');
+      kpiDiv.innerHTML = '';
+      try {
+        const rawLeads = await fetchAllPages('lead/index', {}, 200);
+
+        const rows = rawLeads.map(item => ({
+          date_added: formatDate(item.date_added) || new Date().toISOString().split('T')[0],
+          name: item.name || '',
+          stage: item.stage || '',
+          source: item.source || '',
+          is_duplicate: false,
+          is_bad_contact: false
+        }));
+
+        updateStatus(`Сохранение ${rows.length} лидов...`);
+        await _supabase.from('leads').delete().neq('id', 0);
+        for (let i = 0; i < rows.length; i += 500) {
+          const chunk = rows.slice(i, i + 500);
+          await _supabase.from('leads').insert(chunk);
+        }
+
+        const total = rows.length;
+        const puCount = rows.filter(l => l.stage?.includes('ПУ состоялся')).length;
+        const conversion = total ? ((puCount / total) * 100).toFixed(1) : 0;
+
+        kpiDiv.innerHTML = `
+          <div class="kpi-item"><div class="label">Всего лидов</div><div class="value">${total}</div></div>
+          <div class="kpi-item"><div class="label">Успешных (ПУ)</div><div class="value">${puCount}</div></div>
+          <div class="kpi-item"><div class="label">Конверсия</div><div class="value">${conversion}%</div></div>
+        `;
+        updateStatus(`✅ Лиды загружены: ${total} записей.`);
       } catch (e) {
         updateStatus('Ошибка: ' + e.message);
         console.error(e);
