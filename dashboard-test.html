@@ -77,32 +77,36 @@
       return json;
     }
 
-    // Загрузка всех страниц без ограничения (до пустого ответа)
-    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate, description) {
+    // Загрузка с жёстким лимитом страниц
+    async function fetchWithLimit(proxyUrl, branch, path, bodyTemplate, maxPages, description) {
       let allItems = [];
       let page = 0;
-      while (true) {
+      let total = null;
+      while (page < maxPages) {
         const body = { ...bodyTemplate, page, branch_id: parseInt(branch) };
         const json = await fetchPage(proxyUrl, branch, path, body);
+        if (total === null && json.total) total = json.total;
         const items = json.items || [];
-        if (items.length === 0) break;
         allItems = allItems.concat(items);
-        updateStatus(`${description}: загружено ${allItems.length} записей (стр. ${page})`);
+        updateStatus(`${description}: загружено ${allItems.length}${total ? ' из ' + total : ''} (стр. ${page})`);
+        if (items.length === 0) break;
+        if (total && allItems.length >= total) break;
         page++;
         await new Promise(resolve => setTimeout(resolve, 100));
       }
+      if (page === maxPages) updateStatus(`${description}: достигнут лимит страниц (${maxPages})`);
       return allItems;
     }
 
     async function loadDictionaries(proxyUrl, branch) {
-      updateStatus('Загрузка справочников...');
-      const payItems = await fetchAllPages(proxyUrl, branch, 'pay-item/index', {}, 'Статьи');
+      updateStatus('Загрузка справочников (ограниченно)...');
+      const payItems = await fetchWithLimit(proxyUrl, branch, 'pay-item/index', {}, 3, 'Статьи');
       payItems.forEach(i => dicts.payItems[i.id] = i.name);
-      const payAccounts = await fetchAllPages(proxyUrl, branch, 'pay-account/index', {}, 'Счета');
+      const payAccounts = await fetchWithLimit(proxyUrl, branch, 'pay-account/index', {}, 3, 'Счета');
       payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
-      const payTypes = await fetchAllPages(proxyUrl, branch, 'pay-type/index', {}, 'Типы');
+      const payTypes = await fetchWithLimit(proxyUrl, branch, 'pay-type/index', {}, 1, 'Типы');
       payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
-      updateStatus('Справочники загружены.');
+      updateStatus('Справочники загружены (базовый набор).');
     }
 
     document.getElementById('loadBtn').addEventListener('click', async () => {
@@ -113,19 +117,25 @@
       try {
         await loadDictionaries(proxyUrl, branch);
 
-        updateStatus('Загрузка ВСЕХ операций (потом отфильтруем июль)...');
-        const allItems = await fetchAllPages(proxyUrl, branch, 'pay/index', {}, 'Все операции');
-        updateStatus(`Загружено всего ${allItems.length} операций. Фильтруем июль 2026...`);
+        // Загружаем операции с фильтром по дате (если работает) или без, но с лимитом страниц
+        updateStatus('Загрузка операций за июль 2026...');
+        let items = await fetchWithLimit(proxyUrl, branch, 'pay/index', {
+          document_date_from: '01.07.2026',
+          document_date_to: '31.07.2026'
+        }, 50, 'Операции');
 
-        // Фильтруем только те, у которых document_date в июле 2026
-        const julyItems = allItems.filter(item => {
-          const d = item.document_date;
-          if (!d) return false;
-          const [day, month, year] = d.split('.').map(Number);
-          return year === 2026 && month === 7;
-        });
-
-        updateStatus(`Найдено ${julyItems.length} операций за июль 2026.`);
+        // Если фильтр не дал результатов, загружаем без фильтра и фильтруем на клиенте (ограниченно)
+        if (items.length === 0) {
+          updateStatus('Фильтр по дате не сработал, загружаем общий список (до 2000 записей)...');
+          const all = await fetchWithLimit(proxyUrl, branch, 'pay/index', {}, 40, 'Все операции');
+          items = all.filter(item => {
+            const d = item.document_date;
+            if (!d) return false;
+            const [day, month, year] = d.split('.').map(Number);
+            return year === 2026 && month === 7;
+          });
+          updateStatus(`Отфильтровано ${items.length} записей за июль.`);
+        }
 
         // Анализ
         let totalIncome = 0, totalExpense = 0, totalMarketing = 0;
@@ -133,7 +143,7 @@
         const categoryExpenses = {};
         const oneTimeExpenses = [];
 
-        julyItems.forEach(item => {
+        items.forEach(item => {
           const amount = parseFloat(item.income || item.amount || 0);
           const typeId = item.pay_type_id;
           const typeName = dicts.payTypes[typeId] || '';
@@ -167,7 +177,7 @@
         document.getElementById('kpiRoyalty').textContent = royalty.toLocaleString() + ' ₽';
         document.getElementById('kpiOperProfit').textContent = operatingProfit.toLocaleString() + ' ₽';
         document.getElementById('kpiNetProfit').textContent = netProfit.toLocaleString() + ' ₽';
-        document.getElementById('kpiCount').textContent = julyItems.length;
+        document.getElementById('kpiCount').textContent = items.length;
         document.getElementById('kpiSalesCount').textContent = salesCount;
         document.getElementById('kpiAvgCheck').textContent = avgCheck.toLocaleString() + ' ₽';
         document.getElementById('kpiROI').textContent = roi;
@@ -181,7 +191,7 @@
         const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
         document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
 
-        updateStatus(`Готово. За июль 2026: ${julyItems.length} операций.`);
+        updateStatus(`Готово. За июль 2026: ${items.length} операций.`);
       } catch (err) {
         updateStatus('Ошибка: ' + err.message);
         console.error(err);
