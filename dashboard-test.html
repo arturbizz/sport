@@ -3,32 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Сравнение показателей — CRM vs Excel (июль 2026)</title>
+  <title>Тест API AlfaCRM — полная загрузка</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
-    button { padding: 0.6rem 1.4rem; font-size: 0.9rem; margin: 1rem 0; }
+    button { padding: 0.6rem 1.4rem; font-size: 0.9rem; margin: 0.5rem; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
     th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; font-size: 0.9rem; }
     th { background: #f3f4f6; }
     .status { background: #fef3c7; padding: 0.5rem; border-radius: 8px; margin: 0.5rem 0; white-space: pre-wrap; }
-    .save-btn { background: #0d9488; color: white; border: none; margin-left: 1rem; }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .save-btn { background: #0d9488; color: white; border: none; }
     .save-btn:disabled { background: #94a3b8; cursor: not-allowed; }
   </style>
 </head>
 <body>
-  <h1>Сравнение показателей (июль 2026)</h1>
+  <h1>Загрузка данных из AlfaCRM</h1>
   <div>
     <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
-    <label>Филиал: <input type="text" id="branch" size="10" value="20"></label><br>
-    <button id="loadBtn">Загрузить данные из CRM</button>
+    <label>Филиал: <input type="text" id="branch" size="10" value="20"></label>
+  </div>
+  <div class="actions">
+    <button id="loadJulyBtn">Загрузить июль 2026</button>
+    <button id="loadAllBtn">Загрузить ВСЕ записи (5620)</button>
     <button id="saveBtn" class="save-btn" disabled>Сохранить в Supabase</button>
-    <div id="status" class="status"></div>
+    <span id="status" class="status"></span>
   </div>
 
   <h2>Ключевые показатели (KPI)</h2>
   <table id="kpiTable">
-    <thead><tr><th>Показатель</th><th>Значение из CRM</th></tr></thead>
+    <thead><tr><th>Показатель</th><th>Значение</th></tr></thead>
     <tbody>
       <tr><td>Доходы</td><td id="kpiIncome">—</td></tr>
       <tr><td>Расходы</td><td id="kpiExpense">—</td></tr>
@@ -44,30 +48,42 @@
     </tbody>
   </table>
 
-  <h2>Расходы по категориям</h2>
-  <table id="categoryTable">
-    <thead><tr><th>Категория</th><th>Сумма</th></tr></thead>
-    <tbody></tbody>
-  </table>
-
-  <h2>Топ-10 крупнейших расходов</h2>
-  <table id="topExpensesTable">
-    <thead><tr><th>Дата</th><th>Категория</th><th>Сумма</th></tr></thead>
-    <tbody></tbody>
-  </table>
-
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
+    // Кэш справочников (сохраняется между загрузками)
+    let dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
+    let currentFetchedData = [];
     const statusDiv = document.getElementById('status');
-    let currentFetchedData = []; // сохраняем загруженные данные для возможности сохранения
 
     function updateStatus(msg) {
-      statusDiv.innerHTML = msg;
+      statusDiv.textContent = msg;
       console.log(msg);
+    }
+
+    // Загрузка справочников с кешированием в localStorage
+    async function loadDictionaries(proxyUrl, branch) {
+      const cached = localStorage.getItem('alfa_dicts');
+      if (cached) {
+        dicts = JSON.parse(cached);
+        updateStatus('Справочники загружены из кеша.');
+        return;
+      }
+      updateStatus('Загрузка справочников...');
+      try {
+        const payItems = await fetchAllPages(proxyUrl, branch, 'pay-item/index', {}, 3);
+        payItems.forEach(i => dicts.payItems[i.id] = i.name);
+        const payAccounts = await fetchAllPages(proxyUrl, branch, 'pay-account/index', {}, 3);
+        payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
+        const payTypes = await fetchAllPages(proxyUrl, branch, 'pay-type/index', {}, 1);
+        payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
+        localStorage.setItem('alfa_dicts', JSON.stringify(dicts));
+        updateStatus('Справочники загружены и сохранены в кеш.');
+      } catch (e) {
+        updateStatus('Ошибка загрузки справочников: ' + e.message);
+      }
     }
 
     async function fetchPage(proxyUrl, branch, path, body) {
@@ -81,7 +97,8 @@
       return json;
     }
 
-    async function fetchWithLimit(proxyUrl, branch, path, bodyTemplate, maxPages, description) {
+    // Загрузка всех страниц (до получения пустого ответа или до лимита)
+    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate, maxPages = 200) {
       let allItems = [];
       let page = 0;
       let total = null;
@@ -91,171 +108,144 @@
         if (total === null && json.total) total = json.total;
         const items = json.items || [];
         allItems = allItems.concat(items);
-        updateStatus(`${description}: загружено ${allItems.length}${total ? ' из ' + total : ''} (стр. ${page})`);
+        updateStatus(`Загружено ${allItems.length}${total ? ' из ' + total : ''} (стр. ${page})`);
         if (items.length === 0) break;
         if (total && allItems.length >= total) break;
         page++;
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(r => setTimeout(r, 50)); // лёгкая пауза
       }
-      if (page === maxPages) updateStatus(`${description}: достигнут лимит страниц (${maxPages})`);
       return allItems;
     }
 
-    async function loadDictionaries(proxyUrl, branch) {
-      updateStatus('Загрузка справочников (ограниченно)...');
-      const payItems = await fetchWithLimit(proxyUrl, branch, 'pay-item/index', {}, 3, 'Статьи');
-      payItems.forEach(i => dicts.payItems[i.id] = i.name);
-      const payAccounts = await fetchWithLimit(proxyUrl, branch, 'pay-account/index', {}, 3, 'Счета');
-      payAccounts.forEach(i => dicts.payAccounts[i.id] = i.name);
-      const payTypes = await fetchWithLimit(proxyUrl, branch, 'pay-type/index', {}, 1, 'Типы');
-      payTypes.forEach(i => dicts.payTypes[i.id] = i.name);
-      updateStatus('Справочники загружены (базовый набор).');
+    function formatDate(d) {
+      if (!d) return '';
+      const parts = d.split('.');
+      if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      return d;
     }
 
-    function isJuly2026(dateStr) {
+    function isDateInRange(dateStr, year, month) {
       if (!dateStr) return false;
       const parts = dateStr.split('.');
       if (parts.length !== 3) return false;
-      const day = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10);
-      const year = parseInt(parts[2], 10);
-      return year === 2026 && month === 7;
+      return parseInt(parts[2]) === year && parseInt(parts[1]) === month;
     }
 
-    // Функция форматирования даты из DD.MM.YYYY в YYYY-MM-DD
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      const parts = dateStr.split('.');
-      if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
-      return dateStr;
+    function processItems(items) {
+      currentFetchedData = items.map(item => {
+        const amount = parseFloat(item.income || item.amount || 0);
+        const typeName = dicts.payTypes[item.pay_type_id] || '';
+        const isIncome = typeName.toLowerCase().includes('доход') || typeName.toLowerCase().includes('приход');
+        return {
+          operation_date: formatDate(item.document_date),
+          operation_type: isIncome ? 'Доход' : 'Расход',
+          amount,
+          category: dicts.payItems[item.pay_item_id] || (item.pay_item_id ? `ID ${item.pay_item_id}` : ''),
+          account: dicts.payAccounts[item.pay_account_id] || '',
+          manager: '',
+          payment_type: '',
+          client: '',
+          teacher_name: '',
+          period: ''
+        };
+      });
+
+      let totalIncome = 0, totalExpense = 0, totalMarketing = 0, salesCount = 0;
+      currentFetchedData.forEach(r => {
+        if (r.operation_type === 'Доход') { totalIncome += r.amount; salesCount++; }
+        else {
+          totalExpense += r.amount;
+          if (r.category.toLowerCase().includes('маркетинг') || r.category.toLowerCase().includes('лидмаркет'))
+            totalMarketing += r.amount;
+        }
+      });
+
+      const opProfit = totalIncome - totalExpense;
+      const royalty = new Date().toISOString().slice(0,7) >= '2026-07' ? Math.round(totalIncome * 0.08) : 0;
+      const net = opProfit - royalty;
+      const avgCheck = salesCount ? Math.round(totalIncome / salesCount) : 0;
+      const roi = totalMarketing ? (totalIncome / totalMarketing).toFixed(1) : '—';
+      const share = totalExpense ? ((totalMarketing / totalExpense) * 100).toFixed(1) : '0';
+
+      document.getElementById('kpiIncome').textContent = totalIncome.toLocaleString() + ' ₽';
+      document.getElementById('kpiExpense').textContent = totalExpense.toLocaleString() + ' ₽';
+      document.getElementById('kpiMarketing').textContent = totalMarketing.toLocaleString() + ' ₽';
+      document.getElementById('kpiRoyalty').textContent = royalty.toLocaleString() + ' ₽';
+      document.getElementById('kpiOperProfit').textContent = opProfit.toLocaleString() + ' ₽';
+      document.getElementById('kpiNetProfit').textContent = net.toLocaleString() + ' ₽';
+      document.getElementById('kpiCount').textContent = currentFetchedData.length;
+      document.getElementById('kpiSalesCount').textContent = salesCount;
+      document.getElementById('kpiAvgCheck').textContent = avgCheck.toLocaleString() + ' ₽';
+      document.getElementById('kpiROI').textContent = roi;
+      document.getElementById('kpiMarketingShare').textContent = share + '%';
+      document.getElementById('saveBtn').disabled = false;
     }
 
-    // Загрузка данных из CRM и отображение
-    document.getElementById('loadBtn').addEventListener('click', async () => {
+    async function loadJuly() {
       const proxyUrl = document.getElementById('proxyUrl').value.trim();
       const branch = document.getElementById('branch').value.trim();
       if (!proxyUrl || !branch) return;
-
+      updateStatus('Загрузка операций за июль 2026...');
       try {
         await loadDictionaries(proxyUrl, branch);
-
-        updateStatus('Загрузка операций за июль 2026...');
-        let rawItems = await fetchWithLimit(proxyUrl, branch, 'pay/index', {
+        let raw = await fetchAllPages(proxyUrl, branch, 'pay/index', {
           document_date_from: '01.07.2026',
           document_date_to: '31.07.2026'
-        }, 50, 'Операции');
-
-        if (rawItems.length === 0) {
-          updateStatus('Фильтр по дате не сработал, загружаем общий список (до 2000 записей)...');
-          rawItems = await fetchWithLimit(proxyUrl, branch, 'pay/index', {}, 40, 'Все операции');
+        }, 50);
+        if (raw.length === 0) {
+          raw = await fetchAllPages(proxyUrl, branch, 'pay/index', {}, 40);
+          raw = raw.filter(item => isDateInRange(item.document_date, 2026, 7));
+        } else {
+          raw = raw.filter(item => isDateInRange(item.document_date, 2026, 7));
         }
+        processItems(raw);
+        updateStatus(`Загружено ${raw.length} записей за июль.`);
+      } catch (e) { updateStatus('Ошибка: ' + e.message); }
+    }
 
-        const julyItems = rawItems.filter(item => isJuly2026(item.document_date));
-        updateStatus(`Найдено ${julyItems.length} операций за июль 2026 (из ${rawItems.length} загруженных).`);
-
-        // Формируем данные для сохранения (поля как в crm_finance)
-        currentFetchedData = julyItems.map(item => {
-          const amount = parseFloat(item.income || item.amount || 0);
-          const typeId = item.pay_type_id;
-          const typeName = dicts.payTypes[typeId] || '';
-          const isIncome = typeName.toLowerCase().includes('доход') || typeName.toLowerCase().includes('приход');
-          return {
-            operation_date: formatDate(item.document_date),
-            operation_type: isIncome ? 'Доход' : 'Расход',
-            amount: amount,
-            category: dicts.payItems[item.pay_item_id] || `ID ${item.pay_item_id || ''}`,
-            account: dicts.payAccounts[item.pay_account_id] || `ID ${item.pay_account_id || ''}`,
-            manager: '', // пока нет менеджера в данных
-            payment_type: '',
-            client: '',
-            teacher_name: dicts.teachers?.[item.teacher_id] || '',
-            period: ''
-          };
-        });
-
-        // Анализ для отображения
-        let totalIncome = 0, totalExpense = 0, totalMarketing = 0;
-        let salesCount = 0;
-        const categoryExpenses = {};
-        const oneTimeExpenses = [];
-
-        currentFetchedData.forEach(item => {
-          if (item.operation_type === 'Доход') {
-            totalIncome += item.amount;
-            salesCount++;
-          } else {
-            totalExpense += item.amount;
-            const catName = item.category || 'Без категории';
-            if (catName.toLowerCase().includes('маркетинг') || catName.toLowerCase().includes('лидмаркет')) totalMarketing += item.amount;
-            categoryExpenses[catName] = (categoryExpenses[catName] || 0) + item.amount;
-            if (item.amount > 1000) oneTimeExpenses.push({ date: item.operation_date, category: catName, amount: item.amount });
-          }
-        });
-
-        const operatingProfit = totalIncome - totalExpense;
-        const royalty = new Date().toISOString().slice(0,7) >= '2026-07' ? Math.round(totalIncome * 0.08) : 0;
-        const netProfit = operatingProfit - royalty;
-        const avgCheck = salesCount > 0 ? Math.round(totalIncome / salesCount) : 0;
-        const roi = totalMarketing > 0 ? (totalIncome / totalMarketing).toFixed(1) : '—';
-        const marketingShare = totalExpense > 0 ? ((totalMarketing / totalExpense) * 100).toFixed(1) : '0';
-
-        // Заполняем KPI
-        document.getElementById('kpiIncome').textContent = totalIncome.toLocaleString() + ' ₽';
-        document.getElementById('kpiExpense').textContent = totalExpense.toLocaleString() + ' ₽';
-        document.getElementById('kpiMarketing').textContent = totalMarketing.toLocaleString() + ' ₽';
-        document.getElementById('kpiRoyalty').textContent = royalty.toLocaleString() + ' ₽';
-        document.getElementById('kpiOperProfit').textContent = operatingProfit.toLocaleString() + ' ₽';
-        document.getElementById('kpiNetProfit').textContent = netProfit.toLocaleString() + ' ₽';
-        document.getElementById('kpiCount').textContent = currentFetchedData.length;
-        document.getElementById('kpiSalesCount').textContent = salesCount;
-        document.getElementById('kpiAvgCheck').textContent = avgCheck.toLocaleString() + ' ₽';
-        document.getElementById('kpiROI').textContent = roi;
-        document.getElementById('kpiMarketingShare').textContent = marketingShare + '%';
-
-        // Расходы по категориям
-        const sortedCats = Object.entries(categoryExpenses).sort((a,b) => b[1] - a[1]).slice(0,10);
-        document.querySelector('#categoryTable tbody').innerHTML = sortedCats.map(([cat, sum]) => `<tr><td>${cat}</td><td>${sum.toLocaleString()} ₽</td></tr>`).join('');
-
-        // Топ-10 расходов
-        const topExpenses = oneTimeExpenses.sort((a,b) => b.amount - a.amount).slice(0,10);
-        document.querySelector('#topExpensesTable tbody').innerHTML = topExpenses.map(e => `<tr><td>${e.date}</td><td>${e.category}</td><td>${e.amount.toLocaleString()} ₽</td></tr>`).join('');
-
-        document.getElementById('saveBtn').disabled = false;
-        updateStatus(`Готово. За июль 2026: ${currentFetchedData.length} операций. Можно сохранить в Supabase.`);
-      } catch (err) {
-        updateStatus('Ошибка: ' + err.message);
-        console.error(err);
-      }
-    });
-
-    // Сохранение в Supabase
-    document.getElementById('saveBtn').addEventListener('click', async () => {
-      if (!currentFetchedData.length) {
-        updateStatus('Нет данных для сохранения.');
-        return;
-      }
-      if (!confirm(`ВНИМАНИЕ: Будут удалены все старые данные о финансах (кроме настроек коэффициентов).\nБудет сохранено ${currentFetchedData.length} записей из CRM.\n\nПродолжить?`)) return;
-
-      document.getElementById('saveBtn').disabled = true;
-      updateStatus('Сохранение в Supabase...');
+    async function loadAll() {
+      const proxyUrl = document.getElementById('proxyUrl').value.trim();
+      const branch = document.getElementById('branch').value.trim();
+      if (!proxyUrl || !branch) return;
+      updateStatus('Загрузка всех операций (может занять ~30 секунд)...');
       try {
-        // Удаляем все записи, кроме настроек
-        await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
+        await loadDictionaries(proxyUrl, branch);
+        const raw = await fetchAllPages(proxyUrl, branch, 'pay/index', {}, 200);
+        processItems(raw);
+        updateStatus(`Загружено всего ${raw.length} записей.`);
+      } catch (e) { updateStatus('Ошибка: ' + e.message); }
+    }
 
-        // Вставляем новые данные порциями по 500
+    document.getElementById('loadJulyBtn').addEventListener('click', loadJuly);
+    document.getElementById('loadAllBtn').addEventListener('click', loadAll);
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      if (!currentFetchedData.length) return;
+      if (!confirm(`Заменить ВСЕ данные в crm_finance (кроме настроек) на ${currentFetchedData.length} записей?`)) return;
+      document.getElementById('saveBtn').disabled = true;
+      updateStatus('Сохранение...');
+      try {
+        await _supabase.from('crm_finance').delete().neq('operation_type', 'settings');
         for (let i = 0; i < currentFetchedData.length; i += 500) {
           const chunk = currentFetchedData.slice(i, i + 500);
           const { error } = await _supabase.from('crm_finance').insert(chunk);
           if (error) throw error;
         }
-
-        updateStatus(`✅ Успешно сохранено ${currentFetchedData.length} записей.\nТеперь откройте «Аналитика бюджета» — данные обновятся автоматически.\nЕсли что-то пойдёт не так, загрузите Excel-файл вручную на странице аналитики.`);
-      } catch (err) {
-        updateStatus('Ошибка сохранения: ' + err.message);
-        console.error(err);
+        updateStatus(`✅ Сохранено ${currentFetchedData.length} записей. Дашборды обновлены.`);
+      } catch (e) {
+        updateStatus('Ошибка сохранения: ' + e.message);
         document.getElementById('saveBtn').disabled = false;
       }
     });
+
+    // При открытии страницы сразу пробуем загрузить справочники из кеша
+    (async () => {
+      const cached = localStorage.getItem('alfa_dicts');
+      if (cached) {
+        dicts = JSON.parse(cached);
+        updateStatus('Справочники восстановлены из кеша. Можно начинать загрузку.');
+      }
+    })();
   </script>
 </body>
 </html>
