@@ -121,7 +121,7 @@
       return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : d;
     }
 
-    // ====== ЗАГРУЗКА ФИНАНСОВ (без изменений) ======
+    // ====== ЗАГРУЗКА ФИНАНСОВ ======
     async function loadDictionaries() {
       if (Object.keys(dicts.payItems).length > 0) return;
       updateStatus('Загрузка справочников...');
@@ -175,14 +175,14 @@
           <div class="kpi-item"><div class="label">Операций</div><div class="value">${rows.length}</div></div>
           <div class="kpi-item"><div class="label">Продаж</div><div class="value">${sales}</div></div>
         `;
-        updateStatus(`✅ Финансы загружены: ${rows.length} записей.`);
+        updateStatus(`Готово. Финансы загружены: ${rows.length} записей.`);
       } catch (e) {
         updateStatus('Ошибка: ' + e.message);
         console.error(e);
       }
     });
 
-    // ====== ЗАГРУЗКА ЛИДОВ (исправлено на customer/index) ======
+    // ====== ЗАГРУЗКА ЛИДОВ (с перебором эндпоинтов) ======
     async function loadLeadDictionaries() {
       if (Object.keys(leadDicts.statuses).length === 0) {
         updateStatus('Загрузка справочников статусов и источников...');
@@ -198,9 +198,21 @@
       kpiDiv.innerHTML = '';
       try {
         await loadLeadDictionaries();
-        const rawCustomers = await fetchAllPages('customer/index', {}, 200);
 
-        // Преобразуем поля CRM в структуру таблицы leads
+        let rawCustomers = [];
+        const endpoints = ['customer/index', 'customer', 'customer/list'];
+
+        for (const ep of endpoints) {
+          try {
+            rawCustomers = await fetchAllPages(ep, {}, 200);
+            if (rawCustomers.length > 0) break;
+          } catch (e) {
+            console.warn(`Эндпоинт ${ep} не сработал:`, e.message);
+          }
+        }
+
+        if (rawCustomers.length === 0) throw new Error('Ни один эндпоинт клиентов не вернул данные.');
+
         const rows = rawCustomers.map(item => ({
           date_added: formatDate(item.created_at) || new Date().toISOString().split('T')[0],
           name: item.name || '',
@@ -226,7 +238,7 @@
           <div class="kpi-item"><div class="label">Успешных (ПУ)</div><div class="value">${puCount}</div></div>
           <div class="kpi-item"><div class="label">Конверсия</div><div class="value">${conversion}%</div></div>
         `;
-        updateStatus(`✅ Лиды загружены: ${total} записей.`);
+        updateStatus(`Готово. Лиды загружены: ${total} записей.`);
       } catch (e) {
         updateStatus('Ошибка: ' + e.message);
         console.error(e);
