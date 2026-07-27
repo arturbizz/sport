@@ -428,7 +428,6 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
 
     let currentUserEmail, financeData=[], salaryData=[], employees=[], worklog={}, salaryParams={}, expensesData=[];
     let activeTab = localStorage.getItem('dash_activeTab') || 'finance';
@@ -487,7 +486,7 @@
 
     async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
-        if (!session || (session.user.email||'').trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) { window.location.href='login.html'; return; }
+        if (!session) { window.location.href='login.html'; return; }
         currentUserEmail = session.user.email;
         await Promise.all([loadFinance(), loadSalary(), loadEmployees(), loadWorklog(staffYear, staffMonth), loadSalaryParams(), loadExpenses()]);
         const now = new Date();
@@ -518,7 +517,6 @@
 
     function renderTab() {
         const content = document.getElementById('tabContent');
-        // Показываем или скрываем кнопку загрузки финансов в топбаре
         const uploadTopBtn = document.getElementById('uploadFinanceTopBtn');
         if (activeTab === 'finance') {
             uploadTopBtn.style.display = 'inline-flex';
@@ -675,7 +673,6 @@
             <div class="kpi-card"><span class="kpi-label">Прибыль</span><span class="kpi-value" style="color:${ti-te>=0?'var(--positive)':'var(--negative)'}">${(ti-te).toLocaleString()} ₽</span></div>
             <div class="kpi-card"><span class="kpi-label">Маржинальность</span><span class="kpi-value">${ti?((ti-te)/ti*100).toFixed(1):0}%</span></div>`;
 
-        // Виджет ближайших платежей (наверх)
         let paymentsHtml = '';
         if (expensesData.length) {
             const todayISO = new Date().toISOString().slice(0,10);
@@ -1068,6 +1065,7 @@
             <button class="btn ${period==='full'?'btn-primary':''}" id="staffPeriodFull">Весь месяц</button>
             <button class="btn ${period==='1-15'?'btn-primary':''}" id="staffPeriod1">1–15</button>
             <button class="btn ${period==='16-31'?'btn-primary':''}" id="staffPeriod2">16–31</button>
+            <button class="btn btn-primary" id="saveStaffBtn">Сохранить в ведомость</button>
             <button class="btn-icon" id="exportStaffBtn" title="Скачать Excel">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             </button>
@@ -1104,7 +1102,39 @@
                 renderStaff();
             });
         });
+        document.getElementById('saveStaffBtn').addEventListener('click', saveStaffToManagerSalary);
         document.getElementById('exportStaffBtn').addEventListener('click', exportStaffToExcel);
+    }
+
+    async function saveStaffToManagerSalary() {
+        if (!staffResults.length) {
+            customAlert('Нет данных для сохранения. Сначала рассчитайте зарплаты.');
+            return;
+        }
+        const monthStr = `${staffYear}-${String(staffMonth).padStart(2,'0')}`;
+        const periodStart = `${monthStr}-01`;
+        const periodEnd = `${monthStr}-${new Date(staffYear, staffMonth, 0).getDate()}`;
+        
+        // Удаляем старые записи за этот месяц и период (опционально)
+        await _supabase.from('manager_salary').delete().eq('period_start', periodStart);
+        
+        const records = staffResults.map(r => ({
+            employee_name: r.emp.name,
+            role: r.emp.role,
+            period_start: periodStart,
+            period_end: periodEnd,
+            total_salary: Math.round(r.total),
+            base_salary: Math.round(r.base),
+            bonus: Math.round(r.bonus),
+            worked_shifts: r.worked
+        }));
+        
+        const { error } = await _supabase.from('manager_salary').insert(records);
+        if (error) {
+            customAlert('Ошибка сохранения: ' + error.message);
+        } else {
+            customAlert(`Сохранено ${records.length} записей в ведомость.`);
+        }
     }
 
     function exportStaffToExcel() {
