@@ -87,8 +87,6 @@
 
     // Справочники (финансы)
     const dicts = { payItems: {}, payAccounts: {}, payTypes: {} };
-    // Справочники (лиды)
-    const leadDicts = { statuses: {}, sources: {} };
 
     async function fetchPage(path, body) {
       const resp = await fetch(PROXY_URL, {
@@ -121,7 +119,7 @@
       return parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}` : d;
     }
 
-    // ====== ЗАГРУЗКА ФИНАНСОВ (без изменений) ======
+    // ====== ЗАГРУЗКА ФИНАНСОВ ======
     async function loadDictionaries() {
       if (Object.keys(dicts.payItems).length > 0) return;
       updateStatus('Загрузка справочников...');
@@ -182,54 +180,41 @@
       }
     });
 
-    // ====== ЗАГРУЗКА ЛИДОВ (все клиенты + справочник статусов) ======
-    async function loadLeadDictionaries() {
-      if (Object.keys(leadDicts.statuses).length === 0) {
-        updateStatus('Загрузка справочников этапов и источников...');
-        const statuses = await fetchAllPages('lead-status/index', {}, 2);
-        statuses.forEach(s => { leadDicts.statuses[s.id] = s.name; });
-        const sources = await fetchAllPages('lead-source/index', {}, 2);
-        sources.forEach(s => { leadDicts.sources[s.id] = s.name; });
-      }
-    }
-
+    // ====== ЗАГРУЗКА ЛИДОВ (диагностика) ======
     document.getElementById('loadLeadsBtn').addEventListener('click', async () => {
-      updateStatus('Загрузка всех клиентов из CRM...');
+      updateStatus('Диагностика customer/index...');
       kpiDiv.innerHTML = '';
 
       try {
-        await loadLeadDictionaries();
+        // Просто пробуем получить первую страницу и смотрим ответ
+        const json = await fetchPage('customer/index', { page: 0 });
+        const items = json.items;
+        if (!items || items.length === 0) {
+          // Показываем весь ответ, чтобы понять, что не так
+          updateStatus('Ответ CRM (customer/index):\n' + JSON.stringify(json, null, 2).substring(0, 1000));
+          return;
+        }
 
-        // Загружаем ВСЕХ клиентов без фильтра
-        const rawCustomers = await fetchAllPages('customer/index', {}, 200);
+        // Если всё-таки что-то есть – продолжаем загрузку
+        updateStatus(`Получено ${items.length} записей. Загружаем все страницы...`);
+        const allItems = await fetchAllPages('customer/index', {}, 200);
 
-        const rows = rawCustomers.map(item => ({
+        const rows = allItems.map(item => ({
           date_added: formatDate(item.created_at) || new Date().toISOString().split('T')[0],
           name: item.name || '',
-          // подставляем название статуса, если есть в справочнике
-          stage: leadDicts.statuses[item.lead_status_id] || item.lead_status_id || (item.is_study === 1 ? 'Ученик' : ''),
-          source: leadDicts.sources[item.source_id] || item.source_id || '',
+          stage: item.lead_status_id || '',
+          source: item.source_id || '',
           is_duplicate: false,
           is_bad_contact: false
         }));
 
-        updateStatus(`Сохранение ${rows.length} записей...`);
         await _supabase.from('leads').delete().neq('id', 0);
         for (let i = 0; i < rows.length; i += 500) {
           await _supabase.from('leads').insert(rows.slice(i, i + 500));
         }
 
-        const total = rows.length;
-        // успешные лиды — те, кто перешёл на этап, содержащий "ПУ" или "пробное"
-        const puCount = rows.filter(l => l.stage && (l.stage.includes('ПУ') || l.stage.toLowerCase().includes('пробное'))).length;
-        const conversion = total ? ((puCount / total) * 100).toFixed(1) : 0;
-
-        kpiDiv.innerHTML = `
-          <div class="kpi-item"><div class="label">Всего клиентов</div><div class="value">${total}</div></div>
-          <div class="kpi-item"><div class="label">Успешных (ПУ/пробное)</div><div class="value">${puCount}</div></div>
-          <div class="kpi-item"><div class="label">Конверсия</div><div class="value">${conversion}%</div></div>
-        `;
-        updateStatus(`Готово. Загружено ${total} записей в таблицу лидов.`);
+        kpiDiv.innerHTML = `<div class="kpi-item"><div class="label">Всего записей</div><div class="value">${rows.length}</div></div>`;
+        updateStatus(`Готово. Лиды загружены: ${rows.length} записей.`);
       } catch (e) {
         updateStatus('Ошибка: ' + e.message);
         console.error(e);
