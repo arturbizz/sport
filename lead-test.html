@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тест лидов из AlfaCRM</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; max-width: 1100px; margin: 2rem auto; padding: 1rem; }
+    button { padding: 0.6rem 1.4rem; font-size: 0.9rem; margin: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; font-size: 0.9rem; }
+    th { background: #f3f4f6; }
+    .status { background: #fef3c7; padding: 0.5rem; border-radius: 8px; margin: 0.5rem 0; white-space: pre-wrap; }
+    .actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+    .save-btn { background: #0d9488; color: white; border: none; }
+    .save-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <h1>Тест лидов из AlfaCRM</h1>
+  <div>
+    <label>Прокси: <input type="text" id="proxyUrl" size="60" value="https://ujsakubqnirmpdwmmtju.supabase.co/functions/v1/alfa-proxy"></label><br>
+    <label>Филиал: <input type="text" id="branch" size="10" value="20"></label>
+  </div>
+  <div class="actions">
+    <button id="loadBtn">Загрузить все лиды</button>
+    <button id="saveBtn" class="save-btn" disabled>Сохранить в Supabase</button>
+    <span id="status" class="status"></span>
+  </div>
+
+  <h2>Сводка</h2>
+  <div id="summary"></div>
+
+  <h2>Таблица лидов (первые 100)</h2>
+  <table id="leadsTable">
+    <thead><tr><th>Дата добавления</th><th>Имя</th><th>Этап</th><th>Источник</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const statusDiv = document.getElementById('status');
+    let currentLeads = [];
+
+    function updateStatus(msg) {
+      statusDiv.textContent = msg;
+      console.log(msg);
+    }
+
+    async function fetchPage(proxyUrl, branch, path, body) {
+      const resp = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ branch, path, body })
+      });
+      const json = await resp.json();
+      if (json.error) throw new Error(json.error);
+      return json;
+    }
+
+    // Загрузка всех страниц (до пустого ответа)
+    async function fetchAllPages(proxyUrl, branch, path, bodyTemplate) {
+      let allItems = [];
+      let page = 0;
+      let total = null;
+      while (true) {
+        const body = { ...bodyTemplate, page, branch_id: parseInt(branch) };
+        const json = await fetchPage(proxyUrl, branch, path, body);
+        if (total === null && json.total) total = json.total;
+        const items = json.items || [];
+        allItems = allItems.concat(items);
+        updateStatus(`Загружено ${allItems.length}${total ? ' из ' + total : ''} (стр. ${page})`);
+        if (items.length === 0) break;
+        if (total && allItems.length >= total) break;
+        page++;
+        await new Promise(r => setTimeout(r, 50));
+      }
+      return allItems;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '';
+      const parts = dateStr.split('.');
+      if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+      return dateStr;
+    }
+
+    document.getElementById('loadBtn').addEventListener('click', async () => {
+      const proxyUrl = document.getElementById('proxyUrl').value.trim();
+      const branch = document.getElementById('branch').value.trim();
+      if (!proxyUrl || !branch) return;
+
+      updateStatus('Загрузка лидов...');
+      try {
+        const rawLeads = await fetchAllPages(proxyUrl, branch, 'lead/index', {});
+        if (rawLeads.length === 0) {
+          updateStatus('Лиды не найдены. Проверьте endpoint lead/index.');
+          return;
+        }
+
+        // Показываем пример первого элемента в консоли
+        console.log('Первый лид:', rawLeads[0]);
+
+        currentLeads = rawLeads.map(item => ({
+          date_added: formatDate(item.date_added) || new Date().toISOString().split('T')[0],
+          name: item.name || '',
+          stage: item.stage || '',
+          source: item.source || '',
+          is_duplicate: false,  // можно доработать логику
+          is_bad_contact: false
+        }));
+
+        // Сводка
+        const total = currentLeads.length;
+        const stages = {};
+        currentLeads.forEach(l => {
+          const s = l.stage || 'Без этапа';
+          stages[s] = (stages[s] || 0) + 1;
+        });
+        document.getElementById('summary').innerHTML = `
+          <p><strong>Всего лидов:</strong> ${total}</p>
+          <p><strong>По этапам:</strong> ${Object.entries(stages).map(([s,c]) => `${s}: ${c}`).join(', ')}</p>
+        `;
+
+        // Таблица (первые 100)
+        const tbody = document.querySelector('#leadsTable tbody');
+        tbody.innerHTML = currentLeads.slice(0, 100).map(l => `<tr>
+          <td>${l.date_added}</td>
+          <td>${l.name}</td>
+          <td>${l.stage}</td>
+          <td>${l.source}</td>
+        </tr>`).join('');
+
+        document.getElementById('saveBtn').disabled = false;
+        updateStatus(`Загружено ${total} лидов. Можно сохранить в Supabase.`);
+      } catch (err) {
+        updateStatus('Ошибка: ' + err.message);
+        console.error(err);
+      }
+    });
+
+    // Сохранение в Supabase (с осторожностью)
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      if (!currentLeads.length) return;
+      if (!confirm(`Заменить ВСЕ лиды в таблице leads на ${currentLeads.length} записей из CRM?`)) return;
+      document.getElementById('saveBtn').disabled = true;
+      updateStatus('Сохранение...');
+      try {
+        // Очищаем все лиды
+        await _supabase.from('leads').delete().neq('id', 0);
+        // Вставляем порциями
+        for (let i = 0; i < currentLeads.length; i += 500) {
+          const chunk = currentLeads.slice(i, i + 500);
+          const { error } = await _supabase.from('leads').insert(chunk);
+          if (error) throw error;
+        }
+        updateStatus(`✅ Сохранено ${currentLeads.length} лидов. Можете проверить страницу "Лиды".`);
+      } catch (err) {
+        updateStatus('Ошибка сохранения: ' + err.message);
+        document.getElementById('saveBtn').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
