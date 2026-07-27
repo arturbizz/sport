@@ -182,7 +182,7 @@
       }
     });
 
-    // ====== ЗАГРУЗКА ЛИДОВ (правильная реализация через API) ======
+    // ====== ЗАГРУЗКА ЛИДОВ (все клиенты + справочник статусов) ======
     async function loadLeadDictionaries() {
       if (Object.keys(leadDicts.statuses).length === 0) {
         updateStatus('Загрузка справочников этапов и источников...');
@@ -194,28 +194,26 @@
     }
 
     document.getElementById('loadLeadsBtn').addEventListener('click', async () => {
-      updateStatus('Загрузка лидов из CRM...');
+      updateStatus('Загрузка всех клиентов из CRM...');
       kpiDiv.innerHTML = '';
 
       try {
         await loadLeadDictionaries();
 
-        // Загружаем клиентов со статусом "лид" (is_study=0)
-        const rawCustomers = await fetchAllPages('customer/index', {
-          is_study: 0   // фильтр "только лиды"
-        }, 200);
+        // Загружаем ВСЕХ клиентов без фильтра
+        const rawCustomers = await fetchAllPages('customer/index', {}, 200);
 
         const rows = rawCustomers.map(item => ({
           date_added: formatDate(item.created_at) || new Date().toISOString().split('T')[0],
           name: item.name || '',
-          // используем название статуса из справочника, если есть
-          stage: leadDicts.statuses[item.lead_status_id] || item.lead_status_id || '',
+          // подставляем название статуса, если есть в справочнике
+          stage: leadDicts.statuses[item.lead_status_id] || item.lead_status_id || (item.is_study === 1 ? 'Ученик' : ''),
           source: leadDicts.sources[item.source_id] || item.source_id || '',
           is_duplicate: false,
           is_bad_contact: false
         }));
 
-        updateStatus(`Сохранение ${rows.length} лидов...`);
+        updateStatus(`Сохранение ${rows.length} записей...`);
         await _supabase.from('leads').delete().neq('id', 0);
         for (let i = 0; i < rows.length; i += 500) {
           await _supabase.from('leads').insert(rows.slice(i, i + 500));
@@ -227,11 +225,11 @@
         const conversion = total ? ((puCount / total) * 100).toFixed(1) : 0;
 
         kpiDiv.innerHTML = `
-          <div class="kpi-item"><div class="label">Всего лидов</div><div class="value">${total}</div></div>
+          <div class="kpi-item"><div class="label">Всего клиентов</div><div class="value">${total}</div></div>
           <div class="kpi-item"><div class="label">Успешных (ПУ/пробное)</div><div class="value">${puCount}</div></div>
           <div class="kpi-item"><div class="label">Конверсия</div><div class="value">${conversion}%</div></div>
         `;
-        updateStatus(`Готово. Лиды загружены: ${total} записей.`);
+        updateStatus(`Готово. Загружено ${total} записей в таблицу лидов.`);
       } catch (e) {
         updateStatus('Ошибка: ' + e.message);
         console.error(e);
