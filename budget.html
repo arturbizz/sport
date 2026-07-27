@@ -124,7 +124,7 @@
     <a href="index.html" class="back-link">← На главную</a>
     <h1>Бюджет</h1>
     <div style="display: flex; gap: 0.5rem;">
-      <a href="budget-pro.html" class="nav-link" style="color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--accent); padding: 0.45rem 1rem; border-radius: var(--radius-sm);">Аналитика бюджета</a>
+      <a href="budget-pro.html" style="color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; border: 1px solid var(--accent); padding: 0.45rem 1rem; border-radius: var(--radius-sm);">Аналитика бюджета</a>
       <button class="btn btn-primary" id="addBtn">+ Добавить платёж</button>
     </div>
   </div>
@@ -229,7 +229,6 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let expenses = [], employees = [], teacherSalaryData = [], salaryPayouts = [];
-    // manager_salary – уже готовые цифры из дашборда
     let managerSalaryData = [];
     let currentFilter = 'regular';
     let currentUserRole = null;
@@ -241,24 +240,22 @@
       const { data: { session } } = await _supabase.auth.getSession();
       if (!session) { window.location.href = 'login.html'; return; }
       const email = session.user.email;
-      if (email === 'arturgalkin.ru@mail.ru') { currentUserRole = 'Управляющий'; return; }
       const { data: emp } = await _supabase.from('employees').select('role').eq('email', email).single();
       currentUserRole = emp?.role || null;
     }
-    function canEdit() { return currentUserRole === 'Управляющий' || currentUserRole === 'Бухгалтер'; }
+
+    function canEdit() { return true; } // RLS всё равно запретит, кнопки не скрываем для удобства (ошибка будет в консоли)
 
     async function loadData() {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
       const start = `${monthStr}-01`;
-      const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
-      const end = `${monthStr}-${String(lastDay).padStart(2,'0')}`;
 
       const [exp, emp, ts, spayouts, ms] = await Promise.all([
         _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true }),
         _supabase.from('employees').select('*'),
         _supabase.from('teacher_salary').select('*').eq('month', monthStr),
         _supabase.from('salary_payouts').select('*').eq('month', monthStr),
-        _supabase.from('manager_salary').select('*').eq('period_start', start) // предполагаем, что period_start совпадает с началом месяца
+        _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`)
       ]);
       expenses = exp.data || [];
       employees = emp.data || [];
@@ -274,32 +271,24 @@
       let staff = [];
 
       if (period === '5' || period === '20') {
-        // Артур и Ирина
         staff = employees.filter(e => e.name === 'Артур' || e.name === 'Ирина');
-        // Добавляем преподавателей (для 20-го числа – вторую половину месяца)
         if (period === '20') {
           staff = staff.concat(employees.filter(e => e.role === 'Преподаватель'));
         }
       } else {
-        // 10 и 25 числа – менеджеры и преподаватели
         staff = employees.filter(e => ['Менеджер','Преподаватель'].includes(e.role));
       }
 
       return staff.map(emp => {
         let amount = 0;
         if (emp.role === 'Преподаватель') {
-          // Суммируем все выплаты преподавателю за соответствующий период
           const targetPeriod = (period === '10' || period === '5') ? '1-15' : '16-31';
           const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === targetPeriod);
           amount = teacherRows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
         } else {
-          // Менеджеры, управляющий, администраторы – данные из manager_salary
           const salaryRecord = managerSalaryData.find(m => m.employee_name === emp.name && m.role === emp.role);
           if (salaryRecord) {
             amount = parseFloat(salaryRecord.total_salary) || 0;
-          } else {
-            // Если вдруг нет данных, пробуем старую логику (но её лучше избегать)
-            // оставляем 0, чтобы не вводить в заблуждение
           }
         }
         const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
@@ -309,13 +298,13 @@
           paid: payout ? payout.paid : false,
           payoutData: payout || null
         };
-      }).filter(item => true); // показываем всех, даже с нулевой суммой
+      });
     }
 
     function renderAll() {
       const summaryDiv = document.getElementById('summaryContainer');
       const contentDiv = document.getElementById('contentContainer');
-      document.getElementById('addBtn').style.display = (currentFilter === 'regular' && canEdit()) ? 'inline-flex' : 'none';
+      document.getElementById('addBtn').style.display = (currentFilter === 'regular') ? 'inline-flex' : 'none';
 
       if (currentFilter === 'regular') {
         const total = expenses.reduce((s,e) => s + parseFloat(e.amount), 0);
@@ -380,9 +369,9 @@
           <td>${e.next_payment_date ? new Date(e.next_payment_date).toLocaleDateString('ru') : '—'}</td>
           <td>${periodLabel}</td>
           <td class="actions-cell">
-            ${canEdit() && !e.paid ? `<button class="btn btn-excel pay-action" data-id="${e.id}">Оплатить</button>` : ''}
-            ${canEdit() ? `<button class="btn edit-btn" data-id="${e.id}">Изм.</button>` : ''}
-            ${canEdit() ? `<button class="icon-btn delete-btn" data-id="${e.id}" title="Удалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
+            <button class="btn btn-excel pay-action" data-id="${e.id}">Оплатить</button>
+            <button class="btn edit-btn" data-id="${e.id}">Изм.</button>
+            <button class="icon-btn delete-btn" data-id="${e.id}" title="Удалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </td>
         </tr>`;
       }).join('');
@@ -476,10 +465,7 @@
     document.getElementById('cancelSalaryBtn').addEventListener('click', () => { document.getElementById('salaryModal').style.display = 'none'; });
 
     function exportSalary(list, periodLabel) {
-      if (!list.length) {
-        showAlert('Нет данных для экспорта.');
-        return;
-      }
+      if (!list.length) { showAlert('Нет данных для экспорта.'); return; }
       const rows = list.map(item => ({
         'Сотрудник': item.employee.name, 'Роль': item.employee.role, 'Сумма': item.amount,
         'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
@@ -537,8 +523,7 @@
     function openEditModal(id, readOnly = false) {
       const exp = expenses.find(e => e.id == id);
       if (!exp) return;
-      const isReadOnly = readOnly || !canEdit();
-      document.getElementById('editModalTitle').textContent = isReadOnly ? 'Просмотр платежа' : 'Редактировать платёж';
+      document.getElementById('editModalTitle').textContent = readOnly ? 'Просмотр платежа' : 'Редактировать платёж';
       document.getElementById('editName').value = exp.name; document.getElementById('editAmount').value = exp.amount;
       document.getElementById('editPeriodicity').value = exp.periodicity;
       document.getElementById('editNextDate').value = exp.next_payment_date || '';
@@ -546,26 +531,18 @@
       document.getElementById('editDetails').value = exp.details || '';
       document.getElementById('editNote').value = exp.note || '';
       document.getElementById('editModal').dataset.id = id;
-
-      document.getElementById('editName').readOnly = isReadOnly;
-      document.getElementById('editAmount').readOnly = isReadOnly;
-      document.getElementById('editPeriodicity').disabled = isReadOnly;
-      document.getElementById('editNextDate').readOnly = isReadOnly;
-      document.getElementById('editLink').readOnly = isReadOnly;
-      document.getElementById('editDetails').readOnly = isReadOnly;
-      document.getElementById('editNote').readOnly = isReadOnly;
-
-      document.getElementById('viewActions').style.display = isReadOnly ? 'flex' : 'none';
-      document.getElementById('editActions').style.display = isReadOnly ? 'none' : 'flex';
-      document.getElementById('enableEditBtn').style.display = canEdit() ? 'inline-flex' : 'none';
-
+      document.getElementById('editName').readOnly = readOnly; document.getElementById('editAmount').readOnly = readOnly;
+      document.getElementById('editPeriodicity').disabled = readOnly; document.getElementById('editNextDate').readOnly = readOnly;
+      document.getElementById('editLink').readOnly = readOnly; document.getElementById('editDetails').readOnly = readOnly;
+      document.getElementById('editNote').readOnly = readOnly;
+      document.getElementById('viewActions').style.display = readOnly ? 'flex' : 'none';
+      document.getElementById('editActions').style.display = readOnly ? 'none' : 'flex';
       document.getElementById('editModal').style.display = 'flex';
     }
 
     document.getElementById('enableEditBtn').addEventListener('click', () => openEditModal(document.getElementById('editModal').dataset.id, false));
     document.getElementById('cancelViewBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
     document.getElementById('cancelEditBtn').addEventListener('click', () => document.getElementById('editModal').style.display = 'none');
-
     document.getElementById('saveEditBtn').addEventListener('click', async () => {
       const name = document.getElementById('editName').value.trim();
       const amount = parseFloat(document.getElementById('editAmount').value) || 0;
