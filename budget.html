@@ -228,7 +228,9 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let expenses = [], employees = [], worklog = [], salaryParams = [], teacherSalaryData = [], salaryPayouts = [];
+    let expenses = [], employees = [], teacherSalaryData = [], salaryPayouts = [];
+    // manager_salary – уже готовые цифры из дашборда
+    let managerSalaryData = [];
     let currentFilter = 'regular';
     let currentUserRole = null;
     let selectedYear = new Date().getFullYear();
@@ -251,74 +253,20 @@
       const lastDay = new Date(selectedYear, selectedMonth, 0).getDate();
       const end = `${monthStr}-${String(lastDay).padStart(2,'0')}`;
 
-      const [exp, emp, wl, sp, ts, spayouts] = await Promise.all([
+      const [exp, emp, ts, spayouts, ms] = await Promise.all([
         _supabase.from('expenses').select('*').order('next_payment_date', { ascending: true }),
         _supabase.from('employees').select('*'),
-        _supabase.from('worklog').select('*').gte('date', start).lte('date', end),
-        _supabase.from('salary_params').select('*').eq('month', monthStr),
         _supabase.from('teacher_salary').select('*').eq('month', monthStr),
-        _supabase.from('salary_payouts').select('*').eq('month', monthStr)
+        _supabase.from('salary_payouts').select('*').eq('month', monthStr),
+        _supabase.from('manager_salary').select('*').eq('period_start', start) // предполагаем, что period_start совпадает с началом месяца
       ]);
       expenses = exp.data || [];
       employees = emp.data || [];
-      worklog = wl.data || [];
-      salaryParams = sp.data || [];
       teacherSalaryData = ts.data || [];
       salaryPayouts = spayouts.data || [];
+      managerSalaryData = ms.data || [];
       document.getElementById('monthTitle').textContent = `${monthNames[selectedMonth-1]} ${selectedYear}`;
       renderAll();
-    }
-
-    function getFullMonthSales(empId) {
-      const logs = worklog.filter(l => l.emp_id === empId && l.status === 'working');
-      return logs.reduce((sum, l) => sum + (l.daily_sales || 0), 0);
-    }
-
-    // Точная логика из графика работы (schedule.html)
-    function calculateSalary(employee, period) {
-      const params = salaryParams.find(p => p.emp_id === employee.id) || {};
-      const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-      const isFirstHalf = period === '1-15';
-      const dayStart = isFirstHalf ? 1 : 16;
-      const dayEnd = isFirstHalf ? 15 : daysInMonth;
-
-      const logs = worklog.filter(l => {
-        if (l.emp_id !== employee.id || l.status !== 'working') return false;
-        const day = parseInt(l.date.split('-')[2], 10);
-        return day >= dayStart && day <= dayEnd;
-      });
-
-      const worked = logs.length;
-      const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
-
-      if (employee.role === 'Преподаватель') {
-        // Для преподавателей берём данные из teacher_salary
-        const rows = teacherSalaryData.filter(t => t.teacher_name === employee.name && t.period === period);
-        return rows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
-      }
-
-      const normDays = employee.role === 'Менеджер' ? Math.round(daysInMonth * 0.5) : (params.norm_days || 22);
-      const dailyRate = (rates[employee.role] || 0) / Math.max(normDays, 1);
-      let base = Math.round(dailyRate * worked);
-      let bonus = 0;
-
-      if (employee.role === 'Менеджер') {
-        const sales = logs.reduce((s, l) => s + (l.daily_sales || 0), 0);
-        const plan = params.plan_amount || 0;
-        bonus = Math.round(sales * ((plan > 0 && sales >= plan) ? 0.07 : 0.05));
-      } else if (employee.role === 'Администратор') {
-        const managersSales = employees.filter(e => e.role === 'Менеджер')
-          .reduce((sum, man) => sum + getFullMonthSales(man.id), 0);
-        bonus = Math.round(managersSales * 0.01);
-      } else if (employee.role === 'Управляющий') {
-        const managersSales = employees.filter(e => e.role === 'Менеджер')
-          .reduce((sum, man) => sum + getFullMonthSales(man.id), 0);
-        const plan = params.plan_amount || 0;
-        bonus = (plan > 0 && managersSales >= plan) ? Math.round(managersSales * 0.01) : 0;
-      }
-
-      if (isFirstHalf) bonus = 0; // бонусы только во второй половине
-      return base + bonus;
     }
 
     function getSalaryList(period) {
@@ -326,10 +274,10 @@
       let staff = [];
 
       if (period === '5' || period === '20') {
-        // 5 и 20 числа – Артур, Ирина и преподаватели (вторая половина месяца)
-        staff = employees.filter(e => e.name === 'Артур' || e.name === 'Ирина' || e.role === 'Управляющий');
+        // Артур и Ирина
+        staff = employees.filter(e => e.name === 'Артур' || e.name === 'Ирина');
+        // Добавляем преподавателей (для 20-го числа – вторую половину месяца)
         if (period === '20') {
-          // Добавляем преподавателей (только если есть данные за вторую половину)
           staff = staff.concat(employees.filter(e => e.role === 'Преподаватель'));
         }
       } else {
@@ -338,8 +286,22 @@
       }
 
       return staff.map(emp => {
-        const subPeriod = (period === '5' || period === '10') ? '1-15' : '16-31';
-        const amount = calculateSalary(emp, subPeriod);
+        let amount = 0;
+        if (emp.role === 'Преподаватель') {
+          // Суммируем все выплаты преподавателю за соответствующий период
+          const targetPeriod = (period === '10' || period === '5') ? '1-15' : '16-31';
+          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === targetPeriod);
+          amount = teacherRows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        } else {
+          // Менеджеры, управляющий, администраторы – данные из manager_salary
+          const salaryRecord = managerSalaryData.find(m => m.employee_name === emp.name && m.role === emp.role);
+          if (salaryRecord) {
+            amount = parseFloat(salaryRecord.total_salary) || 0;
+          } else {
+            // Если вдруг нет данных, пробуем старую логику (но её лучше избегать)
+            // оставляем 0, чтобы не вводить в заблуждение
+          }
+        }
         const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.period === period && p.month === monthStr);
         return {
           employee: emp,
@@ -347,7 +309,7 @@
           paid: payout ? payout.paid : false,
           payoutData: payout || null
         };
-      }).filter(item => item.amount >= 0); // показываем всех, включая нулевые суммы
+      }).filter(item => true); // показываем всех, даже с нулевой суммой
     }
 
     function renderAll() {
