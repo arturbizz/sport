@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
+  <title>Зарплатная ведомость — Music Club Орёл</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f8fa; --surface: #ffffff; --border: rgba(15,23,42,0.06);
+      --text: #0f172a; --text-secondary: #475569; --accent: #0d9488;
+      --accent-light: #ccfbf1; --warm-yellow: #f59e0b; --soft-green: #10b981; --critical: #ef4444;
+      --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
+      color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
+      cursor: default; caret-color: transparent;
+    }
+    input, textarea, select { cursor: text; caret-color: auto; }
+    .container {
+      width: 100%; max-width: 1100px; background: var(--surface); border-radius: var(--radius-xl);
+      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+    }
+    .header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    h1 {
+      font-size: 2rem; font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .btn {
+      padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;
+      font-size: 0.85rem; border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;
+    }
+    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+    .btn-primary:hover { background: #0f766e; }
+    .btn-excel {
+      background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
+      color: var(--accent); border: 1px solid var(--accent);
+      box-shadow: 0 4px 12px rgba(124,92,231,0.15), 0 0 0 1px rgba(124,92,231,0.1) inset;
+    }
+    .btn-excel:hover {
+      background: linear-gradient(135deg, var(--accent), #0f766e); color: white;
+      border-color: transparent; box-shadow: 0 8px 24px rgba(13,148,136,0.3);
+    }
+    .filters {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
+    }
+    .filter-btn {
+      padding: 0.35rem 0.9rem; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--surface); cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      transition: 0.2s; color: var(--text-secondary);
+    }
+    .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .month-nav { display: flex; align-items: center; gap: 0.5rem; }
+    .month-nav button { background: var(--surface); border: 1px solid var(--border); padding: 0.3rem 0.8rem; border-radius: 10px; font-weight: 600; cursor: pointer; }
+    .month-title { min-width: 120px; text-align: center; font-weight: 600; background: var(--surface); padding: 0.3rem 0.8rem; border-radius: 10px; border: 1px solid var(--border); }
+    .search-input {
+      padding: 0.35rem 0.9rem; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--surface); font-size: 0.8rem; width: 180px;
+    }
+    .summary {
+      background: var(--surface); border-radius: var(--radius-lg); padding: 1rem 1.5rem; margin-bottom: 1.5rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid var(--border);
+      display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;
+    }
+    .summary-item { display: flex; align-items: baseline; gap: 0.5rem; }
+    .summary-label { font-size: 0.85rem; color: var(--text-secondary); }
+    .summary-value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+
+    .salary-card {
+      background: var(--surface); border-radius: var(--radius-lg); padding: 1.2rem;
+      border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem;
+    }
+    .salary-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
+    .salary-info { flex: 1; }
+    .salary-name { font-weight: 600; }
+    .salary-amount { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+    .salary-status { font-size: 0.8rem; color: var(--text-secondary); }
+    .salary-actions { display: flex; gap: 0.5rem; }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal {
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-radius: var(--radius-xl);
+      padding: 2rem; max-width: 450px; width: 90%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
+      animation: slideUp 0.25s ease-out; text-align: center;
+    }
+    @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+    .modal h2 { margin-bottom: 1rem; }
+    .modal input, .modal select, .modal textarea {
+      width: 100%; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
+    }
+    .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <a href="index.html" class="back-link">← На главную</a>
+    <h1>Зарплатная ведомость</h1>
+    <div>
+      <button class="btn btn-excel" id="exportExcelBtn">Excel</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-role="all">Все</button>
+    <button class="filter-btn" data-role="Управляющий">Управляющий</button>
+    <button class="filter-btn" data-role="Менеджер">Менеджеры</button>
+    <button class="filter-btn" data-role="Администратор">Администраторы</button>
+    <button class="filter-btn" data-role="Преподаватель">Преподаватели</button>
+    <input type="text" class="search-input" id="searchInput" placeholder="Поиск по имени">
+    <div class="month-nav">
+      <button id="prevMonthBtn">←</button>
+      <span class="month-title" id="monthTitle"></span>
+      <button id="nextMonthBtn">→</button>
+    </div>
+  </div>
+
+  <div class="summary" id="summaryContainer"></div>
+  <div id="contentContainer"></div>
+</div>
+
+<!-- Модалка реквизитов и выплаты -->
+<div class="modal-overlay" id="salaryModal" style="display:none;">
+  <div class="modal">
+    <h2 id="salaryModalTitle">Сотрудник</h2>
+    <input type="text" id="salaryPhone" placeholder="Номер телефона">
+    <input type="text" id="salaryBank" placeholder="Банк">
+    <textarea id="salaryComment" rows="2" placeholder="Комментарий"></textarea>
+    <div style="margin:0.5rem 0;">
+      <input type="file" id="salaryReceiptFile" accept="image/*,.pdf">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-excel" id="saveSalaryDetailsBtn">Сохранить реквизиты</button>
+      <button class="btn btn-excel" id="confirmSalaryPayBtn">Подтвердить выплату</button>
+      <button class="btn" id="cancelSalaryBtn">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модалка уведомлений -->
+<div class="modal-overlay" id="alertModal" style="display:none;">
+  <div class="modal"><p id="alertMessage"></p><button class="btn btn-primary" id="alertOkBtn">OK</button></div>
+</div>
+
+<script>
+  (() => {
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let employees = [], teacherSalaryData = [], managerSalaryData = [], salaryPayouts = [];
+    let selectedYear = new Date().getFullYear();
+    let selectedMonth = new Date().getMonth() + 1;
+    let currentRoleFilter = 'all';
+    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+    async function loadData() {
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
+      const start = `${monthStr}-01`;
+      const [emp, ts, ms, sp] = await Promise.all([
+        _supabase.from('employees').select('*'),
+        _supabase.from('teacher_salary').select('*').eq('month', monthStr),
+        _supabase.from('manager_salary').select('*').eq('period_start', start),
+        _supabase.from('salary_payouts').select('*').eq('month', monthStr)
+      ]);
+      employees = emp.data || [];
+      teacherSalaryData = ts.data || [];
+      managerSalaryData = ms.data || [];
+      salaryPayouts = sp.data || [];
+      document.getElementById('monthTitle').textContent = `${monthNames[selectedMonth-1]} ${selectedYear}`;
+      renderAll();
+    }
+
+    function getSalaryList() {
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
+      const staff = employees.filter(e => ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role));
+
+      return staff.map(emp => {
+        let amount = 0;
+        if (emp.role === 'Преподаватель') {
+          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name);
+          amount = teacherRows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+        } else {
+          const salaryRecord = managerSalaryData.find(m => m.employee_name === emp.name && m.role === emp.role);
+          if (salaryRecord) {
+            amount = parseFloat(salaryRecord.total_salary) || 0;
+          }
+        }
+        const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr);
+        return {
+          employee: emp,
+          amount,
+          paid: payout ? payout.paid : false,
+          payoutData: payout || null
+        };
+      });
+    }
+
+    function renderAll() {
+      const list = getSalaryList();
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      let filtered = list;
+      if (currentRoleFilter !== 'all') {
+        filtered = filtered.filter(item => item.employee.role === currentRoleFilter);
+      }
+      if (searchQuery) {
+        filtered = filtered.filter(item => item.employee.name.toLowerCase().includes(searchQuery));
+      }
+
+      const totalToPay = filtered.reduce((s, i) => s + i.amount, 0);
+      const paidAmount = filtered.filter(i => i.paid).reduce((s, i) => s + i.amount, 0);
+      document.getElementById('summaryContainer').innerHTML = `
+        <div class="summary-item"><span class="summary-label">К выплате</span> <span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
+        <div class="summary-item"><span class="summary-label">Выплачено</span> <span class="summary-value">${paidAmount.toLocaleString()} ₽</span></div>
+        <div class="summary-item"><span class="summary-label">Остаток</span> <span class="summary-value" style="color:${totalToPay-paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">${(totalToPay-paidAmount).toLocaleString()} ₽</span></div>
+      `;
+
+      document.getElementById('contentContainer').innerHTML = filtered.map(item => {
+        const emp = item.employee;
+        const payout = item.payoutData;
+        const paid = item.paid;
+        return `
+          <div class="salary-card">
+            <div class="salary-info">
+              <div class="salary-name">${emp.name} (${emp.role})</div>
+              <div class="salary-amount">${item.amount.toLocaleString()} ₽</div>
+              <div class="salary-status">${paid ? 'Выплачено' : 'Не выплачено'}</div>
+              ${payout ? `<div style="font-size:0.75rem; color:var(--text-secondary);">Тел: ${payout.phone || '—'} | Банк: ${payout.bank || '—'}</div>` : ''}
+            </div>
+            <div class="salary-actions">
+              <button class="btn btn-excel salary-req-btn" data-employee='${JSON.stringify(emp)}' data-amount="${item.amount}">Реквизиты</button>
+              ${!paid ? `<button class="btn btn-excel salary-pay-btn" data-employee='${JSON.stringify(emp)}' data-amount="${item.amount}">Выплатить</button>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      bindSalaryButtons();
+    }
+
+    function bindSalaryButtons() {
+      document.querySelectorAll('.salary-req-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const emp = JSON.parse(btn.dataset.employee);
+          openSalaryModal(emp, parseFloat(btn.dataset.amount));
+        });
+      });
+      document.querySelectorAll('.salary-pay-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const emp = JSON.parse(btn.dataset.employee);
+          openSalaryModal(emp, parseFloat(btn.dataset.amount), true);
+        });
+      });
+    }
+
+    function openSalaryModal(emp, amount = 0, markPaid = false) {
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
+      const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr);
+      document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role})`;
+      document.getElementById('salaryPhone').value = existing?.phone || '';
+      document.getElementById('salaryBank').value = existing?.bank || '';
+      document.getElementById('salaryComment').value = existing?.comment || '';
+      document.getElementById('salaryModal').dataset.employeeId = emp.id;
+      document.getElementById('salaryModal').dataset.amount = amount;
+      document.getElementById('salaryModal').dataset.markPaid = markPaid;
+      document.getElementById('salaryModal').dataset.existingReceiptUrl = existing?.receipt_url || '';
+      document.getElementById('salaryModal').style.display = 'flex';
+    }
+
+    document.getElementById('saveSalaryDetailsBtn').addEventListener('click', () => saveSalaryPayout(false));
+    document.getElementById('confirmSalaryPayBtn').addEventListener('click', () => saveSalaryPayout(true));
+
+    async function saveSalaryPayout(markPaid) {
+      const modal = document.getElementById('salaryModal');
+      const employeeId = modal.dataset.employeeId;
+      const amount = parseFloat(modal.dataset.amount) || 0;
+      const phone = document.getElementById('salaryPhone').value.trim();
+      const bank = document.getElementById('salaryBank').value.trim();
+      const comment = document.getElementById('salaryComment').value.trim();
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
+
+      let receiptUrl = modal.dataset.existingReceiptUrl || '';
+      const file = document.getElementById('salaryReceiptFile').files[0];
+      if (file && markPaid) {
+        const fileName = `salary_receipts/${employeeId}_${Date.now()}.${file.name.split('.').pop()}`;
+        const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
+        if (error) { showAlert('Ошибка загрузки чека: ' + error.message); return; }
+        receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
+      }
+
+      const { data: existing } = await _supabase.from('salary_payouts')
+        .select('id').eq('employee_id', employeeId).eq('month', monthStr).single();
+
+      const payload = { employee_id: employeeId, month: monthStr, amount, phone, bank, comment, paid: markPaid, paid_at: markPaid ? new Date().toISOString() : null, receipt_url: receiptUrl };
+      let error;
+      if (existing) {
+        const { error: updateError } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id);
+        error = updateError;
+      } else {
+        const { error: insertError } = await _supabase.from('salary_payouts').insert(payload);
+        error = insertError;
+      }
+
+      if (error) { showAlert('Ошибка сохранения: ' + error.message); return; }
+      modal.style.display = 'none';
+      loadData();
+    }
+
+    document.getElementById('cancelSalaryBtn').addEventListener('click', () => { document.getElementById('salaryModal').style.display = 'none'; });
+
+    function exportExcel() {
+      const list = getSalaryList();
+      const rows = list.map(item => ({
+        'Сотрудник': item.employee.name, 'Роль': item.employee.role, 'Сумма': item.amount,
+        'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
+        'Телефон': item.payoutData?.phone || '', 'Банк': item.payoutData?.bank || ''
+      }));
+      rows.push({ 'Сотрудник': 'ИТОГО', 'Сумма': list.reduce((s, i) => s + i.amount, 0) });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Зарплатная ведомость');
+      XLSX.writeFile(wb, `Зарплатная_ведомость_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
+    }
+
+    function showAlert(msg) { document.getElementById('alertMessage').textContent = msg; document.getElementById('alertModal').style.display = 'flex'; document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none'; }
+
+    document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentRoleFilter = btn.dataset.role;
+        renderAll();
+      });
+    });
+
+    document.getElementById('searchInput').addEventListener('input', renderAll);
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      selectedMonth--; if (selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
+      loadData();
+    });
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      selectedMonth++; if (selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
+      loadData();
+    });
+
+    loadData();
+  })();
+</script>
+</body>
+</html>
