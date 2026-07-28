@@ -118,6 +118,26 @@
     }
     .btn:disabled { opacity: 0.4; cursor: default; transform: none; }
 
+    .tabs {
+      display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
+    }
+    .tab {
+      padding: 0.5rem 1.2rem;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: 0.2s;
+      background: rgba(255,255,255,0.6);
+      border: 1px solid rgba(124,92,231,0.2);
+      color: var(--text-light);
+    }
+    .tab.active {
+      background: var(--violet);
+      color: white;
+      border-color: var(--violet);
+    }
+
     /* воздушный фильтр */
     .toolbar {
       display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
@@ -269,7 +289,15 @@
     .time-row {
       display: flex; gap: 0.5rem; align-items: center;
     }
-    .time-row input { flex: 1; }
+    .time-row select {
+      flex: 1;
+      padding: 0.45rem;
+    }
+    .time-label {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-bottom: 0.2rem;
+    }
     .checkbox-row {
       display: flex; align-items: center; gap: 0.5rem; margin: 0.5rem 0;
     }
@@ -277,11 +305,39 @@
       width: auto; accent-color: var(--violet);
     }
 
-    @media (max-width: 600px) {
-      body { padding: 0.5rem; }
-      .container { padding: 1rem; }
-      .teacher-filter { flex-wrap: wrap; }
-      .search-input { width: 100%; }
+    /* Список преподавателей */
+    .teacher-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    .teacher-card {
+      background: rgba(255,255,255,0.7);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 1.2rem;
+      border: 1px solid rgba(255,255,255,0.8);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .teacher-card h3 {
+      margin-bottom: 0.3rem;
+      color: var(--violet);
+    }
+    .subjects-list {
+      display: flex; flex-wrap: wrap; gap: 0.3rem; margin: 0.4rem 0;
+    }
+    .subject-badge {
+      background: rgba(124,92,231,0.1);
+      color: var(--violet);
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    .features-text {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-top: 0.3rem;
     }
   </style>
 </head>
@@ -298,24 +354,39 @@
       <h1>Доступность преподавателей</h1>
     </div>
 
-    <div class="toolbar">
-      <div class="teacher-filter">
-        <input type="text" class="search-input" id="teacherSearch" placeholder="Поиск...">
-        <select class="teacher-select" id="teacherSelect">
-          <option value="">-- Выберите --</option>
-        </select>
-      </div>
-      <div class="month-nav">
-        <button id="prevMonthBtn">◀</button>
-        <span class="month-title" id="monthTitle"></span>
-        <button id="nextMonthBtn">▶</button>
-      </div>
+    <div class="tabs" id="viewTabs">
+      <button class="tab active" data-tab="calendar">Календарь</button>
+      <button class="tab" data-tab="list">Список преподавателей</button>
     </div>
 
-    <div id="calendarContainer" class="calendar-container"></div>
+    <!-- Панель календаря -->
+    <div id="calendarPanel">
+      <div class="toolbar">
+        <div class="teacher-filter">
+          <input type="text" class="search-input" id="teacherSearch" placeholder="Поиск...">
+          <select class="teacher-select" id="teacherSelect">
+            <option value="">-- Выберите --</option>
+          </select>
+        </div>
+        <div class="month-nav">
+          <button id="prevMonthBtn">◀</button>
+          <span class="month-title" id="monthTitle"></span>
+          <button id="nextMonthBtn">▶</button>
+        </div>
+      </div>
+      <div id="calendarContainer" class="calendar-container"></div>
+    </div>
+
+    <!-- Панель списка преподавателей -->
+    <div id="listPanel" style="display:none;">
+      <div class="toolbar">
+        <input type="text" class="search-input" id="listSearch" placeholder="Поиск по имени или предмету...">
+      </div>
+      <div id="teacherListContainer" class="teacher-list"></div>
+    </div>
   </div>
 
-  <!-- Модалка настройки дня -->
+  <!-- Модалка настройки дня (обновлённая) -->
   <div class="modal-overlay" id="settingModal" style="display:none;">
     <div class="modal">
       <h2 id="settingModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Настройка доступности</h2>
@@ -326,8 +397,32 @@
         <option value="by_agreement">По согласованию</option>
       </select>
       <div class="time-row">
-        <input type="time" id="settingStart" placeholder="Начало">
-        <input type="time" id="settingEnd" placeholder="Конец">
+        <div style="flex:1;">
+          <div class="time-label">Начало</div>
+          <select id="settingStartHour">
+            <option value="">--</option>
+          </select>
+          <select id="settingStartMin" style="margin-top:0.3rem;">
+            <option value="">--</option>
+            <option value="00">00</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+          </select>
+        </div>
+        <div style="flex:1;">
+          <div class="time-label">Конец</div>
+          <select id="settingEndHour">
+            <option value="">--</option>
+          </select>
+          <select id="settingEndMin" style="margin-top:0.3rem;">
+            <option value="">--</option>
+            <option value="00">00</option>
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+          </select>
+        </div>
       </div>
       <div class="checkbox-row">
         <input type="checkbox" id="settingOneTime">
@@ -358,6 +453,7 @@
       const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       let currentUserEmail = null, teachers = [], settings = [], overrides = [];
       let currentYear, currentMonth, selectedTeacherId = '';
+      let activeView = 'calendar';
 
       function showAlert(msg) {
         document.getElementById('alertMessage').textContent = msg;
@@ -377,6 +473,18 @@
         await loadTeachers();
         renderMonthTitle();
         renderCalendar();
+        // Переключение вкладок
+        document.getElementById('viewTabs').addEventListener('click', (e) => {
+          if (e.target.classList.contains('tab')) {
+            document.querySelectorAll('#viewTabs .tab').forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+            activeView = e.target.dataset.tab;
+            document.getElementById('calendarPanel').style.display = activeView === 'calendar' ? 'block' : 'none';
+            document.getElementById('listPanel').style.display = activeView === 'list' ? 'block' : 'none';
+            if (activeView === 'list') renderTeacherList();
+          }
+        });
+        document.getElementById('listSearch').addEventListener('input', renderTeacherList);
       }
 
       async function loadTeachers() {
@@ -388,7 +496,7 @@
 
       function populateSelect(list) {
         const select = document.getElementById('teacherSelect');
-        select.innerHTML = '<option value="">-- Выберите --</option>' + 
+        select.innerHTML = '<option value="">-- Выберите --</option>' +
           list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
         select.value = selectedTeacherId || '';
         select.onchange = async (e) => {
@@ -462,7 +570,7 @@
         for (let d = 1; d <= daysInMonth; d++) {
           const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
           const status = getDayStatus(dateStr);
-          const type = status ? status.type : '';
+          const type = status ? status.type || 'available' : '';
           const cellClass = `day-cell ${type}`;
           let content = `<strong>${d}</strong>`;
           if (status) {
@@ -505,14 +613,48 @@
         });
       }
 
+      function buildTimeSelects(existing = null) {
+        const startHour = document.getElementById('settingStartHour');
+        const startMin = document.getElementById('settingStartMin');
+        const endHour = document.getElementById('settingEndHour');
+        const endMin = document.getElementById('settingEndMin');
+
+        // Заполняем часы 8-22
+        for (let h = 8; h <= 22; h++) {
+          const val = String(h).padStart(2,'0');
+          startHour.innerHTML += `<option value="${val}">${val}</option>`;
+          endHour.innerHTML += `<option value="${val}">${val}</option>`;
+        }
+
+        if (existing && existing.start_time) {
+          const [sh, sm] = existing.start_time.split(':');
+          startHour.value = sh;
+          startMin.value = sm;
+        }
+        if (existing && existing.end_time) {
+          const [eh, em] = existing.end_time.split(':');
+          endHour.value = eh;
+          endMin.value = em;
+        }
+      }
+
       function openSettingModal(dateStr, existing = null) {
         const date = new Date(dateStr);
         const dayOfWeek = date.getDay();
         const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
         document.getElementById('settingDayInfo').textContent = `${dateStr} (${dayNames[dayOfWeek]})`;
         document.getElementById('settingType').value = existing ? existing.type : 'available';
-        document.getElementById('settingStart').value = existing ? (existing.start_time || '') : '';
-        document.getElementById('settingEnd').value = existing ? (existing.end_time || '') : '';
+        // Перестраиваем выпадайки времени
+        const startHour = document.getElementById('settingStartHour');
+        const startMin = document.getElementById('settingStartMin');
+        const endHour = document.getElementById('settingEndHour');
+        const endMin = document.getElementById('settingEndMin');
+        startHour.innerHTML = '<option value="">--</option>';
+        startMin.innerHTML = '<option value="">--</option><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>';
+        endHour.innerHTML = '<option value="">--</option>';
+        endMin.innerHTML = '<option value="">--</option><option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>';
+        buildTimeSelects(existing);
+
         document.getElementById('settingOneTime').checked = existing ? existing.source === 'override' : false;
         document.getElementById('settingNote').value = existing ? (existing.note || '') : '';
         document.getElementById('settingFeatures').value = existing ? (existing.features || '') : '';
@@ -524,12 +666,20 @@
         document.getElementById('settingModal').style.display = 'flex';
       }
 
+      function getTimeFromSelects(hourId, minId) {
+        const hour = document.getElementById(hourId).value;
+        const min = document.getElementById(minId).value;
+        if (hour && min) return `${hour}:${min}`;
+        if (hour) return `${hour}:00`;
+        return null;
+      }
+
       document.getElementById('saveSettingBtn').addEventListener('click', async () => {
         const dateStr = document.getElementById('settingModal').dataset.date;
         const dayOfWeek = parseInt(document.getElementById('settingModal').dataset.dayOfWeek);
         const type = document.getElementById('settingType').value;
-        const start = document.getElementById('settingStart').value;
-        const end = document.getElementById('settingEnd').value;
+        const start = getTimeFromSelects('settingStartHour', 'settingStartMin');
+        const end = getTimeFromSelects('settingEndHour', 'settingEndMin');
         const oneTime = document.getElementById('settingOneTime').checked;
         const note = document.getElementById('settingNote').value.trim();
         const features = document.getElementById('settingFeatures').value.trim();
@@ -539,8 +689,8 @@
         const data = {
           teacher_id: selectedTeacherId,
           type,
-          start_time: start || null,
-          end_time: end || null,
+          start_time: start,
+          end_time: end,
           note,
           features
         };
@@ -568,7 +718,10 @@
           }
         }
 
-        if (error) { showAlert('Ошибка: ' + error.message); return; }
+        if (error) {
+          showAlert('Ошибка: ' + error.message);
+          return;
+        }
         document.getElementById('settingModal').style.display = 'none';
         await Promise.all([loadTeacherSettings(), loadTeacherOverrides()]);
         renderCalendar();
@@ -616,6 +769,47 @@
           renderCalendar();
         }
       });
+
+      // --- Список преподавателей ---
+      async function renderTeacherList() {
+        const query = document.getElementById('listSearch').value.toLowerCase();
+        const filtered = teachers.filter(t => t.name.toLowerCase().includes(query));
+        const container = document.getElementById('teacherListContainer');
+
+        // Для каждого преподавателя собираем предметы из teacher_salary за последние месяцы и features из settings
+        const subjectsMap = {};
+        const featuresMap = {};
+        // Загрузим teacher_salary за последние 3 месяца?
+        const now = new Date();
+        const monthStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+        // Для простоты возьмём текущий месяц и teacher_settings
+        const { data: allSettings } = await _supabase.from('teacher_settings').select('*');
+        const { data: recentSalary } = await _supabase.from('teacher_salary').select('*').eq('month', monthStr);
+
+        teachers.forEach(t => {
+          const subs = new Set();
+          if (recentSalary) {
+            recentSalary.filter(s => s.teacher_name === t.name).forEach(s => subs.add(s.subject));
+          }
+          subjectsMap[t.id] = Array.from(subs);
+          const sett = allSettings ? allSettings.filter(s => s.teacher_id === t.id) : [];
+          // Собираем все features из настроек (обычно одно, но может быть несколько)
+          featuresMap[t.id] = sett.map(s => s.features).filter(Boolean).join('; ') || '';
+        });
+
+        if (filtered.length === 0) {
+          container.innerHTML = '<p style="color:#636e72;">Нет преподавателей</p>';
+          return;
+        }
+
+        container.innerHTML = filtered.map(t => `
+          <div class="teacher-card">
+            <h3>${t.name}</h3>
+            <div class="subjects-list">${subjectsMap[t.id]?.map(s => `<span class="subject-badge">${s}</span>`).join('') || '<span style="font-size:0.8rem;">Нет данных</span>'}</div>
+            <div class="features-text">${featuresMap[t.id] || 'Без особенностей'}</div>
+          </div>
+        `).join('');
+      }
 
       init();
     })();
