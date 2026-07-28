@@ -5,36 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>Планировщик преподавателей — Music Club Орёл</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Зайчик -->
+    <link rel="stylesheet" href="components/music-bunny/music-bunny.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --violet: #7c5ce7;
-            --violet-dark: #5b4cc4;
-            --teal: #0fb9b1;
-            --teal-dark: #0d9488;
-            --gold: #f9ca24;
-            --rose: #ff8c94;
-            --green: #55efc4;
-            --bg: #fef9f0;
-            --surface: rgba(255,255,255,0.85);
-            --text: #2d3436;
-            --text-light: #636e72;
-            --border: #e0e0e0;
-            --radius-sm: 12px;
-            --radius: 20px;
-            --radius-lg: 28px;
-            --glass: rgba(255,255,255,0.7);
-            --shadow-xs: 0 1px 3px rgba(0,0,0,0.04);
-            --shadow: 0 8px 32px rgba(0,0,0,0.06);
-            --shadow-lg: 0 24px 48px rgba(124,92,231,0.12);
+            --violet: #7c5ce7; --violet-dark: #5b4cc4; --teal: #0fb9b1; --teal-dark: #0d9488;
+            --gold: #f9ca24; --rose: #ff8c94; --green: #55efc4;
+            --bg: #fef9f0; --surface: rgba(255,255,255,0.85); --text: #2d3436; --text-light: #636e72;
+            --border: #e0e0e0; --radius-sm: 12px; --radius: 20px; --radius-lg: 28px;
+            --glass: rgba(255,255,255,0.7); --shadow-xs: 0 1px 3px rgba(0,0,0,0.04);
+            --shadow: 0 8px 32px rgba(0,0,0,0.06); --shadow-lg: 0 24px 48px rgba(124,92,231,0.12);
             --transition: 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             background: linear-gradient(135deg, #fef9f0 0%, #f0f7f5 100%);
             color: var(--text); min-height: 100vh; padding: 1.5rem;
             -webkit-font-smoothing: antialiased; cursor: default; caret-color: transparent;
@@ -94,8 +83,6 @@
         .status-dot.unavailable { background: var(--rose); box-shadow: 0 0 6px rgba(255,140,148,0.5); }
         .status-dot.by_agreement { background: var(--gold); box-shadow: 0 0 6px rgba(249,202,36,0.5); }
         .slot-info { font-size: 0.6rem; color: var(--text-light); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .slot-features { display: flex; gap: 2px; margin-top: 1px; }
-        .slot-features svg { width: 12px; height: 12px; }
 
         .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
         .teacher-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all var(--transition); display: flex; flex-direction: column; gap: 0.8rem; position: relative; }
@@ -117,13 +104,20 @@
         input, textarea, select { width: 100%; padding: 0.6rem 0.9rem; margin: 0.35rem 0; border: 1px solid #e8e8e8; border-radius: 10px; font-size: 0.9rem; font-family: inherit; background: white; transition: var(--transition); }
         input:focus, textarea:focus, select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         .row { display: flex; gap: 0.5rem; } .row > * { flex: 1; }
-        .feature-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
-        .feature-tag { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem; border-radius: 20px; border: 1px solid #e0e0e0; background: white; font-size: 0.8rem; cursor: pointer; transition: var(--transition); }
-        .feature-tag.active { background: var(--violet); color: white; border-color: var(--violet); }
-        .feature-tag svg { width: 14px; height: 14px; }
+
         .avatar-upload { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
         .avatar-preview { width: 56px; height: 56px; border-radius: 14px; background: #f1f5f9; object-fit: cover; border: 2px dashed #ddd; flex-shrink: 0; }
         .empty-state { text-align: center; padding: 2.5rem; color: var(--text-light); }
+
+        /* Зайчик */
+        #music-bunny {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999;
+            width: 120px;
+            height: 120px;
+        }
 
         @media (max-width: 768px) { body { padding: 0.5rem; } .container { padding: 1.2rem; } .teacher-grid { grid-template-columns: 1fr; } }
     </style>
@@ -187,6 +181,9 @@
     </div>
 </div>
 
+<!-- Зайчик -->
+<div id="music-bunny"></div>
+
 <!-- Модалка доступности -->
 <div class="modal-overlay" id="settingModal" style="display:none;">
     <div class="modal">
@@ -200,13 +197,6 @@
         <div class="row"><input type="time" id="settingStartTime" value="11:00"><input type="time" id="settingEndTime" value="21:00"></div>
         <div class="time-quick-btns">
             <span class="time-quick-btn" data-range="11:00-21:00">Весь день (11–21)</span>
-        </div>
-        <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Особенности</label>
-        <div class="feature-tags" id="settingFeaturesTags">
-            <span class="feature-tag" data-feature="no_kids"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg> 18+</span>
-            <span class="feature-tag" data-feature="weekends_only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg> Только Сб/Вс</span>
-            <span class="feature-tag" data-feature="online"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Онлайн</span>
-            <span class="feature-tag" data-feature="travel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Выезд</span>
         </div>
         <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Примечание</label>
         <textarea id="settingNote" rows="3" placeholder="Подробности..."></textarea>
@@ -252,6 +242,7 @@
     </div>
 </div>
 
+<script src="components/music-bunny/music-bunny.js"></script>
 <script>
     (() => {
         const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
@@ -263,20 +254,9 @@
         let currentYear, currentMonth, selectedTeacherId = '';
         let activeTab = 'calendar';
 
-        // Иконки особенностей (SVG)
-        const FEATURE_ICONS = {
-            no_kids: '<svg viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>',
-            weekends_only: '<svg viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>',
-            online: '<svg viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-            travel: '<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
-        };
-
         // Иконка короны (SVG)
         const CROWN_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f1c40f" stroke-width="2"><path d="M2 4l3 12h14l3-12-10 4-10-4z"/><circle cx="12" cy="20" r="2"/></svg>';
-
-        // Иконка галочки (SVG)
         const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-        // Иконка вопроса (SVG)
         const QUESTION_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 
         function showAlert(msg) { alert(msg); }
@@ -295,6 +275,12 @@
             renderMonthTitle();
             buildFindTimeSelects();
             populateSubjectFilter();
+
+            // Поздороваться с зайчиком
+            if (window.bunny) {
+                bunny.lookAtMouse(true);
+                setTimeout(() => bunny.say("Готов помочь с расписанием!"), 1000);
+            }
         }
 
         function buildFindTimeSelects() {
@@ -402,7 +388,6 @@
                 document.getElementById('settingStartTime').value = s;
                 document.getElementById('settingEndTime').value = e;
             }));
-            document.querySelectorAll('.feature-tag').forEach(tag => tag.addEventListener('click', () => tag.classList.toggle('active')));
             document.querySelectorAll('.modal-overlay').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.style.display='none'; }));
         }
 
@@ -465,12 +450,6 @@
             document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1, 1).toLocaleDateString('ru', { month:'long', year:'numeric' });
         }
 
-        function getFeatureIcons(featuresStr) {
-            if (!featuresStr) return '';
-            const features = featuresStr.split(',').map(f => f.trim());
-            return features.map(f => FEATURE_ICONS[f] || '').join('');
-        }
-
         function renderCalendar() {
             const c = document.getElementById('calendarContainer');
             if (!selectedTeacherId) { c.innerHTML = '<div class="empty-state">Выберите преподавателя</div>'; return; }
@@ -488,8 +467,6 @@
                     h += `<div style="margin-top:2px;"><span class="status-dot ${type}"></span>`;
                     if (st.start_time) h += `<span class="slot-info">${st.start_time.slice(0,5)}-${st.end_time?.slice(0,5)||''}</span>`;
                     h += `</div>`;
-                    const featuresHtml = getFeatureIcons(st.features);
-                    if (featuresHtml) h += `<div class="slot-features">${featuresHtml}</div>`;
                     if (st.note) h += `<div class="slot-info" title="${st.note}">${st.note.substring(0,20)}</div>`;
                 }
                 h += '</td>';
@@ -516,14 +493,6 @@
             document.getElementById('settingStartTime').value = ex?.start_time?.slice(0,5) || '11:00';
             document.getElementById('settingEndTime').value = ex?.end_time?.slice(0,5) || '21:00';
             document.getElementById('settingNote').value = ex?.note || '';
-            document.querySelectorAll('#settingFeaturesTags .feature-tag').forEach(tag => tag.classList.remove('active'));
-            if (ex?.features) {
-                const feats = ex.features.split(',').map(f => f.trim());
-                feats.forEach(f => {
-                    const tag = document.querySelector(`#settingFeaturesTags .feature-tag[data-feature="${f}"]`);
-                    if (tag) tag.classList.add('active');
-                });
-            }
             document.getElementById('deleteSettingBtn').style.display = ex ? 'inline-flex' : 'none';
             document.getElementById('settingModal').dataset.editId = ex?.id || '';
             document.getElementById('settingModal').dataset.source = ex?.source || '';
@@ -539,11 +508,10 @@
             const startTime = document.getElementById('settingStartTime').value;
             const endTime = document.getElementById('settingEndTime').value;
             const note = document.getElementById('settingNote').value.trim();
-            const selectedFeatures = [...document.querySelectorAll('#settingFeaturesTags .feature-tag.active')].map(t => t.dataset.feature).join(',');
             const isOverride = document.getElementById('settingIsOverride').checked;
             const editId = m.dataset.editId;
             const source = m.dataset.source;
-            const data = { teacher_id: selectedTeacherId, type, start_time: startTime||null, end_time: endTime||null, note, features: selectedFeatures||null };
+            const data = { teacher_id: selectedTeacherId, type, start_time: startTime||null, end_time: endTime||null, note };
             try {
                 if (editId) {
                     if (source==='override') await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
@@ -561,6 +529,7 @@
                 m.style.display = 'none';
                 await Promise.all([loadSettings(), loadOverrides()]);
                 renderCalendar();
+                if (window.bunny) bunny.say("Настройки сохранены!");
             } catch (err) { showAlert('Ошибка: '+err.message); }
         }
 
