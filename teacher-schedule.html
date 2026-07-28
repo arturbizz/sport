@@ -31,9 +31,13 @@
             --shadow-lg: 0 24px 48px rgba(124,92,231,0.12);
             --transition: 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        
-        * { margin:0; padding:0; box-sizing:border-box; }
-        
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #fef9f0 0%, #f0f7f5 100%);
@@ -44,9 +48,12 @@
             cursor: default;
             caret-color: transparent;
         }
-        
-        input, textarea, select { cursor: text; caret-color: auto; }
-        
+
+        input, textarea, select {
+            cursor: text;
+            caret-color: auto;
+        }
+
         .container {
             width: 100%;
             max-width: 1340px;
@@ -59,7 +66,7 @@
             box-shadow: var(--shadow);
             border: 1px solid rgba(255,255,255,0.6);
         }
-        
+
         .header {
             display: flex;
             justify-content: space-between;
@@ -68,7 +75,7 @@
             flex-wrap: wrap;
             gap: 1rem;
         }
-        
+
         .back-link {
             color: var(--violet);
             text-decoration: none;
@@ -82,12 +89,12 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .back-link:hover {
             background: rgba(124,92,231,0.15);
             color: var(--violet-dark);
         }
-        
+
         h1 {
             font-size: 2.2rem;
             font-weight: 800;
@@ -97,36 +104,62 @@
             background-clip: text;
             letter-spacing: -0.02em;
         }
-        
-        /* Иконки премиум SVG */
-        .icon-premium {
-            width: 20px;
-            height: 20px;
-            display: inline-block;
-            vertical-align: middle;
-            flex-shrink: 0;
-        }
-        
-        .icon-premium.lg { width: 28px; height: 28px; }
-        .icon-premium.xl { width: 36px; height: 36px; }
-        
-        /* Советы */
-        .advice-box {
-            background: linear-gradient(135deg, rgba(124,92,231,0.04), rgba(15,185,177,0.04));
-            border-radius: 16px;
-            padding: 1.2rem 1.5rem;
+
+        /* Поиск доступных преподавателей */
+        .find-teacher-box {
+            background: linear-gradient(135deg, rgba(124,92,231,0.06), rgba(15,185,177,0.06));
+            border-radius: 20px;
+            padding: 1.5rem;
             margin-bottom: 2rem;
-            font-size: 0.85rem;
-            color: var(--text-light);
-            border: 1px solid rgba(124,92,231,0.08);
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
+            border: 1px solid rgba(124,92,231,0.1);
         }
-        
-        .advice-box ul { margin-left: 1.2rem; margin-top: 0.3rem; line-height: 1.7; }
-        .advice-box strong { color: var(--violet); font-weight: 700; }
-        
+
+        .find-teacher-box h3 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--violet);
+        }
+
+        .find-row {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .find-row > * {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .find-results {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .found-teacher {
+            background: white;
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            border: 1px solid rgba(124,92,231,0.15);
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            font-weight: 600;
+            transition: all var(--transition);
+        }
+
+        .found-teacher:hover {
+            border-color: var(--violet);
+            box-shadow: 0 4px 12px rgba(124,92,231,0.1);
+        }
+
+        .found-teacher .status-ok { color: var(--green); }
+        .found-teacher .status-maybe { color: var(--gold); }
+        .found-teacher .status-no { color: var(--rose); }
+
         /* Вкладки */
         .tabs {
             display: flex;
@@ -137,7 +170,7 @@
             border-radius: 16px;
             width: fit-content;
         }
-        
+
         .tab {
             padding: 0.7rem 1.8rem;
             border-radius: 14px;
@@ -152,15 +185,15 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .tab.active {
             background: white;
             color: var(--violet);
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
-        
+
         .tab:hover:not(.active) { color: var(--violet); }
-        
+
         /* Кнопки */
         .btn {
             padding: 0.6rem 1.4rem;
@@ -179,7 +212,7 @@
             letter-spacing: 0.01em;
             white-space: nowrap;
         }
-        
+
         .btn:hover {
             background: linear-gradient(135deg, var(--violet), var(--teal));
             color: white;
@@ -187,13 +220,13 @@
             transform: translateY(-1px);
             border-color: transparent;
         }
-        
+
         .btn-primary {
             background: linear-gradient(135deg, var(--violet), #6366f1);
             color: white;
             border-color: transparent;
         }
-        
+
         .btn-icon {
             width: 36px;
             height: 36px;
@@ -207,13 +240,27 @@
             justify-content: center;
             transition: all var(--transition);
         }
-        
-        .btn-icon:hover { background: #f4f0ff; border-color: var(--violet); transform: translateY(-1px); }
-        .btn-icon.danger:hover { background: #fee2e2; border-color: #dc2626; }
-        
-        /* Инструменты */
-        .toolbar { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
-        
+
+        .btn-icon:hover {
+            background: #f4f0ff;
+            border-color: var(--violet);
+            transform: translateY(-1px);
+        }
+
+        .btn-icon.danger:hover {
+            background: #fee2e2;
+            border-color: #dc2626;
+        }
+
+        /* Панель инструментов */
+        .toolbar {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
         .search-input {
             padding: 0.6rem 1.2rem;
             border-radius: 12px;
@@ -223,9 +270,13 @@
             width: 220px;
             transition: var(--transition);
         }
-        
-        .search-input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
-        
+
+        .search-input:focus {
+            border-color: var(--violet);
+            box-shadow: 0 0 0 3px rgba(124,92,231,0.06);
+            outline: none;
+        }
+
         .teacher-select {
             padding: 0.6rem 2.5rem 0.6rem 1.2rem;
             border-radius: 12px;
@@ -235,6 +286,7 @@
             font-weight: 500;
             cursor: pointer;
             appearance: none;
+            -webkit-appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L1 3h10z' fill='%23636e72'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: right 0.8rem center;
@@ -242,11 +294,20 @@
             max-width: 320px;
             transition: var(--transition);
         }
-        
-        .teacher-select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
-        
-        .month-nav { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
-        
+
+        .teacher-select:focus {
+            border-color: var(--violet);
+            box-shadow: 0 0 0 3px rgba(124,92,231,0.06);
+            outline: none;
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-left: auto;
+        }
+
         .month-nav button {
             background: white;
             border: 1px solid rgba(124,92,231,0.12);
@@ -257,9 +318,12 @@
             font-size: 0.9rem;
             transition: var(--transition);
         }
-        
-        .month-nav button:hover { border-color: var(--violet); color: var(--violet); }
-        
+
+        .month-nav button:hover {
+            border-color: var(--violet);
+            color: var(--violet);
+        }
+
         .month-title {
             min-width: 150px;
             text-align: center;
@@ -269,7 +333,7 @@
             border-radius: 10px;
             border: 1px solid rgba(124,92,231,0.12);
         }
-        
+
         /* Календарь */
         .calendar-container {
             overflow-x: auto;
@@ -279,9 +343,13 @@
             margin-top: 1rem;
             box-shadow: var(--shadow-xs);
         }
-        
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
         th, td {
             text-align: center;
             padding: 0.5rem 0.2rem;
@@ -290,7 +358,7 @@
             height: 48px;
             min-width: 40px;
         }
-        
+
         th {
             background: #fafafc;
             color: var(--text-light);
@@ -302,13 +370,20 @@
             letter-spacing: 0.05em;
             font-size: 0.7rem;
         }
-        
-        .day-cell { cursor: pointer; transition: background 0.15s; vertical-align: top; text-align: left; padding: 0.2rem 0.3rem; }
+
+        .day-cell {
+            cursor: pointer;
+            transition: background 0.15s;
+            vertical-align: top;
+            text-align: left;
+            padding: 0.2rem 0.3rem;
+        }
+
         .day-cell:hover { background: rgba(124,92,231,0.04); }
         .day-cell.available { background: rgba(85,239,196,0.1); }
         .day-cell.unavailable { background: rgba(255,140,148,0.1); }
         .day-cell.by_agreement { background: rgba(249,202,36,0.1); }
-        
+
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -316,16 +391,27 @@
             border-radius: 50%;
             margin-right: 4px;
         }
-        
+
         .status-dot.available { background: var(--green); box-shadow: 0 0 6px rgba(85,239,196,0.5); }
         .status-dot.unavailable { background: var(--rose); box-shadow: 0 0 6px rgba(255,140,148,0.5); }
         .status-dot.by_agreement { background: var(--gold); box-shadow: 0 0 6px rgba(249,202,36,0.5); }
-        
-        .slot-info { font-size: 0.6rem; color: var(--text-light); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        /* Карточки */
-        .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
-        
+
+        .slot-info {
+            font-size: 0.6rem;
+            color: var(--text-light);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Карточки преподавателей */
+        .teacher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
         .teacher-card {
             background: white;
             border-radius: 20px;
@@ -337,11 +423,18 @@
             flex-direction: column;
             gap: 0.8rem;
         }
-        
-        .teacher-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
-        
-        .teacher-header { display: flex; align-items: center; gap: 1rem; }
-        
+
+        .teacher-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.06);
+        }
+
+        .teacher-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .teacher-avatar {
             width: 56px;
             height: 56px;
@@ -356,12 +449,25 @@
             object-fit: cover;
             flex-shrink: 0;
         }
-        
-        .teacher-name { font-weight: 700; font-size: 1.15rem; }
-        .teacher-spec { font-size: 0.8rem; color: var(--violet); font-weight: 600; margin-top: 0.15rem; }
-        
-        .teacher-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-        
+
+        .teacher-name {
+            font-weight: 700;
+            font-size: 1.15rem;
+        }
+
+        .teacher-spec {
+            font-size: 0.8rem;
+            color: var(--violet);
+            font-weight: 600;
+            margin-top: 0.15rem;
+        }
+
+        .teacher-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
         .meta-tag {
             background: rgba(124,92,231,0.05);
             padding: 0.25rem 0.6rem;
@@ -369,9 +475,13 @@
             font-size: 0.75rem;
             color: var(--text-light);
         }
-        
-        .subjects-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-        
+
+        .subjects-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+
         .subject-badge {
             background: rgba(124,92,231,0.07);
             color: var(--violet);
@@ -380,21 +490,27 @@
             font-size: 0.75rem;
             font-weight: 600;
         }
-        
-        .card-edit-btn { margin-top: auto; align-self: flex-end; }
-        
+
+        .card-actions {
+            display: flex;
+            gap: 0.3rem;
+            margin-top: auto;
+            justify-content: flex-end;
+        }
+
         /* Модальные окна */
         .modal-overlay {
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.2);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
-        
+
         .modal {
             background: white;
             border-radius: 24px;
@@ -406,12 +522,12 @@
             max-height: 85vh;
             overflow-y: auto;
         }
-        
+
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
+
         input, textarea, select {
             width: 100%;
             padding: 0.6rem 0.9rem;
@@ -423,14 +539,27 @@
             background: white;
             transition: var(--transition);
         }
-        
-        input:focus, textarea:focus, select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
-        
-        .row { display: flex; gap: 0.5rem; }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--violet);
+            box-shadow: 0 0 0 3px rgba(124,92,231,0.06);
+            outline: none;
+        }
+
+        .row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
         .row > * { flex: 1; }
-        
-        .time-quick-btns { display: flex; gap: 0.3rem; flex-wrap: wrap; margin: 0.5rem 0; }
-        
+
+        .time-quick-btns {
+            display: flex;
+            gap: 0.3rem;
+            flex-wrap: wrap;
+            margin: 0.5rem 0;
+        }
+
         .time-quick-btn {
             padding: 0.3rem 0.8rem;
             border-radius: 20px;
@@ -440,11 +569,20 @@
             cursor: pointer;
             transition: var(--transition);
         }
-        
-        .time-quick-btn:hover { background: var(--violet); color: white; border-color: var(--violet); }
-        
-        .avatar-upload { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
-        
+
+        .time-quick-btn:hover {
+            background: var(--violet);
+            color: white;
+            border-color: var(--violet);
+        }
+
+        .avatar-upload {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
         .avatar-preview {
             width: 56px;
             height: 56px;
@@ -454,55 +592,46 @@
             border: 2px dashed #ddd;
             flex-shrink: 0;
         }
-        
-        .admin-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
-        
-        .admin-table th, .admin-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid #f5f3ff; }
-        
-        .admin-table th { background: #fafafc; font-weight: 700; color: var(--text-light); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
-        
-        .empty-state { text-align: center; padding: 2.5rem; color: var(--text-light); }
-        
-        @media (max-width: 768px) { body { padding: 0.5rem; } .container { padding: 1.2rem; } .teacher-grid { grid-template-columns: 1fr; } }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem;
+            color: var(--text-light);
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 0.5rem; }
+            .container { padding: 1.2rem; }
+            .teacher-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
         <a href="index.html" class="back-link">
-            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             На главную
         </a>
         <h1>Планировщик</h1>
     </div>
 
-    <div class="advice-box">
-        <svg class="icon-premium lg" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        <div>
-            <strong>Рекомендации по планированию:</strong>
-            <ul>
-                <li>Постоянное расписание — используйте настройки дней недели</li>
-                <li>Разовые изменения — выберите диапазон дат и тип доступности</li>
-                <li>Анкету преподавателя можно редактировать прямо из карточки</li>
-            </ul>
+    <!-- Поиск доступных преподавателей -->
+    <div class="find-teacher-box">
+        <h3>🔍 Найти доступного преподавателя</h3>
+        <div class="find-row">
+            <input type="date" id="findDate" title="Дата">
+            <select id="findTimeFrom"><option value="">Время с</option></select>
+            <select id="findTimeTo"><option value="">Время до</option></select>
+            <input type="text" id="findSubject" placeholder="Предмет (например, вокал)">
+            <button class="btn btn-primary" id="findBtn">Найти</button>
         </div>
+        <div class="find-results" id="findResults"></div>
     </div>
 
     <div class="tabs" id="viewTabs">
-        <button class="tab active" data-tab="calendar">
-            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Календарь
-        </button>
-        <button class="tab" data-tab="list">
-            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Преподаватели
-        </button>
-        <button class="tab" data-tab="admin" id="adminTab" style="display:none;">
-            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Управление
-        </button>
+        <button class="tab active" data-tab="calendar">📅 Календарь</button>
+        <button class="tab" data-tab="list">👥 Преподаватели</button>
     </div>
 
     <div id="calendarPanel">
@@ -519,13 +648,11 @@
     </div>
 
     <div id="listPanel" style="display:none;">
-        <div class="toolbar"><input type="text" class="search-input" id="listSearch" placeholder="Поиск..."></div>
+        <div class="toolbar">
+            <input type="text" class="search-input" id="listSearch" placeholder="Поиск...">
+            <button class="btn btn-primary" id="addTeacherBtn">+ Добавить преподавателя</button>
+        </div>
         <div id="teacherListContainer" class="teacher-grid"></div>
-    </div>
-
-    <div id="adminPanel" style="display:none;">
-        <div class="toolbar"><button class="btn btn-primary" id="addTeacherBtn">+ Добавить</button></div>
-        <table class="admin-table" id="adminTable"><thead><tr><th></th><th>Имя</th><th>Email</th><th></th></tr></thead><tbody></tbody></table>
     </div>
 </div>
 
@@ -535,34 +662,24 @@
         <h2 style="font-weight:700; margin-bottom:1rem;">Настройка доступности</h2>
         <p id="settingDayInfo" style="color:var(--text-light); margin-bottom:0.8rem;"></p>
         <label style="font-size:0.85rem; font-weight:600;">Статус</label>
-        <select id="settingType">
-            <option value="available">Доступен</option>
-            <option value="unavailable">Недоступен</option>
-            <option value="by_agreement">По согласованию</option>
-        </select>
+        <select id="settingType"><option value="available">Доступен</option><option value="unavailable">Недоступен</option><option value="by_agreement">По согласованию</option></select>
         <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Период действия</label>
-        <div class="row">
-            <input type="date" id="settingDateFrom" title="Начало периода">
-            <input type="date" id="settingDateTo" title="Конец периода">
-        </div>
-        <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Время (если нужно)</label>
-        <div class="row">
-            <input type="time" id="settingStartTime" value="09:00">
-            <input type="time" id="settingEndTime" value="18:00">
-        </div>
+        <div class="row"><input type="date" id="settingDateFrom"><input type="date" id="settingDateTo"></div>
+        <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Время</label>
+        <div class="row"><input type="time" id="settingStartTime" value="09:00"><input type="time" id="settingEndTime" value="18:00"></div>
         <div class="time-quick-btns">
             <span class="time-quick-btn" data-range="09:00-12:00">Утро 9-12</span>
             <span class="time-quick-btn" data-range="12:00-15:00">День 12-15</span>
             <span class="time-quick-btn" data-range="15:00-18:00">Вечер 15-18</span>
             <span class="time-quick-btn" data-range="09:00-21:00">Весь день</span>
         </div>
-        <div class="checkbox-row" style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;">
+        <div class="checkbox-row" style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0;">
             <input type="checkbox" id="settingIsOverride" style="width:auto;">
             <label for="settingIsOverride" style="font-size:0.9rem;">Применить ко всем дням недели (шаблон)</label>
         </div>
         <textarea id="settingNote" rows="2" placeholder="Примечание"></textarea>
         <input type="text" id="settingFeatures" placeholder="Особенности">
-        <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <div style="display:flex;gap:0.5rem;margin-top:1rem;">
             <button class="btn btn-primary" id="saveSettingBtn">Сохранить</button>
             <button class="btn" id="deleteSettingBtn" style="display:none;">Удалить</button>
             <button class="btn" id="cancelSettingBtn" style="margin-left:auto;">Отмена</button>
@@ -573,10 +690,10 @@
 <!-- Модалка преподавателя -->
 <div class="modal-overlay" id="teacherModal" style="display:none;">
     <div class="modal">
-        <h2 style="font-weight:700; margin-bottom:1rem;">Анкета преподавателя</h2>
+        <h2 style="font-weight:700;margin-bottom:1rem;">Анкета преподавателя</h2>
         <div class="avatar-upload">
             <img id="avatarPreview" class="avatar-preview" src="" style="display:none;">
-            <div class="avatar-preview" id="avatarPlaceholder" style="display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#ccc;">
+            <div class="avatar-preview" id="avatarPlaceholder" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#ccc;">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
             <div style="flex:1;"><input type="file" id="avatarInput" accept="image/*"></div>
@@ -585,7 +702,7 @@
         <input id="teacherSpec" placeholder="Специализация (эмодзи через пробел)">
         <div class="row"><input type="number" id="teacherAge" placeholder="Возраст" min="18" max="99"><input id="teacherHobbies" placeholder="Увлечения"></div>
         <textarea id="teacherFeat" rows="2" placeholder="Особенности работы"></textarea>
-        <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <div style="display:flex;gap:0.5rem;margin-top:1rem;">
             <button class="btn btn-primary" id="saveTeacherBtn">Сохранить</button>
             <button class="btn" id="deleteTeacherBtn" style="display:none;">Удалить</button>
             <button class="btn" id="cancelTeacherBtn" style="margin-left:auto;">Отмена</button>
@@ -594,343 +711,392 @@
 </div>
 
 <script>
-(() => {
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
+    (() => {
+        const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let currentUserEmail = null;
-    let teachers = [], settings = [], overrides = [];
-    let currentYear, currentMonth, selectedTeacherId = '';
-    let activeTab = 'calendar';
+        let currentUserEmail = null;
+        let teachers = [], settings = [], overrides = [], allOverrides = [], allSettings = [];
+        let currentYear, currentMonth, selectedTeacherId = '';
+        let activeTab = 'calendar';
 
-    function showAlert(msg) { alert(msg); }
+        function showAlert(msg) { alert(msg); }
 
-    async function init() {
-        const { data: { session } } = await _supabase.auth.getSession();
-        if (!session) { window.location.href = 'login.html'; return; }
-        currentUserEmail = session.user.email;
-        if (currentUserEmail === ADMIN_EMAIL) document.getElementById('adminTab').style.display = 'inline-block';
-        const now = new Date();
-        currentYear = now.getFullYear();
-        currentMonth = now.getMonth() + 1;
-        await loadTeachers();
-        setupEvents();
-        renderMonthTitle();
-    }
-
-    function setupEvents() {
-        document.getElementById('viewTabs').addEventListener('click', e => {
-            if (e.target.closest('.tab')) switchTab(e.target.closest('.tab').dataset.tab);
-        });
-        document.getElementById('teacherSelect').addEventListener('change', onSelectTeacher);
-        document.getElementById('teacherSearch').addEventListener('input', filterTeachers);
-        document.getElementById('listSearch').addEventListener('input', renderTeacherList);
-        document.getElementById('addTeacherBtn').addEventListener('click', () => openTeacherModal(null));
-        document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
-        document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
-        document.getElementById('saveSettingBtn').addEventListener('click', saveSetting);
-        document.getElementById('deleteSettingBtn').addEventListener('click', deleteSetting);
-        document.getElementById('cancelSettingBtn').addEventListener('click', () => document.getElementById('settingModal').style.display = 'none');
-        document.getElementById('saveTeacherBtn').addEventListener('click', saveTeacher);
-        document.getElementById('deleteTeacherBtn').addEventListener('click', deleteTeacherHandler);
-        document.getElementById('cancelTeacherBtn').addEventListener('click', () => document.getElementById('teacherModal').style.display = 'none');
-
-        document.querySelectorAll('.time-quick-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const [start, end] = btn.dataset.range.split('-');
-                document.getElementById('settingStartTime').value = start;
-                document.getElementById('settingEndTime').value = end;
-            });
-        });
-
-        document.querySelectorAll('.modal-overlay').forEach(ov => {
-            ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
-        });
-    }
-
-    function switchTab(tab) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
-        activeTab = tab;
-        document.getElementById('calendarPanel').style.display = tab === 'calendar' ? 'block' : 'none';
-        document.getElementById('listPanel').style.display = tab === 'list' ? 'block' : 'none';
-        document.getElementById('adminPanel').style.display = tab === 'admin' ? 'block' : 'none';
-        if (tab === 'list') renderTeacherList();
-        if (tab === 'admin') renderAdminTable();
-    }
-
-    async function loadTeachers() {
-        const { data } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель').order('name');
-        teachers = data || [];
-        populateSelect(teachers);
-    }
-
-    function populateSelect(list) {
-        const sel = document.getElementById('teacherSelect');
-        sel.innerHTML = '<option value="">— Выберите преподавателя —</option>' + list.map(t => `<option value="${t.id}">${t.specialization || ''} ${t.name}</option>`).join('');
-        sel.value = selectedTeacherId || '';
-    }
-
-    function filterTeachers(e) {
-        populateSelect(teachers.filter(t => t.name.toLowerCase().includes(e.target.value.toLowerCase())));
-    }
-
-    async function onSelectTeacher(e) {
-        selectedTeacherId = e.target.value;
-        if (selectedTeacherId) { await Promise.all([loadSettings(), loadOverrides()]); }
-        else { settings = []; overrides = []; }
-        renderCalendar();
-    }
-
-    async function loadSettings() {
-        if (!selectedTeacherId) return;
-        const { data } = await _supabase.from('teacher_settings').select('*').eq('teacher_id', selectedTeacherId);
-        settings = data || [];
-    }
-
-    async function loadOverrides() {
-        if (!selectedTeacherId) return;
-        const start = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-        const end = new Date(currentYear, currentMonth, 0).toISOString().slice(0, 10);
-        const { data } = await _supabase.from('teacher_unavailability').select('*').eq('teacher_id', selectedTeacherId).gte('date', start).lte('date', end);
-        overrides = data || [];
-    }
-
-    function changeMonth(d) {
-        currentMonth += d;
-        if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-        else if (currentMonth > 12) { currentMonth = 1; currentYear++; }
-        renderMonthTitle();
-        if (selectedTeacherId) { loadOverrides().then(renderCalendar); } else { renderCalendar(); }
-    }
-
-    function renderMonthTitle() {
-        document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
-    }
-
-    function renderCalendar() {
-        const c = document.getElementById('calendarContainer');
-        if (!selectedTeacherId) { c.innerHTML = '<div class="empty-state">👆 Выберите преподавателя</div>'; return; }
-        const dim = new Date(currentYear, currentMonth, 0).getDate();
-        let h = '<table><thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead><tbody><tr>';
-        const fd = new Date(currentYear, currentMonth - 1, 1).getDay();
-        const off = fd === 0 ? 6 : fd - 1;
-        for (let i = 0; i < off; i++) h += '<td></td>';
-        for (let d = 1; d <= dim; d++) {
-            const ds = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const st = getDayStatus(ds);
-            const type = st?.type || '';
-            h += `<td class="day-cell ${type}" data-date="${ds}"><strong>${d}</strong>`;
-            if (st) {
-                h += `<div style="margin-top:2px;"><span class="status-dot ${type}"></span>`;
-                if (st.start_time) h += `<span class="slot-info">${st.start_time.slice(0,5)}-${st.end_time?.slice(0,5)||''}</span>`;
-                h += `</div>`;
-                if (st.note) h += `<div class="slot-info">${st.note.substring(0, 15)}</div>`;
-            }
-            h += '</td>';
-            if ((off + d) % 7 === 0) h += '</tr><tr>';
+        async function init() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return; }
+            currentUserEmail = session.user.email;
+            const now = new Date(); currentYear = now.getFullYear(); currentMonth = now.getMonth() + 1;
+            await loadTeachers();
+            await loadAllAvailability();
+            setupEvents();
+            renderMonthTitle();
+            buildFindTimeSelects();
         }
-        h += '</tr></tbody></table>';
-        c.innerHTML = h;
-        c.querySelectorAll('.day-cell').forEach(cell => {
-            cell.addEventListener('click', () => openSettingModal(cell.dataset.date));
-        });
-    }
 
-    function getDayStatus(ds) {
-        const ov = overrides.find(o => o.date === ds);
-        if (ov) return { ...ov, source: 'override' };
-        const dow = new Date(ds).getDay();
-        const se = settings.find(s => s.day_of_week === dow);
-        return se ? { ...se, source: 'setting' } : null;
-    }
-
-    function openSettingModal(ds, ex = null) {
-        document.getElementById('settingDayInfo').textContent = `Дата: ${ds}`;
-        document.getElementById('settingType').value = ex?.type || 'available';
-        document.getElementById('settingDateFrom').value = ds;
-        document.getElementById('settingDateTo').value = ds;
-        document.getElementById('settingStartTime').value = ex?.start_time?.slice(0, 5) || '09:00';
-        document.getElementById('settingEndTime').value = ex?.end_time?.slice(0, 5) || '18:00';
-        document.getElementById('settingNote').value = ex?.note || '';
-        document.getElementById('settingFeatures').value = ex?.features || '';
-        document.getElementById('deleteSettingBtn').style.display = ex ? 'inline-flex' : 'none';
-        document.getElementById('settingModal').dataset.editId = ex?.id || '';
-        document.getElementById('settingModal').dataset.source = ex?.source || '';
-        document.getElementById('settingModal').dataset.date = ds;
-        document.getElementById('settingModal').style.display = 'flex';
-    }
-
-    async function saveSetting() {
-        const m = document.getElementById('settingModal');
-        const type = document.getElementById('settingType').value;
-        const dateFrom = document.getElementById('settingDateFrom').value;
-        const dateTo = document.getElementById('settingDateTo').value;
-        const startTime = document.getElementById('settingStartTime').value;
-        const endTime = document.getElementById('settingEndTime').value;
-        const note = document.getElementById('settingNote').value.trim();
-        const features = document.getElementById('settingFeatures').value.trim();
-        const isOverride = document.getElementById('settingIsOverride').checked;
-        const editId = m.dataset.editId;
-        const source = m.dataset.source;
-        const data = { teacher_id: selectedTeacherId, type, start_time: startTime || null, end_time: endTime || null, note: note || null, features: features || null };
-
-        try {
-            if (editId) {
-                if (source === 'override') await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
-                else await _supabase.from('teacher_settings').update(data).eq('id', editId);
-            } else if (isOverride) {
-                const dow = new Date(dateFrom).getDay();
-                await _supabase.from('teacher_settings').upsert({ ...data, day_of_week: dow }, { onConflict: 'teacher_id, day_of_week' });
-            } else {
-                const dates = [];
-                let cur = new Date(dateFrom);
-                const to = new Date(dateTo);
-                while (cur <= to) { dates.push(cur.toISOString().slice(0, 10)); cur.setDate(cur.getDate() + 1); }
-                if (dates.length > 0) await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
+        function buildFindTimeSelects() {
+            const from = document.getElementById('findTimeFrom');
+            const to = document.getElementById('findTimeTo');
+            for (let h = 8; h <= 22; h++) {
+                const val = String(h).padStart(2, '0') + ':00';
+                from.innerHTML += `<option value="${val}">${val}</option>`;
+                to.innerHTML += `<option value="${val}">${val}</option>`;
             }
+        }
+
+        async function loadAllAvailability() {
+            const start = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+            const end = new Date(currentYear, currentMonth, 0).toISOString().slice(0, 10);
+            const [ovRes, setRes] = await Promise.all([
+                _supabase.from('teacher_unavailability').select('*').gte('date', start).lte('date', end),
+                _supabase.from('teacher_settings').select('*')
+            ]);
+            allOverrides = ovRes.data || [];
+            allSettings = setRes.data || [];
+        }
+
+        function isTeacherAvailable(teacherId, dateStr, timeFrom, timeTo) {
+            const override = allOverrides.find(o => o.teacher_id === teacherId && o.date === dateStr);
+            if (override) {
+                if (override.type === 'unavailable') return false;
+                if (override.type === 'by_agreement') return 'maybe';
+                if (override.type === 'available') return checkTime(override, timeFrom, timeTo);
+            }
+            const dow = new Date(dateStr).getDay();
+            const setting = allSettings.find(s => s.teacher_id === teacherId && s.day_of_week === dow);
+            if (setting) {
+                if (setting.type === 'unavailable') return false;
+                if (setting.type === 'by_agreement') return 'maybe';
+                if (setting.type === 'available') return checkTime(setting, timeFrom, timeTo);
+            }
+            return 'maybe';
+        }
+
+        function checkTime(record, timeFrom, timeTo) {
+            if (!timeFrom || !timeTo) return true;
+            if (!record.start_time || !record.end_time) return 'maybe';
+            const recStart = record.start_time.slice(0, 5);
+            const recEnd = record.end_time.slice(0, 5);
+            if (timeFrom >= recStart && timeTo <= recEnd) return true;
+            return 'maybe';
+        }
+
+        async function findAvailableTeachers() {
+            const date = document.getElementById('findDate').value;
+            const timeFrom = document.getElementById('findTimeFrom').value;
+            const timeTo = document.getElementById('findTimeTo').value;
+            const subject = document.getElementById('findSubject').value.toLowerCase().trim();
+            if (!date) return showAlert('Выберите дату');
+
+            await loadAllAvailability();
+            const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+            const { data: salaries } = await _supabase.from('teacher_salary').select('*').eq('month', monthStr);
+
+            const results = teachers.map(t => {
+                const availability = isTeacherAvailable(t.id, date, timeFrom, timeTo);
+                const subs = salaries ? [...new Set(salaries.filter(s => s.teacher_name === t.name).map(s => s.subject))] : [];
+                const matchesSubject = !subject || subs.some(s => s.toLowerCase().includes(subject)) || (t.specialization || '').toLowerCase().includes(subject);
+                return { teacher: t, availability, matchesSubject, subjects: subs };
+            }).filter(r => r.availability !== false && r.matchesSubject)
+              .sort((a, b) => {
+                  if (a.availability === true && b.availability !== true) return -1;
+                  if (b.availability === true && a.availability !== true) return 1;
+                  return 0;
+              });
+
+            const container = document.getElementById('findResults');
+            if (!results.length) {
+                container.innerHTML = '<div style="color:var(--text-light);padding:0.5rem;">Нет доступных преподавателей</div>';
+                return;
+            }
+
+            container.innerHTML = results.map(r => {
+                const statusClass = r.availability === true ? 'status-ok' : 'status-maybe';
+                const statusText = r.availability === true ? '✓ Доступен' : '? Уточнить';
+                return `<div class="found-teacher">
+                    <span class="${statusClass}">${statusText}</span>
+                    <span>${r.teacher.specialization || ''} ${r.teacher.name}</span>
+                    <span style="font-size:0.8rem;color:var(--text-light);">${r.subjects.join(', ') || '—'}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function setupEvents() {
+            document.getElementById('viewTabs').addEventListener('click', e => {
+                const tab = e.target.closest('.tab');
+                if (tab) switchTab(tab.dataset.tab);
+            });
+            document.getElementById('teacherSelect').addEventListener('change', onSelectTeacher);
+            document.getElementById('teacherSearch').addEventListener('input', filterTeachers);
+            document.getElementById('listSearch').addEventListener('input', renderTeacherList);
+            document.getElementById('addTeacherBtn').addEventListener('click', () => openTeacherModal(null));
+            document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+            document.getElementById('saveSettingBtn').addEventListener('click', saveSetting);
+            document.getElementById('deleteSettingBtn').addEventListener('click', deleteSetting);
+            document.getElementById('cancelSettingBtn').addEventListener('click', () => document.getElementById('settingModal').style.display = 'none');
+            document.getElementById('saveTeacherBtn').addEventListener('click', saveTeacher);
+            document.getElementById('deleteTeacherBtn').addEventListener('click', deleteTeacherHandler);
+            document.getElementById('cancelTeacherBtn').addEventListener('click', () => document.getElementById('teacherModal').style.display = 'none');
+            document.getElementById('findBtn').addEventListener('click', findAvailableTeachers);
+
+            document.querySelectorAll('.time-quick-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const [s, e] = btn.dataset.range.split('-');
+                    document.getElementById('settingStartTime').value = s;
+                    document.getElementById('settingEndTime').value = e;
+                });
+            });
+
+            document.querySelectorAll('.modal-overlay').forEach(ov => {
+                ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
+            });
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+            activeTab = tab;
+            document.getElementById('calendarPanel').style.display = tab === 'calendar' ? 'block' : 'none';
+            document.getElementById('listPanel').style.display = tab === 'list' ? 'block' : 'none';
+            if (tab === 'list') renderTeacherList();
+        }
+
+        async function loadTeachers() {
+            const { data } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель').order('name');
+            teachers = data || [];
+            populateSelect(teachers);
+        }
+
+        function populateSelect(list) {
+            const sel = document.getElementById('teacherSelect');
+            sel.innerHTML = '<option value="">— Выберите преподавателя —</option>' + list.map(t => `<option value="${t.id}">${t.specialization || ''} ${t.name}</option>`).join('');
+            sel.value = selectedTeacherId || '';
+        }
+
+        function filterTeachers(e) { populateSelect(teachers.filter(t => t.name.toLowerCase().includes(e.target.value.toLowerCase()))); }
+
+        async function onSelectTeacher(e) {
+            selectedTeacherId = e.target.value;
+            if (selectedTeacherId) { await Promise.all([loadSettings(), loadOverrides()]); }
+            else { settings = []; overrides = []; }
+            renderCalendar();
+        }
+
+        async function loadSettings() {
+            if (!selectedTeacherId) return;
+            const { data } = await _supabase.from('teacher_settings').select('*').eq('teacher_id', selectedTeacherId);
+            settings = data || [];
+        }
+
+        async function loadOverrides() {
+            if (!selectedTeacherId) return;
+            const start = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+            const end = new Date(currentYear, currentMonth, 0).toISOString().slice(0, 10);
+            const { data } = await _supabase.from('teacher_unavailability').select('*').eq('teacher_id', selectedTeacherId).gte('date', start).lte('date', end);
+            overrides = data || [];
+        }
+
+        function changeMonth(d) {
+            currentMonth += d;
+            if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+            else if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+            renderMonthTitle();
+            if (selectedTeacherId) { loadOverrides().then(renderCalendar); } else { renderCalendar(); }
+        }
+
+        function renderMonthTitle() {
+            document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+        }
+
+        function renderCalendar() {
+            const c = document.getElementById('calendarContainer');
+            if (!selectedTeacherId) { c.innerHTML = '<div class="empty-state">👆 Выберите преподавателя</div>'; return; }
+            const dim = new Date(currentYear, currentMonth, 0).getDate();
+            let h = '<table><thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead><tbody><tr>';
+            const fd = new Date(currentYear, currentMonth - 1, 1).getDay();
+            const off = fd === 0 ? 6 : fd - 1;
+            for (let i = 0; i < off; i++) h += '<td></td>';
+            for (let d = 1; d <= dim; d++) {
+                const ds = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const st = getDayStatus(ds);
+                const type = st?.type || '';
+                h += `<td class="day-cell ${type}" data-date="${ds}"><strong>${d}</strong>`;
+                if (st) {
+                    h += `<div style="margin-top:2px;"><span class="status-dot ${type}"></span>`;
+                    if (st.start_time) h += `<span class="slot-info">${st.start_time.slice(0,5)}-${st.end_time?.slice(0,5)||''}</span>`;
+                    h += `</div>`;
+                    if (st.note) h += `<div class="slot-info">${st.note.substring(0, 15)}</div>`;
+                }
+                h += '</td>';
+                if ((off + d) % 7 === 0) h += '</tr><tr>';
+            }
+            h += '</tr></tbody></table>';
+            c.innerHTML = h;
+            c.querySelectorAll('.day-cell').forEach(cell => cell.addEventListener('click', () => openSettingModal(cell.dataset.date)));
+        }
+
+        function getDayStatus(ds) {
+            const ov = overrides.find(o => o.date === ds);
+            if (ov) return { ...ov, source: 'override' };
+            const dow = new Date(ds).getDay();
+            const se = settings.find(s => s.day_of_week === dow);
+            return se ? { ...se, source: 'setting' } : null;
+        }
+
+        function openSettingModal(ds, ex = null) {
+            document.getElementById('settingDayInfo').textContent = `Дата: ${ds}`;
+            document.getElementById('settingType').value = ex?.type || 'available';
+            document.getElementById('settingDateFrom').value = ds;
+            document.getElementById('settingDateTo').value = ds;
+            document.getElementById('settingStartTime').value = ex?.start_time?.slice(0, 5) || '09:00';
+            document.getElementById('settingEndTime').value = ex?.end_time?.slice(0, 5) || '18:00';
+            document.getElementById('settingNote').value = ex?.note || '';
+            document.getElementById('settingFeatures').value = ex?.features || '';
+            document.getElementById('deleteSettingBtn').style.display = ex ? 'inline-flex' : 'none';
+            document.getElementById('settingModal').dataset.editId = ex?.id || '';
+            document.getElementById('settingModal').dataset.source = ex?.source || '';
+            document.getElementById('settingModal').dataset.date = ds;
+            document.getElementById('settingModal').style.display = 'flex';
+        }
+
+        async function saveSetting() {
+            const m = document.getElementById('settingModal');
+            const type = document.getElementById('settingType').value;
+            const dateFrom = document.getElementById('settingDateFrom').value;
+            const dateTo = document.getElementById('settingDateTo').value;
+            const startTime = document.getElementById('settingStartTime').value;
+            const endTime = document.getElementById('settingEndTime').value;
+            const note = document.getElementById('settingNote').value.trim();
+            const features = document.getElementById('settingFeatures').value.trim();
+            const isOverride = document.getElementById('settingIsOverride').checked;
+            const editId = m.dataset.editId;
+            const source = m.dataset.source;
+            const data = { teacher_id: selectedTeacherId, type, start_time: startTime || null, end_time: endTime || null, note: note || null, features: features || null };
+            try {
+                if (editId) {
+                    if (source === 'override') await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
+                    else await _supabase.from('teacher_settings').update(data).eq('id', editId);
+                } else if (isOverride) {
+                    const dow = new Date(dateFrom).getDay();
+                    await _supabase.from('teacher_settings').upsert({ ...data, day_of_week: dow }, { onConflict: 'teacher_id, day_of_week' });
+                } else {
+                    const dates = [];
+                    let cur = new Date(dateFrom);
+                    const to = new Date(dateTo);
+                    while (cur <= to) { dates.push(cur.toISOString().slice(0, 10)); cur.setDate(cur.getDate() + 1); }
+                    if (dates.length > 0) await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
+                }
+                m.style.display = 'none';
+                await Promise.all([loadSettings(), loadOverrides()]);
+                renderCalendar();
+            } catch (err) { showAlert('Ошибка: ' + err.message); }
+        }
+
+        async function deleteSetting() {
+            const m = document.getElementById('settingModal');
+            if (!m.dataset.editId) return;
+            if (m.dataset.source === 'override') await _supabase.from('teacher_unavailability').delete().eq('id', m.dataset.editId);
+            else await _supabase.from('teacher_settings').delete().eq('id', m.dataset.editId);
             m.style.display = 'none';
             await Promise.all([loadSettings(), loadOverrides()]);
             renderCalendar();
-        } catch (err) { showAlert('Ошибка: ' + err.message); }
-    }
+        }
 
-    async function deleteSetting() {
-        const m = document.getElementById('settingModal');
-        const editId = m.dataset.editId;
-        const source = m.dataset.source;
-        if (!editId) return;
-        if (source === 'override') await _supabase.from('teacher_unavailability').delete().eq('id', editId);
-        else await _supabase.from('teacher_settings').delete().eq('id', editId);
-        m.style.display = 'none';
-        await Promise.all([loadSettings(), loadOverrides()]);
-        renderCalendar();
-    }
-
-    async function renderTeacherList() {
-        const q = document.getElementById('listSearch').value.toLowerCase();
-        const filtered = teachers.filter(t => t.name.toLowerCase().includes(q));
-        const c = document.getElementById('teacherListContainer');
-        if (!filtered.length) { c.innerHTML = '<div class="empty-state">Нет преподавателей</div>'; return; }
-        const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-        const { data: sal } = await _supabase.from('teacher_salary').select('*').eq('month', monthStr);
-        c.innerHTML = filtered.map(t => {
-            const subs = sal ? [...new Set(sal.filter(s => s.teacher_name === t.name).map(s => s.subject))] : [];
-            return `<div class="teacher-card">
-                <div class="teacher-header">
-                    ${t.avatar_url ? `<img src="${t.avatar_url}" class="teacher-avatar">` : `<div class="teacher-avatar">${t.name.charAt(0)}</div>`}
-                    <div>
-                        <div class="teacher-name">${t.specialization || ''} ${t.name}</div>
-                        <div class="teacher-spec">Преподаватель</div>
+        async function renderTeacherList() {
+            const q = document.getElementById('listSearch').value.toLowerCase();
+            const filtered = teachers.filter(t => t.name.toLowerCase().includes(q));
+            const c = document.getElementById('teacherListContainer');
+            if (!filtered.length) { c.innerHTML = '<div class="empty-state">Нет преподавателей</div>'; return; }
+            const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+            const { data: sal } = await _supabase.from('teacher_salary').select('*').eq('month', monthStr);
+            c.innerHTML = filtered.map(t => {
+                const subs = sal ? [...new Set(sal.filter(s => s.teacher_name === t.name).map(s => s.subject))] : [];
+                return `<div class="teacher-card">
+                    <div class="teacher-header">
+                        ${t.avatar_url ? `<img src="${t.avatar_url}" class="teacher-avatar">` : `<div class="teacher-avatar">${t.name.charAt(0)}</div>`}
+                        <div><div class="teacher-name">${t.specialization || ''} ${t.name}</div><div class="teacher-spec">Преподаватель</div></div>
                     </div>
-                </div>
-                <div class="teacher-meta">
-                    ${t.age ? `<span class="meta-tag">Возраст: ${t.age} лет</span>` : ''}
-                    ${t.hobbies ? `<span class="meta-tag">Увлечения: ${t.hobbies}</span>` : ''}
-                </div>
-                <div class="subjects-list">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('') || '—'}</div>
-                ${t.features ? `<div style="font-size:0.82rem; color:var(--text-light);">Особенности: ${t.features}</div>` : ''}
-                <button class="btn card-edit-btn" data-id="${t.id}">Редактировать</button>
-            </div>`;
-        }).join('');
-        document.querySelectorAll('.card-edit-btn').forEach(b => {
-            b.addEventListener('click', () => { const t = teachers.find(x => x.id === b.dataset.id); if (t) openTeacherModal(t); });
-        });
-    }
+                    <div class="teacher-meta">
+                        ${t.age ? `<span class="meta-tag">Возраст: ${t.age} лет</span>` : ''}
+                        ${t.hobbies ? `<span class="meta-tag">Увлечения: ${t.hobbies}</span>` : ''}
+                    </div>
+                    <div class="subjects-list">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('') || '—'}</div>
+                    ${t.features ? `<div style="font-size:0.82rem;color:var(--text-light);">Особенности: ${t.features}</div>` : ''}
+                    <div class="card-actions">
+                        <button class="btn-icon edit-teacher" data-id="${t.id}" title="Редактировать">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button class="btn-icon danger delete-teacher" data-id="${t.id}" title="Удалить">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+            document.querySelectorAll('.edit-teacher').forEach(b => b.addEventListener('click', () => { const t = teachers.find(x => x.id === b.dataset.id); if (t) openTeacherModal(t); }));
+            document.querySelectorAll('.delete-teacher').forEach(b => b.addEventListener('click', () => { if (confirm('Удалить преподавателя?')) deleteTeacher(b.dataset.id); }));
+        }
 
-    async function renderAdminTable() {
-        const tb = document.querySelector('#adminTable tbody');
-        tb.innerHTML = teachers.map(t => `<tr>
-            <td>${t.avatar_url ? `<img src="${t.avatar_url}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;">` : ''}</td>
-            <td><strong>${t.name}</strong></td>
-            <td>${t.email || '—'}</td>
-            <td style="display:flex;gap:0.3rem;">
-                <button class="btn-icon edit-teacher" data-id="${t.id}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-                <button class="btn-icon danger delete-teacher" data-id="${t.id}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                </button>
-            </td>
-        </tr>`).join('');
-        tb.querySelectorAll('.edit-teacher').forEach(b => b.addEventListener('click', () => { const t = teachers.find(x => x.id === b.dataset.id); if (t) openTeacherModal(t); }));
-        tb.querySelectorAll('.delete-teacher').forEach(b => b.addEventListener('click', () => { if (confirm('Удалить?')) deleteTeacher(b.dataset.id); }));
-    }
+        async function deleteTeacher(id) {
+            await _supabase.from('employees').delete().eq('id', id);
+            await loadTeachers();
+            renderTeacherList();
+        }
 
-    async function deleteTeacher(id) {
-        await _supabase.from('employees').delete().eq('id', id);
-        await loadTeachers();
-        renderAdminTable();
-    }
+        function openTeacherModal(t) {
+            document.getElementById('teacherName').value = t?.name || '';
+            document.getElementById('teacherEmail').value = t?.email || '';
+            document.getElementById('teacherSpec').value = t?.specialization || '';
+            document.getElementById('teacherAge').value = t?.age || '';
+            document.getElementById('teacherHobbies').value = t?.hobbies || '';
+            document.getElementById('teacherFeat').value = t?.features || '';
+            document.getElementById('avatarPreview').src = t?.avatar_url || '';
+            document.getElementById('avatarPreview').style.display = t?.avatar_url ? 'block' : 'none';
+            document.getElementById('avatarPlaceholder').style.display = t?.avatar_url ? 'none' : 'flex';
+            document.getElementById('teacherModal').dataset.id = t?.id || '';
+            document.getElementById('deleteTeacherBtn').style.display = t ? 'inline-flex' : 'none';
+            document.getElementById('teacherModal').style.display = 'flex';
+        }
 
-    function openTeacherModal(t) {
-        document.getElementById('teacherName').value = t?.name || '';
-        document.getElementById('teacherEmail').value = t?.email || '';
-        document.getElementById('teacherSpec').value = t?.specialization || '';
-        document.getElementById('teacherAge').value = t?.age || '';
-        document.getElementById('teacherHobbies').value = t?.hobbies || '';
-        document.getElementById('teacherFeat').value = t?.features || '';
-        document.getElementById('avatarPreview').src = t?.avatar_url || '';
-        document.getElementById('avatarPreview').style.display = t?.avatar_url ? 'block' : 'none';
-        document.getElementById('avatarPlaceholder').style.display = t?.avatar_url ? 'none' : 'flex';
-        document.getElementById('teacherModal').dataset.id = t?.id || '';
-        document.getElementById('deleteTeacherBtn').style.display = t ? 'inline-flex' : 'none';
-        document.getElementById('teacherModal').style.display = 'flex';
-    }
+        async function saveTeacher() {
+            const id = document.getElementById('teacherModal').dataset.id;
+            const name = document.getElementById('teacherName').value.trim();
+            if (!name) return showAlert('Введите имя');
+            const email = document.getElementById('teacherEmail').value.trim();
+            const spec = document.getElementById('teacherSpec').value.trim();
+            const age = document.getElementById('teacherAge').value;
+            const hobbies = document.getElementById('teacherHobbies').value.trim();
+            const features = document.getElementById('teacherFeat').value.trim();
 
-    async function saveTeacher() {
-        const id = document.getElementById('teacherModal').dataset.id;
-        const name = document.getElementById('teacherName').value.trim();
-        if (!name) return showAlert('Введите имя');
-        const email = document.getElementById('teacherEmail').value.trim();
-        const spec = document.getElementById('teacherSpec').value.trim();
-        const age = document.getElementById('teacherAge').value;
-        const hobbies = document.getElementById('teacherHobbies').value.trim();
-        const features = document.getElementById('teacherFeat').value.trim();
-        let avatar_url = document.getElementById('avatarPreview').style.display !== 'none' ? document.getElementById('avatarPreview').src : null;
-
-        const file = document.getElementById('avatarInput').files[0];
-        if (file) {
-            const { data, error } = await _supabase.storage.from('avatars').upload(`public/${Date.now()}_${file.name}`, file, { upsert: true });
-            if (!error && data) {
-                avatar_url = _supabase.storage.from('avatars').getPublicUrl(data.path).data.publicUrl;
+            // Аватар
+            let avatar_url = document.getElementById('avatarPreview').src;
+            if (avatar_url === window.location.href) avatar_url = null;
+            const file = document.getElementById('avatarInput').files[0];
+            if (file) {
+                const fileName = `public/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const { data: uploadData, error: uploadError } = await _supabase.storage.from('avatars').upload(fileName, file, { cacheControl: '3600', upsert: true });
+                if (!uploadError && uploadData) {
+                    const { data: publicData } = _supabase.storage.from('avatars').getPublicUrl(uploadData.path);
+                    avatar_url = publicData.publicUrl;
+                }
             }
-        }
 
-        const payload = {
-            name,
-            email: email || null,
-            role: 'Преподаватель',
-            specialization: spec || null,
-            age: age ? parseInt(age) : null,
-            hobbies: hobbies || null,
-            features: features || null,
-            avatar_url: avatar_url || null
-        };
-
-        const { error } = id
-            ? await _supabase.from('employees').update(payload).eq('id', id)
-            : await _supabase.from('employees').insert([payload]);
-
-        if (error) return showAlert('Ошибка: ' + error.message);
-        document.getElementById('teacherModal').style.display = 'none';
-        await loadTeachers();
-        if (activeTab === 'admin') renderAdminTable();
-        else if (activeTab === 'list') renderTeacherList();
-    }
-
-    async function deleteTeacherHandler() {
-        const id = document.getElementById('teacherModal').dataset.id;
-        if (id && confirm('Удалить преподавателя?')) {
-            await deleteTeacher(id);
+            const payload = { name, email: email || null, role: 'Преподаватель', specialization: spec || null, age: age ? parseInt(age) : null, hobbies: hobbies || null, features: features || null, avatar_url };
+            const { error } = id ? await _supabase.from('employees').update(payload).eq('id', id) : await _supabase.from('employees').insert([payload]);
+            if (error) return showAlert('Ошибка: ' + error.message);
             document.getElementById('teacherModal').style.display = 'none';
+            await loadTeachers();
+            renderTeacherList();
         }
-    }
 
-    init();
-})();
+        async function deleteTeacherHandler() {
+            const id = document.getElementById('teacherModal').dataset.id;
+            if (id && confirm('Удалить преподавателя?')) { await deleteTeacher(id); document.getElementById('teacherModal').style.display = 'none'; }
+        }
+
+        init();
+    })();
 </script>
 </body>
 </html>
