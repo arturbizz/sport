@@ -1,0 +1,121 @@
+.music-bunny-container {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  user-select: none;
+}
+
+.music-bunny-container svg {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+/* Базовые анимации */
+.bunny-blink .bunny-eyes {
+  animation: blink 0.15s ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+
+.bunny-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.02); }
+}
+
+.bunny-jump {
+  animation: jump 0.6s ease;
+}
+
+@keyframes jump {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-30px); }
+  50% { transform: translateY(0); }
+  70% { transform: translateY(-15px); }
+}
+
+.bunny-wave-arm {
+  animation: wave 0.5s ease-in-out infinite;
+  transform-origin: 135px 150px;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(20deg); }
+}
+
+.bunny-clap {
+  animation: clap 0.3s ease-in-out;
+}
+
+@keyframes clap {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(0.9); }
+}
+
+.bunny-ear-wiggle {
+  animation: earWiggle 0.5s ease-in-out;
+}
+
+@keyframes earWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+/* Облачко сообщения */
+.bunny-speech-bubble {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #2d3436;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  white-space: nowrap;
+  max-width: 250px;
+  text-align: center;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.bunny-speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid white;
+}
+
+.bunny-speech-bubble.show {
+  opacity: 1;
+}
+
+/* Частицы */
+.bunny-particle {
+  position: absolute;
+  pointer-events: none;
+  animation: particleFloat 1.5s ease-out forwards;
+}
+
+@keyframes particleFloat {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
+}
