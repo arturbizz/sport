@@ -27,6 +27,7 @@
             --shadow-xs: 0 1px 2px rgba(0,0,0,0.02);
             --shadow: 0 8px 30px rgba(0,0,0,0.04);
             --shadow-lg: 0 20px 50px rgba(124,92,231,0.15);
+            --transition: 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         
         * {
@@ -44,6 +45,7 @@
             justify-content: center;
             padding: 1.5rem;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             cursor: default;
             caret-color: transparent;
         }
@@ -79,48 +81,56 @@
             text-decoration: none;
             font-weight: 600;
             font-size: 0.9rem;
-            transition: 0.2s;
+            transition: var(--transition);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            background: rgba(124,92,231,0.06);
         }
         
         .back-link:hover {
+            background: rgba(124,92,231,0.12);
             color: var(--teal);
         }
         
         h1 {
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             font-weight: 800;
             background: linear-gradient(135deg, var(--violet), var(--gold), var(--teal));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            letter-spacing: -0.02em;
         }
         
         /* Советы планировщика */
         .advice-box {
             background: linear-gradient(135deg, rgba(124,92,231,0.06), rgba(15,185,177,0.06));
             border-radius: 20px;
-            padding: 1.2rem 1.5rem;
+            padding: 1.4rem 1.6rem;
             margin-bottom: 2rem;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             color: var(--text-light);
             border: 1px solid rgba(124,92,231,0.1);
             display: flex;
             align-items: flex-start;
-            gap: 0.8rem;
+            gap: 1rem;
+            line-height: 1.6;
         }
         
-        .advice-box .icon {
-            font-size: 1.5rem;
+        .advice-box .advice-icon {
+            font-size: 2rem;
             flex-shrink: 0;
+            margin-top: 0.1rem;
         }
         
         .advice-box ul {
             margin-left: 1.2rem;
-            line-height: 1.6;
+            margin-top: 0.3rem;
         }
         
         .advice-box strong {
             color: var(--violet);
+            font-weight: 700;
         }
         
         /* Вкладки */
@@ -135,21 +145,22 @@
         }
         
         .tab {
-            padding: 0.7rem 1.8rem;
+            padding: 0.8rem 2rem;
             border-radius: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all var(--transition);
             background: transparent;
             border: none;
             color: var(--text-light);
             font-size: 0.95rem;
+            letter-spacing: -0.01em;
         }
         
         .tab.active {
             background: white;
             color: var(--violet);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
         }
         
         .tab:hover:not(.active) {
@@ -159,12 +170,12 @@
         
         /* Кнопки */
         .btn {
-            padding: 0.6rem 1.4rem;
+            padding: 0.65rem 1.5rem;
             border-radius: 14px;
             font-weight: 600;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: all 0.3s ease;
+            transition: all var(--transition);
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
@@ -173,6 +184,7 @@
             border: 1px solid rgba(124,92,231,0.2);
             box-shadow: 0 2px 8px rgba(124,92,231,0.06);
             letter-spacing: 0.01em;
+            text-decoration: none;
         }
         
         .btn:hover {
@@ -184,9 +196,9 @@
         }
         
         .btn-primary {
-            background: var(--violet);
+            background: linear-gradient(135deg, var(--violet), #6366f1);
             color: white;
-            border-color: var(--violet);
+            border-color: transparent;
         }
         
         .btn-primary:hover {
@@ -194,25 +206,26 @@
         }
         
         .btn-icon {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             padding: 0;
             border-radius: 12px;
             background: white;
             border: 1px solid #eee;
             color: var(--text-light);
             cursor: pointer;
-            transition: 0.2s;
+            transition: all var(--transition);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 1.1rem;
         }
         
         .btn-icon:hover {
             background: #f4f0ff;
             color: var(--violet);
             border-color: var(--violet);
+            transform: translateY(-1px);
         }
         
         .btn-icon.danger:hover {
@@ -231,7 +244,7 @@
         }
         
         .search-input {
-            padding: 0.6rem 1.2rem;
+            padding: 0.65rem 1.2rem;
             border-radius: 16px;
             border: 1px solid rgba(124,92,231,0.15);
             background: var(--glass);
@@ -239,7 +252,7 @@
             width: 220px;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            transition: 0.2s;
+            transition: all var(--transition);
         }
         
         .search-input:focus {
@@ -249,7 +262,7 @@
         }
         
         .teacher-select {
-            padding: 0.6rem 2.5rem 0.6rem 1.2rem;
+            padding: 0.65rem 2.8rem 0.65rem 1.2rem;
             border-radius: 16px;
             border: 1px solid rgba(124,92,231,0.15);
             background: var(--glass);
@@ -265,7 +278,8 @@
             background-position: right 0.8rem center;
             background-size: 10px;
             flex: 1;
-            max-width: 320px;
+            max-width: 340px;
+            transition: all var(--transition);
         }
         
         .teacher-select:focus {
@@ -284,12 +298,12 @@
         .month-nav button {
             background: white;
             border: 1px solid rgba(124,92,231,0.15);
-            padding: 0.5rem 1rem;
+            padding: 0.55rem 1.1rem;
             border-radius: 14px;
             font-weight: 600;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: 0.2s;
+            transition: all var(--transition);
         }
         
         .month-nav button:hover {
@@ -299,13 +313,14 @@
         }
         
         .month-title {
-            min-width: 150px;
+            min-width: 160px;
             text-align: center;
             font-weight: 600;
             background: white;
-            padding: 0.5rem 1.2rem;
+            padding: 0.55rem 1.4rem;
             border-radius: 14px;
             border: 1px solid rgba(124,92,231,0.15);
+            letter-spacing: -0.01em;
         }
         
         /* Календарь */
@@ -326,11 +341,11 @@
         
         th, td {
             text-align: center;
-            padding: 0.5rem 0.2rem;
+            padding: 0.55rem 0.2rem;
             font-size: 0.82rem;
             border: 1px solid #f5f3ff;
-            height: 48px;
-            min-width: 40px;
+            height: 50px;
+            min-width: 42px;
         }
         
         th {
@@ -341,43 +356,49 @@
             top: 0;
             z-index: 3;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
             font-size: 0.7rem;
         }
         
         .day-cell {
             cursor: pointer;
-            transition: 0.15s;
+            transition: background 0.15s;
             vertical-align: top;
             text-align: left;
-            padding: 0.2rem 0.3rem;
+            padding: 0.25rem 0.35rem;
+            position: relative;
         }
         
         .day-cell:hover {
-            background: rgba(124,92,231,0.05);
+            background: rgba(124,92,231,0.06);
         }
         
         .day-cell.available {
-            background: rgba(85,239,196,0.15);
+            background: rgba(85,239,196,0.12);
         }
         
         .day-cell.unavailable {
-            background: rgba(255,140,148,0.15);
+            background: rgba(255,140,148,0.12);
         }
         
         .day-cell.by_agreement {
-            background: rgba(249,202,36,0.15);
+            background: rgba(249,202,36,0.12);
         }
         
         .slot-indicator {
-            font-size: 0.62rem;
-            padding: 0.1rem 0.3rem;
-            border-radius: 6px;
-            margin-top: 2px;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 8px;
+            margin-top: 3px;
             white-space: nowrap;
             cursor: pointer;
             display: inline-block;
             font-weight: 600;
+            transition: transform 0.15s;
+        }
+        
+        .slot-indicator:hover {
+            transform: scale(1.05);
         }
         
         .slot-indicator.available {
@@ -396,9 +417,9 @@
         }
         
         .feature-note {
-            font-size: 0.58rem;
+            font-size: 0.6rem;
             color: var(--text-light);
-            margin-top: 1px;
+            margin-top: 2px;
             font-style: italic;
             white-space: nowrap;
             overflow: hidden;
@@ -409,62 +430,65 @@
         /* Карточки преподавателей */
         .teacher-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
             gap: 1.5rem;
         }
         
         .teacher-card {
             background: white;
             border-radius: 24px;
-            padding: 1.5rem;
+            padding: 1.8rem;
             border: 1px solid rgba(0,0,0,0.04);
             box-shadow: 0 4px 12px rgba(0,0,0,0.02);
             display: flex;
             flex-direction: column;
-            gap: 0.8rem;
-            transition: 0.3s;
+            gap: 1rem;
+            transition: all var(--transition);
+            position: relative;
         }
         
         .teacher-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 16px 32px rgba(0,0,0,0.06);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.06);
         }
         
         .teacher-header {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.2rem;
         }
         
         .teacher-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 18px;
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
             background: linear-gradient(135deg, var(--violet), var(--teal));
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: 700;
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             object-fit: cover;
             flex-shrink: 0;
-            box-shadow: 0 6px 14px rgba(124,92,231,0.2);
+            box-shadow: 0 8px 20px rgba(124,92,231,0.2);
         }
         
         .teacher-name {
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1.25rem;
+            letter-spacing: -0.01em;
         }
         
         .teacher-role {
             color: var(--violet);
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 600;
+            margin-top: 0.15rem;
         }
         
         .teacher-meta {
-            font-size: 0.82rem;
+            font-size: 0.85rem;
             color: var(--text-light);
             line-height: 1.5;
             display: flex;
@@ -474,33 +498,39 @@
         
         .teacher-meta span {
             background: rgba(124,92,231,0.06);
-            padding: 0.2rem 0.6rem;
+            padding: 0.3rem 0.7rem;
             border-radius: 10px;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
+            font-weight: 500;
         }
         
         .subjects-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.3rem;
+            gap: 0.4rem;
         }
         
         .subject-badge {
             background: rgba(124,92,231,0.08);
             color: var(--violet);
-            padding: 0.2rem 0.7rem;
+            padding: 0.3rem 0.8rem;
             border-radius: 10px;
-            font-size: 0.75rem;
+            font-size: 0.78rem;
             font-weight: 600;
         }
         
         .features-text {
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             color: var(--text-light);
             background: #f8fafc;
-            padding: 0.6rem;
+            padding: 0.7rem;
             border-radius: 14px;
-            line-height: 1.4;
+            line-height: 1.5;
+        }
+        
+        .card-edit-btn {
+            align-self: flex-end;
+            margin-top: auto;
         }
         
         /* Модальные окна */
@@ -508,8 +538,8 @@
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.25);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -522,18 +552,18 @@
             -webkit-backdrop-filter: blur(20px);
             border-radius: var(--radius-lg);
             padding: 2.5rem;
-            max-width: 520px;
+            max-width: 540px;
             width: 90%;
-            box-shadow: 0 30px 60px rgba(124,92,231,0.15), 0 0 0 1px rgba(255,255,255,0.6) inset;
-            animation: slideUp 0.3s cubic-bezier(0.2,0.8,0.2,1);
+            box-shadow: 0 30px 60px rgba(124,92,231,0.12), 0 0 0 1px rgba(255,255,255,0.6) inset;
+            animation: modalSlideUp 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
             max-height: 85vh;
             overflow-y: auto;
         }
         
-        @keyframes slideUp {
+        @keyframes modalSlideUp {
             from {
                 opacity: 0;
-                transform: translateY(24px) scale(0.98);
+                transform: translateY(30px) scale(0.96);
             }
             to {
                 opacity: 1;
@@ -543,14 +573,14 @@
         
         input, textarea, select {
             width: 100%;
-            padding: 0.7rem 1rem;
-            margin: 0.4rem 0;
+            padding: 0.75rem 1rem;
+            margin: 0.45rem 0;
             border: 1px solid rgba(124,92,231,0.15);
             border-radius: 14px;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
             font-family: inherit;
             background: white;
-            transition: 0.2s;
+            transition: all var(--transition);
         }
         
         input:focus, textarea:focus, select:focus {
@@ -561,65 +591,103 @@
         
         .row {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.6rem;
         }
         
         .row > * {
             flex: 1;
         }
         
-        .time-presets {
-            display: flex;
-            gap: 0.4rem;
-            margin: 0.5rem 0;
-            flex-wrap: wrap;
+        /* Слайдер времени */
+        .time-range-container {
+            margin: 1rem 0;
         }
         
-        .time-preset {
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            background: white;
-            border: 1px solid rgba(124,92,231,0.2);
-            color: var(--violet);
-            font-size: 0.78rem;
+        .time-range-label {
+            font-size: 0.82rem;
             font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
+            color: var(--text-light);
+            margin-bottom: 0.5rem;
         }
         
-        .time-preset:hover {
-            background: var(--violet);
-            color: white;
-            border-color: var(--violet);
+        .time-range-slider {
+            position: relative;
+            height: 44px;
+            background: linear-gradient(to right, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+            border-radius: 22px;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .time-range-fill {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, var(--violet), var(--teal));
+            border-radius: 22px;
+            opacity: 0.35;
+            pointer-events: none;
+        }
+        
+        .time-range-thumb {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 3px solid var(--violet);
+            border-radius: 50%;
+            top: 7px;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            cursor: grab;
+            z-index: 2;
+            transition: box-shadow 0.2s;
+        }
+        
+        .time-range-thumb:active {
+            cursor: grabbing;
+            box-shadow: 0 4px 16px rgba(124,92,231,0.3);
+        }
+        
+        .time-display {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--violet);
+            margin-top: 0.5rem;
+            letter-spacing: -0.01em;
         }
         
         .checkbox-row {
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            margin: 0.6rem 0;
-            font-size: 0.9rem;
+            margin: 0.7rem 0;
+            font-size: 0.92rem;
+            color: var(--text);
         }
         
         .checkbox-row input[type="checkbox"] {
-            width: auto;
+            width: 18px;
+            height: 18px;
             accent-color: var(--violet);
+            cursor: pointer;
         }
         
         .avatar-upload {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
+            gap: 1.2rem;
+            margin-bottom: 0.8rem;
         }
         
         .avatar-preview {
-            width: 56px;
-            height: 56px;
+            width: 60px;
+            height: 60px;
             border-radius: 18px;
             background: #f1f5f9;
             object-fit: cover;
             border: 2px dashed #ddd;
+            flex-shrink: 0;
         }
         
         .admin-table {
@@ -628,10 +696,11 @@
             background: white;
             border-radius: 20px;
             overflow: hidden;
+            box-shadow: var(--shadow-xs);
         }
         
         .admin-table th, .admin-table td {
-            padding: 1rem;
+            padding: 1rem 1.2rem;
             text-align: left;
             border-bottom: 1px solid #f1f5f9;
         }
@@ -642,11 +711,11 @@
             color: var(--text-light);
             font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            letter-spacing: 0.05em;
         }
         
         .admin-table td {
-            font-size: 0.9rem;
+            font-size: 0.92rem;
         }
         
         .empty-state {
@@ -669,6 +738,9 @@
             .month-nav {
                 margin-left: 0;
             }
+            h1 {
+                font-size: 1.8rem;
+            }
         }
     </style>
 </head>
@@ -679,16 +751,16 @@
         <h1>🎹 Планировщик</h1>
     </div>
 
-    <!-- Советы планировщика -->
+    <!-- Советы -->
     <div class="advice-box">
-        <span class="icon">💡</span>
+        <span class="advice-icon">💎</span>
         <div>
             <strong>Как эффективно планировать расписание:</strong>
             <ul>
-                <li>Постоянное расписание — настройте шаблоны по дням недели (Пн-Вс).</li>
-                <li>Разовые изменения (отпуск, болезнь) — включите «Разовое переопределение» и выберите диапазон дат.</li>
-                <li>Используйте быстрые пресеты времени для типовых смен (утро, день, вечер).</li>
-                <li>В карточках преподавателей собраны все данные: предметы, возраст, особенности работы.</li>
+                <li>Постоянное расписание — настройте шаблоны по дням недели.</li>
+                <li>Разовые изменения — включите «Разовое переопределение» и выберите диапазон дат.</li>
+                <li>Используйте слайдер для быстрого выбора времени работы.</li>
+                <li>В карточках преподавателей можно редактировать анкету прямо из списка.</li>
             </ul>
         </div>
     </div>
@@ -704,7 +776,7 @@
             <select class="teacher-select" id="teacherSelect">
                 <option value="">-- Выберите преподавателя --</option>
             </select>
-            <input type="text" class="search-input" id="teacherSearch" placeholder="Поиск...">
+            <input type="text" class="search-input" id="teacherSearch" placeholder="🔍 Поиск...">
             <div class="month-nav">
                 <button id="prevMonthBtn">◀</button>
                 <span class="month-title" id="monthTitle"></span>
@@ -718,14 +790,14 @@
 
     <div id="listPanel" style="display:none;">
         <div class="toolbar">
-            <input type="text" class="search-input" id="listSearch" placeholder="Поиск по имени, предмету...">
+            <input type="text" class="search-input" id="listSearch" placeholder="🔍 Поиск по имени или предмету...">
         </div>
         <div id="teacherListContainer" class="teacher-grid"></div>
     </div>
 
     <div id="adminPanel" style="display:none;">
         <div class="toolbar">
-            <button class="btn" id="addTeacherBtn">+ Добавить преподавателя</button>
+            <button class="btn btn-primary" id="addTeacherBtn">✨ Добавить преподавателя</button>
         </div>
         <table class="admin-table" id="adminTable">
             <thead>
@@ -748,36 +820,26 @@
         <h2 style="font-weight:700; margin-bottom:0.5rem; font-size:1.3rem;">⚡ Настройка доступности</h2>
         <p id="settingDayInfo" style="color:var(--text-light); margin-bottom:0.8rem; font-size:0.9rem;"></p>
         
-        <label style="font-size:0.8rem; font-weight:600; color:var(--text-light);">Статус</label>
+        <label style="font-size:0.82rem; font-weight:600; color:var(--text-light);">Статус</label>
         <select id="settingType">
-            <option value="available">✅ Доступен</option>
-            <option value="unavailable">❌ Недоступен</option>
+            <option value="available">🟢 Доступен</option>
+            <option value="unavailable">🔴 Недоступен</option>
             <option value="by_agreement">🟡 По согласованию</option>
         </select>
         
-        <div class="row" style="margin-top:0.5rem;">
-            <div>
-                <label style="font-size:0.8rem; font-weight:600; color:var(--text-light);">Начало</label>
-                <select id="settingStartHour"></select>
-                <select id="settingStartMin"></select>
+        <div class="time-range-container">
+            <div class="time-range-label">⏰ Время работы</div>
+            <div class="time-range-slider" id="timeSlider">
+                <div class="time-range-fill" id="timeFill"></div>
+                <div class="time-range-thumb" id="startThumb"></div>
+                <div class="time-range-thumb" id="endThumb"></div>
             </div>
-            <div>
-                <label style="font-size:0.8rem; font-weight:600; color:var(--text-light);">Конец</label>
-                <select id="settingEndHour"></select>
-                <select id="settingEndMin"></select>
-            </div>
-        </div>
-        
-        <div class="time-presets">
-            <span class="time-preset" data-range="9:00-12:00">🌅 9–12 утро</span>
-            <span class="time-preset" data-range="12:00-15:00">☀️ 12–15 день</span>
-            <span class="time-preset" data-range="15:00-18:00">🌇 15–18 вечер</span>
-            <span class="time-preset" data-range="9:00-21:00">🌙 полный день</span>
+            <div class="time-display" id="timeDisplay">8:00 – 21:00</div>
         </div>
         
         <div class="checkbox-row">
             <input type="checkbox" id="settingOneTime">
-            <label for="settingOneTime">Разовое переопределение (отпуск, больничный, замена)</label>
+            <label for="settingOneTime">📌 Разовое переопределение (отпуск, болезнь, замена)</label>
         </div>
         
         <div id="dateRangeRow" style="display:none;" class="row">
@@ -785,14 +847,14 @@
             <input type="date" id="settingDateTo" placeholder="Конец периода">
         </div>
         
-        <label style="font-size:0.8rem; font-weight:600; color:var(--text-light); margin-top:0.5rem;">Примечание</label>
+        <label style="font-size:0.82rem; font-weight:600; color:var(--text-light); margin-top:0.5rem;">📝 Примечание</label>
         <textarea id="settingNote" rows="2" placeholder="Например: замена, больничный, отпуск"></textarea>
         
-        <label style="font-size:0.8rem; font-weight:600; color:var(--text-light); margin-top:0.5rem;">Особенности</label>
+        <label style="font-size:0.82rem; font-weight:600; color:var(--text-light); margin-top:0.5rem;">💡 Особенности</label>
         <input type="text" id="settingFeatures" placeholder="Например: только онлайн, не выезжает">
         
         <div style="display:flex; gap:0.5rem; margin-top:1.2rem;">
-            <button class="btn" id="saveSettingBtn">💾 Сохранить</button>
+            <button class="btn btn-primary" id="saveSettingBtn">💾 Сохранить</button>
             <button class="btn" id="deleteSettingBtn" style="display:none;">🗑️ Удалить</button>
             <button class="btn" id="cancelSettingBtn" style="margin-left:auto;">Отмена</button>
         </div>
@@ -802,48 +864,48 @@
 <!-- Модалка анкеты преподавателя -->
 <div class="modal-overlay" id="teacherModal" style="display:none;">
     <div class="modal">
-        <h2 style="font-weight:700; margin-bottom:1rem; font-size:1.3rem;">✨ Анкета преподавателя</h2>
+        <h2 style="font-weight:700; margin-bottom:1.2rem; font-size:1.3rem;">✨ Анкета преподавателя</h2>
         
         <div class="avatar-upload">
-            <img id="avatarPreview" class="avatar-preview" src="" style="display:none;">
-            <div class="avatar-preview" id="avatarPlaceholder" style="display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#ccc;">📷</div>
+            <img id="avatarPreview" class="avatar-preview" src="" style="display:none;" alt="Аватар">
+            <div class="avatar-preview" id="avatarPlaceholder" style="display:flex; align-items:center; justify-content:center; font-size:1.8rem; color:#ccc;">📷</div>
             <div style="flex:1;">
-                <label style="font-size:0.8rem; color:var(--text-light);">Фото</label>
+                <label style="font-size:0.82rem; color:var(--text-light);">Фото</label>
                 <input type="file" id="avatarInput" accept="image/*" style="padding:0.3rem;">
             </div>
         </div>
         
         <div class="row">
             <div>
-                <label style="font-size:0.8rem; color:var(--text-light);">Имя *</label>
-                <input type="text" id="teacherName" placeholder="Например: Анна Петрова">
+                <label style="font-size:0.82rem; color:var(--text-light);">Имя *</label>
+                <input type="text" id="teacherName" placeholder="Анна Петрова">
             </div>
             <div>
-                <label style="font-size:0.8rem; color:var(--text-light);">Email</label>
+                <label style="font-size:0.82rem; color:var(--text-light);">Email</label>
                 <input type="email" id="teacherEmail" placeholder="anna@music.ru">
             </div>
         </div>
         
-        <label style="font-size:0.8rem; color:var(--text-light);">Специализация (эмодзи через пробел)</label>
-        <input type="text" id="teacherSpec" placeholder="🎹 🎸 🥁 🎺">
+        <label style="font-size:0.82rem; color:var(--text-light);">🎯 Специализация (эмодзи через пробел)</label>
+        <input type="text" id="teacherSpec" placeholder="🎹 🎸 🥁 🎺 🎻">
         
         <div class="row">
             <div>
-                <label style="font-size:0.8rem; color:var(--text-light);">Возраст</label>
+                <label style="font-size:0.82rem; color:var(--text-light);">🎂 Возраст</label>
                 <input type="number" id="teacherAge" placeholder="30" min="18" max="99">
             </div>
             <div>
-                <label style="font-size:0.8rem; color:var(--text-light);">Увлечения</label>
+                <label style="font-size:0.82rem; color:var(--text-light);">💝 Увлечения</label>
                 <input type="text" id="teacherHobbies" placeholder="Музыка, спорт, кино">
             </div>
         </div>
         
-        <label style="font-size:0.8rem; color:var(--text-light);">Особенности работы</label>
+        <label style="font-size:0.82rem; color:var(--text-light);">💡 Особенности работы</label>
         <textarea id="teacherFeat" rows="2" placeholder="Не работает с детьми до 14 лет, только онлайн, выезжает"></textarea>
         
         <div style="display:flex; gap:0.5rem; margin-top:1.2rem;">
-            <button class="btn" id="saveTeacherBtn">✅ Сохранить</button>
-            <button class="btn" id="deleteTeacherBtn" style="display:none;">🗑️</button>
+            <button class="btn btn-primary" id="saveTeacherBtn">✅ Сохранить</button>
+            <button class="btn" id="deleteTeacherBtn" style="display:none;">🗑️ Удалить</button>
             <button class="btn" id="cancelTeacherBtn" style="margin-left:auto;">Отмена</button>
         </div>
     </div>
@@ -861,9 +923,11 @@
         let settings = [];
         let overrides = [];
         let currentYear, currentMonth, selectedTeacherId = '';
+        let timeStart = 8;
+        let timeEnd = 21;
         let activeTab = 'calendar';
 
-        // ==================== Инициализация ====================
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
         async function init() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (!session) {
@@ -883,42 +947,38 @@
             await loadTeachers();
             setupEventListeners();
             renderMonthTitle();
+            initTimeSlider();
         }
 
-        // ==================== Обработчики событий ====================
+        // ==================== ОБРАБОТЧИКИ ====================
         function setupEventListeners() {
             // Вкладки
-            document.getElementById('viewTabs').addEventListener('click', handleTabSwitch);
+            document.getElementById('viewTabs').addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab')) {
+                    switchTab(e.target.dataset.tab);
+                }
+            });
             
             // Выбор преподавателя
             document.getElementById('teacherSelect').addEventListener('change', onTeacherSelect);
             document.getElementById('teacherSearch').addEventListener('input', filterTeacherList);
             
-            // Поиск в списке преподавателей
+            // Поиск в списке
             document.getElementById('listSearch').addEventListener('input', renderTeacherList);
             
-            // Кнопка добавления преподавателя
+            // Кнопка добавления
             document.getElementById('addTeacherBtn').addEventListener('click', () => openTeacherModal(null));
             
             // Навигация по месяцам
             document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
             document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
             
-            // Пресеты времени
-            document.querySelectorAll('.time-preset').forEach(el => {
-                el.addEventListener('click', () => {
-                    const [start, end] = el.dataset.range.split('-');
-                    setTimeFromString('settingStartHour', 'settingStartMin', start);
-                    setTimeFromString('settingEndHour', 'settingEndMin', end);
-                });
-            });
-            
             // Чекбокс разового переопределения
             document.getElementById('settingOneTime').addEventListener('change', (e) => {
                 document.getElementById('dateRangeRow').style.display = e.target.checked ? 'flex' : 'none';
             });
             
-            // Сохранение / удаление настройки доступности
+            // Сохранение / удаление настройки
             document.getElementById('saveSettingBtn').addEventListener('click', saveSetting);
             document.getElementById('deleteSettingBtn').addEventListener('click', deleteSetting);
             document.getElementById('cancelSettingBtn').addEventListener('click', () => {
@@ -931,11 +991,24 @@
             document.getElementById('cancelTeacherBtn').addEventListener('click', () => {
                 document.getElementById('teacherModal').style.display = 'none';
             });
+            
+            // Закрытие модалок по клику на оверлей
+            document.querySelectorAll('.modal-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        overlay.style.display = 'none';
+                    }
+                });
+            });
         }
 
-        // ==================== Загрузка данных ====================
+        // ==================== ЗАГРУЗКА ДАННЫХ ====================
         async function loadTeachers() {
-            const { data, error } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель').order('name');
+            const { data, error } = await _supabase.from('employees')
+                .select('*')
+                .eq('role', 'Преподаватель')
+                .order('name');
+            
             if (error) {
                 console.error('Ошибка загрузки преподавателей:', error);
                 teachers = [];
@@ -974,7 +1047,9 @@
 
         async function loadSettings() {
             if (!selectedTeacherId) return;
-            const { data } = await _supabase.from('teacher_settings').select('*').eq('teacher_id', selectedTeacherId);
+            const { data } = await _supabase.from('teacher_settings')
+                .select('*')
+                .eq('teacher_id', selectedTeacherId);
             settings = data || [];
         }
 
@@ -990,14 +1065,12 @@
             overrides = data || [];
         }
 
-        // ==================== Переключение вкладок ====================
-        function handleTabSwitch(e) {
-            if (!e.target.classList.contains('tab')) return;
-            
+        // ==================== ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК ====================
+        function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            e.target.classList.add('active');
+            const targetTab = document.querySelector(`.tab[data-tab="${tab}"]`);
+            if (targetTab) targetTab.classList.add('active');
             
-            const tab = e.target.dataset.tab;
             activeTab = tab;
             
             document.getElementById('calendarPanel').style.display = tab === 'calendar' ? 'block' : 'none';
@@ -1031,7 +1104,7 @@
             document.getElementById('monthTitle').textContent = title;
         }
 
-        // ==================== Календарь ====================
+        // ==================== КАЛЕНДАРЬ ====================
         function renderCalendar() {
             const container = document.getElementById('calendarContainer');
             
@@ -1058,10 +1131,10 @@
                 
                 let content = `<strong>${d}</strong>`;
                 if (status) {
-                    const label = type === 'available' ? '✅' : type === 'unavailable' ? '❌' : '🟡';
-                    content += `<div class="slot-indicator ${type}" data-date="${dateStr}" data-id="${status.id || ''}" data-source="${status.source || ''}">${label}</div>`;
+                    const emoji = type === 'available' ? '🟢' : type === 'unavailable' ? '🔴' : '🟡';
+                    content += `<div class="slot-indicator ${type}" data-date="${dateStr}" data-id="${status.id || ''}" data-source="${status.source || ''}">${emoji}</div>`;
                     if (status.note) {
-                        content += `<div class="feature-note">${status.note.substring(0, 15)}</div>`;
+                        content += `<div class="feature-note">${status.note.substring(0, 18)}</div>`;
                     }
                 }
                 
@@ -1075,7 +1148,7 @@
             html += '</tr></tbody></table>';
             container.innerHTML = html;
             
-            // Обработчики кликов по дням
+            // Обработчики кликов
             container.querySelectorAll('.day-cell').forEach(cell => {
                 cell.addEventListener('click', (e) => {
                     if (!e.target.classList.contains('slot-indicator')) {
@@ -1084,7 +1157,6 @@
                 });
             });
             
-            // Обработчики кликов по индикаторам
             container.querySelectorAll('.slot-indicator').forEach(ind => {
                 ind.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1105,53 +1177,132 @@
             return setting ? { ...setting, source: 'setting' } : null;
         }
 
-        // ==================== Модалка настройки доступности ====================
-        function setTimeFromString(hourId, minId, timeStr) {
-            const [h, m] = timeStr.split(':');
-            document.getElementById(hourId).value = h.padStart(2, '0');
-            document.getElementById(minId).value = m || '00';
-        }
-
-        function buildTimeSelects(existing) {
-            const startHour = document.getElementById('settingStartHour');
-            startHour.innerHTML = '<option value="">--</option>';
-            for (let h = 8; h <= 22; h++) {
-                const val = String(h).padStart(2, '0');
-                startHour.innerHTML += `<option value="${val}">${val}</option>`;
-            }
-            document.getElementById('settingEndHour').innerHTML = startHour.innerHTML;
+        // ==================== СЛАЙДЕР ВРЕМЕНИ ====================
+        function initTimeSlider() {
+            const slider = document.getElementById('timeSlider');
+            const fill = document.getElementById('timeFill');
+            const startThumb = document.getElementById('startThumb');
+            const endThumb = document.getElementById('endThumb');
+            const display = document.getElementById('timeDisplay');
             
-            ['settingStartMin', 'settingEndMin'].forEach(id => {
-                document.getElementById(id).innerHTML =
-                    '<option value="">--</option>' +
-                    '<option value="00">00</option>' +
-                    '<option value="15">15</option>' +
-                    '<option value="30">30</option>' +
-                    '<option value="45">45</option>';
+            let dragging = null;
+            
+            function updateSlider() {
+                const width = slider.clientWidth;
+                const left = ((timeStart - 8) / 13) * width;
+                const right = ((timeEnd - 8) / 13) * width;
+                
+                fill.style.left = left + 'px';
+                fill.style.width = (right - left) + 'px';
+                startThumb.style.left = left + 'px';
+                endThumb.style.left = right + 'px';
+                
+                display.textContent = `${String(timeStart).padStart(2, '0')}:00 – ${String(timeEnd).padStart(2, '0')}:00`;
+            }
+            
+            function getHourFromPosition(x) {
+                const width = slider.clientWidth;
+                const ratio = Math.max(0, Math.min(1, x / width));
+                return Math.round(8 + ratio * 13);
+            }
+            
+            function startDrag(e, thumb) {
+                e.preventDefault();
+                dragging = thumb;
+                document.addEventListener('mousemove', onDrag);
+                document.addEventListener('mouseup', stopDrag);
+            }
+            
+            function onDrag(e) {
+                if (!dragging) return;
+                const rect = slider.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                let hour = getHourFromPosition(x);
+                hour = Math.max(8, Math.min(22, hour));
+                
+                if (dragging === 'start') {
+                    if (hour < timeEnd - 1) timeStart = hour;
+                } else {
+                    if (hour > timeStart + 1) timeEnd = hour;
+                }
+                
+                updateSlider();
+            }
+            
+            function stopDrag() {
+                dragging = null;
+                document.removeEventListener('mousemove', onDrag);
+                document.removeEventListener('mouseup', stopDrag);
+            }
+            
+            startThumb.addEventListener('mousedown', (e) => startDrag(e, 'start'));
+            endThumb.addEventListener('mousedown', (e) => startDrag(e, 'end'));
+            
+            // Поддержка касаний
+            startThumb.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                dragging = 'start';
+                document.addEventListener('touchmove', onTouchDrag);
+                document.addEventListener('touchend', stopTouchDrag);
             });
             
-            if (existing?.start_time) {
-                const [sh, sm] = existing.start_time.split(':');
-                document.getElementById('settingStartHour').value = sh;
-                document.getElementById('settingStartMin').value = sm || '00';
+            endThumb.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                dragging = 'end';
+                document.addEventListener('touchmove', onTouchDrag);
+                document.addEventListener('touchend', stopTouchDrag);
+            });
+            
+            function onTouchDrag(e) {
+                if (!dragging) return;
+                const rect = slider.getBoundingClientRect();
+                const x = e.touches[0].clientX - rect.left;
+                let hour = getHourFromPosition(x);
+                hour = Math.max(8, Math.min(22, hour));
+                
+                if (dragging === 'start') {
+                    if (hour < timeEnd - 1) timeStart = hour;
+                } else {
+                    if (hour > timeStart + 1) timeEnd = hour;
+                }
+                
+                updateSlider();
             }
-            if (existing?.end_time) {
-                const [eh, em] = existing.end_time.split(':');
-                document.getElementById('settingEndHour').value = eh;
-                document.getElementById('settingEndMin').value = em || '00';
+            
+            function stopTouchDrag() {
+                dragging = null;
+                document.removeEventListener('touchmove', onTouchDrag);
+                document.removeEventListener('touchend', stopTouchDrag);
             }
+            
+            updateSlider();
         }
 
+        // ==================== МОДАЛКА ДОСТУПНОСТИ ====================
         function openSettingModal(dateStr, existing = null) {
             const date = new Date(dateStr);
             const dayOfWeek = date.getDay();
             const dayNames = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
             
             document.getElementById('settingDayInfo').textContent =
-                `Дата: ${dateStr} (${dayNames[dayOfWeek]})`;
+                `📅 ${dateStr} (${dayNames[dayOfWeek]})`;
             document.getElementById('settingType').value = existing?.type || 'available';
             
-            buildTimeSelects(existing);
+            // Установка времени из существующей записи
+            if (existing?.start_time) {
+                const [h] = existing.start_time.split(':');
+                timeStart = parseInt(h);
+            } else {
+                timeStart = 8;
+            }
+            if (existing?.end_time) {
+                const [h] = existing.end_time.split(':');
+                timeEnd = parseInt(h);
+            } else {
+                timeEnd = 21;
+            }
+            
+            initTimeSlider();
             
             document.getElementById('settingNote').value = existing?.note || '';
             document.getElementById('settingFeatures').value = existing?.features || '';
@@ -1175,13 +1326,8 @@
             const source = modal.dataset.source;
             
             const type = document.getElementById('settingType').value;
-            const startHour = document.getElementById('settingStartHour').value;
-            const startMin = document.getElementById('settingStartMin').value;
-            const endHour = document.getElementById('settingEndHour').value;
-            const endMin = document.getElementById('settingEndMin').value;
-            
-            const startTime = startHour ? `${startHour}:${startMin || '00'}` : null;
-            const endTime = endHour ? `${endHour}:${endMin || '00'}` : null;
+            const startTime = `${String(timeStart).padStart(2, '0')}:00`;
+            const endTime = `${String(timeEnd).padStart(2, '0')}:00`;
             const isOneTime = document.getElementById('settingOneTime').checked;
             const note = document.getElementById('settingNote').value.trim();
             const features = document.getElementById('settingFeatures').value.trim();
@@ -1201,16 +1347,13 @@
             
             try {
                 if (editId) {
-                    // Редактирование существующей записи
                     if (source === 'override') {
                         ({ error } = await _supabase.from('teacher_unavailability').update(payload).eq('id', editId));
                     } else {
                         ({ error } = await _supabase.from('teacher_settings').update(payload).eq('id', editId));
                     }
                 } else if (isOneTime) {
-                    // Создание разового переопределения
                     if (dateFrom && dateTo) {
-                        // Диапазон дат
                         const dates = [];
                         let current = new Date(dateFrom);
                         const end = new Date(dateTo);
@@ -1223,11 +1366,9 @@
                             ({ error } = await _supabase.from('teacher_unavailability').insert(inserts));
                         }
                     } else {
-                        // Одиночная дата
                         ({ error } = await _supabase.from('teacher_unavailability').insert([{ ...payload, date: dateStr }]));
                     }
                 } else {
-                    // Создание/обновление шаблона дня недели
                     ({ error } = await _supabase.from('teacher_settings').upsert(
                         { ...payload, day_of_week: dayOfWeek },
                         { onConflict: 'teacher_id, day_of_week' }
@@ -1235,7 +1376,6 @@
                 }
                 
                 if (error) {
-                    console.error('Ошибка сохранения:', error);
                     alert('Ошибка сохранения: ' + error.message);
                     return;
                 }
@@ -1244,8 +1384,7 @@
                 await Promise.all([loadSettings(), loadOverrides()]);
                 renderCalendar();
             } catch (err) {
-                console.error('Критическая ошибка:', err);
-                alert('Не удалось сохранить: ' + err.message);
+                alert('Критическая ошибка: ' + err.message);
             }
         }
 
@@ -1273,26 +1412,34 @@
             renderCalendar();
         }
 
-        // ==================== Список преподавателей ====================
+        // ==================== СПИСОК ПРЕПОДАВАТЕЛЕЙ ====================
         async function renderTeacherList() {
             const query = document.getElementById('listSearch').value.toLowerCase();
-            const filtered = teachers.filter(t => t.name.toLowerCase().includes(query));
+            const filtered = teachers.filter(t =>
+                t.name.toLowerCase().includes(query) ||
+                (t.specialization || '').toLowerCase().includes(query)
+            );
+            
             const container = document.getElementById('teacherListContainer');
             
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="empty-state">Нет преподавателей</div>';
+                container.innerHTML = '<div class="empty-state">👩‍🏫 Нет преподавателей</div>';
                 return;
             }
             
             const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
-            const { data: recentSalary } = await _supabase.from('teacher_salary').select('*').eq('month', monthStr);
+            const { data: recentSalary } = await _supabase.from('teacher_salary')
+                .select('*')
+                .eq('month', monthStr);
             
             container.innerHTML = filtered.map(teacher => {
                 const subjects = recentSalary
-                    ? [...new Set(recentSalary.filter(s => s.teacher_name === teacher.name).map(s => s.subject))]
+                    ? [...new Set(recentSalary
+                        .filter(s => s.teacher_name === teacher.name)
+                        .map(s => s.subject))]
                     : [];
                 
-                const emojis = teacher.specialization ? teacher.specialization.split(' ') : [];
+                const emojis = teacher.specialization || '';
                 
                 return `
                     <div class="teacher-card">
@@ -1302,35 +1449,44 @@
                                 : `<div class="teacher-avatar">${teacher.name.charAt(0)}</div>`
                             }
                             <div>
-                                <div class="teacher-name">${emojis.join(' ')} ${teacher.name}</div>
-                                <div class="teacher-role">Преподаватель</div>
+                                <div class="teacher-name">${emojis} ${teacher.name}</div>
+                                <div class="teacher-role">✨ Преподаватель</div>
                             </div>
                         </div>
                         <div class="teacher-meta">
                             ${teacher.age ? `<span>🎂 ${teacher.age} лет</span>` : ''}
-                            ${teacher.hobbies ? `<span>❤️ ${teacher.hobbies}</span>` : ''}
+                            ${teacher.hobbies ? `<span>💝 ${teacher.hobbies}</span>` : ''}
                         </div>
                         <div class="subjects-list">
                             ${subjects.length > 0
                                 ? subjects.map(s => `<span class="subject-badge">${s}</span>`).join('')
-                                : '<span style="font-size:0.8rem; color:var(--text-light);">Предметы не указаны</span>'
+                                : '<span style="font-size:0.82rem;color:var(--text-light);">Предметы не указаны</span>'
                             }
                         </div>
                         ${teacher.features
                             ? `<div class="features-text">💡 ${teacher.features}</div>`
                             : ''
                         }
+                        <button class="btn card-edit-btn" data-id="${teacher.id}">✏️ Редактировать анкету</button>
                     </div>
                 `;
             }).join('');
+            
+            // Обработчики кнопок редактирования в карточках
+            document.querySelectorAll('.card-edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const teacher = teachers.find(t => t.id === btn.dataset.id);
+                    if (teacher) openTeacherModal(teacher);
+                });
+            });
         }
 
-        // ==================== Управление преподавателями (админ) ====================
+        // ==================== УПРАВЛЕНИЕ (АДМИН) ====================
         async function renderAdminTable() {
             const tbody = document.querySelector('#adminTable tbody');
             
             if (teachers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Нет преподавателей</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-state">👩‍🏫 Нет преподавателей</td></tr>';
                 return;
             }
             
@@ -1338,12 +1494,12 @@
                 <tr>
                     <td>
                         ${teacher.avatar_url
-                            ? `<img src="${teacher.avatar_url}" style="width:36px;height:36px;border-radius:10px;object-fit:cover;">`
-                            : `<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg, var(--violet), var(--teal));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.9rem;">${teacher.name.charAt(0)}</div>`
+                            ? `<img src="${teacher.avatar_url}" style="width:40px;height:40px;border-radius:12px;object-fit:cover;">`
+                            : `<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--violet),var(--teal));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1rem;">${teacher.name.charAt(0)}</div>`
                         }
                     </td>
                     <td><strong>${teacher.name}</strong></td>
-                    <td>${teacher.email || '—'}</td>
+                    <td style="color:var(--text-light);">${teacher.email || '—'}</td>
                     <td>${teacher.specialization || '—'}</td>
                     <td style="display:flex;gap:0.3rem;">
                         <button class="btn-icon edit-teacher" data-id="${teacher.id}" title="Редактировать">✏️</button>
@@ -1352,19 +1508,19 @@
                 </tr>
             `).join('');
             
-            // Обработчики кнопок
+            // Обработчики
             tbody.querySelectorAll('.edit-teacher').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const id = btn.dataset.id;
-                    const teacher = teachers.find(t => t.id === id);
+                    const teacher = teachers.find(t => t.id === btn.dataset.id);
                     if (teacher) openTeacherModal(teacher);
                 });
             });
             
             tbody.querySelectorAll('.delete-teacher').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const id = btn.dataset.id;
-                    if (confirm('Удалить преподавателя?')) deleteTeacher(id);
+                    if (confirm('Удалить преподавателя?')) {
+                        deleteTeacher(btn.dataset.id);
+                    }
                 });
             });
         }
@@ -1379,7 +1535,7 @@
             renderAdminTable();
         }
 
-        // ==================== Модалка преподавателя ====================
+        // ==================== МОДАЛКА ПРЕПОДАВАТЕЛЯ ====================
         function openTeacherModal(teacher = null) {
             document.getElementById('teacherName').value = teacher?.name || '';
             document.getElementById('teacherEmail').value = teacher?.email || '';
@@ -1411,7 +1567,7 @@
             const name = document.getElementById('teacherName').value.trim();
             
             if (!name) {
-                alert('Введите имя преподавателя');
+                alert('⚠️ Введите имя преподавателя');
                 return;
             }
             
@@ -1428,13 +1584,13 @@
             const file = document.getElementById('avatarInput').files[0];
             if (file) {
                 const fileName = `public/${Date.now()}_${file.name}`;
-                const { data, error } = await _supabase.storage.from('avatars').upload(fileName, file, { upsert: true });
+                const { data, error } = await _supabase.storage.from('avatars')
+                    .upload(fileName, file, { upsert: true });
                 if (error) {
                     console.error('Ошибка загрузки аватара:', error);
-                    alert('Ошибка загрузки фото: ' + error.message);
-                    return;
+                } else {
+                    avatar_url = _supabase.storage.from('avatars').getPublicUrl(data.path).data.publicUrl;
                 }
-                avatar_url = _supabase.storage.from('avatars').getPublicUrl(data.path).data.publicUrl;
             }
             
             const payload = {
@@ -1477,7 +1633,7 @@
             }
         }
 
-        // Запуск
+        // ==================== ЗАПУСК ====================
         init();
     })();
 </script>
