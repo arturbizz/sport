@@ -11,7 +11,9 @@
     <style>
         :root {
             --violet: #7c5ce7;
+            --violet-dark: #5b4cc4;
             --teal: #0fb9b1;
+            --teal-dark: #0d9488;
             --gold: #f9ca24;
             --rose: #ff8c94;
             --green: #55efc4;
@@ -78,12 +80,12 @@
             background: rgba(124,92,231,0.08);
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.5rem;
         }
         
         .back-link:hover {
             background: rgba(124,92,231,0.15);
-            color: #5b4cc4;
+            color: var(--violet-dark);
         }
         
         h1 {
@@ -96,18 +98,17 @@
             letter-spacing: -0.02em;
         }
         
-        /* Премиум иконки SVG */
-        .icon-svg {
-            width: 1.2em;
-            height: 1.2em;
+        /* Иконки премиум SVG */
+        .icon-premium {
+            width: 20px;
+            height: 20px;
             display: inline-block;
             vertical-align: middle;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+            flex-shrink: 0;
         }
+        
+        .icon-premium.lg { width: 28px; height: 28px; }
+        .icon-premium.xl { width: 36px; height: 36px; }
         
         /* Советы */
         .advice-box {
@@ -176,6 +177,7 @@
             border: 1px solid rgba(124,92,231,0.2);
             box-shadow: 0 2px 6px rgba(124,92,231,0.04);
             letter-spacing: 0.01em;
+            white-space: nowrap;
         }
         
         .btn:hover {
@@ -206,22 +208,11 @@
             transition: all var(--transition);
         }
         
-        .btn-icon:hover {
-            background: #f4f0ff;
-            border-color: var(--violet);
-            transform: translateY(-1px);
-        }
-        
+        .btn-icon:hover { background: #f4f0ff; border-color: var(--violet); transform: translateY(-1px); }
         .btn-icon.danger:hover { background: #fee2e2; border-color: #dc2626; }
         
         /* Инструменты */
-        .toolbar {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
+        .toolbar { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
         
         .search-input {
             padding: 0.6rem 1.2rem;
@@ -233,11 +224,7 @@
             transition: var(--transition);
         }
         
-        .search-input:focus {
-            border-color: var(--violet);
-            box-shadow: 0 0 0 3px rgba(124,92,231,0.06);
-            outline: none;
-        }
+        .search-input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         
         .teacher-select {
             padding: 0.6rem 2.5rem 0.6rem 1.2rem;
@@ -256,18 +243,9 @@
             transition: var(--transition);
         }
         
-        .teacher-select:focus {
-            border-color: var(--violet);
-            box-shadow: 0 0 0 3px rgba(124,92,231,0.06);
-            outline: none;
-        }
+        .teacher-select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         
-        .month-nav {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            margin-left: auto;
-        }
+        .month-nav { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
         
         .month-nav button {
             background: white;
@@ -280,10 +258,7 @@
             transition: var(--transition);
         }
         
-        .month-nav button:hover {
-            border-color: var(--violet);
-            color: var(--violet);
-        }
+        .month-nav button:hover { border-color: var(--violet); color: var(--violet); }
         
         .month-title {
             min-width: 150px;
@@ -328,14 +303,7 @@
             font-size: 0.7rem;
         }
         
-        .day-cell {
-            cursor: pointer;
-            transition: background 0.15s;
-            vertical-align: top;
-            text-align: left;
-            padding: 0.2rem 0.3rem;
-        }
-        
+        .day-cell { cursor: pointer; transition: background 0.15s; vertical-align: top; text-align: left; padding: 0.2rem 0.3rem; }
         .day-cell:hover { background: rgba(124,92,231,0.04); }
         .day-cell.available { background: rgba(85,239,196,0.1); }
         .day-cell.unavailable { background: rgba(255,140,148,0.1); }
@@ -353,21 +321,10 @@
         .status-dot.unavailable { background: var(--rose); box-shadow: 0 0 6px rgba(255,140,148,0.5); }
         .status-dot.by_agreement { background: var(--gold); box-shadow: 0 0 6px rgba(249,202,36,0.5); }
         
-        .slot-info {
-            font-size: 0.6rem;
-            color: var(--text-light);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .slot-info { font-size: 0.6rem; color: var(--text-light); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
         /* Карточки */
-        .teacher-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
+        .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
         
         .teacher-card {
             background: white;
@@ -376,14 +333,14 @@
             border: 1px solid rgba(0,0,0,0.04);
             box-shadow: 0 2px 8px rgba(0,0,0,0.02);
             transition: all var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
         }
         
-        .teacher-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.06);
-        }
+        .teacher-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
         
-        .teacher-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .teacher-header { display: flex; align-items: center; gap: 1rem; }
         
         .teacher-avatar {
             width: 56px;
@@ -403,12 +360,7 @@
         .teacher-name { font-weight: 700; font-size: 1.15rem; }
         .teacher-spec { font-size: 0.8rem; color: var(--violet); font-weight: 600; margin-top: 0.15rem; }
         
-        .teacher-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            margin-bottom: 0.8rem;
-        }
+        .teacher-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
         
         .meta-tag {
             background: rgba(124,92,231,0.05);
@@ -418,7 +370,7 @@
             color: var(--text-light);
         }
         
-        .subjects-list { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.8rem; }
+        .subjects-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
         
         .subject-badge {
             background: rgba(124,92,231,0.07);
@@ -472,21 +424,12 @@
             transition: var(--transition);
         }
         
-        input:focus, textarea:focus, select:focus {
-            border-color: var(--violet);
-            box-shadow: 0 0 0 3px rgba(124,92,231,0.06);
-            outline: none;
-        }
+        input:focus, textarea:focus, select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         
         .row { display: flex; gap: 0.5rem; }
         .row > * { flex: 1; }
         
-        .time-quick-btns {
-            display: flex;
-            gap: 0.3rem;
-            flex-wrap: wrap;
-            margin: 0.5rem 0;
-        }
+        .time-quick-btns { display: flex; gap: 0.3rem; flex-wrap: wrap; margin: 0.5rem 0; }
         
         .time-quick-btn {
             padding: 0.3rem 0.8rem;
@@ -498,18 +441,9 @@
             transition: var(--transition);
         }
         
-        .time-quick-btn:hover {
-            background: var(--violet);
-            color: white;
-            border-color: var(--violet);
-        }
+        .time-quick-btn:hover { background: var(--violet); color: white; border-color: var(--violet); }
         
-        .avatar-upload {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0.5rem;
-        }
+        .avatar-upload { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
         
         .avatar-preview {
             width: 56px;
@@ -518,70 +452,57 @@
             background: #f1f5f9;
             object-fit: cover;
             border: 2px dashed #ddd;
+            flex-shrink: 0;
         }
         
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-        }
+        .admin-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
         
-        .admin-table th, .admin-table td {
-            padding: 0.8rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid #f5f3ff;
-        }
+        .admin-table th, .admin-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid #f5f3ff; }
         
-        .admin-table th {
-            background: #fafafc;
-            font-weight: 700;
-            color: var(--text-light);
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
+        .admin-table th { background: #fafafc; font-weight: 700; color: var(--text-light); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
         
-        .empty-state {
-            text-align: center;
-            padding: 2.5rem;
-            color: var(--text-light);
-        }
+        .empty-state { text-align: center; padding: 2.5rem; color: var(--text-light); }
         
-        @media (max-width: 768px) {
-            body { padding: 0.5rem; }
-            .container { padding: 1.2rem; }
-            .teacher-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) { body { padding: 0.5rem; } .container { padding: 1.2rem; } .teacher-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
         <a href="index.html" class="back-link">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             На главную
         </a>
         <h1>Планировщик</h1>
     </div>
 
     <div class="advice-box">
-        <div style="font-size:1.5rem; flex-shrink:0;">💡</div>
+        <svg class="icon-premium lg" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
         <div>
             <strong>Рекомендации по планированию:</strong>
             <ul>
-                <li>Постоянное расписание — дни недели</li>
-                <li>Разовые изменения — диапазон дат с типом доступности</li>
+                <li>Постоянное расписание — используйте настройки дней недели</li>
+                <li>Разовые изменения — выберите диапазон дат и тип доступности</li>
                 <li>Анкету преподавателя можно редактировать прямо из карточки</li>
             </ul>
         </div>
     </div>
 
     <div class="tabs" id="viewTabs">
-        <button class="tab active" data-tab="calendar">📅 Календарь</button>
-        <button class="tab" data-tab="list">👥 Преподаватели</button>
-        <button class="tab" data-tab="admin" id="adminTab" style="display:none;">⚙️ Управление</button>
+        <button class="tab active" data-tab="calendar">
+            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Календарь
+        </button>
+        <button class="tab" data-tab="list">
+            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Преподаватели
+        </button>
+        <button class="tab" data-tab="admin" id="adminTab" style="display:none;">
+            <svg class="icon-premium" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Управление
+        </button>
     </div>
 
     <div id="calendarPanel">
@@ -613,40 +534,34 @@
     <div class="modal">
         <h2 style="font-weight:700; margin-bottom:1rem;">Настройка доступности</h2>
         <p id="settingDayInfo" style="color:var(--text-light); margin-bottom:0.8rem;"></p>
-
         <label style="font-size:0.85rem; font-weight:600;">Статус</label>
         <select id="settingType">
             <option value="available">Доступен</option>
             <option value="unavailable">Недоступен</option>
             <option value="by_agreement">По согласованию</option>
         </select>
-
         <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Период действия</label>
         <div class="row">
             <input type="date" id="settingDateFrom" title="Начало периода">
             <input type="date" id="settingDateTo" title="Конец периода">
         </div>
-
         <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Время (если нужно)</label>
         <div class="row">
             <input type="time" id="settingStartTime" value="09:00">
             <input type="time" id="settingEndTime" value="18:00">
         </div>
         <div class="time-quick-btns">
-            <span class="time-quick-btn" data-range="09:00-12:00">🌅 Утро 9-12</span>
-            <span class="time-quick-btn" data-range="12:00-15:00">☀️ День 12-15</span>
-            <span class="time-quick-btn" data-range="15:00-18:00">🌇 Вечер 15-18</span>
-            <span class="time-quick-btn" data-range="09:00-21:00">🌙 Весь день</span>
+            <span class="time-quick-btn" data-range="09:00-12:00">Утро 9-12</span>
+            <span class="time-quick-btn" data-range="12:00-15:00">День 12-15</span>
+            <span class="time-quick-btn" data-range="15:00-18:00">Вечер 15-18</span>
+            <span class="time-quick-btn" data-range="09:00-21:00">Весь день</span>
         </div>
-
         <div class="checkbox-row" style="display:flex; align-items:center; gap:0.5rem; margin:0.5rem 0;">
             <input type="checkbox" id="settingIsOverride" style="width:auto;">
             <label for="settingIsOverride" style="font-size:0.9rem;">Применить ко всем дням недели (шаблон)</label>
         </div>
-
         <textarea id="settingNote" rows="2" placeholder="Примечание"></textarea>
         <input type="text" id="settingFeatures" placeholder="Особенности">
-
         <div style="display:flex; gap:0.5rem; margin-top:1rem;">
             <button class="btn btn-primary" id="saveSettingBtn">Сохранить</button>
             <button class="btn" id="deleteSettingBtn" style="display:none;">Удалить</button>
@@ -661,7 +576,9 @@
         <h2 style="font-weight:700; margin-bottom:1rem;">Анкета преподавателя</h2>
         <div class="avatar-upload">
             <img id="avatarPreview" class="avatar-preview" src="" style="display:none;">
-            <div class="avatar-preview" id="avatarPlaceholder" style="display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#ccc;">📷</div>
+            <div class="avatar-preview" id="avatarPlaceholder" style="display:flex; align-items:center; justify-content:center; font-size:1.5rem; color:#ccc;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
             <div style="flex:1;"><input type="file" id="avatarInput" accept="image/*"></div>
         </div>
         <div class="row"><input id="teacherName" placeholder="Имя *"><input type="email" id="teacherEmail" placeholder="Email"></div>
@@ -688,6 +605,8 @@
     let currentYear, currentMonth, selectedTeacherId = '';
     let activeTab = 'calendar';
 
+    function showAlert(msg) { alert(msg); }
+
     async function init() {
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return; }
@@ -703,7 +622,7 @@
 
     function setupEvents() {
         document.getElementById('viewTabs').addEventListener('click', e => {
-            if (e.target.classList.contains('tab')) switchTab(e.target.dataset.tab);
+            if (e.target.closest('.tab')) switchTab(e.target.closest('.tab').dataset.tab);
         });
         document.getElementById('teacherSelect').addEventListener('change', onSelectTeacher);
         document.getElementById('teacherSearch').addEventListener('input', filterTeachers);
@@ -718,7 +637,6 @@
         document.getElementById('deleteTeacherBtn').addEventListener('click', deleteTeacherHandler);
         document.getElementById('cancelTeacherBtn').addEventListener('click', () => document.getElementById('teacherModal').style.display = 'none');
 
-        // Быстрые кнопки времени
         document.querySelectorAll('.time-quick-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const [start, end] = btn.dataset.range.split('-');
@@ -727,7 +645,6 @@
             });
         });
 
-        // Закрытие модалок по оверлею
         document.querySelectorAll('.modal-overlay').forEach(ov => {
             ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
         });
@@ -762,12 +679,8 @@
 
     async function onSelectTeacher(e) {
         selectedTeacherId = e.target.value;
-        if (selectedTeacherId) {
-            await Promise.all([loadSettings(), loadOverrides()]);
-        } else {
-            settings = [];
-            overrides = [];
-        }
+        if (selectedTeacherId) { await Promise.all([loadSettings(), loadOverrides()]); }
+        else { settings = []; overrides = []; }
         renderCalendar();
     }
 
@@ -869,28 +782,19 @@
                 if (source === 'override') await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
                 else await _supabase.from('teacher_settings').update(data).eq('id', editId);
             } else if (isOverride) {
-                // Шаблон дня недели для диапазона дат
                 const dow = new Date(dateFrom).getDay();
                 await _supabase.from('teacher_settings').upsert({ ...data, day_of_week: dow }, { onConflict: 'teacher_id, day_of_week' });
             } else {
-                // Создаём записи на каждый день диапазона
                 const dates = [];
                 let cur = new Date(dateFrom);
                 const to = new Date(dateTo);
-                while (cur <= to) {
-                    dates.push(cur.toISOString().slice(0, 10));
-                    cur.setDate(cur.getDate() + 1);
-                }
-                if (dates.length > 0) {
-                    await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
-                }
+                while (cur <= to) { dates.push(cur.toISOString().slice(0, 10)); cur.setDate(cur.getDate() + 1); }
+                if (dates.length > 0) await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
             }
             m.style.display = 'none';
             await Promise.all([loadSettings(), loadOverrides()]);
             renderCalendar();
-        } catch (err) {
-            alert('Ошибка: ' + err.message);
-        }
+        } catch (err) { showAlert('Ошибка: ' + err.message); }
     }
 
     async function deleteSetting() {
@@ -923,19 +827,16 @@
                     </div>
                 </div>
                 <div class="teacher-meta">
-                    ${t.age ? `<span class="meta-tag">🎂 ${t.age} лет</span>` : ''}
-                    ${t.hobbies ? `<span class="meta-tag">💝 ${t.hobbies}</span>` : ''}
+                    ${t.age ? `<span class="meta-tag">Возраст: ${t.age} лет</span>` : ''}
+                    ${t.hobbies ? `<span class="meta-tag">Увлечения: ${t.hobbies}</span>` : ''}
                 </div>
                 <div class="subjects-list">${subs.map(s => `<span class="subject-badge">${s}</span>`).join('') || '—'}</div>
-                ${t.features ? `<div style="font-size:0.82rem; color:var(--text-light);">💡 ${t.features}</div>` : ''}
-                <button class="btn card-edit-btn" data-id="${t.id}">✏️ Редактировать</button>
+                ${t.features ? `<div style="font-size:0.82rem; color:var(--text-light);">Особенности: ${t.features}</div>` : ''}
+                <button class="btn card-edit-btn" data-id="${t.id}">Редактировать</button>
             </div>`;
         }).join('');
         document.querySelectorAll('.card-edit-btn').forEach(b => {
-            b.addEventListener('click', () => {
-                const t = teachers.find(x => x.id === b.dataset.id);
-                if (t) openTeacherModal(t);
-            });
+            b.addEventListener('click', () => { const t = teachers.find(x => x.id === b.dataset.id); if (t) openTeacherModal(t); });
         });
     }
 
@@ -946,8 +847,12 @@
             <td><strong>${t.name}</strong></td>
             <td>${t.email || '—'}</td>
             <td style="display:flex;gap:0.3rem;">
-                <button class="btn-icon edit-teacher" data-id="${t.id}">✏️</button>
-                <button class="btn-icon danger delete-teacher" data-id="${t.id}">🗑️</button>
+                <button class="btn-icon edit-teacher" data-id="${t.id}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="btn-icon danger delete-teacher" data-id="${t.id}">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
             </td>
         </tr>`).join('');
         tb.querySelectorAll('.edit-teacher').forEach(b => b.addEventListener('click', () => { const t = teachers.find(x => x.id === b.dataset.id); if (t) openTeacherModal(t); }));
@@ -978,29 +883,50 @@
     async function saveTeacher() {
         const id = document.getElementById('teacherModal').dataset.id;
         const name = document.getElementById('teacherName').value.trim();
-        if (!name) return alert('Введите имя');
+        if (!name) return showAlert('Введите имя');
         const email = document.getElementById('teacherEmail').value.trim();
         const spec = document.getElementById('teacherSpec').value.trim();
         const age = document.getElementById('teacherAge').value;
         const hobbies = document.getElementById('teacherHobbies').value.trim();
         const features = document.getElementById('teacherFeat').value.trim();
         let avatar_url = document.getElementById('avatarPreview').style.display !== 'none' ? document.getElementById('avatarPreview').src : null;
+
         const file = document.getElementById('avatarInput').files[0];
         if (file) {
             const { data, error } = await _supabase.storage.from('avatars').upload(`public/${Date.now()}_${file.name}`, file, { upsert: true });
-            if (!error) avatar_url = _supabase.storage.from('avatars').getPublicUrl(data.path).data.publicUrl;
+            if (!error && data) {
+                avatar_url = _supabase.storage.from('avatars').getPublicUrl(data.path).data.publicUrl;
+            }
         }
-        const payload = { name, email, role: 'Преподаватель', specialization: spec, age: age || null, hobbies, features, avatar_url };
-        const { error } = id ? await _supabase.from('employees').update(payload).eq('id', id) : await _supabase.from('employees').insert([payload]);
-        if (error) return alert('Ошибка: ' + error.message);
+
+        const payload = {
+            name,
+            email: email || null,
+            role: 'Преподаватель',
+            specialization: spec || null,
+            age: age ? parseInt(age) : null,
+            hobbies: hobbies || null,
+            features: features || null,
+            avatar_url: avatar_url || null
+        };
+
+        const { error } = id
+            ? await _supabase.from('employees').update(payload).eq('id', id)
+            : await _supabase.from('employees').insert([payload]);
+
+        if (error) return showAlert('Ошибка: ' + error.message);
         document.getElementById('teacherModal').style.display = 'none';
         await loadTeachers();
-        if (activeTab === 'admin') renderAdminTable(); else if (activeTab === 'list') renderTeacherList();
+        if (activeTab === 'admin') renderAdminTable();
+        else if (activeTab === 'list') renderTeacherList();
     }
 
     async function deleteTeacherHandler() {
         const id = document.getElementById('teacherModal').dataset.id;
-        if (id && confirm('Удалить?')) { await deleteTeacher(id); document.getElementById('teacherModal').style.display = 'none'; }
+        if (id && confirm('Удалить преподавателя?')) {
+            await deleteTeacher(id);
+            document.getElementById('teacherModal').style.display = 'none';
+        }
     }
 
     init();
