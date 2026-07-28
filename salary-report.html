@@ -170,7 +170,9 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let employees = [], teacherSalaryData = [], managerSalaryData = [], salaryPayouts = [];
+    let currentUserEmail = null;
+    let currentUserRole = null;
+    let employees = [], teacherSalaryData = [], salaryPayouts = [];
     let worklog = {}, salaryParams = {};
     let selectedYear = new Date().getFullYear();
     let selectedMonth = new Date().getMonth() + 1;
@@ -184,6 +186,18 @@
       document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none';
     }
 
+    async function init() {
+      const { data: { session } } = await _supabase.auth.getSession();
+      if (!session) { window.location.href = 'login.html'; return; }
+      currentUserEmail = session.user.email;
+
+      // Определяем роль текущего пользователя
+      const { data: emp } = await _supabase.from('employees').select('role').eq('email', currentUserEmail).single();
+      currentUserRole = emp?.role || null;
+
+      await loadData();
+    }
+
     async function loadData() {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
       const start = `${monthStr}-01`;
@@ -191,10 +205,9 @@
       const nextY = selectedMonth === 12 ? selectedYear + 1 : selectedYear;
       const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
 
-      const [emp, ts, ms, sp, wl, spParams] = await Promise.all([
+      const [emp, ts, sp, wl, spParams] = await Promise.all([
         _supabase.from('employees').select('*'),
         _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', currentPeriod),
-        _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`),
         _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod),
         _supabase.from('worklog').select('*').gte('date', start).lt('date', end),
         _supabase.from('salary_params').select('*').eq('month', monthStr)
@@ -202,7 +215,6 @@
 
       employees = emp.data || [];
       teacherSalaryData = ts.data || [];
-      managerSalaryData = ms.data || [];
       salaryPayouts = sp.data || [];
 
       worklog = {};
@@ -214,23 +226,16 @@
       renderAll();
     }
 
-    // Рассчитывает зарплату сотрудника за выбранный период (точно)
+    // Функция расчёта зарплаты (как в schedule.html, но с учётом периода)
     function calculateSalary(emp) {
       const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
 
-      // Если есть сохранённая запись в manager_salary – приоритет
-      const saved = managerSalaryData.find(m =>
-        m.employee_name === emp.name && m.role === emp.role &&
-        m.period_start && m.period_start.startsWith(monthStr)
-      );
-      if (saved) return parseFloat(saved.total_salary) || 0;
-
-      // Иначе считаем по дням
-      let worked = 0, sales = 0;
       const isFirstHalf = currentPeriod === '1-15';
       const isSecondHalf = currentPeriod === '16-31';
 
+      let worked = 0, sales = 0;
+      // Считаем смены и продажи за выбранный период
       for (let d = 1; d <= daysInMonth; d++) {
         if (isFirstHalf && d > 15) continue;
         if (isSecondHalf && d < 16) continue;
@@ -246,7 +251,7 @@
       const params = salaryParams[emp.id] || {};
       const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
 
-      // Норма дней зависит от роли и периода
+      // Норма дней зависит от роли и параметров
       const fullNorm = emp.role === 'Менеджер'
         ? Math.round(daysInMonth * 0.5)
         : (params.norm_days || 22);
@@ -257,28 +262,34 @@
       let bonus = 0;
 
       if (emp.role === 'Менеджер') {
-        const plan = params.plan_amount || 0;
-        // План может быть на месяц – для половины берём половину плана
-        const halfPlan = currentPeriod === 'full' ? plan : plan / 2;
-        bonus = sales * ((halfPlan > 0 && sales >= halfPlan) ? 0.07 : 0.05);
-      } else if (emp.role === 'Администратор' || emp.role === 'Управляющий') {
-        // Собираем продажи менеджеров за тот же период
-        const managers = employees.filter(e => e.role === 'Менеджер');
-        let totalManagerSales = 0;
-        managers.forEach(man => {
+        // Бонус только для второй половины (16-31), считается от продаж за ВЕСЬ месяц
+        if (isSecondHalf || currentPeriod === 'full') {
+          // Собираем продажи за весь месяц для этого менеджера
+          let totalMonthSales = 0;
           for (let d = 1; d <= daysInMonth; d++) {
-            if (isFirstHalf && d > 15) continue;
-            if (isSecondHalf && d < 16) continue;
-            const rec = worklog[`${man.id}_${monthStr}-${String(d).padStart(2,'0')}`];
-            if (rec && rec.status === 'working') totalManagerSales += rec.daily_sales || 0;
+            const rec = worklog[`${emp.id}_${monthStr}-${String(d).padStart(2,'0')}`];
+            if (rec && rec.status === 'working') totalMonthSales += rec.daily_sales || 0;
           }
-        });
-        if (emp.role === 'Администратор') {
-          bonus = totalManagerSales * 0.01;
-        } else { // Управляющий
           const plan = params.plan_amount || 0;
-          const halfPlan = currentPeriod === 'full' ? plan : plan / 2;
-          bonus = (halfPlan > 0 && totalManagerSales >= halfPlan) ? totalManagerSales * 0.01 : 0;
+          bonus = totalMonthSales * ((plan > 0 && totalMonthSales >= plan) ? 0.07 : 0.05);
+        }
+      } else if (emp.role === 'Администратор' || emp.role === 'Управляющий') {
+        // Бонусы для администратора и управляющего также только во второй половине
+        if (isSecondHalf || currentPeriod === 'full') {
+          const managers = employees.filter(e => e.role === 'Менеджер');
+          let totalManagerSales = 0;
+          managers.forEach(man => {
+            for (let d = 1; d <= daysInMonth; d++) {
+              const rec = worklog[`${man.id}_${monthStr}-${String(d).padStart(2,'0')}`];
+              if (rec && rec.status === 'working') totalManagerSales += rec.daily_sales || 0;
+            }
+          });
+          if (emp.role === 'Администратор') {
+            bonus = totalManagerSales * 0.01;
+          } else { // Управляющий – 2% (по условию)
+            const plan = params.plan_amount || 0;
+            bonus = totalManagerSales * 0.02; // фиксированные 2%
+          }
         }
       }
 
@@ -287,7 +298,13 @@
 
     function getSalaryList() {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const staff = employees.filter(e => ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role));
+      // Какие роли показываем
+      let staff = employees.filter(e => ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role));
+
+      // Если пользователь не админ и не бухгалтер, показываем только себя
+      if (currentUserRole !== 'Управляющий' && currentUserRole !== 'Бухгалтер') {
+        staff = staff.filter(e => e.email === currentUserEmail);
+      }
 
       return staff.map(emp => {
         let amount = 0;
@@ -487,7 +504,7 @@
       loadData();
     });
 
-    loadData();
+    init();
   })();
 </script>
 </body>
