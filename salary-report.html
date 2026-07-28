@@ -109,6 +109,14 @@
       border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
     }
     .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
+    .info-banner {
+      background: #fef3c7;
+      border-radius: 12px;
+      padding: 0.6rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.8rem;
+      color: #92400e;
+    }
   </style>
 </head>
 <body>
@@ -135,6 +143,10 @@
       <span class="month-title" id="monthTitle"></span>
       <button id="nextMonthBtn">→</button>
     </div>
+  </div>
+
+  <div id="infoBanner" class="info-banner" style="display:none;">
+    💡 Чтобы заполнить зарплаты сотрудников, сохраните их в дашборде (вкладка «ЗП сотрудники» → «Сохранить в ведомость»).
   </div>
 
   <div class="summary" id="summaryContainer"></div>
@@ -169,11 +181,14 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const ADMIN_EMAILS = ['arturgalkin.ru@mail.ru', 'evelifetv@gmail.com'];
 
     let currentUserEmail = null;
     let currentUserRole = null;
-    let employees = [], teacherSalaryData = [], salaryPayouts = [];
-    let worklog = {}, salaryParams = {};
+    let employees = [];
+    let teacherSalaryData = [];
+    let managerSalaryData = [];
+    let salaryPayouts = [];
     let selectedYear = new Date().getFullYear();
     let selectedMonth = new Date().getMonth() + 1;
     let currentPeriod = '1-15';
@@ -186,13 +201,17 @@
       document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none';
     }
 
+    function isAdmin() {
+      return ADMIN_EMAILS.includes(currentUserEmail) || currentUserRole === 'Управляющий' || currentUserRole === 'Бухгалтер';
+    }
+
     async function init() {
       const { data: { session } } = await _supabase.auth.getSession();
       if (!session) { window.location.href = 'login.html'; return; }
       currentUserEmail = session.user.email;
 
-      // Определяем роль текущего пользователя
-      const { data: emp } = await _supabase.from('employees').select('role').eq('email', currentUserEmail).single();
+      // Узнаём роль
+      const { data: emp } = await _supabase.from('employees').select('role').eq('email', currentUserEmail).maybeSingle();
       currentUserRole = emp?.role || null;
 
       await loadData();
@@ -200,121 +219,77 @@
 
     async function loadData() {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const start = `${monthStr}-01`;
-      const nextM = selectedMonth === 12 ? 1 : selectedMonth + 1;
-      const nextY = selectedMonth === 12 ? selectedYear + 1 : selectedYear;
-      const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
 
-      const [emp, ts, sp, wl, spParams] = await Promise.all([
-        _supabase.from('employees').select('*'),
-        _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', currentPeriod),
-        _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod),
-        _supabase.from('worklog').select('*').gte('date', start).lt('date', end),
-        _supabase.from('salary_params').select('*').eq('month', monthStr)
+      // Загружаем всех сотрудников (RLS разрешит)
+      const empPromise = _supabase.from('employees').select('*');
+
+      // Данные преподавателей за период
+      const tsPromise = _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', currentPeriod);
+
+      // Данные менеджеров из manager_salary
+      const msPromise = _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`);
+
+      // Выплаты за период
+      const spPromise = _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod);
+
+      const [empResult, tsResult, msResult, spResult] = await Promise.all([
+        empPromise, tsPromise, msPromise, spPromise
       ]);
 
-      employees = emp.data || [];
-      teacherSalaryData = ts.data || [];
-      salaryPayouts = sp.data || [];
+      employees = empResult.data || [];
+      teacherSalaryData = tsResult.data || [];
+      managerSalaryData = msResult.data || [];
+      salaryPayouts = spResult.data || [];
 
-      worklog = {};
-      (wl.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
-      salaryParams = {};
-      (spParams.data || []).forEach(r => { salaryParams[r.emp_id] = r; });
+      // Показываем баннер, если manager_salary пуст
+      const infoBanner = document.getElementById('infoBanner');
+      if (isAdmin() && managerSalaryData.length === 0 && employees.some(e => ['Управляющий','Менеджер','Администратор'].includes(e.role))) {
+        infoBanner.style.display = 'block';
+      } else {
+        infoBanner.style.display = 'none';
+      }
 
       document.getElementById('monthTitle').textContent = `${monthNames[selectedMonth-1]} ${selectedYear}`;
       renderAll();
     }
 
-    // Функция расчёта зарплаты (как в schedule.html, но с учётом периода)
-    function calculateSalary(emp) {
-      const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-
-      const isFirstHalf = currentPeriod === '1-15';
-      const isSecondHalf = currentPeriod === '16-31';
-
-      let worked = 0, sales = 0;
-      // Считаем смены и продажи за выбранный период
-      for (let d = 1; d <= daysInMonth; d++) {
-        if (isFirstHalf && d > 15) continue;
-        if (isSecondHalf && d < 16) continue;
-
-        const dateStr = `${monthStr}-${String(d).padStart(2,'0')}`;
-        const rec = worklog[`${emp.id}_${dateStr}`];
-        if (!rec || rec.status !== 'working') continue;
-
-        worked++;
-        if (emp.role === 'Менеджер') sales += rec.daily_sales || 0;
-      }
-
-      const params = salaryParams[emp.id] || {};
-      const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
-
-      // Норма дней зависит от роли и параметров
-      const fullNorm = emp.role === 'Менеджер'
-        ? Math.round(daysInMonth * 0.5)
-        : (params.norm_days || 22);
-      const normDays = (currentPeriod === 'full') ? fullNorm : Math.round(fullNorm / 2);
-
-      const dailyRate = (rates[emp.role] || 0) / Math.max(normDays, 1);
-      let base = dailyRate * worked;
-      let bonus = 0;
-
-      if (emp.role === 'Менеджер') {
-        // Бонус только для второй половины (16-31), считается от продаж за ВЕСЬ месяц
-        if (isSecondHalf || currentPeriod === 'full') {
-          // Собираем продажи за весь месяц для этого менеджера
-          let totalMonthSales = 0;
-          for (let d = 1; d <= daysInMonth; d++) {
-            const rec = worklog[`${emp.id}_${monthStr}-${String(d).padStart(2,'0')}`];
-            if (rec && rec.status === 'working') totalMonthSales += rec.daily_sales || 0;
-          }
-          const plan = params.plan_amount || 0;
-          bonus = totalMonthSales * ((plan > 0 && totalMonthSales >= plan) ? 0.07 : 0.05);
-        }
-      } else if (emp.role === 'Администратор' || emp.role === 'Управляющий') {
-        // Бонусы для администратора и управляющего также только во второй половине
-        if (isSecondHalf || currentPeriod === 'full') {
-          const managers = employees.filter(e => e.role === 'Менеджер');
-          let totalManagerSales = 0;
-          managers.forEach(man => {
-            for (let d = 1; d <= daysInMonth; d++) {
-              const rec = worklog[`${man.id}_${monthStr}-${String(d).padStart(2,'0')}`];
-              if (rec && rec.status === 'working') totalManagerSales += rec.daily_sales || 0;
-            }
-          });
-          if (emp.role === 'Администратор') {
-            bonus = totalManagerSales * 0.01;
-          } else { // Управляющий – 2% (по условию)
-            const plan = params.plan_amount || 0;
-            bonus = totalManagerSales * 0.02; // фиксированные 2%
-          }
-        }
-      }
-
-      return Math.round(base + bonus);
-    }
-
     function getSalaryList() {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      // Какие роли показываем
-      let staff = employees.filter(e => ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role));
 
-      // Если пользователь не админ и не бухгалтер, показываем только себя
-      if (currentUserRole !== 'Управляющий' && currentUserRole !== 'Бухгалтер') {
+      // Какие роли показываем
+      let staff = employees.filter(e =>
+        ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role)
+      );
+
+      // Если пользователь не админ — показываем только его строку
+      if (!isAdmin()) {
         staff = staff.filter(e => e.email === currentUserEmail);
       }
 
       return staff.map(emp => {
         let amount = 0;
+
         if (emp.role === 'Преподаватель') {
-          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === currentPeriod);
-          amount = teacherRows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+          // Берём сумму из teacher_salary
+          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name);
+          amount = teacherRows.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
         } else {
-          amount = calculateSalary(emp);
+          // Берём сумму из manager_salary (сохранённую админом)
+          const record = managerSalaryData.find(m =>
+            m.employee_name === emp.name &&
+            m.role === emp.role &&
+            m.period_start &&
+            m.period_start.startsWith(monthStr)
+          );
+          amount = record ? (parseFloat(record.total_salary) || 0) : 0;
         }
-        const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr && p.period === currentPeriod);
+
+        const payout = salaryPayouts.find(p =>
+          p.employee_id === emp.id &&
+          p.month === monthStr &&
+          p.period === currentPeriod
+        );
+
         return {
           employee: emp,
           amount,
@@ -328,19 +303,34 @@
       const list = getSalaryList();
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
       let filtered = list;
-      if (currentRoleFilter !== 'all') {
+
+      // Фильтр по роли (только для админа)
+      if (isAdmin() && currentRoleFilter !== 'all') {
         filtered = filtered.filter(item => item.employee.role === currentRoleFilter);
       }
+
       if (searchQuery) {
         filtered = filtered.filter(item => item.employee.name.toLowerCase().includes(searchQuery));
       }
 
       const totalToPay = filtered.reduce((s, i) => s + i.amount, 0);
       const paidAmount = filtered.filter(i => i.paid).reduce((s, i) => s + i.amount, 0);
+
       document.getElementById('summaryContainer').innerHTML = `
-        <div class="summary-item"><span class="summary-label">К выплате (${currentPeriod === '1-15' ? '1–15' : '16–31'})</span> <span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
-        <div class="summary-item"><span class="summary-label">Выплачено</span> <span class="summary-value">${paidAmount.toLocaleString()} ₽</span></div>
-        <div class="summary-item"><span class="summary-label">Остаток</span> <span class="summary-value" style="color:${totalToPay-paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">${(totalToPay-paidAmount).toLocaleString()} ₽</span></div>
+        <div class="summary-item">
+          <span class="summary-label">К выплате (${currentPeriod === '1-15' ? '1–15' : '16–31'})</span>
+          <span class="summary-value">${totalToPay.toLocaleString()} ₽</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Выплачено</span>
+          <span class="summary-value">${paidAmount.toLocaleString()} ₽</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Остаток</span>
+          <span class="summary-value" style="color:${totalToPay - paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">
+            ${(totalToPay - paidAmount).toLocaleString()} ₽
+          </span>
+        </div>
       `;
 
       document.getElementById('contentContainer').innerHTML = filtered.map(item => {
@@ -352,7 +342,7 @@
             <div class="salary-info">
               <div class="salary-name">${emp.name} (${emp.role})</div>
               <div class="salary-amount">${item.amount.toLocaleString()} ₽</div>
-              <div class="salary-status">${paid ? 'Выплачено' : 'Не выплачено'}</div>
+              <div class="salary-status">${paid ? '✅ Выплачено' : '❌ Не выплачено'}</div>
               ${payout ? `<div style="font-size:0.75rem; color:var(--text-secondary);">Тел: ${payout.phone || '—'} | Банк: ${payout.bank || '—'}</div>` : ''}
             </div>
             <div class="salary-actions">
@@ -382,7 +372,11 @@
 
     function openSalaryModal(emp, amount = 0, markPaid = false) {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr && p.period === currentPeriod);
+      const existing = salaryPayouts.find(p =>
+        p.employee_id === emp.id &&
+        p.month === monthStr &&
+        p.period === currentPeriod
+      );
       document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role})`;
       document.getElementById('salaryPhone').value = existing?.phone || '';
       document.getElementById('salaryBank').value = existing?.bank || '';
@@ -430,15 +424,17 @@
 
       try {
         const { data: existing } = await _supabase.from('salary_payouts')
-          .select('id').eq('employee_id', employeeId).eq('period', currentPeriod).eq('month', monthStr).single();
+          .select('id')
+          .eq('employee_id', employeeId)
+          .eq('period', currentPeriod)
+          .eq('month', monthStr)
+          .maybeSingle();
 
         let error;
         if (existing) {
-          const { error: updateError } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id);
-          error = updateError;
+          ({ error } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id));
         } else {
-          const { error: insertError } = await _supabase.from('salary_payouts').insert(payload);
-          error = insertError;
+          ({ error } = await _supabase.from('salary_payouts').insert(payload));
         }
 
         if (error) {
@@ -450,21 +446,26 @@
           return;
         }
         modal.style.display = 'none';
-        loadData();
+        await loadData();
       } catch (err) {
         showAlert('Не удалось сохранить. Попробуйте позже.');
         console.error(err);
       }
     }
 
-    document.getElementById('cancelSalaryBtn').addEventListener('click', () => { document.getElementById('salaryModal').style.display = 'none'; });
+    document.getElementById('cancelSalaryBtn').addEventListener('click', () => {
+      document.getElementById('salaryModal').style.display = 'none';
+    });
 
     function exportExcel() {
       const list = getSalaryList();
       const rows = list.map(item => ({
-        'Сотрудник': item.employee.name, 'Роль': item.employee.role, 'Сумма': item.amount,
+        'Сотрудник': item.employee.name,
+        'Роль': item.employee.role,
+        'Сумма': item.amount,
         'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
-        'Телефон': item.payoutData?.phone || '', 'Банк': item.payoutData?.bank || ''
+        'Телефон': item.payoutData?.phone || '',
+        'Банк': item.payoutData?.bank || ''
       }));
       rows.push({ 'Сотрудник': 'ИТОГО', 'Сумма': list.reduce((s, i) => s + i.amount, 0) });
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -475,6 +476,7 @@
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
 
+    // Фильтры периода
     document.querySelectorAll('.filter-btn[data-period]').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn[data-period]').forEach(b => b.classList.remove('active'));
@@ -484,6 +486,7 @@
       });
     });
 
+    // Фильтры ролей
     document.querySelectorAll('.filter-btn[data-role]').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn[data-role]').forEach(b => b.classList.remove('active'));
@@ -496,11 +499,14 @@
     document.getElementById('searchInput').addEventListener('input', renderAll);
 
     document.getElementById('prevMonthBtn').addEventListener('click', () => {
-      selectedMonth--; if (selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
+      selectedMonth--;
+      if (selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
       loadData();
     });
+
     document.getElementById('nextMonthBtn').addEventListener('click', () => {
-      selectedMonth++; if (selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
+      selectedMonth++;
+      if (selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
       loadData();
     });
 
