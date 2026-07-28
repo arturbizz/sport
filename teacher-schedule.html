@@ -33,118 +33,53 @@
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
-
         body {
-            font-family: 'Inter', system-ui, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #fef9f0 0%, #f0f7f5 100%);
             color: var(--text); min-height: 100vh; padding: 1.5rem;
             -webkit-font-smoothing: antialiased; cursor: default; caret-color: transparent;
         }
-
         input, textarea, select { cursor: text; caret-color: auto; }
-
-        .container {
-            width: 100%; max-width: 1340px; margin: 0 auto;
-            background: var(--surface); backdrop-filter: blur(24px);
-            border-radius: var(--radius-lg); padding: 2.5rem;
-            box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.6);
-        }
-
+        .container { width: 100%; max-width: 1340px; margin: 0 auto; background: var(--surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.6); }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
-
-        .back-link {
-            color: var(--violet); text-decoration: none; font-weight: 600; font-size: 0.9rem;
-            transition: var(--transition); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm);
-            background: rgba(124,92,231,0.08); display: inline-flex; align-items: center; gap: 0.5rem;
-        }
-
+        .back-link { color: var(--violet); text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: var(--transition); padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); background: rgba(124,92,231,0.08); display: inline-flex; align-items: center; gap: 0.5rem; }
         .back-link:hover { background: rgba(124,92,231,0.15); color: var(--violet-dark); }
+        h1 { font-size: 2.2rem; font-weight: 800; background: linear-gradient(135deg, var(--violet), var(--gold), var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.02em; }
 
-        h1 {
-            font-size: 2.2rem; font-weight: 800;
-            background: linear-gradient(135deg, var(--violet), var(--gold), var(--teal));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            letter-spacing: -0.02em;
-        }
-
-        /* Поиск доступных преподавателей */
-        .find-teacher-box {
-            background: linear-gradient(135deg, rgba(124,92,231,0.04), rgba(15,185,177,0.04));
-            border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;
-            border: 1px solid rgba(124,92,231,0.08); backdrop-filter: blur(10px);
-        }
-
+        /* Поиск */
+        .find-teacher-box { background: linear-gradient(135deg, rgba(124,92,231,0.04), rgba(15,185,177,0.04)); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; border: 1px solid rgba(124,92,231,0.08); backdrop-filter: blur(10px); }
         .find-teacher-box h3 { font-weight: 600; margin-bottom: 1rem; color: var(--violet); display: flex; align-items: center; gap: 0.5rem; }
-
         .find-row { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: flex-end; }
         .find-row > * { flex: 1; min-width: 140px; }
         .find-results { margin-top: 1.2rem; display: flex; flex-wrap: wrap; gap: 0.6rem; }
-
-        .found-teacher {
-            background: white; border-radius: 12px; padding: 0.7rem 1.2rem;
-            border: 1px solid rgba(124,92,231,0.15); display: flex; align-items: center; gap: 0.8rem;
-            font-weight: 500; transition: all var(--transition); box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-        }
-
+        .found-teacher { background: white; border-radius: 12px; padding: 0.7rem 1.2rem; border: 1px solid rgba(124,92,231,0.15); display: flex; align-items: center; gap: 0.8rem; font-weight: 500; transition: all var(--transition); box-shadow: 0 2px 6px rgba(0,0,0,0.02); }
         .found-teacher:hover { border-color: var(--violet); box-shadow: 0 4px 12px rgba(124,92,231,0.08); }
-        .found-teacher .status-ok { color: var(--green); font-weight: 600; }
-        .found-teacher .status-maybe { color: var(--gold); font-weight: 600; }
+        .found-teacher .status-ok { color: var(--green); font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
+        .found-teacher .status-maybe { color: var(--gold); font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
 
-        /* Вкладки */
+        /* Табы */
         .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: rgba(0,0,0,0.02); padding: 0.3rem; border-radius: 16px; width: fit-content; }
-        .tab {
-            padding: 0.7rem 1.8rem; border-radius: 14px; font-weight: 600; cursor: pointer;
-            transition: all var(--transition); background: transparent; border: none;
-            color: var(--text-light); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem;
-        }
+        .tab { padding: 0.7rem 1.8rem; border-radius: 14px; font-weight: 600; cursor: pointer; transition: all var(--transition); background: transparent; border: none; color: var(--text-light); font-size: 0.95rem; display: flex; align-items: center; gap: 0.5rem; }
         .tab.active { background: white; color: var(--violet); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .tab:hover:not(.active) { color: var(--violet); }
 
-        /* Кнопки */
-        .btn {
-            padding: 0.6rem 1.4rem; border-radius: 12px; font-weight: 600; cursor: pointer;
-            font-size: 0.88rem; transition: all var(--transition); display: inline-flex; align-items: center; gap: 0.4rem;
-            background: white; color: var(--violet); border: 1px solid rgba(124,92,231,0.2);
-            box-shadow: 0 2px 6px rgba(124,92,231,0.04); letter-spacing: 0.01em; white-space: nowrap;
-        }
+        .btn { padding: 0.6rem 1.4rem; border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 0.88rem; transition: all var(--transition); display: inline-flex; align-items: center; gap: 0.4rem; background: white; color: var(--violet); border: 1px solid rgba(124,92,231,0.2); box-shadow: 0 2px 6px rgba(124,92,231,0.04); letter-spacing: 0.01em; white-space: nowrap; }
         .btn:hover { background: linear-gradient(135deg, var(--violet), var(--teal)); color: white; box-shadow: 0 8px 20px rgba(124,92,231,0.2); transform: translateY(-1px); border-color: transparent; }
         .btn-primary { background: linear-gradient(135deg, var(--violet), #6366f1); color: white; border-color: transparent; }
-        .btn-icon {
-            width: 36px; height: 36px; padding: 0; border-radius: 10px; background: white;
-            border: 1px solid #eee; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-            transition: all var(--transition);
-        }
+        .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 10px; background: white; border: 1px solid #eee; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all var(--transition); }
         .btn-icon:hover { background: #f4f0ff; border-color: var(--violet); transform: translateY(-1px); }
         .btn-icon.danger:hover { background: #fee2e2; border-color: #dc2626; }
 
-        /* Панель инструментов */
         .toolbar { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; }
-        .search-input {
-            padding: 0.6rem 1.2rem; border-radius: 12px; border: 1px solid rgba(124,92,231,0.12);
-            background: white; font-size: 0.9rem; width: 220px; transition: var(--transition);
-        }
+        .search-input { padding: 0.6rem 1.2rem; border-radius: 12px; border: 1px solid rgba(124,92,231,0.12); background: white; font-size: 0.9rem; width: 220px; transition: var(--transition); }
         .search-input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
-        .teacher-select {
-            padding: 0.6rem 2.5rem 0.6rem 1.2rem; border-radius: 12px;
-            border: 1px solid rgba(124,92,231,0.12); background: white;
-            font-size: 0.9rem; font-weight: 500; cursor: pointer; appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L1 3h10z' fill='%23636e72'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 0.8rem center;
-            flex: 1; max-width: 320px; transition: var(--transition);
-        }
+        .teacher-select { padding: 0.6rem 2.5rem 0.6rem 1.2rem; border-radius: 12px; border: 1px solid rgba(124,92,231,0.12); background: white; font-size: 0.9rem; font-weight: 500; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L1 3h10z' fill='%23636e72'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.8rem center; flex: 1; max-width: 320px; transition: var(--transition); }
         .teacher-select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         .month-nav { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
-        .month-nav button {
-            background: white; border: 1px solid rgba(124,92,231,0.12); padding: 0.5rem 1rem;
-            border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: var(--transition);
-        }
+        .month-nav button { background: white; border: 1px solid rgba(124,92,231,0.12); padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: var(--transition); }
         .month-nav button:hover { border-color: var(--violet); color: var(--violet); }
-        .month-title {
-            min-width: 150px; text-align: center; font-weight: 600; background: white;
-            padding: 0.5rem 1.2rem; border-radius: 10px; border: 1px solid rgba(124,92,231,0.12);
-        }
+        .month-title { min-width: 150px; text-align: center; font-weight: 600; background: white; padding: 0.5rem 1.2rem; border-radius: 10px; border: 1px solid rgba(124,92,231,0.12); }
 
-        /* Календарь */
         .calendar-container { overflow-x: auto; background: white; border-radius: 16px; border: 1px solid rgba(0,0,0,0.04); margin-top: 1rem; box-shadow: var(--shadow-xs); }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { text-align: center; padding: 0.5rem 0.2rem; font-size: 0.82rem; border: 1px solid #f5f3ff; height: 48px; min-width: 40px; }
@@ -159,23 +94,16 @@
         .status-dot.unavailable { background: var(--rose); box-shadow: 0 0 6px rgba(255,140,148,0.5); }
         .status-dot.by_agreement { background: var(--gold); box-shadow: 0 0 6px rgba(249,202,36,0.5); }
         .slot-info { font-size: 0.6rem; color: var(--text-light); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .slot-features { display: flex; gap: 2px; margin-top: 1px; }
+        .slot-features svg { width: 12px; height: 12px; }
 
-        /* Карточки преподавателей */
         .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
-        .teacher-card {
-            background: white; border-radius: 20px; padding: 1.5rem;
-            border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-            transition: all var(--transition); display: flex; flex-direction: column; gap: 0.8rem;
-        }
+        .teacher-card { background: white; border-radius: 20px; padding: 1.5rem; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 2px 8px rgba(0,0,0,0.02); transition: all var(--transition); display: flex; flex-direction: column; gap: 0.8rem; position: relative; }
         .teacher-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px rgba(0,0,0,0.06); }
+        .senior-crown { position: absolute; top: -8px; right: -8px; }
         .teacher-header { display: flex; align-items: center; gap: 1rem; }
-        .teacher-avatar {
-            width: 56px; height: 56px; border-radius: 16px;
-            background: linear-gradient(135deg, var(--violet), var(--teal));
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: 700; font-size: 1.5rem; object-fit: cover; flex-shrink: 0;
-        }
-        .teacher-name { font-weight: 700; font-size: 1.15rem; }
+        .teacher-avatar { width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, var(--violet), var(--teal)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem; object-fit: cover; flex-shrink: 0; }
+        .teacher-name { font-weight: 700; font-size: 1.15rem; display: flex; align-items: center; gap: 0.3rem; }
         .teacher-spec { font-size: 0.8rem; color: var(--violet); font-weight: 600; margin-top: 0.15rem; }
         .teacher-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
         .meta-tag { background: rgba(124,92,231,0.05); padding: 0.25rem 0.6rem; border-radius: 8px; font-size: 0.75rem; color: var(--text-light); }
@@ -183,24 +111,19 @@
         .subject-badge { background: rgba(124,92,231,0.07); color: var(--violet); padding: 0.25rem 0.7rem; border-radius: 8px; font-size: 0.75rem; font-weight: 600; }
         .card-actions { display: flex; gap: 0.3rem; margin-top: auto; justify-content: flex-end; }
 
-        /* Модальные окна */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal { background: white; border-radius: 24px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: var(--shadow-lg); animation: slideUp 0.3s ease; max-height: 85vh; overflow-y: auto; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         input, textarea, select { width: 100%; padding: 0.6rem 0.9rem; margin: 0.35rem 0; border: 1px solid #e8e8e8; border-radius: 10px; font-size: 0.9rem; font-family: inherit; background: white; transition: var(--transition); }
         input:focus, textarea:focus, select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         .row { display: flex; gap: 0.5rem; } .row > * { flex: 1; }
-        .time-quick-btns { display: flex; gap: 0.3rem; flex-wrap: wrap; margin: 0.5rem 0; }
-        .time-quick-btn { padding: 0.3rem 0.8rem; border-radius: 20px; border: 1px solid #e0e0e0; background: white; font-size: 0.8rem; cursor: pointer; transition: var(--transition); }
-        .time-quick-btn:hover { background: var(--violet); color: white; border-color: var(--violet); }
+        .feature-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
+        .feature-tag { display: flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem; border-radius: 20px; border: 1px solid #e0e0e0; background: white; font-size: 0.8rem; cursor: pointer; transition: var(--transition); }
+        .feature-tag.active { background: var(--violet); color: white; border-color: var(--violet); }
+        .feature-tag svg { width: 14px; height: 14px; }
         .avatar-upload { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
         .avatar-preview { width: 56px; height: 56px; border-radius: 14px; background: #f1f5f9; object-fit: cover; border: 2px dashed #ddd; flex-shrink: 0; }
         .empty-state { text-align: center; padding: 2.5rem; color: var(--text-light); }
-
-        .icon-svg { display: inline-block; vertical-align: middle; }
-        .icon-xs { width: 14px; height: 14px; }
-        .icon-sm { width: 18px; height: 18px; }
-        .icon-md { width: 24px; height: 24px; }
 
         @media (max-width: 768px) { body { padding: 0.5rem; } .container { padding: 1.2rem; } .teacher-grid { grid-template-columns: 1fr; } }
     </style>
@@ -209,7 +132,7 @@
 <div class="container">
     <div class="header">
         <a href="index.html" class="back-link">
-            <svg class="icon-svg icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             На главную
         </a>
         <h1>Планировщик</h1>
@@ -218,11 +141,11 @@
     <!-- Поиск доступных преподавателей -->
     <div class="find-teacher-box">
         <h3>
-            <svg class="icon-svg icon-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Найти доступного преподавателя
         </h3>
         <div class="find-row">
-            <input type="date" id="findDate" title="Дата">
+            <input type="date" id="findDate">
             <select id="findTimeFrom"><option value="">Время с</option></select>
             <select id="findTimeTo"><option value="">Время до</option></select>
             <select id="findSubject"><option value="">Любой предмет</option></select>
@@ -233,11 +156,11 @@
 
     <div class="tabs" id="viewTabs">
         <button class="tab active" data-tab="calendar">
-            <svg class="icon-svg icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Календарь
         </button>
         <button class="tab" data-tab="list">
-            <svg class="icon-svg icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Преподаватели
         </button>
     </div>
@@ -258,7 +181,7 @@
     <div id="listPanel" style="display:none;">
         <div class="toolbar">
             <input type="text" class="search-input" id="listSearch" placeholder="Поиск...">
-            <button class="btn btn-primary" id="addTeacherBtn">+ Добавить преподавателя</button>
+            <button class="btn btn-primary" id="addTeacherBtn">Добавить преподавателя</button>
         </div>
         <div id="teacherListContainer" class="teacher-grid"></div>
     </div>
@@ -278,12 +201,19 @@
         <div class="time-quick-btns">
             <span class="time-quick-btn" data-range="11:00-21:00">Весь день (11–21)</span>
         </div>
+        <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Особенности</label>
+        <div class="feature-tags" id="settingFeaturesTags">
+            <span class="feature-tag" data-feature="no_kids"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg> 18+</span>
+            <span class="feature-tag" data-feature="weekends_only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg> Только Сб/Вс</span>
+            <span class="feature-tag" data-feature="online"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Онлайн</span>
+            <span class="feature-tag" data-feature="travel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Выезд</span>
+        </div>
+        <label style="font-size:0.85rem; font-weight:600; margin-top:0.5rem;">Примечание</label>
+        <textarea id="settingNote" rows="3" placeholder="Подробности..."></textarea>
         <div class="checkbox-row" style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0;">
             <input type="checkbox" id="settingIsOverride" style="width:auto;">
-            <label for="settingIsOverride" style="font-size:0.9rem;">Применить ко всем дням недели (шаблон)</label>
+            <label for="settingIsOverride" style="font-size:0.9rem;">Шаблон для дня недели</label>
         </div>
-        <textarea id="settingNote" rows="2" placeholder="Примечание"></textarea>
-        <input type="text" id="settingFeatures" placeholder="Особенности">
         <div style="display:flex;gap:0.5rem;margin-top:1rem;">
             <button class="btn btn-primary" id="saveSettingBtn">Сохранить</button>
             <button class="btn" id="deleteSettingBtn" style="display:none;">Удалить</button>
@@ -307,6 +237,13 @@
         <input id="teacherSpec" placeholder="Специализация (эмодзи через пробел)">
         <div class="row"><input type="number" id="teacherAge" placeholder="Возраст" min="18" max="99"><input id="teacherHobbies" placeholder="Увлечения"></div>
         <textarea id="teacherFeat" rows="2" placeholder="Особенности работы"></textarea>
+        <div class="checkbox-row" style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0;">
+            <input type="checkbox" id="teacherSenior" style="width:auto;">
+            <label for="teacherSenior" style="font-size:0.9rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l3 12h14l3-12-10 4-10-4z"/><circle cx="12" cy="20" r="2"/></svg>
+                Старший преподаватель
+            </label>
+        </div>
         <div style="display:flex;gap:0.5rem;margin-top:1rem;">
             <button class="btn btn-primary" id="saveTeacherBtn">Сохранить</button>
             <button class="btn" id="deleteTeacherBtn" style="display:none;">Удалить</button>
@@ -320,13 +257,27 @@
         const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
         const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         const ADMIN_EMAIL = 'arturgalkin.ru@mail.ru';
-        let currentUserEmail = null;
-        let isAdminUser = false;
+        let currentUserEmail = null, isAdminUser = false;
         let teachers = [], settings = [], overrides = [], allOverrides = [], allSettings = [];
         let currentYear, currentMonth, selectedTeacherId = '';
         let activeTab = 'calendar';
+
+        // Иконки особенностей (SVG)
+        const FEATURE_ICONS = {
+            no_kids: '<svg viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="8" x2="16" y2="16"/></svg>',
+            weekends_only: '<svg viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>',
+            online: '<svg viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+            travel: '<svg viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'
+        };
+
+        // Иконка короны (SVG)
+        const CROWN_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f1c40f" stroke-width="2"><path d="M2 4l3 12h14l3-12-10 4-10-4z"/><circle cx="12" cy="20" r="2"/></svg>';
+
+        // Иконка галочки (SVG)
+        const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        // Иконка вопроса (SVG)
+        const QUESTION_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
 
         function showAlert(msg) { alert(msg); }
 
@@ -335,12 +286,7 @@
             if (!session) { window.location.href = 'login.html'; return; }
             currentUserEmail = session.user.email;
             isAdminUser = currentUserEmail === ADMIN_EMAIL;
-
-            // Скрываем кнопку "Добавить преподавателя" для не-админов
-            if (!isAdminUser) {
-                const addBtn = document.getElementById('addTeacherBtn');
-                if (addBtn) addBtn.style.display = 'none';
-            }
+            if (!isAdminUser) document.getElementById('addTeacherBtn').style.display = 'none';
 
             const now = new Date(); currentYear = now.getFullYear(); currentMonth = now.getMonth() + 1;
             await loadTeachers();
@@ -411,37 +357,25 @@
             const timeTo = document.getElementById('findTimeTo').value;
             const subject = document.getElementById('findSubject').value;
             if (!date) return showAlert('Выберите дату');
-
             await loadAllAvailability();
             const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
             const { data: salaries } = await _supabase.from('teacher_salary').select('*').eq('month', monthStr);
-
             const results = teachers.map(t => {
                 const availability = isTeacherAvailable(t.id, date, timeFrom, timeTo);
                 const subs = salaries ? [...new Set(salaries.filter(s => s.teacher_name === t.name).map(s => s.subject))] : [];
                 const matchesSubject = !subject || subs.some(s => s === subject) || (t.specialization || '').includes(subject);
                 return { teacher: t, availability, matchesSubject, subjects: subs };
             }).filter(r => r.availability !== false && r.matchesSubject)
-              .sort((a, b) => {
-                  if (a.availability === true && b.availability !== true) return -1;
-                  if (b.availability === true && a.availability !== true) return 1;
-                  return 0;
-              });
-
+              .sort((a, b) => (a.availability === true ? -1 : 1));
             const container = document.getElementById('findResults');
             if (!results.length) {
-                container.innerHTML = '<div style="color:var(--text-light);padding:0.5rem;">Нет доступных преподавателей</div>';
+                container.innerHTML = '<div style="color:var(--text-light);">Нет доступных</div>';
                 return;
             }
-
             container.innerHTML = results.map(r => {
                 const statusClass = r.availability === true ? 'status-ok' : 'status-maybe';
-                const statusText = r.availability === true ? '✓ Доступен' : '? Уточнить';
-                return `<div class="found-teacher">
-                    <span class="${statusClass}">${statusText}</span>
-                    <span>${r.teacher.specialization || ''} ${r.teacher.name}</span>
-                    <span style="font-size:0.8rem;color:var(--text-light);">${r.subjects.join(', ') || '—'}</span>
-                </div>`;
+                const statusText = r.availability === true ? `${CHECK_ICON} Доступен` : `${QUESTION_ICON} Уточнить`;
+                return `<div class="found-teacher"><span class="${statusClass}">${statusText}</span><span>${r.teacher.specialization||''} ${r.teacher.name}</span><span style="font-size:0.8rem;color:var(--text-light);">${r.subjects.join(', ')||'—'}</span></div>`;
             }).join('');
         }
 
@@ -458,43 +392,41 @@
             document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
             document.getElementById('saveSettingBtn').addEventListener('click', saveSetting);
             document.getElementById('deleteSettingBtn').addEventListener('click', deleteSetting);
-            document.getElementById('cancelSettingBtn').addEventListener('click', () => document.getElementById('settingModal').style.display = 'none');
+            document.getElementById('cancelSettingBtn').addEventListener('click', () => document.getElementById('settingModal').style.display='none');
             document.getElementById('saveTeacherBtn').addEventListener('click', saveTeacher);
             document.getElementById('deleteTeacherBtn').addEventListener('click', deleteTeacherHandler);
-            document.getElementById('cancelTeacherBtn').addEventListener('click', () => document.getElementById('teacherModal').style.display = 'none');
+            document.getElementById('cancelTeacherBtn').addEventListener('click', () => document.getElementById('teacherModal').style.display='none');
             document.getElementById('findBtn').addEventListener('click', findAvailableTeachers);
-
-            document.querySelectorAll('.time-quick-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const [s, e] = btn.dataset.range.split('-');
-                    document.getElementById('settingStartTime').value = s;
-                    document.getElementById('settingEndTime').value = e;
-                });
-            });
-
-            document.querySelectorAll('.modal-overlay').forEach(ov => {
-                ov.addEventListener('click', e => { if (e.target === ov) ov.style.display = 'none'; });
-            });
+            document.querySelectorAll('.time-quick-btn').forEach(btn => btn.addEventListener('click', () => {
+                const [s,e] = btn.dataset.range.split('-');
+                document.getElementById('settingStartTime').value = s;
+                document.getElementById('settingEndTime').value = e;
+            }));
+            document.querySelectorAll('.feature-tag').forEach(tag => tag.addEventListener('click', () => tag.classList.toggle('active')));
+            document.querySelectorAll('.modal-overlay').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.style.display='none'; }));
         }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
             activeTab = tab;
-            document.getElementById('calendarPanel').style.display = tab === 'calendar' ? 'block' : 'none';
-            document.getElementById('listPanel').style.display = tab === 'list' ? 'block' : 'none';
-            if (tab === 'list') renderTeacherList();
+            document.getElementById('calendarPanel').style.display = tab==='calendar'?'block':'none';
+            document.getElementById('listPanel').style.display = tab==='list'?'block':'none';
+            if (tab==='list') renderTeacherList();
         }
 
         async function loadTeachers() {
-            const { data } = await _supabase.from('employees').select('*').eq('role', 'Преподаватель').order('name');
+            const { data } = await _supabase.from('employees').select('*').eq('role','Преподаватель').order('name');
             teachers = data || [];
             populateSelect(teachers);
         }
 
         function populateSelect(list) {
             const sel = document.getElementById('teacherSelect');
-            sel.innerHTML = '<option value="">— Выберите преподавателя —</option>' + list.map(t => `<option value="${t.id}">${t.specialization || ''} ${t.name}</option>`).join('');
+            sel.innerHTML = '<option value="">— Выберите преподавателя —</option>' + list.map(t => {
+                const crown = t.is_senior ? CROWN_ICON : '';
+                return `<option value="${t.id}">${crown} ${t.specialization||''} ${t.name}</option>`;
+            }).join('');
             sel.value = selectedTeacherId || '';
         }
 
@@ -503,7 +435,7 @@
         async function onSelectTeacher(e) {
             selectedTeacherId = e.target.value;
             if (selectedTeacherId) { await Promise.all([loadSettings(), loadOverrides()]); }
-            else { settings = []; overrides = []; }
+            else { settings=[]; overrides=[]; }
             renderCalendar();
         }
 
@@ -515,22 +447,28 @@
 
         async function loadOverrides() {
             if (!selectedTeacherId) return;
-            const start = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-            const end = new Date(currentYear, currentMonth, 0).toISOString().slice(0, 10);
+            const start = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+            const end = new Date(currentYear, currentMonth, 0).toISOString().slice(0,10);
             const { data } = await _supabase.from('teacher_unavailability').select('*').eq('teacher_id', selectedTeacherId).gte('date', start).lte('date', end);
             overrides = data || [];
         }
 
         function changeMonth(d) {
             currentMonth += d;
-            if (currentMonth < 1) { currentMonth = 12; currentYear--; }
-            else if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+            if (currentMonth<1) { currentMonth=12; currentYear--; }
+            else if (currentMonth>12) { currentMonth=1; currentYear++; }
             renderMonthTitle();
             if (selectedTeacherId) { loadOverrides().then(renderCalendar); } else { renderCalendar(); }
         }
 
         function renderMonthTitle() {
-            document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+            document.getElementById('monthTitle').textContent = new Date(currentYear, currentMonth-1, 1).toLocaleDateString('ru', { month:'long', year:'numeric' });
+        }
+
+        function getFeatureIcons(featuresStr) {
+            if (!featuresStr) return '';
+            const features = featuresStr.split(',').map(f => f.trim());
+            return features.map(f => FEATURE_ICONS[f] || '').join('');
         }
 
         function renderCalendar() {
@@ -538,11 +476,11 @@
             if (!selectedTeacherId) { c.innerHTML = '<div class="empty-state">Выберите преподавателя</div>'; return; }
             const dim = new Date(currentYear, currentMonth, 0).getDate();
             let h = '<table><thead><tr><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th><th>Сб</th><th>Вс</th></tr></thead><tbody><tr>';
-            const fd = new Date(currentYear, currentMonth - 1, 1).getDay();
-            const off = fd === 0 ? 6 : fd - 1;
-            for (let i = 0; i < off; i++) h += '<td></td>';
-            for (let d = 1; d <= dim; d++) {
-                const ds = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const fd = new Date(currentYear, currentMonth-1, 1).getDay();
+            const off = fd===0?6:fd-1;
+            for (let i=0; i<off; i++) h+='<td></td>';
+            for (let d=1; d<=dim; d++) {
+                const ds = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const st = getDayStatus(ds);
                 const type = st?.type || '';
                 h += `<td class="day-cell ${type}" data-date="${ds}"><strong>${d}</strong>`;
@@ -550,33 +488,42 @@
                     h += `<div style="margin-top:2px;"><span class="status-dot ${type}"></span>`;
                     if (st.start_time) h += `<span class="slot-info">${st.start_time.slice(0,5)}-${st.end_time?.slice(0,5)||''}</span>`;
                     h += `</div>`;
-                    if (st.note) h += `<div class="slot-info">${st.note.substring(0, 15)}</div>`;
+                    const featuresHtml = getFeatureIcons(st.features);
+                    if (featuresHtml) h += `<div class="slot-features">${featuresHtml}</div>`;
+                    if (st.note) h += `<div class="slot-info" title="${st.note}">${st.note.substring(0,20)}</div>`;
                 }
                 h += '</td>';
-                if ((off + d) % 7 === 0) h += '</tr><tr>';
+                if ((off+d)%7===0) h+='</tr><tr>';
             }
-            h += '</tr></tbody></table>';
+            h+='</tr></tbody></table>';
             c.innerHTML = h;
             c.querySelectorAll('.day-cell').forEach(cell => cell.addEventListener('click', () => openSettingModal(cell.dataset.date)));
         }
 
         function getDayStatus(ds) {
-            const ov = overrides.find(o => o.date === ds);
-            if (ov) return { ...ov, source: 'override' };
+            const ov = overrides.find(o => o.date===ds);
+            if (ov) return { ...ov, source:'override' };
             const dow = new Date(ds).getDay();
-            const se = settings.find(s => s.day_of_week === dow);
-            return se ? { ...se, source: 'setting' } : null;
+            const se = settings.find(s => s.day_of_week===dow);
+            return se ? { ...se, source:'setting' } : null;
         }
 
-        function openSettingModal(ds, ex = null) {
+        function openSettingModal(ds, ex=null) {
             document.getElementById('settingDayInfo').textContent = `Дата: ${ds}`;
             document.getElementById('settingType').value = ex?.type || 'available';
             document.getElementById('settingDateFrom').value = ds;
             document.getElementById('settingDateTo').value = ds;
-            document.getElementById('settingStartTime').value = ex?.start_time?.slice(0, 5) || '11:00';
-            document.getElementById('settingEndTime').value = ex?.end_time?.slice(0, 5) || '21:00';
+            document.getElementById('settingStartTime').value = ex?.start_time?.slice(0,5) || '11:00';
+            document.getElementById('settingEndTime').value = ex?.end_time?.slice(0,5) || '21:00';
             document.getElementById('settingNote').value = ex?.note || '';
-            document.getElementById('settingFeatures').value = ex?.features || '';
+            document.querySelectorAll('#settingFeaturesTags .feature-tag').forEach(tag => tag.classList.remove('active'));
+            if (ex?.features) {
+                const feats = ex.features.split(',').map(f => f.trim());
+                feats.forEach(f => {
+                    const tag = document.querySelector(`#settingFeaturesTags .feature-tag[data-feature="${f}"]`);
+                    if (tag) tag.classList.add('active');
+                });
+            }
             document.getElementById('deleteSettingBtn').style.display = ex ? 'inline-flex' : 'none';
             document.getElementById('settingModal').dataset.editId = ex?.id || '';
             document.getElementById('settingModal').dataset.source = ex?.source || '';
@@ -592,14 +539,14 @@
             const startTime = document.getElementById('settingStartTime').value;
             const endTime = document.getElementById('settingEndTime').value;
             const note = document.getElementById('settingNote').value.trim();
-            const features = document.getElementById('settingFeatures').value.trim();
+            const selectedFeatures = [...document.querySelectorAll('#settingFeaturesTags .feature-tag.active')].map(t => t.dataset.feature).join(',');
             const isOverride = document.getElementById('settingIsOverride').checked;
             const editId = m.dataset.editId;
             const source = m.dataset.source;
-            const data = { teacher_id: selectedTeacherId, type, start_time: startTime || null, end_time: endTime || null, note: note || null, features: features || null };
+            const data = { teacher_id: selectedTeacherId, type, start_time: startTime||null, end_time: endTime||null, note, features: selectedFeatures||null };
             try {
                 if (editId) {
-                    if (source === 'override') await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
+                    if (source==='override') await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
                     else await _supabase.from('teacher_settings').update(data).eq('id', editId);
                 } else if (isOverride) {
                     const dow = new Date(dateFrom).getDay();
@@ -608,19 +555,19 @@
                     const dates = [];
                     let cur = new Date(dateFrom);
                     const to = new Date(dateTo);
-                    while (cur <= to) { dates.push(cur.toISOString().slice(0, 10)); cur.setDate(cur.getDate() + 1); }
-                    if (dates.length > 0) await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
+                    while (cur <= to) { dates.push(cur.toISOString().slice(0,10)); cur.setDate(cur.getDate()+1); }
+                    if (dates.length) await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
                 }
                 m.style.display = 'none';
                 await Promise.all([loadSettings(), loadOverrides()]);
                 renderCalendar();
-            } catch (err) { showAlert('Ошибка: ' + err.message); }
+            } catch (err) { showAlert('Ошибка: '+err.message); }
         }
 
         async function deleteSetting() {
             const m = document.getElementById('settingModal');
             if (!m.dataset.editId) return;
-            if (m.dataset.source === 'override') await _supabase.from('teacher_unavailability').delete().eq('id', m.dataset.editId);
+            if (m.dataset.source==='override') await _supabase.from('teacher_unavailability').delete().eq('id', m.dataset.editId);
             else await _supabase.from('teacher_settings').delete().eq('id', m.dataset.editId);
             m.style.display = 'none';
             await Promise.all([loadSettings(), loadOverrides()]);
@@ -632,24 +579,21 @@
             const filtered = teachers.filter(t => t.name.toLowerCase().includes(q));
             const c = document.getElementById('teacherListContainer');
             if (!filtered.length) { c.innerHTML = '<div class="empty-state">Нет преподавателей</div>'; return; }
-            const monthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+            const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
             const { data: sal } = await _supabase.from('teacher_salary').select('*').eq('month', monthStr);
             c.innerHTML = filtered.map(t => {
-                const subs = sal ? [...new Set(sal.filter(s => s.teacher_name === t.name).map(s => s.subject))] : [];
-                // Показываем кнопки действий только для админа
+                const subs = sal ? [...new Set(sal.filter(s => s.teacher_name===t.name).map(s => s.subject))] : [];
                 const actionsHtml = isAdminUser ? `
                     <div class="card-actions">
-                        <button class="btn-icon edit-teacher" data-id="${t.id}" title="Редактировать">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        </button>
-                        <button class="btn-icon danger delete-teacher" data-id="${t.id}" title="Удалить">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                        </button>
+                        <button class="btn-icon edit-teacher" data-id="${t.id}" title="Редактировать"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="btn-icon danger delete-teacher" data-id="${t.id}" title="Удалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                     </div>` : '';
+                const crown = t.is_senior ? `<span class="senior-crown" title="Старший преподаватель">${CROWN_ICON}</span>` : '';
                 return `<div class="teacher-card">
+                    ${crown}
                     <div class="teacher-header">
                         ${t.avatar_url ? `<img src="${t.avatar_url}" class="teacher-avatar">` : `<div class="teacher-avatar">${t.name.charAt(0)}</div>`}
-                        <div><div class="teacher-name">${t.specialization || ''} ${t.name}</div><div class="teacher-spec">Преподаватель</div></div>
+                        <div><div class="teacher-name">${t.specialization||''} ${t.name}</div><div class="teacher-spec">Преподаватель</div></div>
                     </div>
                     <div class="teacher-meta">
                         ${t.age ? `<span class="meta-tag">Возраст: ${t.age} лет</span>` : ''}
@@ -660,42 +604,30 @@
                     ${actionsHtml}
                 </div>`;
             }).join('');
-
             if (isAdminUser) {
-                document.querySelectorAll('.edit-teacher').forEach(b => b.addEventListener('click', () => { const t = teachers.find(x => x.id === b.dataset.id); if (t) openTeacherModal(t); }));
-                document.querySelectorAll('.delete-teacher').forEach(b => b.addEventListener('click', () => { if (confirm('Удалить преподавателя?')) deleteTeacher(b.dataset.id); }));
+                document.querySelectorAll('.edit-teacher').forEach(b => b.addEventListener('click', () => { const t = teachers.find(x => x.id===b.dataset.id); if (t) openTeacherModal(t); }));
+                document.querySelectorAll('.delete-teacher').forEach(b => b.addEventListener('click', () => { if (confirm('Удалить?')) deleteTeacher(b.dataset.id); }));
             }
         }
 
-        async function deleteTeacher(id) {
-            await _supabase.from('employees').delete().eq('id', id);
-            await loadTeachers();
-            renderTeacherList();
-        }
+        async function deleteTeacher(id) { await _supabase.from('employees').delete().eq('id', id); await loadTeachers(); renderTeacherList(); }
 
         function openTeacherModal(t) {
-            // Проверяем права на редактирование
-            if (!isAdminUser && t) {
-                showAlert('Редактирование доступно только администратору');
-                return;
-            }
+            if (!isAdminUser && t) return showAlert('Только администратор');
             document.getElementById('teacherName').value = t?.name || '';
             document.getElementById('teacherEmail').value = t?.email || '';
             document.getElementById('teacherSpec').value = t?.specialization || '';
             document.getElementById('teacherAge').value = t?.age || '';
             document.getElementById('teacherHobbies').value = t?.hobbies || '';
             document.getElementById('teacherFeat').value = t?.features || '';
+            document.getElementById('teacherSenior').checked = t?.is_senior || false;
             document.getElementById('avatarPreview').src = t?.avatar_url || '';
             document.getElementById('avatarPreview').style.display = t?.avatar_url ? 'block' : 'none';
             document.getElementById('avatarPlaceholder').style.display = t?.avatar_url ? 'none' : 'flex';
             document.getElementById('teacherModal').dataset.id = t?.id || '';
             document.getElementById('deleteTeacherBtn').style.display = (t && isAdminUser) ? 'inline-flex' : 'none';
             document.getElementById('saveTeacherBtn').style.display = isAdminUser ? 'inline-flex' : 'none';
-            // Если не админ и пытается открыть редактирование – не показываем модалку
-            if (!isAdminUser && t) {
-                document.getElementById('teacherModal').style.display = 'none';
-                return;
-            }
+            if (!isAdminUser && t) { document.getElementById('teacherModal').style.display = 'none'; return; }
             document.getElementById('teacherModal').style.display = 'flex';
         }
 
@@ -709,6 +641,7 @@
             const age = document.getElementById('teacherAge').value;
             const hobbies = document.getElementById('teacherHobbies').value.trim();
             const features = document.getElementById('teacherFeat').value.trim();
+            const isSenior = document.getElementById('teacherSenior').checked;
 
             let avatar_url = document.getElementById('avatarPreview').src;
             if (avatar_url === window.location.href) avatar_url = null;
@@ -716,20 +649,16 @@
             if (file) {
                 const fileName = `public/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
                 const { data: uploadData, error: uploadError } = await _supabase.storage.from('avatars').upload(fileName, file, { cacheControl: '3600', upsert: true });
-                if (uploadError) {
-                    showAlert('Ошибка загрузки аватара: ' + uploadError.message);
-                    console.error('Upload error:', uploadError);
-                    return;
-                }
+                if (uploadError) { showAlert('Ошибка загрузки аватара: ' + uploadError.message); return; }
                 if (uploadData) {
                     const { data: publicData } = _supabase.storage.from('avatars').getPublicUrl(uploadData.path);
                     avatar_url = publicData.publicUrl;
                 }
             }
 
-            const payload = { name, email: email || null, role: 'Преподаватель', specialization: spec || null, age: age ? parseInt(age) : null, hobbies: hobbies || null, features: features || null, avatar_url };
+            const payload = { name, email: email||null, role:'Преподаватель', specialization: spec||null, age: age?parseInt(age):null, hobbies, features, is_senior: isSenior, avatar_url };
             const { error } = id ? await _supabase.from('employees').update(payload).eq('id', id) : await _supabase.from('employees').insert([payload]);
-            if (error) return showAlert('Ошибка: ' + error.message);
+            if (error) return showAlert('Ошибка: '+error.message);
             document.getElementById('teacherModal').style.display = 'none';
             await loadTeachers();
             renderTeacherList();
