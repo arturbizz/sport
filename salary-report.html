@@ -141,7 +141,7 @@
   <div id="contentContainer"></div>
 </div>
 
-<!-- Модалка реквизитов и выплаты (оставлена как была, без изменений дизайна) -->
+<!-- Модалка реквизитов и выплаты -->
 <div class="modal-overlay" id="salaryModal" style="display:none;">
   <div class="modal">
     <h2 id="salaryModalTitle">Сотрудник</h2>
@@ -171,27 +171,118 @@
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let employees = [], teacherSalaryData = [], managerSalaryData = [], salaryPayouts = [];
+    let worklog = {}, salaryParams = {};
     let selectedYear = new Date().getFullYear();
     let selectedMonth = new Date().getMonth() + 1;
     let currentPeriod = '1-15';
     let currentRoleFilter = 'all';
     const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
 
+    function showAlert(msg) {
+      document.getElementById('alertMessage').textContent = msg;
+      document.getElementById('alertModal').style.display = 'flex';
+      document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none';
+    }
+
     async function loadData() {
       const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
       const start = `${monthStr}-01`;
-      const [emp, ts, ms, sp] = await Promise.all([
+      const nextM = selectedMonth === 12 ? 1 : selectedMonth + 1;
+      const nextY = selectedMonth === 12 ? selectedYear + 1 : selectedYear;
+      const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
+
+      const [emp, ts, ms, sp, wl, spParams] = await Promise.all([
         _supabase.from('employees').select('*'),
         _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', currentPeriod),
         _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`),
-        _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod)
+        _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod),
+        _supabase.from('worklog').select('*').gte('date', start).lt('date', end),
+        _supabase.from('salary_params').select('*').eq('month', monthStr)
       ]);
+
       employees = emp.data || [];
       teacherSalaryData = ts.data || [];
       managerSalaryData = ms.data || [];
       salaryPayouts = sp.data || [];
+
+      worklog = {};
+      (wl.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
+      salaryParams = {};
+      (spParams.data || []).forEach(r => { salaryParams[r.emp_id] = r; });
+
       document.getElementById('monthTitle').textContent = `${monthNames[selectedMonth-1]} ${selectedYear}`;
       renderAll();
+    }
+
+    // Рассчитывает зарплату сотрудника за выбранный период (точно)
+    function calculateSalary(emp) {
+      const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
+
+      // Если есть сохранённая запись в manager_salary – приоритет
+      const saved = managerSalaryData.find(m =>
+        m.employee_name === emp.name && m.role === emp.role &&
+        m.period_start && m.period_start.startsWith(monthStr)
+      );
+      if (saved) return parseFloat(saved.total_salary) || 0;
+
+      // Иначе считаем по дням
+      let worked = 0, sales = 0;
+      const isFirstHalf = currentPeriod === '1-15';
+      const isSecondHalf = currentPeriod === '16-31';
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        if (isFirstHalf && d > 15) continue;
+        if (isSecondHalf && d < 16) continue;
+
+        const dateStr = `${monthStr}-${String(d).padStart(2,'0')}`;
+        const rec = worklog[`${emp.id}_${dateStr}`];
+        if (!rec || rec.status !== 'working') continue;
+
+        worked++;
+        if (emp.role === 'Менеджер') sales += rec.daily_sales || 0;
+      }
+
+      const params = salaryParams[emp.id] || {};
+      const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
+
+      // Норма дней зависит от роли и периода
+      const fullNorm = emp.role === 'Менеджер'
+        ? Math.round(daysInMonth * 0.5)
+        : (params.norm_days || 22);
+      const normDays = (currentPeriod === 'full') ? fullNorm : Math.round(fullNorm / 2);
+
+      const dailyRate = (rates[emp.role] || 0) / Math.max(normDays, 1);
+      let base = dailyRate * worked;
+      let bonus = 0;
+
+      if (emp.role === 'Менеджер') {
+        const plan = params.plan_amount || 0;
+        // План может быть на месяц – для половины берём половину плана
+        const halfPlan = currentPeriod === 'full' ? plan : plan / 2;
+        bonus = sales * ((halfPlan > 0 && sales >= halfPlan) ? 0.07 : 0.05);
+      } else if (emp.role === 'Администратор' || emp.role === 'Управляющий') {
+        // Собираем продажи менеджеров за тот же период
+        const managers = employees.filter(e => e.role === 'Менеджер');
+        let totalManagerSales = 0;
+        managers.forEach(man => {
+          for (let d = 1; d <= daysInMonth; d++) {
+            if (isFirstHalf && d > 15) continue;
+            if (isSecondHalf && d < 16) continue;
+            const rec = worklog[`${man.id}_${monthStr}-${String(d).padStart(2,'0')}`];
+            if (rec && rec.status === 'working') totalManagerSales += rec.daily_sales || 0;
+          }
+        });
+        if (emp.role === 'Администратор') {
+          bonus = totalManagerSales * 0.01;
+        } else { // Управляющий
+          const plan = params.plan_amount || 0;
+          const halfPlan = currentPeriod === 'full' ? plan : plan / 2;
+          bonus = (halfPlan > 0 && totalManagerSales >= halfPlan) ? totalManagerSales * 0.01 : 0;
+        }
+      }
+
+      return Math.round(base + bonus);
     }
 
     function getSalaryList() {
@@ -204,13 +295,7 @@
           const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === currentPeriod);
           amount = teacherRows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
         } else {
-          const salaryRecord = managerSalaryData.find(m => {
-            return m.employee_name === emp.name && m.role === emp.role &&
-                   m.period_start && m.period_start.startsWith(monthStr);
-          });
-          if (salaryRecord) {
-            amount = parseFloat(salaryRecord.total_salary) || 0;
-          }
+          amount = calculateSalary(emp);
         }
         const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr && p.period === currentPeriod);
         return {
@@ -326,21 +411,33 @@
         receipt_url: receiptUrl
       };
 
-      const { data: existing } = await _supabase.from('salary_payouts')
-        .select('id').eq('employee_id', employeeId).eq('period', currentPeriod).eq('month', monthStr).single();
+      try {
+        const { data: existing } = await _supabase.from('salary_payouts')
+          .select('id').eq('employee_id', employeeId).eq('period', currentPeriod).eq('month', monthStr).single();
 
-      let error;
-      if (existing) {
-        const { error: updateError } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id);
-        error = updateError;
-      } else {
-        const { error: insertError } = await _supabase.from('salary_payouts').insert(payload);
-        error = insertError;
+        let error;
+        if (existing) {
+          const { error: updateError } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id);
+          error = updateError;
+        } else {
+          const { error: insertError } = await _supabase.from('salary_payouts').insert(payload);
+          error = insertError;
+        }
+
+        if (error) {
+          if (error.code === '42501' || error.message.includes('row-level security')) {
+            showAlert('У вас нет прав на проведение выплат. Обратитесь к администратору.');
+          } else {
+            showAlert('Ошибка сохранения: ' + error.message);
+          }
+          return;
+        }
+        modal.style.display = 'none';
+        loadData();
+      } catch (err) {
+        showAlert('Не удалось сохранить. Попробуйте позже.');
+        console.error(err);
       }
-
-      if (error) { showAlert('Ошибка сохранения: ' + error.message); return; }
-      modal.style.display = 'none';
-      loadData();
     }
 
     document.getElementById('cancelSalaryBtn').addEventListener('click', () => { document.getElementById('salaryModal').style.display = 'none'; });
@@ -358,8 +455,6 @@
       XLSX.utils.book_append_sheet(wb, ws, 'Зарплатная ведомость');
       XLSX.writeFile(wb, `ЗП_${currentPeriod}_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
     }
-
-    function showAlert(msg) { document.getElementById('alertMessage').textContent = msg; document.getElementById('alertModal').style.display = 'flex'; document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none'; }
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
 
