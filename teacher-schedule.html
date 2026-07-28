@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>Планировщик преподавателей — Music Club Орёл</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Зайчик -->
-    <link rel="stylesheet" href="components/music-bunny/music-bunny.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -118,6 +116,38 @@
             width: 120px;
             height: 120px;
         }
+        .bunny-speech-bubble {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 20px;
+            padding: 10px 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: #2d3436;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            white-space: nowrap;
+            max-width: 250px;
+            text-align: center;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .bunny-speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid white;
+        }
+        .bunny-speech-bubble.show { opacity: 1; }
 
         @media (max-width: 768px) { body { padding: 0.5rem; } .container { padding: 1.2rem; } .teacher-grid { grid-template-columns: 1fr; } }
     </style>
@@ -181,8 +211,68 @@
     </div>
 </div>
 
-<!-- Зайчик -->
-<div id="music-bunny"></div>
+<!-- Зайчик (встроенный SVG) -->
+<div id="music-bunny">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+        <defs>
+            <radialGradient id="blush" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffb3ba" stop-opacity="0.6"/>
+                <stop offset="100%" stop-color="#ffb3ba" stop-opacity="0"/>
+            </radialGradient>
+        </defs>
+        <!-- Тень -->
+        <ellipse cx="100" cy="185" rx="40" ry="8" fill="rgba(0,0,0,0.08)"/>
+        <!-- Хвост -->
+        <circle cx="145" cy="140" r="12" fill="white"/>
+        <circle cx="143" cy="138" r="8" fill="#f0f0f0"/>
+        <!-- Левая лапа -->
+        <ellipse cx="65" cy="150" rx="12" ry="18" fill="white" transform="rotate(-20, 65, 150)"/>
+        <ellipse cx="62" cy="155" rx="8" ry="6" fill="#ffb3ba"/>
+        <!-- Правая лапа -->
+        <ellipse cx="135" cy="150" rx="12" ry="18" fill="white" transform="rotate(20, 135, 150)"/>
+        <ellipse cx="138" cy="155" rx="8" ry="6" fill="#ffb3ba"/>
+        <!-- Тело -->
+        <ellipse cx="100" cy="145" rx="35" ry="45" fill="white" stroke="#f0f0f0" stroke-width="1"/>
+        <ellipse cx="100" cy="145" rx="20" ry="30" fill="#fafafa"/>
+        <!-- Левая нога -->
+        <ellipse cx="85" cy="180" rx="15" ry="8" fill="white"/>
+        <ellipse cx="82" cy="182" rx="6" ry="4" fill="#ffb3ba"/>
+        <!-- Правая нога -->
+        <ellipse cx="115" cy="180" rx="15" ry="8" fill="white"/>
+        <ellipse cx="118" cy="182" rx="6" ry="4" fill="#ffb3ba"/>
+        <!-- Голова -->
+        <!-- Левое ухо -->
+        <ellipse cx="75" cy="60" rx="15" ry="35" fill="white" transform="rotate(-15, 75, 60)"/>
+        <ellipse cx="75" cy="60" rx="8" ry="25" fill="#ffb3ba" transform="rotate(-15, 75, 60)"/>
+        <!-- Правое ухо -->
+        <ellipse cx="125" cy="60" rx="15" ry="35" fill="white" transform="rotate(15, 125, 60)"/>
+        <ellipse cx="125" cy="60" rx="8" ry="25" fill="#ffb3ba" transform="rotate(15, 125, 60)"/>
+        <!-- Основание головы -->
+        <ellipse cx="100" cy="100" rx="45" ry="40" fill="white" stroke="#f0f0f0" stroke-width="1"/>
+        <!-- Щёчки -->
+        <ellipse cx="70" cy="110" rx="15" ry="10" fill="url(#blush)"/>
+        <ellipse cx="130" cy="110" rx="15" ry="10" fill="url(#blush)"/>
+        <!-- Глаза -->
+        <g id="left-eye">
+            <ellipse cx="83" cy="95" rx="8" ry="10" fill="white"/>
+            <ellipse cx="85" cy="95" rx="5" ry="7" fill="#2d3436"/>
+            <circle cx="87" cy="93" r="2" fill="white"/>
+        </g>
+        <g id="right-eye">
+            <ellipse cx="117" cy="95" rx="8" ry="10" fill="white"/>
+            <ellipse cx="115" cy="95" rx="5" ry="7" fill="#2d3436"/>
+            <circle cx="113" cy="93" r="2" fill="white"/>
+        </g>
+        <!-- Рот -->
+        <g id="mouth">
+            <path d="M 92 112 Q 100 122 108 112" fill="none" stroke="#2d3436" stroke-width="2" stroke-linecap="round"/>
+            <path d="M 94 112 Q 100 118 106 112" fill="#ff7675"/>
+        </g>
+        <!-- Нос -->
+        <circle cx="100" cy="105" r="3" fill="#ffb3ba"/>
+    </svg>
+    <div class="bunny-speech-bubble" id="bunny-speech"></div>
+</div>
 
 <!-- Модалка доступности -->
 <div class="modal-overlay" id="settingModal" style="display:none;">
@@ -242,7 +332,6 @@
     </div>
 </div>
 
-<script src="components/music-bunny/music-bunny.js"></script>
 <script>
     (() => {
         const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
@@ -254,10 +343,78 @@
         let currentYear, currentMonth, selectedTeacherId = '';
         let activeTab = 'calendar';
 
-        // Иконка короны (SVG)
+        // Иконки
         const CROWN_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f1c40f" stroke-width="2"><path d="M2 4l3 12h14l3-12-10 4-10-4z"/><circle cx="12" cy="20" r="2"/></svg>';
         const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
         const QUESTION_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+        // ========== Зайчик ==========
+        const bunny = {
+            container: document.getElementById('music-bunny'),
+            speechBubble: document.getElementById('bunny-speech'),
+            svg: document.querySelector('#music-bunny svg'),
+            say(text) {
+                if (!this.speechBubble) return;
+                this.speechBubble.textContent = text;
+                this.speechBubble.classList.add('show');
+                clearTimeout(this._timeout);
+                this._timeout = setTimeout(() => this.speechBubble.classList.remove('show'), 3000);
+            },
+            setEmotion(name) {
+                if (!this.svg) return;
+                const mouth = this.svg.querySelector('#mouth');
+                const leftEye = this.svg.querySelector('#left-eye');
+                const rightEye = this.svg.querySelector('#right-eye');
+                // сброс
+                mouth.innerHTML = '<path d="M 92 112 Q 100 122 108 112" fill="none" stroke="#2d3436" stroke-width="2" stroke-linecap="round"/><path d="M 94 112 Q 100 118 106 112" fill="#ff7675"/>';
+                leftEye.innerHTML = '<ellipse cx="83" cy="95" rx="8" ry="10" fill="white"/><ellipse cx="85" cy="95" rx="5" ry="7" fill="#2d3436"/><circle cx="87" cy="93" r="2" fill="white"/>';
+                rightEye.innerHTML = '<ellipse cx="117" cy="95" rx="8" ry="10" fill="white"/><ellipse cx="115" cy="95" rx="5" ry="7" fill="#2d3436"/><circle cx="113" cy="93" r="2" fill="white"/>';
+
+                if (name === 'happy') {
+                    mouth.innerHTML = '<path d="M 88 108 Q 100 125 112 108" fill="none" stroke="#2d3436" stroke-width="2.5" stroke-linecap="round"/>';
+                } else if (name === 'love') {
+                    leftEye.innerHTML += '<path d="M 75 90 Q 83 85 91 90" fill="#ff7675"/>';
+                    rightEye.innerHTML += '<path d="M 109 90 Q 117 85 125 90" fill="#ff7675"/>';
+                } else if (name === 'wow') {
+                    mouth.innerHTML = '<ellipse cx="100" cy="115" rx="6" ry="8" fill="#2d3436"/>';
+                    leftEye.innerHTML = '<circle cx="83" cy="95" r="9" fill="white" stroke="#2d3436" stroke-width="1.5"/><circle cx="85" cy="95" r="4" fill="#2d3436"/>';
+                    rightEye.innerHTML = '<circle cx="117" cy="95" r="9" fill="white" stroke="#2d3436" stroke-width="1.5"/><circle cx="115" cy="95" r="4" fill="#2d3436"/>';
+                } else if (name === 'sad') {
+                    mouth.innerHTML = '<path d="M 92 118 Q 100 112 108 118" fill="none" stroke="#2d3436" stroke-width="2" stroke-linecap="round"/>';
+                }
+            },
+            wave() {
+                const arm = this.svg?.querySelector('ellipse[cx="135"][cy="150"]');
+                if (arm) {
+                    arm.style.transition = 'transform 0.3s';
+                    arm.style.transform = 'rotate(30deg)';
+                    setTimeout(() => { arm.style.transform = 'rotate(20deg)'; }, 500);
+                    setTimeout(() => { arm.style.transform = ''; }, 1000);
+                }
+            },
+            jump() {
+                if (this.container) {
+                    this.container.style.transition = 'transform 0.3s';
+                    this.container.style.transform = 'translateY(-15px)';
+                    setTimeout(() => { this.container.style.transform = ''; }, 300);
+                }
+            },
+            lookAtMouse(enable) {
+                if (enable) {
+                    document.addEventListener('mousemove', this._mouseHandler = (e) => {
+                        const eyes = this.svg?.querySelectorAll('#left-eye ellipse:last-of-type, #right-eye ellipse:last-of-type');
+                        if (!eyes) return;
+                        const rect = this.container.getBoundingClientRect();
+                        const dx = (e.clientX - (rect.left + rect.width/2)) / 30;
+                        const dy = (e.clientY - (rect.top + rect.height/2)) / 30;
+                        eyes.forEach(eye => eye.setAttribute('transform', `translate(${Math.min(3, Math.max(-3, dx))}, ${Math.min(3, Math.max(-3, dy))})`));
+                    });
+                } else {
+                    document.removeEventListener('mousemove', this._mouseHandler);
+                }
+            }
+        };
+        window.bunny = bunny;
 
         function showAlert(msg) { alert(msg); }
 
@@ -276,11 +433,8 @@
             buildFindTimeSelects();
             populateSubjectFilter();
 
-            // Поздороваться с зайчиком
-            if (window.bunny) {
-                bunny.lookAtMouse(true);
-                setTimeout(() => bunny.say("Готов помочь с расписанием!"), 1000);
-            }
+            bunny.lookAtMouse(true);
+            setTimeout(() => bunny.say("Будь внимателен при планировании"), 800);
         }
 
         function buildFindTimeSelects() {
@@ -529,7 +683,8 @@
                 m.style.display = 'none';
                 await Promise.all([loadSettings(), loadOverrides()]);
                 renderCalendar();
-                if (window.bunny) bunny.say("Настройки сохранены!");
+                bunny.setEmotion('happy');
+                bunny.say("Настройки сохранены!");
             } catch (err) { showAlert('Ошибка: '+err.message); }
         }
 
