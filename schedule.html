@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-  <title>Зарплатная ведомость — Music Club Орёл</title>
+  <title>График работы — Music Club Орёл</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,474 +11,782 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f7f8fa; --surface: #ffffff; --border: rgba(15,23,42,0.06);
-      --text: #0f172a; --text-secondary: #475569; --accent: #0d9488;
-      --accent-light: #ccfbf1; --warm-yellow: #f59e0b; --soft-green: #10b981; --critical: #ef4444;
-      --radius-xl: 24px; --radius-lg: 16px; --radius-sm: 12px;
+      --violet: #7c5ce7;
+      --teal: #0fb9b1;
+      --gold: #f9ca24;
+      --rose: #ff8c94;
+      --bg: #fef9f0;
+      --surface: rgba(255,255,255,0.85);
+      --text: #2d3436;
+      --text-light: #636e72;
+      --border: #e0e0e0;
+      --critical: #e74c3c;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, .container, .header, .modal {
+      -webkit-user-select: none; user-select: none; cursor: default;
+    }
+    input, textarea, select {
+      -webkit-user-select: text; user-select: text; cursor: text;
+    }
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f0fdfa 0%, #fefce8 50%, #ecfdf5 100%);
-      color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 2rem;
-      cursor: default; caret-color: transparent;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: linear-gradient(135deg, #fef9f0 0%, #f0f7f5 100%);
+      color: var(--text);
+      padding: 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      position: relative;
+      overflow-x: hidden;
     }
-    input, textarea, select { cursor: text; caret-color: auto; }
+    .music-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 0;
+    }
+    .note {
+      position: absolute;
+      font-size: 2rem;
+      color: rgba(124,92,231,0.08);
+      animation: floatNote 12s infinite ease-in-out;
+    }
+    .note::before { content: '♪'; }
+    .note.two::before { content: '♫'; }
+    .note.three::before { content: '♩'; }
+    @keyframes floatNote {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(8deg); opacity: 0.7; }
+      100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+    }
+
     .container {
-      width: 100%; max-width: 1100px; background: var(--surface); border-radius: var(--radius-xl);
-      padding: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); border: 1px solid var(--border);
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1400px;
+      background: var(--surface);
       backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+      border: 1px solid rgba(255,255,255,0.6);
     }
     .header {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
     }
-    .back-link { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .back-link { color: var(--violet); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
     h1 {
       font-size: 2rem; font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), var(--warm-yellow));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      background: linear-gradient(135deg, var(--violet), var(--gold), var(--teal));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .btn {
-      padding: 0.5rem 1.2rem; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer;
-      font-size: 0.85rem; border: 1px solid var(--border); background: var(--surface);
-      color: var(--text); transition: 0.2s; display: inline-flex; align-items: center; gap: 0.3rem;
-    }
-    .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
-    .btn-primary:hover { background: #0f766e; }
-    .btn-excel {
-      background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
-      color: var(--accent); border: 1px solid var(--accent);
-      box-shadow: 0 4px 12px rgba(124,92,231,0.15), 0 0 0 1px rgba(124,92,231,0.1) inset;
-    }
-    .btn-excel:hover {
-      background: linear-gradient(135deg, var(--accent), #0f766e); color: white;
-      border-color: transparent; box-shadow: 0 8px 24px rgba(13,148,136,0.3);
-    }
-    .filters {
-      display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem;
-    }
-    .filter-btn {
-      padding: 0.35rem 0.9rem; border-radius: 20px; border: 1px solid var(--border);
-      background: var(--surface); cursor: pointer; font-size: 0.8rem; font-weight: 500;
-      transition: 0.2s; color: var(--text-secondary);
-    }
-    .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-    .month-nav { display: flex; align-items: center; gap: 0.5rem; }
-    .month-nav button { background: var(--surface); border: 1px solid var(--border); padding: 0.3rem 0.8rem; border-radius: 10px; font-weight: 600; cursor: pointer; }
-    .month-title { min-width: 120px; text-align: center; font-weight: 600; background: var(--surface); padding: 0.3rem 0.8rem; border-radius: 10px; border: 1px solid var(--border); }
-    .search-input {
-      padding: 0.35rem 0.9rem; border-radius: 20px; border: 1px solid var(--border);
-      background: var(--surface); font-size: 0.8rem; width: 180px;
-    }
-    .summary {
-      background: var(--surface); border-radius: var(--radius-lg); padding: 1rem 1.5rem; margin-bottom: 1.5rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.02); border: 1px solid var(--border);
-      display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;
-    }
-    .summary-item { display: flex; align-items: baseline; gap: 0.5rem; }
-    .summary-label { font-size: 0.85rem; color: var(--text-secondary); }
-    .summary-value { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
 
-    .salary-card {
-      background: var(--surface); border-radius: var(--radius-lg); padding: 1.2rem;
-      border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-      display: flex; align-items: center; gap: 1rem; margin-bottom: 0.8rem;
+    .btn {
+      border: none; padding: 0.45rem 1.2rem; border-radius: 12px;
+      font-weight: 600; cursor: pointer; font-size: 0.85rem;
+      transition: all 0.3s ease; display: inline-flex; align-items: center; gap: 0.3rem;
+      background: linear-gradient(135deg, rgba(124,92,231,0.12), rgba(15,185,177,0.12));
+      color: var(--violet);
+      box-shadow: 0 4px 12px rgba(124,92,231,0.15), 0 0 0 1px rgba(124,92,231,0.1) inset;
+      backdrop-filter: blur(4px);
     }
-    .salary-card:hover { box-shadow: 0 8px 16px rgba(0,0,0,0.04); }
-    .salary-info { flex: 1; }
-    .salary-name { font-weight: 600; }
-    .salary-amount { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
-    .salary-status { font-size: 0.8rem; color: var(--text-secondary); }
-    .salary-actions { display: flex; gap: 0.5rem; }
+    .btn:hover {
+      background: linear-gradient(135deg, var(--violet), var(--teal));
+      color: white;
+      box-shadow: 0 8px 24px rgba(124,92,231,0.3), 0 0 0 1px rgba(255,255,255,0.2) inset;
+      transform: translateY(-2px);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--violet);
+      color: var(--violet);
+      box-shadow: none;
+    }
+    .btn-outline:hover { background: var(--violet); color: white; }
+
+    .filters {
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      margin-bottom: 2rem; align-items: center;
+    }
+    .period-btn {
+      padding: 0.35rem 0.8rem; border-radius: 16px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
+    }
+    .period-btn.active { background: var(--violet); color: white; border-color: var(--violet); }
+    .role-filters { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+    .role-btn {
+      padding: 0.3rem 0.8rem; border-radius: 16px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500; transition: 0.2s;
+    }
+    .role-btn.active { background: var(--teal); border-color: var(--teal); color: #055b5c; }
+    .emp-filter-wrap { position: relative; }
+    .emp-filter-btn {
+      padding: 0.35rem 1.2rem 0.35rem 0.8rem; border-radius: 16px;
+      border: 1px solid var(--border); background: white;
+      cursor: pointer; font-size: 0.8rem; font-weight: 500;
+      display: flex; align-items: center; gap: 0.5rem;
+      transition: 0.2s; white-space: nowrap;
+    }
+    .emp-filter-btn::after { content: '▼'; font-size: 0.6rem; color: var(--text-light); }
+    .emp-filter-btn:hover { border-color: var(--violet); }
+    .emp-dropdown {
+      position: absolute; top: 100%; left: 0; margin-top: 4px;
+      background: white; border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 20; min-width: 240px; display: none;
+      padding: 0.5rem; animation: fadeIn 0.2s ease;
+    }
+    .emp-dropdown.open { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .emp-dropdown-item {
+      padding: 0.3rem 0.6rem; cursor: pointer;
+      border-radius: 6px; font-size: 0.8rem; transition: 0.1s;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .emp-dropdown-item:hover { background: #f4f0ff; }
+    .emp-dropdown-item input[type="checkbox"] { accent-color: var(--violet); }
+    .dropdown-actions {
+      display: flex; gap: 0.5rem; padding: 0.3rem 0;
+      border-bottom: 1px solid #f0f0f0; margin-bottom: 0.3rem;
+    }
+    .dropdown-actions button {
+      background: none; border: none; color: var(--violet);
+      font-size: 0.75rem; cursor: pointer; font-weight: 500;
+    }
+    .dropdown-actions button:hover { text-decoration: underline; }
+
+    .schedule-container {
+      overflow-x: auto;
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th, td { text-align: center; padding: 0.5rem 0.3rem; font-size: 0.8rem; border: 1px solid #f0f0f0; height: 42px; }
+    th { background: #fafafa; color: var(--text-light); font-weight: 600; position: sticky; top: 0; z-index: 3; }
+    .employee-name {
+      text-align: left; padding-left: 1rem; font-weight: 600;
+      background: white; position: sticky; left: 0; z-index: 2;
+      min-width: 180px; cursor: pointer;
+    }
+    .employee-name:hover { color: var(--violet); }
+    .day-cell { cursor: pointer; transition: 0.2s; }
+    .day-cell:hover { background: #f4f0ff; }
+    .day-cell.working { background: #d1fae5; color: #065f46; font-weight: 600; }
+    .day-cell.dayoff { background: #ffe0e0; color: #991b1b; }
+    .day-cell.sick { background: #fef3c7; color: #92400e; }
+    .day-cell.vacation { background: #e0e7ff; color: #3730a3; }
+    .day-cell.leave { background: #ffedd5; color: #9a3412; }
+    .summary-cell { font-weight: 600; background: #fafafa; }
+    .role-header td {
+      background: #f4f0ff; font-weight: 700; color: var(--violet);
+      text-align: left; padding: 0.6rem 1rem; font-size: 0.9rem;
+      border-bottom: 2px solid var(--violet);
+      letter-spacing: 0.03em;
+    }
 
     .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.3);
-      backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 1000;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(4px); display: flex;
+      align-items: center; justify-content: center; z-index: 1000;
     }
     .modal {
-      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); border-radius: var(--radius-xl);
-      padding: 2rem; max-width: 450px; width: 90%;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.5) inset;
-      animation: slideUp 0.25s ease-out; text-align: center;
+      background: white; border-radius: 24px; padding: 2rem;
+      max-width: 500px; width: 90%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+      animation: slideUp 0.25s ease-out;
     }
-    @keyframes slideUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-    .modal h2 { margin-bottom: 1rem; }
-    .modal input, .modal select, .modal textarea {
-      width: 100%; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid var(--border);
-      border-radius: var(--radius-sm); font-family: inherit; font-size: 0.9rem;
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }
     }
-    .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center; }
+    input, textarea, select {
+      width: 100%; padding: 0.6rem; margin: 0.5rem 0;
+      border: 1px solid var(--border); border-radius: 10px;
+      font-size: 0.9rem; font-family: inherit;
+    }
+    .label-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 0.5rem 0;
+    }
+    .label-row input { width: 100px; margin-left: 0.5rem; }
+
+    .progress-container {
+      width: 100%;
+      background: #f0f0f0;
+      border-radius: 10px;
+      height: 18px;
+      margin: 0.8rem 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 10px;
+      transition: width 0.3s;
+      background: linear-gradient(135deg, var(--teal), var(--violet));
+      width: 0%;
+    }
+    .stats-block {
+      background: rgba(124,92,231,0.05);
+      border-radius: 14px;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+    }
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 0.3rem 0;
+      font-size: 0.9rem;
+    }
+
+    /* Модальное окно уведомлений (кастомный алерт) */
+    .alert-modal-content {
+      text-align: center;
+    }
+    .alert-modal-content p {
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+      color: var(--text);
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <a href="index.html" class="back-link">← На главную</a>
-    <h1>Зарплатная ведомость</h1>
-    <div>
-      <button class="btn btn-excel" id="exportExcelBtn">Excel</button>
+  <div class="music-bg">
+    <div class="note" style="top:10%; left:5%;"></div>
+    <div class="note two" style="top:25%; right:10%;"></div>
+    <div class="note three" style="bottom:20%; left:15%;"></div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <a href="index.html" class="back-link">← На главную</a>
+      <h1>График работы</h1>
+      <div style="display:flex; gap:0.5rem;">
+        <button id="prevMonthBtn" class="btn">◀</button>
+        <span class="month-title" id="monthTitle" style="padding:0.45rem 1rem; background:white; border-radius:12px; border:1px solid var(--border); font-weight:600;"></span>
+        <button id="nextMonthBtn" class="btn">▶</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="period-btn active" data-period="full">Весь месяц</button>
+      <button class="period-btn" data-period="first">1–15</button>
+      <button class="period-btn" data-period="second">16–31</button>
+      <div class="role-filters" id="roleFilters">
+        <button class="role-btn active" data-role="all">Все</button>
+        <button class="role-btn" data-role="Управляющий">Управляющие</button>
+        <button class="role-btn" data-role="Менеджер">Менеджеры</button>
+        <button class="role-btn" data-role="Администратор">Администраторы</button>
+      </div>
+      <div class="emp-filter-wrap" id="empFilterWrap">
+        <div class="emp-filter-btn" id="empFilterBtn">Сотрудники ▾</div>
+        <div class="emp-dropdown" id="empDropdown">
+          <div class="dropdown-actions">
+            <button id="selectAllBtn">Выбрать всех</button>
+            <button id="deselectAllBtn">Снять всех</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn" id="exportBtn">Excel</button>
+    </div>
+
+    <div id="scheduleContainer" class="schedule-container"></div>
+  </div>
+
+  <!-- Модалка дня -->
+  <div class="modal-overlay" id="dayModal" style="display:none;">
+    <div class="modal">
+      <h2 id="dayModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Статус дня</h2>
+      <select id="dayStatus">
+        <option value="working">Рабочий</option>
+        <option value="dayoff">Выходной</option>
+        <option value="sick">Больничный</option>
+        <option value="vacation">Отпуск</option>
+        <option value="leave">Отпросился</option>
+      </select>
+      <div id="dayDynamicFields"></div>
+      <textarea id="dayComment" rows="2" placeholder="Примечание"></textarea>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="saveDayBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelDayBtn">Отмена</button>
+      </div>
     </div>
   </div>
 
-  <div class="filters">
-    <button class="filter-btn active" data-period="1-15">1–15 число</button>
-    <button class="filter-btn" data-period="16-31">16–31 число</button>
-    <button class="filter-btn" data-role="all">Все</button>
-    <button class="filter-btn" data-role="Управляющий">Управляющий</button>
-    <button class="filter-btn" data-role="Менеджер">Менеджеры</button>
-    <button class="filter-btn" data-role="Администратор">Администраторы</button>
-    <button class="filter-btn" data-role="Преподаватель">Преподаватели</button>
-    <input type="text" class="search-input" id="searchInput" placeholder="Поиск по имени">
-    <div class="month-nav">
-      <button id="prevMonthBtn">←</button>
-      <span class="month-title" id="monthTitle"></span>
-      <button id="nextMonthBtn">→</button>
+  <!-- Модалка зарплаты -->
+  <div class="modal-overlay" id="salaryModal" style="display:none;">
+    <div class="modal">
+      <h2 id="salaryModalTitle" style="background:linear-gradient(135deg,var(--violet),var(--teal)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">Параметры зарплаты</h2>
+      <div id="salaryContent"></div>
+      <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+        <button class="btn" id="saveSalaryBtn">Сохранить</button>
+        <button class="btn btn-outline" id="cancelSalaryBtn">Отмена</button>
+      </div>
     </div>
   </div>
 
-  <div class="summary" id="summaryContainer"></div>
-  <div id="contentContainer"></div>
-</div>
-
-<!-- Модалка реквизитов и выплаты -->
-<div class="modal-overlay" id="salaryModal" style="display:none;">
-  <div class="modal">
-    <h2 id="salaryModalTitle">Сотрудник</h2>
-    <input type="text" id="salaryPhone" placeholder="Номер телефона">
-    <input type="text" id="salaryBank" placeholder="Банк">
-    <textarea id="salaryComment" rows="2" placeholder="Комментарий"></textarea>
-    <div style="margin:0.5rem 0;">
-      <input type="file" id="salaryReceiptFile" accept="image/*,.pdf">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-excel" id="saveSalaryDetailsBtn">Сохранить реквизиты</button>
-      <button class="btn btn-excel" id="confirmSalaryPayBtn">Подтвердить выплату</button>
-      <button class="btn" id="cancelSalaryBtn">Отмена</button>
+  <!-- Кастомное уведомление -->
+  <div class="modal-overlay" id="alertModal" style="display:none;">
+    <div class="modal alert-modal-content">
+      <p id="alertMessage"></p>
+      <button class="btn btn-primary" id="alertOkBtn">OK</button>
     </div>
   </div>
-</div>
 
-<!-- Модалка уведомлений -->
-<div class="modal-overlay" id="alertModal" style="display:none;">
-  <div class="modal"><p id="alertMessage"></p><button class="btn btn-primary" id="alertOkBtn">OK</button></div>
-</div>
+  <script>
+    (function() {
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const OWNER_EMAIL = 'arturgalkin.ru@mail.ru';
+      let currentUserEmail = null, currentEmployee = null;
+      let employees = [], worklog = {}, salaryParams = {};
+      let currentYear, currentMonth, currentPeriod = 'full';
+      let selectedEmployeeIds = new Set();
+      let currentRoleFilter = 'all';
+      const DISPLAY_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
 
-<script>
-  (() => {
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let employees = [], teacherSalaryData = [], managerSalaryData = [], salaryPayouts = [];
-    let worklog = {}, salaryParams = {};
-    let selectedYear = new Date().getFullYear();
-    let selectedMonth = new Date().getMonth() + 1;
-    let currentPeriod = '1-15';
-    let currentRoleFilter = 'all';
-    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-
-    function showAlert(msg) {
-      document.getElementById('alertMessage').textContent = msg;
-      document.getElementById('alertModal').style.display = 'flex';
-      document.getElementById('alertOkBtn').onclick = () => document.getElementById('alertModal').style.display = 'none';
-    }
-
-    async function loadData() {
-      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const start = `${monthStr}-01`;
-      const nextM = selectedMonth === 12 ? 1 : selectedMonth + 1;
-      const nextY = selectedMonth === 12 ? selectedYear + 1 : selectedYear;
-      const end = `${nextY}-${String(nextM).padStart(2,'0')}-01`;
-
-      const [emp, ts, ms, sp, wl, spParams] = await Promise.all([
-        _supabase.from('employees').select('*'),
-        _supabase.from('teacher_salary').select('*').eq('month', monthStr).eq('period', currentPeriod),
-        _supabase.from('manager_salary').select('*').like('period_start', `${monthStr}%`),
-        _supabase.from('salary_payouts').select('*').eq('month', monthStr).eq('period', currentPeriod),
-        _supabase.from('worklog').select('*').gte('date', start).lt('date', end),
-        _supabase.from('salary_params').select('*').eq('month', monthStr)
-      ]);
-
-      employees = emp.data || [];
-      teacherSalaryData = ts.data || [];
-      managerSalaryData = ms.data || [];
-      salaryPayouts = sp.data || [];
-
-      worklog = {};
-      (wl.data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
-      salaryParams = {};
-      (spParams.data || []).forEach(r => { salaryParams[r.emp_id] = r; });
-
-      document.getElementById('monthTitle').textContent = `${monthNames[selectedMonth-1]} ${selectedYear}`;
-      renderAll();
-    }
-
-    // Рассчитывает зарплату сотрудника, если нет в manager_salary
-    function calculateSalary(emp) {
-      const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-
-      // Если есть готовая запись в manager_salary, используем её
-      const saved = managerSalaryData.find(m =>
-        m.employee_name === emp.name && m.role === emp.role &&
-        m.period_start && m.period_start.startsWith(monthStr)
-      );
-      if (saved) return parseFloat(saved.total_salary) || 0;
-
-      // Иначе считаем на лету
-      let worked = 0, sales = 0;
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${monthStr}-${String(d).padStart(2,'0')}`;
-        const rec = worklog[`${emp.id}_${dateStr}`];
-        if (!rec || rec.status !== 'working') continue;
-        if ((currentPeriod === '1-15' && d <= 15) || (currentPeriod === '16-31' && d >= 16) || currentPeriod === 'full') {
-          worked++;
-        }
-        if (emp.role === 'Менеджер') sales += rec.daily_sales || 0;
-      }
-
-      const params = salaryParams[emp.id] || {};
-      const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
-      const normDays = emp.role === 'Менеджер'
-        ? Math.round(daysInMonth * 0.5)
-        : (params.norm_days || 22);
-      const dailyRate = (rates[emp.role] || 0) / normDays;
-      let base = dailyRate * worked;
-      let bonus = 0;
-
-      if (emp.role === 'Менеджер') {
-        const plan = params.plan_amount || 0;
-        bonus = sales * ((plan > 0 && sales >= plan) ? 0.07 : 0.05);
-      } else if (emp.role === 'Администратор') {
-        const allManagers = employees.filter(e => e.role === 'Менеджер');
-        let totalManagerSales = 0;
-        allManagers.forEach(man => {
-          for (let d = 1; d <= daysInMonth; d++) {
-            const rec = worklog[`${man.id}_${monthStr}-${String(d).padStart(2,'0')}`];
-            if (rec && rec.status === 'working') totalManagerSales += rec.daily_sales || 0;
-          }
-        });
-        bonus = totalManagerSales * 0.01;
-      } else if (emp.role === 'Управляющий') {
-        const allManagers = employees.filter(e => e.role === 'Менеджер');
-        let totalManagerSales = 0;
-        allManagers.forEach(man => {
-          for (let d = 1; d <= daysInMonth; d++) {
-            const rec = worklog[`${man.id}_${monthStr}-${String(d).padStart(2,'0')}`];
-            if (rec && rec.status === 'working') totalManagerSales += rec.daily_sales || 0;
-          }
-        });
-        const plan = params.plan_amount || 0;
-        bonus = (plan > 0 && totalManagerSales >= plan) ? totalManagerSales * 0.01 : 0;
-      }
-      return Math.round(base + bonus);
-    }
-
-    function getSalaryList() {
-      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const staff = employees.filter(e => ['Управляющий','Менеджер','Администратор','Преподаватель'].includes(e.role));
-
-      return staff.map(emp => {
-        let amount = 0;
-        if (emp.role === 'Преподаватель') {
-          const teacherRows = teacherSalaryData.filter(t => t.teacher_name === emp.name && t.period === currentPeriod);
-          amount = teacherRows.reduce((sum, t) => sum + parseFloat(t.amount), 0);
-        } else {
-          amount = calculateSalary(emp);
-        }
-        const payout = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr && p.period === currentPeriod);
-        return {
-          employee: emp,
-          amount,
-          paid: payout ? payout.paid : false,
-          payoutData: payout || null
+      // Кастомное уведомление
+      function showAlert(message) {
+        document.getElementById('alertMessage').textContent = message;
+        document.getElementById('alertModal').style.display = 'flex';
+        document.getElementById('alertOkBtn').onclick = function() {
+          document.getElementById('alertModal').style.display = 'none';
         };
-      });
-    }
-
-    function renderAll() {
-      const list = getSalaryList();
-      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-      let filtered = list;
-      if (currentRoleFilter !== 'all') {
-        filtered = filtered.filter(item => item.employee.role === currentRoleFilter);
-      }
-      if (searchQuery) {
-        filtered = filtered.filter(item => item.employee.name.toLowerCase().includes(searchQuery));
       }
 
-      const totalToPay = filtered.reduce((s, i) => s + i.amount, 0);
-      const paidAmount = filtered.filter(i => i.paid).reduce((s, i) => s + i.amount, 0);
-      document.getElementById('summaryContainer').innerHTML = `
-        <div class="summary-item"><span class="summary-label">К выплате (${currentPeriod === '1-15' ? '1–15' : '16–31'})</span> <span class="summary-value">${totalToPay.toLocaleString()} ₽</span></div>
-        <div class="summary-item"><span class="summary-label">Выплачено</span> <span class="summary-value">${paidAmount.toLocaleString()} ₽</span></div>
-        <div class="summary-item"><span class="summary-label">Остаток</span> <span class="summary-value" style="color:${totalToPay-paidAmount > 0 ? 'var(--critical)' : 'var(--soft-green)'};">${(totalToPay-paidAmount).toLocaleString()} ₽</span></div>
-      `;
-
-      document.getElementById('contentContainer').innerHTML = filtered.map(item => {
-        const emp = item.employee;
-        const payout = item.payoutData;
-        const paid = item.paid;
-        return `
-          <div class="salary-card">
-            <div class="salary-info">
-              <div class="salary-name">${emp.name} (${emp.role})</div>
-              <div class="salary-amount">${item.amount.toLocaleString()} ₽</div>
-              <div class="salary-status">${paid ? 'Выплачено' : 'Не выплачено'}</div>
-              ${payout ? `<div style="font-size:0.75rem; color:var(--text-secondary);">Тел: ${payout.phone || '—'} | Банк: ${payout.bank || '—'}</div>` : ''}
-            </div>
-            <div class="salary-actions">
-              <button class="btn btn-excel salary-req-btn" data-employee='${JSON.stringify(emp)}' data-amount="${item.amount}">Реквизиты</button>
-              ${!paid ? `<button class="btn btn-excel salary-pay-btn" data-employee='${JSON.stringify(emp)}' data-amount="${item.amount}">Выплатить</button>` : ''}
-            </div>
-          </div>`;
-      }).join('');
-
-      bindSalaryButtons();
-    }
-
-    function bindSalaryButtons() {
-      document.querySelectorAll('.salary-req-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const emp = JSON.parse(btn.dataset.employee);
-          openSalaryModal(emp, parseFloat(btn.dataset.amount));
-        });
-      });
-      document.querySelectorAll('.salary-pay-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const emp = JSON.parse(btn.dataset.employee);
-          openSalaryModal(emp, parseFloat(btn.dataset.amount), true);
-        });
-      });
-    }
-
-    function openSalaryModal(emp, amount = 0, markPaid = false) {
-      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-      const existing = salaryPayouts.find(p => p.employee_id === emp.id && p.month === monthStr && p.period === currentPeriod);
-      document.getElementById('salaryModalTitle').textContent = `${emp.name} (${emp.role})`;
-      document.getElementById('salaryPhone').value = existing?.phone || '';
-      document.getElementById('salaryBank').value = existing?.bank || '';
-      document.getElementById('salaryComment').value = existing?.comment || '';
-      document.getElementById('salaryModal').dataset.employeeId = emp.id;
-      document.getElementById('salaryModal').dataset.amount = amount;
-      document.getElementById('salaryModal').dataset.markPaid = markPaid;
-      document.getElementById('salaryModal').dataset.existingReceiptUrl = existing?.receipt_url || '';
-      document.getElementById('salaryModal').style.display = 'flex';
-    }
-
-    document.getElementById('saveSalaryDetailsBtn').addEventListener('click', () => saveSalaryPayout(false));
-    document.getElementById('confirmSalaryPayBtn').addEventListener('click', () => saveSalaryPayout(true));
-
-    async function saveSalaryPayout(markPaid) {
-      const modal = document.getElementById('salaryModal');
-      const employeeId = modal.dataset.employeeId;
-      const amount = parseFloat(modal.dataset.amount) || 0;
-      const phone = document.getElementById('salaryPhone').value.trim();
-      const bank = document.getElementById('salaryBank').value.trim();
-      const comment = document.getElementById('salaryComment').value.trim();
-      const monthStr = `${selectedYear}-${String(selectedMonth).padStart(2,'0')}`;
-
-      let receiptUrl = modal.dataset.existingReceiptUrl || '';
-      const file = document.getElementById('salaryReceiptFile').files[0];
-      if (file && markPaid) {
-        const fileName = `salary_receipts/${employeeId}_${Date.now()}.${file.name.split('.').pop()}`;
-        const { data, error } = await _supabase.storage.from('receipts').upload(fileName, file);
-        if (error) { showAlert('Ошибка загрузки чека: ' + error.message); return; }
-        receiptUrl = _supabase.storage.from('receipts').getPublicUrl(fileName).data.publicUrl;
+      async function init() {
+        const { data: { session } } = await _supabase.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return; }
+        currentUserEmail = session.user.email;
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth() + 1;
+        await loadEmployees();
+        await loadWorklog();
+        await loadSalaryParams();
+        renderEmpDropdown();
+        renderSchedule();
+        updateSelectedEmployeesDisplay();
       }
 
-      const payload = {
-        employee_id: employeeId,
-        period: currentPeriod,
-        month: monthStr,
-        amount,
-        phone,
-        bank,
-        comment,
-        paid: markPaid,
-        paid_at: markPaid ? new Date().toISOString() : null,
-        receipt_url: receiptUrl
-      };
+      async function loadEmployees() {
+        const { data } = await _supabase.from('employees').select('*');
+        employees = (data || []).filter(e => DISPLAY_ROLES.includes(e.role));
+        const emp = employees.find(e => e.email === currentUserEmail);
+        currentEmployee = emp || null;
+        if (currentUserEmail !== OWNER_EMAIL) {
+          employees = employees.filter(e => e.role !== 'Управляющий');
+        }
+        if (selectedEmployeeIds.size === 0) {
+          employees.forEach(e => selectedEmployeeIds.add(e.id));
+        }
+        applyRoleFilter(currentRoleFilter);
+      }
 
-      try {
-        const { data: existing } = await _supabase.from('salary_payouts')
-          .select('id').eq('employee_id', employeeId).eq('period', currentPeriod).eq('month', monthStr).single();
+      async function loadWorklog() {
+        const startDate = `${currentYear}-${String(currentMonth).padStart(2,'0')}-01`;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+        const endDate = `${nextYear}-${String(nextMonth).padStart(2,'0')}-01`;
+        const { data } = await _supabase.from('worklog').select('*')
+          .gte('date', startDate)
+          .lt('date', endDate);
+        worklog = {};
+        (data || []).forEach(r => { worklog[`${r.emp_id}_${r.date}`] = r; });
+      }
 
-        let error;
-        if (existing) {
-          const { error: updateError } = await _supabase.from('salary_payouts').update(payload).eq('id', existing.id);
-          error = updateError;
+      async function loadSalaryParams() {
+        const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+        const { data } = await _supabase.from('salary_params').select('*').eq('month', monthStr);
+        salaryParams = {};
+        (data || []).forEach(r => { salaryParams[r.emp_id] = r; });
+      }
+
+      function applyRoleFilter(role) {
+        currentRoleFilter = role;
+        if (role === 'all') {
+          selectedEmployeeIds.clear();
+          employees.forEach(e => selectedEmployeeIds.add(e.id));
         } else {
-          const { error: insertError } = await _supabase.from('salary_payouts').insert(payload);
-          error = insertError;
+          selectedEmployeeIds.clear();
+          employees.filter(e => e.role === role).forEach(e => selectedEmployeeIds.add(e.id));
+        }
+        renderEmpDropdown();
+        renderSchedule();
+        updateSelectedEmployeesDisplay();
+      }
+
+      function renderEmpDropdown() {
+        const dd = document.getElementById('empDropdown');
+        dd.querySelectorAll('.emp-dropdown-item').forEach(el => el.remove());
+        employees.forEach(e => {
+          const item = document.createElement('label');
+          item.className = 'emp-dropdown-item';
+          item.innerHTML = `<input type="checkbox" value="${e.id}" ${selectedEmployeeIds.has(e.id) ? 'checked' : ''}> ${e.name} (${e.role})`;
+          item.querySelector('input').addEventListener('change', function() {
+            if (this.checked) selectedEmployeeIds.add(e.id);
+            else selectedEmployeeIds.delete(e.id);
+            currentRoleFilter = null;
+            document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+            renderSchedule();
+            updateSelectedEmployeesDisplay();
+          });
+          dd.appendChild(item);
+        });
+      }
+
+      function updateSelectedEmployeesDisplay() {
+        const btn = document.getElementById('empFilterBtn');
+        if (selectedEmployeeIds.size === employees.length) {
+          btn.textContent = 'Все сотрудники ▾';
+        } else if (selectedEmployeeIds.size === 0) {
+          btn.textContent = 'Никто не выбран ▾';
+        } else {
+          btn.textContent = `${selectedEmployeeIds.size} сотруд. ▾`;
+        }
+      }
+
+      function getNormDays(role, params) {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        if (role === 'Менеджер') {
+          let count = 0;
+          for (let d = 1; d <= daysInMonth; d++) if ((d - 1) % 6 < 3) count++;
+          return count;
+        }
+        if (role === 'Администратор') {
+          let count = 0;
+          for (let d = 1; d <= daysInMonth; d++) if ((d - 1) % 4 < 2) count++;
+          return params.norm_days || count;
+        }
+        return params.norm_days || 22;
+      }
+
+      function getPeriodSales(emp, period) {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        let total = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          if (period === 'first' && d > 15) continue;
+          if (period === 'second' && d < 16) continue;
+          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[`${emp.id}_${dateStr}`];
+          if (rec && rec.status === 'working') total += rec.daily_sales || 0;
+        }
+        return total;
+      }
+
+      function getSalary(emp) {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        let worked = 0, sales = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[`${emp.id}_${dateStr}`];
+          if (!rec || rec.status !== 'working') continue;
+          if (emp.role === 'Менеджер') sales += rec.daily_sales || 0;
+          if ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16)) {
+            worked++;
+          }
+        }
+        const params = salaryParams[emp.id] || {};
+        const norm = getNormDays(emp.role, params);
+        const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
+        const dailyRate = (rates[emp.role] || 0) / norm;
+        let base = dailyRate * worked;
+
+        if (emp.role === 'Менеджер') {
+          const plan = params.plan_amount || 0;
+          const bonusPercent = (plan > 0 && sales >= plan) ? 7 : 5;
+          const bonus = currentPeriod === 'first' ? 0 : sales * bonusPercent / 100;
+          return base + bonus;
+        }
+        if (emp.role === 'Администратор') {
+          const managersSales = employees.filter(e => e.role === 'Менеджер')
+            .reduce((sum, m) => sum + getFullMonthSales(m), 0);
+          const bonus = currentPeriod !== 'first' ? managersSales * 0.01 : 0;
+          return base + bonus;
+        }
+        if (emp.role === 'Управляющий') {
+          const managersSales = employees.filter(e => e.role === 'Менеджер')
+            .reduce((sum, m) => sum + getFullMonthSales(m), 0);
+          const plan = params.plan_amount || 0;
+          const bonus = (plan > 0 && managersSales >= plan && currentPeriod !== 'first') ? managersSales * 0.01 : 0;
+          return base + bonus;
+        }
+        return base;
+      }
+
+      function getFullMonthSales(emp) {
+        const days = new Date(currentYear, currentMonth, 0).getDate();
+        let total = 0;
+        for (let d = 1; d <= days; d++) {
+          const key = `${emp.id}_${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[key];
+          if (rec && rec.status === 'working') total += rec.daily_sales || 0;
+        }
+        return total;
+      }
+
+      function renderSchedule() {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        document.getElementById('monthTitle').textContent =
+          new Date(currentYear, currentMonth - 1, 1).toLocaleDateString('ru', { month: 'long', year: 'numeric' });
+
+        const filtered = employees.filter(e => selectedEmployeeIds.has(e.id));
+        const container = document.getElementById('scheduleContainer');
+        if (!filtered.length) {
+          container.innerHTML = '<p style="color:#636e72; text-align:center; padding:2rem;">Выберите сотрудников для отображения</p>';
+          return;
         }
 
+        let html = '<table><thead><tr><th class="employee-name">Сотрудник</th>';
+        for (let d = 1; d <= daysInMonth; d++) {
+          html += `<th>${d}</th>`;
+        }
+        html += '<th>Смен</th><th>ЗП</th></tr></thead><tbody>';
+
+        DISPLAY_ROLES.forEach(role => {
+          const group = filtered.filter(e => e.role === role);
+          if (!group.length) return;
+          html += `<tr class="role-header"><td colspan="${daysInMonth + 3}">${role === 'Управляющий' ? 'Управляющие' : (role === 'Менеджер' ? 'Менеджеры' : 'Администраторы')}</td></tr>`;
+          group.forEach(emp => {
+            let cells = '', worked = 0;
+            for (let d = 1; d <= daysInMonth; d++) {
+              const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+              const rec = worklog[`${emp.id}_${dateStr}`] || {};
+              const status = rec.status || '';
+              if (status === 'working' && ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16))) {
+                worked++;
+              }
+              let cellClass = 'day-cell ' + status;
+              let content = '';
+              if (status === 'working') {
+                if (emp.role === 'Менеджер') content = rec.daily_sales > 0 ? '₽' : 'Д';
+                else content = 'Д';
+              } else if (status === 'dayoff') content = 'В';
+              else if (status === 'sick') content = 'Б';
+              else if (status === 'vacation') content = 'О';
+              else if (status === 'leave') content = 'От';
+              cells += `<td class="${cellClass}" data-emp="${emp.id}" data-date="${dateStr}">${content}</td>`;
+            }
+            const salary = getSalary(emp);
+            const isOwner = currentUserEmail === OWNER_EMAIL;
+            const displaySalary = (emp.role === 'Управляющий' && !isOwner) ? '***' : `${salary.toFixed(0)} ₽`;
+            html += `<tr>
+              <td class="employee-name" data-emp="${emp.id}">${emp.name}</td>
+              ${cells}
+              <td class="summary-cell">${worked}</td>
+              <td class="summary-cell">${displaySalary}</td>
+            </tr>`;
+          });
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+
+        container.querySelectorAll('.day-cell').forEach(cell => {
+          cell.addEventListener('click', () => openDayModal(cell.dataset.emp, cell.dataset.date));
+        });
+        container.querySelectorAll('.employee-name').forEach(el => {
+          el.addEventListener('click', () => openSalaryModal(el.dataset.emp));
+        });
+      }
+
+      function openDayModal(empId, date) {
+        const emp = employees.find(e => e.id === empId);
+        if (!emp) return;
+        const rec = worklog[`${empId}_${date}`] || {};
+        document.getElementById('dayModalTitle').textContent = `${emp.name} – ${date}`;
+        document.getElementById('dayStatus').value = rec.status || '';
+        document.getElementById('dayComment').value = rec.comment || '';
+        document.getElementById('dayDynamicFields').innerHTML = emp.role === 'Менеджер'
+          ? `<input type="number" id="dailySales" value="${rec.daily_sales || ''}" placeholder="Выручка">`
+          : '';
+        document.getElementById('dayModal').dataset.emp = empId;
+        document.getElementById('dayModal').dataset.date = date;
+        document.getElementById('dayModal').style.display = 'flex';
+      }
+
+      document.getElementById('saveDayBtn').addEventListener('click', async () => {
+        const empId = document.getElementById('dayModal').dataset.emp;
+        const date = document.getElementById('dayModal').dataset.date;
+        const status = document.getElementById('dayStatus').value;
+        const comment = document.getElementById('dayComment').value.trim();
+        const data = { emp_id: empId, date, status, comment };
+        if (document.getElementById('dailySales')) data.daily_sales = parseFloat(document.getElementById('dailySales').value) || 0;
+
+        try {
+          const { error } = await _supabase.from('worklog').upsert(data, { onConflict: 'emp_id, date' });
+          if (error) {
+            if (error.code === '42501' || error.message.includes('row-level security')) {
+              showAlert('У вас нет прав на редактирование данных другого сотрудника.');
+            } else {
+              showAlert('Ошибка: ' + error.message);
+            }
+            return;
+          }
+          document.getElementById('dayModal').style.display = 'none';
+          await loadWorklog();
+          renderSchedule();
+        } catch (err) {
+          showAlert('Не удалось сохранить изменения. Возможно, у вас недостаточно прав.');
+          console.error(err);
+        }
+      });
+
+      document.getElementById('cancelDayBtn').addEventListener('click', () => document.getElementById('dayModal').style.display = 'none');
+
+      function openSalaryModal(empId) {
+        const emp = employees.find(e => e.id === empId);
+        if (!emp) return;
+        if (emp.role === 'Управляющий' && currentUserEmail !== OWNER_EMAIL) {
+          document.getElementById('salaryContent').innerHTML = '<p>Только для руководства</p>';
+          document.getElementById('salaryModal').style.display = 'flex';
+          return;
+        }
+        const params = salaryParams[empId] || {};
+        let html = `<p style="font-weight:600; margin-bottom:0.5rem;">${emp.name} (${emp.role})</p>`;
+        const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
+        if (rates[emp.role]) {
+          html += `<div class="label-row"><span>Оклад:</span><strong>${rates[emp.role]} ₽</strong></div>`;
+        }
+        html += `<select id="salaryGraph">
+          <option value="2/2" ${emp.role === 'Администратор' ? 'selected' : ''}>2/2</option>
+          <option value="3/3" ${emp.role === 'Менеджер' ? 'selected' : ''}>3/3</option>
+          <option value="5/2">5/2 (стандарт)</option>
+        </select>`;
+        html += `<div class="label-row"><span>Норма дней:</span><input type="number" id="normDays" value="${params.norm_days || getNormDays(emp.role, params)}" style="width:80px;"></div>`;
+
+        if (emp.role === 'Менеджер' || emp.role === 'Управляющий') {
+          const totalSales = (emp.role === 'Менеджер') ? getPeriodSales(emp, currentPeriod) : employees.filter(e=>e.role==='Менеджер').reduce((sum,m)=>sum+getPeriodSales(m, currentPeriod),0);
+          const plan = params.plan_amount || 0;
+          let statsHtml = '';
+          if (plan > 0) {
+            const percent = Math.min(100, (totalSales / plan) * 100).toFixed(1);
+            const remaining = plan - totalSales > 0 ? plan - totalSales : 0;
+            statsHtml = `
+              <div class="stats-block">
+                <div class="stats-row"><span>Выручка за период:</span><strong>${totalSales.toLocaleString()} ₽</strong></div>
+                <div class="stats-row"><span>План:</span><strong>${plan.toLocaleString()} ₽</strong></div>
+                <div class="stats-row"><span>Осталось до плана:</span><strong>${remaining.toLocaleString()} ₽</strong></div>
+                <div class="progress-container">
+                  <div class="progress-fill" style="width:${percent}%;"></div>
+                </div>
+                <div class="stats-row"><span>Выполнение:</span><strong>${percent}%</strong></div>
+              </div>
+            `;
+          } else {
+            statsHtml = `<div class="stats-block"><div class="stats-row"><span>Выручка за период:</span><strong>${totalSales.toLocaleString()} ₽</strong></div></div>`;
+          }
+          html += statsHtml;
+          html += `<div class="label-row"><span>План продаж:</span><input type="number" id="planAmount" value="${params.plan_amount || ''}" style="width:120px;"></div>`;
+        }
+
+        if (emp.role === 'Администратор') {
+          const managersSales = employees.filter(e => e.role === 'Менеджер')
+            .reduce((sum, m) => sum + getFullMonthSales(m), 0);
+          html += `<div class="label-row"><span>Продажи менеджеров:</span><strong>${managersSales.toLocaleString()} ₽</strong></div>`;
+          html += `<div class="label-row"><span>KPI (1%):</span><strong>${(managersSales * 0.01).toFixed(0)} ₽</strong></div>`;
+        }
+        document.getElementById('salaryContent').innerHTML = html;
+        document.getElementById('salaryModal').dataset.emp = empId;
+        document.getElementById('salaryModal').style.display = 'flex';
+      }
+
+      document.getElementById('saveSalaryBtn').addEventListener('click', async () => {
+        const empId = document.getElementById('salaryModal').dataset.emp;
+        const emp = employees.find(e => e.id === empId);
+        if (!emp) return;
+        const monthStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+        const normDays = parseInt(document.getElementById('normDays')?.value) || getNormDays(emp.role, salaryParams[empId] || {});
+        const planAmount = parseFloat(document.getElementById('planAmount')?.value) || null;
+        const data = {
+          emp_id: empId,
+          month: monthStr,
+          norm_days: normDays,
+          plan_amount: planAmount
+        };
+        const { error } = await _supabase.from('salary_params').upsert(data, { onConflict: 'emp_id, month' });
         if (error) {
           if (error.code === '42501' || error.message.includes('row-level security')) {
-            showAlert('У вас нет прав на проведение выплат. Обратитесь к администратору.');
+            showAlert('У вас нет прав изменять зарплатные параметры.');
           } else {
-            showAlert('Ошибка сохранения: ' + error.message);
+            showAlert('Ошибка: ' + error.message);
           }
           return;
         }
-        modal.style.display = 'none';
-        loadData();
-      } catch (err) {
-        showAlert('Не удалось сохранить. Попробуйте позже.');
-        console.error(err);
-      }
-    }
-
-    document.getElementById('cancelSalaryBtn').addEventListener('click', () => { document.getElementById('salaryModal').style.display = 'none'; });
-
-    function exportExcel() {
-      const list = getSalaryList();
-      const rows = list.map(item => ({
-        'Сотрудник': item.employee.name, 'Роль': item.employee.role, 'Сумма': item.amount,
-        'Статус': item.paid ? 'Выплачено' : 'Не выплачено',
-        'Телефон': item.payoutData?.phone || '', 'Банк': item.payoutData?.bank || ''
-      }));
-      rows.push({ 'Сотрудник': 'ИТОГО', 'Сумма': list.reduce((s, i) => s + i.amount, 0) });
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Зарплатная ведомость');
-      XLSX.writeFile(wb, `ЗП_${currentPeriod}_${selectedYear}-${String(selectedMonth).padStart(2,'0')}.xlsx`);
-    }
-
-    document.getElementById('exportExcelBtn').addEventListener('click', exportExcel);
-
-    document.querySelectorAll('.filter-btn[data-period]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn[data-period]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentPeriod = btn.dataset.period;
-        loadData();
+        document.getElementById('salaryModal').style.display = 'none';
+        await loadSalaryParams();
+        renderSchedule();
       });
-    });
 
-    document.querySelectorAll('.filter-btn[data-role]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn[data-role]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentRoleFilter = btn.dataset.role;
-        renderAll();
+      document.getElementById('cancelSalaryBtn').addEventListener('click', () => document.getElementById('salaryModal').style.display = 'none');
+
+      document.getElementById('prevMonthBtn').addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+        loadWorklog().then(renderSchedule);
       });
-    });
+      document.getElementById('nextMonthBtn').addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 12) { currentMonth = 1; currentYear++; }
+        loadWorklog().then(renderSchedule);
+      });
 
-    document.getElementById('searchInput').addEventListener('input', renderAll);
+      document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          currentPeriod = this.dataset.period;
+          renderSchedule();
+        });
+      });
 
-    document.getElementById('prevMonthBtn').addEventListener('click', () => {
-      selectedMonth--; if (selectedMonth < 1) { selectedMonth = 12; selectedYear--; }
-      loadData();
-    });
-    document.getElementById('nextMonthBtn').addEventListener('click', () => {
-      selectedMonth++; if (selectedMonth > 12) { selectedMonth = 1; selectedYear++; }
-      loadData();
-    });
+      document.getElementById('roleFilters').addEventListener('click', (e) => {
+        if (e.target.classList.contains('role-btn')) {
+          document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          applyRoleFilter(e.target.dataset.role);
+        }
+      });
 
-    loadData();
-  })();
-</script>
+      document.getElementById('empFilterBtn').addEventListener('click', () => {
+        document.getElementById('empDropdown').classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#empFilterWrap')) document.getElementById('empDropdown').classList.remove('open');
+      });
+
+      document.getElementById('selectAllBtn').addEventListener('click', () => {
+        employees.forEach(e => selectedEmployeeIds.add(e.id));
+        currentRoleFilter = null;
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        renderEmpDropdown();
+        renderSchedule();
+        updateSelectedEmployeesDisplay();
+      });
+      document.getElementById('deselectAllBtn').addEventListener('click', () => {
+        selectedEmployeeIds.clear();
+        currentRoleFilter = null;
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        renderEmpDropdown();
+        renderSchedule();
+        updateSelectedEmployeesDisplay();
+      });
+
+      document.getElementById('exportBtn').addEventListener('click', () => {
+        const table = document.querySelector('table');
+        if (!table) return;
+        const wb = XLSX.utils.table_to_book(table, { sheet: 'График' });
+        XLSX.writeFile(wb, `График_${currentYear}-${String(currentMonth).padStart(2,'0')}.xlsx`);
+      });
+
+      init();
+    })();
+  </script>
 </body>
 </html>
