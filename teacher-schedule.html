@@ -59,48 +59,22 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.6) inset, 0 0 0 2px rgba(200,200,220,0.3);
             z-index: 0;
         }
-        .wave-layer {
-            position: absolute; inset: 0; z-index: 1; opacity: 0.6; pointer-events: none;
-        }
-        .wave {
-            fill: none; stroke: rgba(124,92,231,0.2); stroke-width: 1.5;
-            animation: waveShift 12s ease-in-out infinite alternate;
-        }
-        .wave:nth-child(2) {
-            stroke: rgba(200,180,220,0.25); stroke-width: 1;
-            animation-duration: 15s; animation-direction: alternate-reverse;
-        }
-        .wave:nth-child(3) {
-            stroke: rgba(180,160,210,0.3); stroke-width: 2; animation-duration: 18s;
-        }
-        @keyframes waveShift {
-            0% { transform: translateX(0) scaleY(1); }
-            100% { transform: translateX(15px) scaleY(1.05); }
-        }
-        .resonance-rings {
-            position: absolute; inset: 0; z-index: 1; pointer-events: none;
-        }
-        .ring {
-            fill: none; stroke: rgba(160,140,200,0.25); stroke-width: 1.2;
-            animation: ringPulse 8s ease-in-out infinite;
-        }
-        .ring:nth-child(2) {
-            stroke: rgba(180,160,210,0.2); stroke-width: 0.8; animation-duration: 11s;
-        }
-        @keyframes ringPulse {
-            0%, 100% { transform: scale(1); opacity: 0.4; }
-            50% { transform: scale(1.02); opacity: 0.7; }
-        }
-        .bunny-sculpture {
-            position: relative; z-index: 3;
-            width: 120px; height: 140px;
-            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.15));
+        /* Новый зайчик */
+        #music-bunny {
+            position: relative;
+            z-index: 3;
+            width: 140px;
+            height: 140px;
             cursor: pointer;
             transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1);
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.2));
         }
-        .bunny-sculpture:hover { transform: scale(1.02) translateY(-2px); }
+        #music-bunny:hover {
+            transform: scale(1.03) translateY(-4px);
+            filter: drop-shadow(0 15px 20px rgba(0,0,0,0.3));
+        }
         .bunny-speech-bubble {
-            position: absolute; z-index: 4; left: 140px; top: 50%; transform: translateY(-50%);
+            position: absolute; z-index: 4; left: 160px; top: 50%; transform: translateY(-50%);
             background: rgba(255,255,255,0.8); backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px); border-radius: 20px;
             padding: 12px 18px; font-size: 13px; color: #2d3436;
@@ -116,7 +90,7 @@
             border-right: 8px solid rgba(255,255,255,0.8); backdrop-filter: blur(16px);
         }
 
-        /* Остальные стили без изменений */
+        /* Остальные стили сохранены */
         .find-teacher-compact { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.5rem; padding: 0.4rem 0.6rem; background: rgba(255,255,255,0.6); backdrop-filter: blur(6px); border-radius: 12px; border: 1px solid rgba(124,92,231,0.08); }
         .find-teacher-compact input, .find-teacher-compact select { width: auto; min-width: 110px; flex: 1; padding: 0.4rem 0.7rem; font-size: 0.82rem; border-radius: 8px; border: 1px solid rgba(124,92,231,0.1); background: white; }
         .find-results { margin-top: 0.4rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; font-size: 0.85rem; }
@@ -193,81 +167,87 @@
 
         <div class="art-panel">
             <div class="art-base"></div>
-            <svg class="wave-layer" viewBox="0 0 800 150" preserveAspectRatio="none">
-                <path class="wave" d="M0,75 C200,35 400,120 800,70" />
-                <path class="wave" d="M0,85 C200,110 400,50 800,85" />
-                <path class="wave" d="M0,95 C200,70 400,110 800,80" />
-            </svg>
-            <div class="resonance-rings">
-                <svg viewBox="0 0 800 150" preserveAspectRatio="none">
-                    <ellipse class="ring" cx="400" cy="75" rx="180" ry="45" />
-                    <ellipse class="ring" cx="400" cy="75" rx="160" ry="40" />
-                </svg>
-            </div>
-
-            <div class="bunny-sculpture" id="music-bunny">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="100%">
+            <!-- НОВЫЙ ПЕРСОНАЖ -->
+            <div id="music-bunny">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
                     <defs>
-                        <radialGradient id="porcelain" cx="40%" cy="30%" r="60%">
+                        <!-- Фарфоровое тело -->
+                        <radialGradient id="porcelain" cx="40%" cy="30%" r="70%">
                             <stop offset="0%" stop-color="#ffffff"/>
-                            <stop offset="70%" stop-color="#f5f0f0"/>
-                            <stop offset="100%" stop-color="#e8e0e0"/>
+                            <stop offset="60%" stop-color="#f2edf0"/>
+                            <stop offset="100%" stop-color="#dad3d8"/>
                         </radialGradient>
-                        <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#fff5f5" stop-opacity="0.6"/>
-                            <stop offset="100%" stop-color="#fff5f5" stop-opacity="0"/>
+                        <!-- Кварцевые уши -->
+                        <linearGradient id="earGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+                            <stop offset="50%" stop-color="#f5e6f0" stop-opacity="0.6"/>
+                            <stop offset="100%" stop-color="#d4c5d0" stop-opacity="0.3"/>
+                        </linearGradient>
+                        <!-- Жемчужный нос -->
+                        <radialGradient id="pearlNose" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#ffe0ec"/>
+                            <stop offset="100%" stop-color="#c08ba0"/>
                         </radialGradient>
-                        <radialGradient id="eyeLens" cx="40%" cy="35%">
+                        <!-- Глаза-линзы -->
+                        <radialGradient id="lens" cx="40%" cy="35%" r="60%">
                             <stop offset="0%" stop-color="#ffffff"/>
-                            <stop offset="30%" stop-color="#f0f0f5"/>
-                            <stop offset="70%" stop-color="#d0d0e0"/>
-                            <stop offset="100%" stop-color="#a0a0b0"/>
+                            <stop offset="40%" stop-color="#e8eaf0"/>
+                            <stop offset="80%" stop-color="#b0b5c0"/>
+                            <stop offset="100%" stop-color="#707080"/>
                         </radialGradient>
-                        <radialGradient id="footGrad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#ffffff"/>
-                            <stop offset="100%" stop-color="#e0d8d8"/>
+                        <radialGradient id="pupil" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#1a1a2e"/>
+                            <stop offset="70%" stop-color="#0d0d1a"/>
+                            <stop offset="100%" stop-color="#000000"/>
                         </radialGradient>
+                        <!-- Золотые элементы -->
+                        <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#f0d78c"/>
+                            <stop offset="50%" stop-color="#c9a84c"/>
+                            <stop offset="100%" stop-color="#8b6914"/>
+                        </linearGradient>
                     </defs>
-                    <!-- Тень -->
-                    <ellipse cx="100" cy="230" rx="55" ry="8" fill="rgba(0,0,0,0.06)" filter="blur(4px)"/>
-                    <!-- Тело -->
-                    <ellipse cx="100" cy="180" rx="45" ry="55" fill="url(#porcelain)"/>
-                    <ellipse cx="100" cy="180" rx="30" ry="40" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
-                    <ellipse cx="100" cy="185" rx="25" ry="35" fill="url(#innerGlow)"/>
-                    <!-- Нижние лапки -->
-                    <ellipse cx="60" cy="210" rx="18" ry="12" fill="url(#footGrad)" stroke="rgba(180,160,160,0.3)" stroke-width="1"/>
-                    <ellipse cx="140" cy="210" rx="18" ry="12" fill="url(#footGrad)" stroke="rgba(180,160,160,0.3)" stroke-width="1"/>
-                    <!-- Уши -->
-                    <path d="M70,90 C50,40 65,20 80,50" fill="url(#porcelain)" stroke="rgba(200,180,190,0.3)" stroke-width="1"/>
-                    <path d="M130,90 C150,40 135,20 120,50" fill="url(#porcelain)" stroke="rgba(200,180,190,0.3)" stroke-width="1"/>
-                    <!-- Голова -->
-                    <ellipse cx="100" cy="120" rx="50" ry="45" fill="url(#porcelain)"/>
-                    <ellipse cx="70" cy="130" rx="15" ry="10" fill="url(#innerGlow)"/>
-                    <ellipse cx="130" cy="130" rx="15" ry="10" fill="url(#innerGlow)"/>
-                    <!-- Глаза -->
-                    <g>
-                        <ellipse cx="80" cy="115" rx="10" ry="14" fill="url(#eyeLens)"/>
-                        <ellipse cx="80" cy="115" rx="6" ry="10" fill="#2d2d3a"/>
-                        <circle cx="82" cy="112" r="2.5" fill="white"/>
-                        <circle cx="78" cy="117" r="1" fill="rgba(255,255,255,0.6)"/>
+
+                    <!-- Параметрические уши -->
+                    <path d="M62,80 C55,40 75,10 85,35 C88,42 82,60 78,68" fill="url(#earGlow)" stroke="rgba(200,180,190,0.4)" stroke-width="1.5"/>
+                    <path d="M98,80 C105,40 85,10 75,35 C72,42 78,60 82,68" fill="url(#earGlow)" stroke="rgba(200,180,190,0.4)" stroke-width="1.5"/>
+
+                    <!-- Органическое тело -->
+                    <path d="M80,130 C55,120 40,95 50,75 C55,65 65,58 80,55 C95,58 105,65 110,75 C120,95 105,120 80,130Z" fill="url(#porcelain)"/>
+                    <!-- Щёки с subsurface scattering -->
+                    <ellipse cx="65" cy="90" rx="12" ry="8" fill="#ffb3ba" opacity="0.3" filter="blur(4px)"/>
+                    <ellipse cx="95" cy="90" rx="12" ry="8" fill="#ffb3ba" opacity="0.3" filter="blur(4px)"/>
+
+                    <!-- Глаза-линзы -->
+                    <g transform="translate(68, 78)">
+                        <ellipse cx="0" cy="0" rx="9" ry="12" fill="url(#lens)"/>
+                        <ellipse cx="2" cy="0" rx="5" ry="8" fill="url(#pupil)"/>
+                        <circle cx="4" cy="-3" r="2" fill="white" opacity="0.9"/>
+                        <circle cx="0" cy="4" r="1" fill="white" opacity="0.4"/>
                     </g>
-                    <g>
-                        <ellipse cx="120" cy="115" rx="10" ry="14" fill="url(#eyeLens)"/>
-                        <ellipse cx="120" cy="115" rx="6" ry="10" fill="#2d2d3a"/>
-                        <circle cx="122" cy="112" r="2.5" fill="white"/>
-                        <circle cx="118" cy="117" r="1" fill="rgba(255,255,255,0.6)"/>
+                    <g transform="translate(92, 78)">
+                        <ellipse cx="0" cy="0" rx="9" ry="12" fill="url(#lens)"/>
+                        <ellipse cx="-2" cy="0" rx="5" ry="8" fill="url(#pupil)"/>
+                        <circle cx="0" cy="-3" r="2" fill="white" opacity="0.9"/>
+                        <circle cx="-4" cy="4" r="1" fill="white" opacity="0.4"/>
                     </g>
+
                     <!-- Нос -->
-                    <ellipse cx="100" cy="125" rx="3" ry="2" fill="#e0c0c0"/>
+                    <ellipse cx="80" cy="92" rx="4" ry="3" fill="url(#pearlNose)"/>
+
                     <!-- Рот -->
-                    <path d="M95,132 Q100,138 105,132" fill="none" stroke="#c0a0a0" stroke-width="1.5" stroke-linecap="round"/>
-                    <path d="M72,102 Q80,98 88,102" fill="none" stroke="#b0a0a0" stroke-width="0.8"/>
-                    <path d="M112,102 Q120,98 128,102" fill="none" stroke="#b0a0a0" stroke-width="0.8"/>
-                    <!-- Ручки (лапки) -->
-                    <path d="M55,150 C40,170 35,190 45,195" fill="none" stroke="url(#porcelain)" stroke-width="12" stroke-linecap="round"/>
-                    <path d="M145,150 C160,170 165,190 155,195" fill="none" stroke="url(#porcelain)" stroke-width="12" stroke-linecap="round"/>
+                    <path d="M74,100 Q80,105 86,100" fill="none" stroke="#b0a0b0" stroke-width="1.2" stroke-linecap="round"/>
+
+                    <!-- Золотые рожки (вместо обычных ушей) -->
+                    <path d="M75,65 C78,50 90,55 88,58" fill="none" stroke="url(#gold)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M85,65 C82,50 70,55 72,58" fill="none" stroke="url(#gold)" stroke-width="2" stroke-linecap="round"/>
+
+                    <!-- Кварцевые лапки -->
+                    <ellipse cx="60" cy="125" rx="10" ry="6" fill="url(#earGlow)" stroke="rgba(200,180,190,0.3)" stroke-width="1"/>
+                    <ellipse cx="100" cy="125" rx="10" ry="6" fill="url(#earGlow)" stroke="rgba(200,180,190,0.3)" stroke-width="1"/>
+
                     <!-- Логотип -->
-                    <text x="100" y="185" text-anchor="middle" dominant-baseline="central" font-family="Inter, sans-serif" font-weight="800" font-size="12" fill="#7c5ce7" opacity="0.8">MC</text>
+                    <text x="80" y="110" text-anchor="middle" dominant-baseline="central" font-family="Inter, sans-serif" font-weight="800" font-size="10" fill="#7c5ce7" opacity="0.7">MC</text>
                 </svg>
             </div>
             <div class="bunny-speech-bubble" id="bunny-speech"></div>
@@ -725,6 +705,7 @@
             return se ? { ...se, source:'setting' } : null;
         }
 
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ – ВСЕГДА ЗАГРУЖАЕТ СВЕЖИЕ ДАННЫЕ
         async function openSettingModal(ds, ex = null) {
             let freshEx = null;
             if (selectedTeacherId) {
