@@ -28,16 +28,17 @@
         input, textarea, select { cursor: text; caret-color: auto; }
         .container { width: 100%; max-width: 1340px; margin: 0 auto; background: var(--surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.6); }
 
-        /* Шапка */
+        /* Шапка с музыкальным узором */
         .header {
             display: flex; align-items: center; gap: 1rem;
             margin-bottom: 2rem; flex-wrap: nowrap;
             position: sticky; top: 20px; z-index: 20;
             background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
             padding: 0.8rem 1.2rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            /* Красивый музыкальный паттерн */
+            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237c5ce7' fill-opacity='0.1'%3E%3Cpath d='M20 20h4v4h-4zM56 20h4v4h-4zM20 56h4v4h-4zM56 56h4v4h-4zM10 40h4v4h-4zM66 40h4v4h-4zM40 10h4v4h-4zM40 66h4v4h-4z'/%3E%3Ccircle cx='40' cy='40' r='10'/%3E%3Cpath d='M34 28l8 4-8 4-8-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-size: 60px 60px;
             border: 1px solid rgba(124,92,231,0.15);
-            position: relative;
-            overflow: hidden;
             justify-content: space-between;
         }
         .back-link {
@@ -49,7 +50,7 @@
         .back-link:hover { background: rgba(124,92,231,0.15); color: var(--violet-dark); }
         .back-link svg { width: 20px; height: 20px; }
 
-        /* Центрирование зайчика */
+        /* Зайчик по центру */
         .bunny-block {
             flex: 1; display: flex; align-items: center; justify-content: center; gap: 1rem;
             position: relative;
@@ -74,7 +75,7 @@
         }
         .bunny-speech-bubble svg { flex-shrink: 0; margin-right: 4px; }
 
-        /* Плавающие ноты вокруг зайчика */
+        /* Плавающие ноты */
         .floating-notes {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; z-index: 0;
@@ -140,7 +141,7 @@
         .search-input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         .teacher-select { padding: 0.6rem 2.5rem 0.6rem 1.2rem; border-radius: 12px; border: 1px solid rgba(124,92,231,0.12); background: white; font-size: 0.9rem; font-weight: 500; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L1 3h10z' fill='%23636e72'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.8rem center; flex: 1; max-width: 320px; transition: var(--transition); }
         .teacher-select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
-        .month-nav { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
+        .month-nav { display: flex; align-items: center; gap: 0.4rem; }
         .month-nav button { background: white; border: 1px solid rgba(124,92,231,0.12); padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: var(--transition); }
         .month-nav button:hover { border-color: var(--violet); color: var(--violet); }
         .month-title { min-width: 150px; text-align: center; font-weight: 600; background: white; padding: 0.5rem 1.2rem; border-radius: 10px; border: 1px solid rgba(124,92,231,0.12); }
@@ -195,7 +196,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         </a>
 
-        <!-- Блок с зайчиком (центрирован) -->
+        <!-- Блок с зайчиком по центру -->
         <div class="bunny-block">
             <div id="music-bunny">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
@@ -349,6 +350,26 @@
         let currentYear, currentMonth, selectedTeacherId = '';
         let activeTab = 'calendar';
 
+        // Сохранение состояния
+        function saveState() {
+            const state = { selectedTeacherId, currentYear, currentMonth, activeTab };
+            localStorage.setItem('teacherScheduleState', JSON.stringify(state));
+        }
+        function loadState() {
+            const saved = localStorage.getItem('teacherScheduleState');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    if (state.currentYear && state.currentMonth) {
+                        currentYear = state.currentYear;
+                        currentMonth = state.currentMonth;
+                    }
+                    if (state.selectedTeacherId) selectedTeacherId = state.selectedTeacherId;
+                    if (state.activeTab) activeTab = state.activeTab;
+                } catch (e) { /* ignore */ }
+            }
+        }
+
         // Премиальные SVG-иконки
         const CROWN_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f1c40f" stroke-width="2"><path d="M2 4l3 12h14l3-12-10 4-10-4z"/><circle cx="12" cy="20" r="2"/></svg>';
         const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
@@ -419,16 +440,43 @@
             currentUserEmail = session.user.email;
             isAdminUser = currentUserEmail === ADMIN_EMAIL;
             if (!isAdminUser) document.getElementById('addTeacherBtn').style.display = 'none';
-            const now = new Date(); currentYear = now.getFullYear(); currentMonth = now.getMonth() + 1;
+            // Загружаем сохранённое состояние
+            loadState();
+            // Если месяц не задан – берём текущий
+            if (!currentYear || !currentMonth) {
+                const now = new Date();
+                currentYear = now.getFullYear();
+                currentMonth = now.getMonth() + 1;
+            }
             await loadTeachers();
             await loadAllAvailability();
             setupEvents();
             renderMonthTitle();
             buildFindTimeSelects();
             populateSubjectFilter();
+            // Устанавливаем вкладку
+            if (activeTab === 'list') {
+                switchTab('list');
+                document.querySelector('.tab[data-tab="list"]')?.classList.add('active');
+                document.querySelector('.tab[data-tab="calendar"]')?.classList.remove('active');
+            } else {
+                switchTab('calendar');
+            }
+            // Если был выбран преподаватель – загружаем его
+            if (selectedTeacherId) {
+                document.getElementById('teacherSelect').value = selectedTeacherId;
+                await Promise.all([loadSettings(), loadOverrides()]);
+                renderCalendar();
+            }
             bunny.startIdleAnimations();
             bunny.enableHover();
             bunny.say(`${HEART_ICON}<span style="margin-left:4px;">Я готов помогать, моя золотая!</span>`);
+            saveState();
+        }
+
+        // При любом изменении сохраняем состояние
+        function updateStateAndSave() {
+            saveState();
         }
 
         function buildFindTimeSelects() {
@@ -581,6 +629,7 @@
             document.getElementById('calendarPanel').style.display = tab==='calendar'?'block':'none';
             document.getElementById('listPanel').style.display = tab==='list'?'block':'none';
             if (tab==='list') renderTeacherList();
+            updateStateAndSave();
         }
 
         async function loadTeachers() {
@@ -598,6 +647,7 @@
                 return `<option value="${t.id}">${crown} ${t.specialization||''} ${t.name}</option>`;
             }).join('');
             sel.value = selectedTeacherId || '';
+            updateStateAndSave();
         }
 
         function filterTeachers(e) {
@@ -608,6 +658,7 @@
 
         async function onSelectTeacher(e) {
             selectedTeacherId = e.target.value;
+            updateStateAndSave();
             if (selectedTeacherId) {
                 await Promise.all([loadSettings(), loadOverrides()]);
                 const teacher = teachers.find(t => t.id === selectedTeacherId);
@@ -637,6 +688,7 @@
             currentMonth += d;
             if (currentMonth<1) { currentMonth=12; currentYear--; }
             else if (currentMonth>12) { currentMonth=1; currentYear++; }
+            updateStateAndSave();
             renderMonthTitle();
             if (selectedTeacherId) { loadOverrides().then(renderCalendar); } else { renderCalendar(); }
             bunny.say("Переключили месяц");
