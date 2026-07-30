@@ -28,51 +28,145 @@
         input, textarea, select { cursor: text; caret-color: auto; }
         .container { width: 100%; max-width: 1340px; margin: 0 auto; background: var(--surface); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: var(--radius-lg); padding: 2.5rem; box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.6); }
 
-        /* Шапка с музыкальным граффити */
+        /* ===== НОВАЯ ПРЕМИАЛЬНАЯ ШАПКА ===== */
         .header {
-            display: flex; align-items: center; gap: 1rem;
+            display: flex; align-items: center; gap: 2rem;
             margin-bottom: 2rem; flex-wrap: nowrap;
             position: sticky; top: 20px; z-index: 20;
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
-            padding: 0.8rem 1.2rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237c5ce7' fill-opacity='0.18'%3E%3Cpath d='M20 30h4v4h-4zM60 20h4v4h-4zM100 30h4v4h-4zM20 70h4v4h-4zM60 80h4v4h-4zM100 70h4v4h-4zM20 110h4v4h-4zM60 110h4v4h-4zM100 110h4v4h-4z'/%3E%3Ccircle cx='30' cy='50' r='6' fill='%23f9ca24' /%3E%3Ccircle cx='90' cy='50' r='6' fill='%23f9ca24' /%3E%3Cpath d='M15 90l8 4-8 4-8-4z' fill='%23ff8c94' /%3E%3Cpath d='M105 90l8 4-8 4-8-4z' fill='%23ff8c94' /%3E%3Cpath d='M60 50l6 10-6 10-6-10z' fill='%2355efc4' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            background-size: 100px 100px;
-            border: 1px solid rgba(124,92,231,0.15);
-            justify-content: space-between;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            height: 180px;
+            overflow: visible;
         }
         .back-link {
             color: var(--violet); text-decoration: none; font-weight: 600; font-size: 0.9rem;
-            transition: var(--transition); padding: 0.4rem; border-radius: var(--radius-sm);
-            background: rgba(124,92,231,0.08); display: flex; align-items: center; justify-content: center;
-            width: 38px; height: 38px; flex-shrink: 0;
+            transition: var(--transition); padding: 0.5rem 0.8rem; border-radius: var(--radius-sm);
+            background: rgba(124,92,231,0.12); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            width: 38px; height: 38px; flex-shrink: 0; margin-right: auto;
+            position: relative; z-index: 5;
         }
-        .back-link:hover { background: rgba(124,92,231,0.15); color: var(--violet-dark); }
+        .back-link:hover { background: rgba(124,92,231,0.25); color: var(--violet-dark); }
         .back-link svg { width: 20px; height: 20px; }
 
-        /* Зайчик по центру */
-        .bunny-block {
-            flex: 1; display: flex; align-items: center; justify-content: center; gap: 1rem;
+        .art-panel {
+            flex: 1;
+            height: 100%;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        #music-bunny {
-            width: 120px; height: 120px; position: relative; cursor: pointer; flex-shrink: 0;
+        .art-base {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 40% 50%, rgba(255,255,255,0.9) 0%, rgba(240,240,245,0.7) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.6) inset, 0 0 0 2px rgba(200,200,220,0.3);
+            z-index: 0;
+        }
+        .wave-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .wave {
+            fill: none;
+            stroke: rgba(124,92,231,0.2);
+            stroke-width: 1.5;
+            animation: waveShift 12s ease-in-out infinite alternate;
+        }
+        .wave:nth-child(2) {
+            stroke: rgba(200,180,220,0.25);
+            stroke-width: 1;
+            animation-duration: 15s;
+            animation-direction: alternate-reverse;
+        }
+        .wave:nth-child(3) {
+            stroke: rgba(180,160,210,0.3);
+            stroke-width: 2;
+            animation-duration: 18s;
+        }
+        @keyframes waveShift {
+            0% { transform: translateX(0) scaleY(1); }
+            100% { transform: translateX(15px) scaleY(1.05); }
+        }
+        .resonance-rings {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .ring {
+            fill: none;
+            stroke: rgba(160,140,200,0.25);
+            stroke-width: 1.2;
+            animation: ringPulse 8s ease-in-out infinite;
+        }
+        .ring:nth-child(2) {
+            stroke: rgba(180,160,210,0.2);
+            stroke-width: 0.8;
+            animation-duration: 11s;
+        }
+        @keyframes ringPulse {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.02); opacity: 0.7; }
+        }
+        .bunny-sculpture {
+            position: relative;
+            z-index: 3;
+            width: 120px;
+            height: 140px;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.15));
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .bunny-sculpture:hover {
+            transform: scale(1.02) translateY(-2px);
         }
         .bunny-speech-bubble {
-            position: relative;
-            background: white; border-radius: 16px; padding: 10px 14px;
-            font-size: 13px; color: #2d3436; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            white-space: normal; word-wrap: break-word; max-width: 220px;
-            opacity: 0; transition: opacity 0.3s ease;
-            display: flex; align-items: center; gap: 10px;
-            line-height: 1.5;
+            position: absolute;
+            z-index: 4;
+            left: 140px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            padding: 12px 18px;
+            font-size: 13px;
+            color: #2d3436;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.06), 0 0 0 1px rgba(255,255,255,0.8) inset;
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 220px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         .bunny-speech-bubble.show { opacity: 1; }
-        .bunny-speech-bubble::after {
-            content: ''; position: absolute; top: 50%; left: -6px; transform: translateY(-50%);
-            width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent;
-            border-right: 6px solid white;
+        .bunny-speech-bubble::before {
+            content: '';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 8px solid rgba(255,255,255,0.8);
+            backdrop-filter: blur(16px);
         }
-        .bunny-speech-bubble svg { flex-shrink: 0; margin-right: 4px; }
 
         /* Компактный поиск */
         .find-teacher-compact {
@@ -125,10 +219,10 @@
         .search-input:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
         .teacher-select { padding: 0.6rem 2.5rem 0.6rem 1.2rem; border-radius: 12px; border: 1px solid rgba(124,92,231,0.12); background: white; font-size: 0.9rem; font-weight: 500; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 8L1 3h10z' fill='%23636e72'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.8rem center; flex: 1; max-width: 320px; transition: var(--transition); }
         .teacher-select:focus { border-color: var(--violet); box-shadow: 0 0 0 3px rgba(124,92,231,0.06); outline: none; }
-        .month-nav { display: flex; align-items: center; gap: 0.4rem; }
-        .month-nav button { background: white; border: 1px solid rgba(124,92,231,0.12); padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: var(--transition); }
+        .month-nav { display: flex; align-items: center; gap: 0.4rem; position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); z-index: 5; }
+        .month-nav button { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(124,92,231,0.15); padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: var(--transition); }
         .month-nav button:hover { border-color: var(--violet); color: var(--violet); }
-        .month-title { min-width: 150px; text-align: center; font-weight: 600; background: white; padding: 0.5rem 1.2rem; border-radius: 10px; border: 1px solid rgba(124,92,231,0.12); }
+        .month-title { min-width: 150px; text-align: center; font-weight: 600; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 0.5rem 1.2rem; border-radius: 10px; border: 1px solid rgba(124,92,231,0.15); }
 
         .calendar-container { overflow-x: auto; background: white; border-radius: 16px; border: 1px solid rgba(0,0,0,0.04); margin-top: 1rem; box-shadow: var(--shadow-xs); }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
@@ -175,38 +269,72 @@
 </head>
 <body>
 <div class="container">
+    <!-- ===== НОВАЯ ШАПКА ===== -->
     <div class="header">
         <a href="index.html" class="back-link" title="На главную">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
         </a>
 
-        <!-- Зайчик без артефактов -->
-        <div class="bunny-block">
-            <div id="music-bunny">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+        <div class="art-panel">
+            <div class="art-base"></div>
+            <svg class="wave-layer" viewBox="0 0 800 180" preserveAspectRatio="none">
+                <path class="wave" d="M0,90 C200,40 400,140 800,80" />
+                <path class="wave" d="M0,100 C200,130 400,60 800,100" />
+                <path class="wave" d="M0,110 C200,80 400,120 800,90" />
+            </svg>
+            <div class="resonance-rings">
+                <svg viewBox="0 0 800 180" preserveAspectRatio="none">
+                    <ellipse class="ring" cx="400" cy="90" rx="200" ry="50" />
+                    <ellipse class="ring" cx="400" cy="90" rx="180" ry="45" />
+                </svg>
+            </div>
+
+            <div class="bunny-sculpture" id="music-bunny">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="100%" height="100%">
                     <defs>
-                        <radialGradient id="blush" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#ffb3ba" stop-opacity="0.6"/>
-                            <stop offset="100%" stop-color="#ffb3ba" stop-opacity="0"/>
+                        <radialGradient id="porcelain" cx="40%" cy="30%" r="60%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="70%" stop-color="#f5f0f0"/>
+                            <stop offset="100%" stop-color="#e8e0e0"/>
+                        </radialGradient>
+                        <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#fff5f5" stop-opacity="0.6"/>
+                            <stop offset="100%" stop-color="#fff5f5" stop-opacity="0"/>
+                        </radialGradient>
+                        <radialGradient id="eyeLens" cx="40%" cy="35%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="30%" stop-color="#f0f0f5"/>
+                            <stop offset="70%" stop-color="#d0d0e0"/>
+                            <stop offset="100%" stop-color="#a0a0b0"/>
                         </radialGradient>
                     </defs>
-                    <ellipse cx="100" cy="185" rx="40" ry="8" fill="rgba(0,0,0,0.08)"/>
-                    <circle cx="145" cy="140" r="12" fill="white"/><circle cx="143" cy="138" r="8" fill="#f0f0f0"/>
-                    <ellipse cx="65" cy="150" rx="12" ry="18" fill="white" transform="rotate(-20, 65, 150)"/><ellipse cx="62" cy="155" rx="8" ry="6" fill="#ffb3ba"/>
-                    <ellipse cx="135" cy="150" rx="12" ry="18" fill="white" transform="rotate(20, 135, 150)"/><ellipse cx="138" cy="155" rx="8" ry="6" fill="#ffb3ba"/>
-                    <ellipse cx="100" cy="145" rx="35" ry="45" fill="white" stroke="#f0f0f0" stroke-width="1"/>
-                    <ellipse cx="100" cy="145" rx="20" ry="30" fill="#fafafa"/>
-                    <text x="100" y="145" text-anchor="middle" dominant-baseline="central" font-family="Inter, sans-serif" font-weight="800" font-size="14" fill="#7c5ce7" opacity="0.9">MC</text>
-                    <ellipse cx="85" cy="180" rx="15" ry="8" fill="white"/><ellipse cx="82" cy="182" rx="6" ry="4" fill="#ffb3ba"/>
-                    <ellipse cx="115" cy="180" rx="15" ry="8" fill="white"/><ellipse cx="118" cy="182" rx="6" ry="4" fill="#ffb3ba"/>
-                    <ellipse cx="75" cy="60" rx="15" ry="35" fill="white" transform="rotate(-15, 75, 60)"/><ellipse cx="75" cy="60" rx="8" ry="25" fill="#ffb3ba" transform="rotate(-15, 75, 60)"/>
-                    <ellipse cx="125" cy="60" rx="15" ry="35" fill="white" transform="rotate(15, 125, 60)"/><ellipse cx="125" cy="60" rx="8" ry="25" fill="#ffb3ba" transform="rotate(15, 125, 60)"/>
-                    <ellipse cx="100" cy="100" rx="45" ry="40" fill="white" stroke="#f0f0f0" stroke-width="1"/>
-                    <ellipse cx="70" cy="110" rx="15" ry="10" fill="url(#blush)"/><ellipse cx="130" cy="110" rx="15" ry="10" fill="url(#blush)"/>
-                    <g id="left-eye"><ellipse cx="83" cy="95" rx="8" ry="10" fill="white"/><ellipse cx="85" cy="95" rx="5" ry="7" fill="#2d3436"/><circle cx="87" cy="93" r="2" fill="white"/></g>
-                    <g id="right-eye"><ellipse cx="117" cy="95" rx="8" ry="10" fill="white"/><ellipse cx="115" cy="95" rx="5" ry="7" fill="#2d3436"/><circle cx="113" cy="93" r="2" fill="white"/></g>
-                    <g id="mouth"><path d="M 88 108 Q 100 125 112 108" fill="none" stroke="#2d3436" stroke-width="2.5" stroke-linecap="round"/></g>
-                    <circle cx="100" cy="105" r="3" fill="#ffb3ba"/>
+                    <ellipse cx="100" cy="230" rx="50" ry="8" fill="rgba(0,0,0,0.08)" filter="blur(4px)"/>
+                    <ellipse cx="100" cy="180" rx="45" ry="55" fill="url(#porcelain)"/>
+                    <ellipse cx="100" cy="180" rx="30" ry="40" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+                    <ellipse cx="100" cy="185" rx="25" ry="35" fill="url(#innerGlow)"/>
+                    <ellipse cx="60" cy="200" rx="15" ry="10" fill="url(#porcelain)"/>
+                    <ellipse cx="140" cy="200" rx="15" ry="10" fill="url(#porcelain)"/>
+                    <path d="M70,90 C50,40 65,20 80,50" fill="url(#porcelain)" stroke="rgba(200,180,190,0.3)" stroke-width="1"/>
+                    <path d="M130,90 C150,40 135,20 120,50" fill="url(#porcelain)" stroke="rgba(200,180,190,0.3)" stroke-width="1"/>
+                    <ellipse cx="100" cy="120" rx="50" ry="45" fill="url(#porcelain)"/>
+                    <ellipse cx="70" cy="130" rx="15" ry="10" fill="url(#innerGlow)"/>
+                    <ellipse cx="130" cy="130" rx="15" ry="10" fill="url(#innerGlow)"/>
+                    <g>
+                        <ellipse cx="80" cy="115" rx="10" ry="14" fill="url(#eyeLens)"/>
+                        <ellipse cx="80" cy="115" rx="6" ry="10" fill="#2d2d3a"/>
+                        <circle cx="82" cy="112" r="2.5" fill="white"/>
+                        <circle cx="78" cy="117" r="1" fill="rgba(255,255,255,0.6)"/>
+                    </g>
+                    <g>
+                        <ellipse cx="120" cy="115" rx="10" ry="14" fill="url(#eyeLens)"/>
+                        <ellipse cx="120" cy="115" rx="6" ry="10" fill="#2d2d3a"/>
+                        <circle cx="122" cy="112" r="2.5" fill="white"/>
+                        <circle cx="118" cy="117" r="1" fill="rgba(255,255,255,0.6)"/>
+                    </g>
+                    <ellipse cx="100" cy="125" rx="3" ry="2" fill="#e0c0c0"/>
+                    <path d="M95,132 Q100,138 105,132" fill="none" stroke="#c0a0a0" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M72,102 Q80,98 88,102" fill="none" stroke="#b0a0a0" stroke-width="0.8"/>
+                    <path d="M112,102 Q120,98 128,102" fill="none" stroke="#b0a0a0" stroke-width="0.8"/>
                 </svg>
             </div>
             <div class="bunny-speech-bubble" id="bunny-speech"></div>
@@ -353,14 +481,11 @@
         const CHECK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
         const QUESTION_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
         const HEART_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#ff7675" stroke="#ff7675" stroke-width="1"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-        const SUN_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f9ca24" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>';
-        const KISS_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#ff8c94" stroke="#ff8c94" stroke-width="1"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>';
 
-        // Зайчик (лаконичный)
+        // Зайчик (премиальный)
         const bunny = {
             container: document.getElementById('music-bunny'),
             speechBubble: document.getElementById('bunny-speech'),
-            svg: document.querySelector('#music-bunny svg'),
             say(htmlContent) {
                 if (!this.speechBubble) return;
                 this.speechBubble.innerHTML = htmlContent;
@@ -369,42 +494,24 @@
                 this._timeout = setTimeout(() => this.speechBubble.classList.remove('show'), 5000);
             },
             wave() {
-                const arm = this.svg?.querySelector('ellipse[cx="135"][cy="150"]');
-                if (arm) {
-                    arm.style.transition = 'transform 0.3s';
-                    arm.style.transform = 'rotate(30deg)';
-                    setTimeout(() => { arm.style.transform = 'rotate(20deg)'; }, 500);
-                    setTimeout(() => { arm.style.transform = ''; }, 1000);
+                if (this.container) {
+                    this.container.style.transition = 'transform 0.4s cubic-bezier(0.2,0.8,0.2,1)';
+                    this.container.style.transform = 'rotate(-3deg) scale(1.03)';
+                    setTimeout(() => { this.container.style.transform = ''; }, 600);
                 }
             },
             jump() {
                 if (this.container) {
                     this.container.style.transition = 'transform 0.3s';
-                    this.container.style.transform = 'translateY(-15px)';
+                    this.container.style.transform = 'translateY(-12px)';
                     setTimeout(() => { this.container.style.transform = ''; }, 300);
                 }
             },
-            startIdleAnimations() {
-                this._blinkInterval = setInterval(() => {
-                    if (this.svg) {
-                        const eyes = this.svg.querySelectorAll('#left-eye, #right-eye');
-                        eyes.forEach(eye => eye.style.transform = 'scaleY(0.1)');
-                        setTimeout(() => eyes.forEach(eye => eye.style.transform = ''), 150);
-                    }
-                }, 4000);
-                this._waveInterval = setInterval(() => { this.wave(); }, 7000);
-            },
             enableHover() {
-                this.container.addEventListener('mouseenter', () => { this.wave(); this.say(`${HEART_ICON}<span style="margin-left:4px;">Привет, моя хорошая!</span>`); });
+                this.container.addEventListener('mouseenter', () => { this.wave(); this.say(`${HEART_ICON}<span style="margin-left:6px;">Привет, моя хорошая!</span>`); });
                 this.container.addEventListener('click', () => {
-                    const reactions = [
-                        { action: 'jump', text: `${SUN_ICON}<span style="margin-left:4px;">Сделай разминку, моя сладкая булочка!</span>` },
-                        { action: 'laugh', text: `${HEART_ICON}<span style="margin-left:4px;">Ты такая смешная, когда злишься!</span>` },
-                        { action: 'shy', text: `${KISS_ICON}<span style="margin-left:4px;">Ой, ну ты меня смущаешь!</span>` }
-                    ];
-                    const r = reactions[Math.floor(Math.random() * reactions.length)];
-                    if (r.action === 'jump') this.jump();
-                    this.say(r.text);
+                    this.jump();
+                    this.say(`${HEART_ICON}<span style="margin-left:6px;">Ты замечательная!</span>`);
                 });
             }
         };
@@ -442,9 +549,8 @@
                 await Promise.all([loadSettings(), loadOverrides()]);
                 renderCalendar();
             }
-            bunny.startIdleAnimations();
             bunny.enableHover();
-            bunny.say(`${HEART_ICON}<span style="margin-left:4px;">Я готов помогать, моя золотая!</span>`);
+            bunny.say(`${HEART_ICON}<span style="margin-left:6px;">Я готов помогать, моя золотая!</span>`);
             saveState();
         }
 
@@ -693,7 +799,6 @@
             }
             h+='</tr></tbody></table>';
             c.innerHTML = h;
-            // Исправлено: передаём текущий статус дня в модалку
             c.querySelectorAll('.day-cell').forEach(cell => {
                 cell.addEventListener('click', () => {
                     const dateStr = cell.dataset.date;
@@ -713,10 +818,8 @@
 
         // Исправленная функция открытия модалки – всегда загружает актуальные данные
         async function openSettingModal(ds, ex = null) {
-            // Принудительно получаем самые свежие данные из базы для этой даты
             let freshEx = null;
             if (selectedTeacherId) {
-                // Проверяем, есть ли override
                 const { data: ov } = await _supabase.from('teacher_unavailability')
                     .select('*').eq('teacher_id', selectedTeacherId).eq('date', ds).maybeSingle();
                 if (ov) {
@@ -728,8 +831,7 @@
                     if (st) freshEx = { ...st, source: 'setting' };
                 }
             }
-
-            const displayEx = freshEx || ex; // если свежих нет, используем переданный (но теперь он всегда свежий)
+            const displayEx = freshEx || ex;
             document.getElementById('settingDayInfo').textContent = `Дата: ${ds}`;
             document.getElementById('settingType').value = displayEx?.type || 'available';
             document.getElementById('settingDateFrom').value = ds;
