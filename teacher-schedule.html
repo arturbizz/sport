@@ -35,9 +35,8 @@
             position: sticky; top: 20px; z-index: 20;
             background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
             padding: 0.8rem 1.2rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            /* Красивый музыкальный паттерн */
-            background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237c5ce7' fill-opacity='0.1'%3E%3Cpath d='M20 20h4v4h-4zM56 20h4v4h-4zM20 56h4v4h-4zM56 56h4v4h-4zM10 40h4v4h-4zM66 40h4v4h-4zM40 10h4v4h-4zM40 66h4v4h-4z'/%3E%3Ccircle cx='40' cy='40' r='10'/%3E%3Cpath d='M34 28l8 4-8 4-8-4z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            background-size: 60px 60px;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237c5ce7' fill-opacity='0.15'%3E%3Cpath d='M24 18h4v4h-4zM36 18h4v4h-4zM24 36h4v4h-4zM36 36h4v4h-4zM18 24h4v4h-4zM38 24h4v4h-4zM26 22l4 2-4 2-4-2zM34 22l4 2-4 2-4-2zM28 34l4 2-4 2-4-2zM32 34l4 2-4 2-4-2z'/%3E%3Ccircle cx='30' cy='30' r='8'/%3E%3Cpath d='M30 22v12'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background-size: 80px 80px;
             border: 1px solid rgba(124,92,231,0.15);
             justify-content: space-between;
         }
@@ -64,7 +63,7 @@
             font-size: 13px; color: #2d3436; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             white-space: normal; word-wrap: break-word; max-width: 220px;
             opacity: 0; transition: opacity 0.3s ease;
-            display: flex; align-items: center; gap: 8px;
+            display: flex; align-items: center; gap: 10px;
             line-height: 1.5;
         }
         .bunny-speech-bubble.show { opacity: 1; }
@@ -440,9 +439,7 @@
             currentUserEmail = session.user.email;
             isAdminUser = currentUserEmail === ADMIN_EMAIL;
             if (!isAdminUser) document.getElementById('addTeacherBtn').style.display = 'none';
-            // Загружаем сохранённое состояние
             loadState();
-            // Если месяц не задан – берём текущий
             if (!currentYear || !currentMonth) {
                 const now = new Date();
                 currentYear = now.getFullYear();
@@ -454,7 +451,6 @@
             renderMonthTitle();
             buildFindTimeSelects();
             populateSubjectFilter();
-            // Устанавливаем вкладку
             if (activeTab === 'list') {
                 switchTab('list');
                 document.querySelector('.tab[data-tab="list"]')?.classList.add('active');
@@ -462,7 +458,6 @@
             } else {
                 switchTab('calendar');
             }
-            // Если был выбран преподаватель – загружаем его
             if (selectedTeacherId) {
                 document.getElementById('teacherSelect').value = selectedTeacherId;
                 await Promise.all([loadSettings(), loadOverrides()]);
@@ -474,10 +469,7 @@
             saveState();
         }
 
-        // При любом изменении сохраняем состояние
-        function updateStateAndSave() {
-            saveState();
-        }
+        function updateStateAndSave() { saveState(); }
 
         function buildFindTimeSelects() {
             const from = document.getElementById('findTimeFrom');
@@ -722,7 +714,14 @@
             }
             h+='</tr></tbody></table>';
             c.innerHTML = h;
-            c.querySelectorAll('.day-cell').forEach(cell => cell.addEventListener('click', () => openSettingModal(cell.dataset.date)));
+            // Исправлено: передаём текущий статус дня в модалку
+            c.querySelectorAll('.day-cell').forEach(cell => {
+                cell.addEventListener('click', () => {
+                    const dateStr = cell.dataset.date;
+                    const ex = getDayStatus(dateStr);
+                    openSettingModal(dateStr, ex);
+                });
+            });
         }
 
         function getDayStatus(ds) {
@@ -734,6 +733,8 @@
         }
 
         function openSettingModal(ds, ex=null) {
+            // Если не передали явно, получаем статус ещё раз (на случай вызова без параметров)
+            if (!ex) ex = getDayStatus(ds);
             document.getElementById('settingDayInfo').textContent = `Дата: ${ds}`;
             document.getElementById('settingType').value = ex?.type || 'available';
             document.getElementById('settingDateFrom').value = ds;
@@ -747,11 +748,8 @@
             document.getElementById('settingModal').dataset.date = ds;
             document.getElementById('settingModal').style.display = 'flex';
             const teacher = teachers.find(t => t.id === selectedTeacherId);
-            if (teacher) {
-                const dayStatus = getDayStatus(ds);
-                if (dayStatus && dayStatus.type === 'unavailable') {
-                    bunny.say(`${teacher.name} не работает в этот день`);
-                }
+            if (teacher && ex?.type === 'unavailable') {
+                bunny.say(`${teacher.name} не работает в этот день`);
             }
         }
 
