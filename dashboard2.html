@@ -10,21 +10,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #F7F8FA;
-            --surface: #ffffff;
-            --border: rgba(15,23,42,0.06);
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-tertiary: #94a3b8;
-            --accent: #4f46e5;
-            --accent-light: #eef2ff;
-            --positive: #059669;
-            --negative: #dc2626;
+            --bg: #F7F8FA; --surface: #ffffff; --border: rgba(15,23,42,0.06);
+            --text-primary: #0f172a; --text-secondary: #475569; --text-tertiary: #94a3b8;
+            --accent: #4f46e5; --accent-light: #eef2ff; --positive: #059669; --negative: #dc2626;
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.03);
             --shadow-lg: 0 12px 24px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
-            --radius-xl: 24px;
-            --radius-lg: 20px;
-            --radius-sm: 12px;
+            --radius-xl: 24px; --radius-lg: 20px; --radius-sm: 12px;
             --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
             --sidebar-width: 72px;
             --transition-base: 280ms cubic-bezier(0.2,0.8,0.2,1);
@@ -32,25 +23,15 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family:'Inter',system-ui,-apple-system,sans-serif;
-            background:var(--bg);
-            color:var(--text-primary);
-            display:flex;
-            min-height:100vh;
-            -webkit-font-smoothing:antialiased;
-            letter-spacing:-0.01em;
-            cursor:default;
-            caret-color:transparent;
-            overflow-x:hidden;
+            background:var(--bg); color:var(--text-primary); display:flex; min-height:100vh;
+            -webkit-font-smoothing:antialiased; letter-spacing:-0.01em; cursor:default; caret-color:transparent; overflow-x:hidden;
         }
         .ambient-blob { position:fixed; border-radius:50%; filter:blur(100px); opacity:0.04; pointer-events:none; z-index:0; }
         .ambient-blob.top-right { width:500px; height:500px; background:var(--accent); top:-100px; right:-100px; }
         .ambient-blob.bottom-left { width:400px; height:400px; background:#2563eb; bottom:-100px; left:-100px; }
         .sidebar {
-            width:var(--sidebar-width);
-            background:rgba(255,255,255,0.7);
-            backdrop-filter:blur(24px);
-            -webkit-backdrop-filter:blur(24px);
-            border-right:1px solid var(--border);
+            width:var(--sidebar-width); background:rgba(255,255,255,0.7); backdrop-filter:blur(24px);
+            -webkit-backdrop-filter:blur(24px); border-right:1px solid var(--border);
             display:flex; flex-direction:column; align-items:center; padding:var(--space-8) 0; gap:var(--space-10);
             position:fixed; top:0; bottom:0; z-index:20; box-shadow:var(--shadow-sm);
         }
@@ -159,10 +140,8 @@
         <span id="salesStatus" style="font-size:13px; color:var(--text-tertiary);"></span>
     </div>
 
-    <!-- KPI -->
     <div class="kpi-grid" id="leadsKPI"></div>
 
-    <!-- Графики -->
     <div class="widget-grid">
         <div class="widget-card">
             <div class="widget-title">Воронка этапов (текущий период)</div>
@@ -174,7 +153,6 @@
         </div>
     </div>
 
-    <!-- Таблицы -->
     <div class="widget-grid">
         <div class="widget-card" id="stageWidget">
             <div class="widget-title">Детализация по этапам</div>
@@ -303,89 +281,39 @@
             <div class="kpi-card"><span class="kpi-label">Конв. ПУ→Продажа</span><span class="kpi-value">${conversionPUToSale}%</span></div>
         `;
 
-        // Воронка для графика
+        // Графики
         const funnelStages = ['Лиды', 'Запись на ПУ', 'ПУ состоялся', 'Продажи'];
         const funnelValues = [total, booked, pu, salesCount];
         if (funnelChart) funnelChart.destroy();
         const ctx = document.getElementById('funnelChart').getContext('2d');
         funnelChart = new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: funnelStages,
-                datasets: [{
-                    label: 'Количество',
-                    data: funnelValues,
-                    backgroundColor: ['#4f46e5','#7c5ce7','#0fb9b1','#55efc4'],
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
-            }
+            data: { labels: funnelStages, datasets: [{ label: 'Количество', data: funnelValues, backgroundColor: ['#4f46e5','#7c5ce7','#0fb9b1','#55efc4'], borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Продажи по менеджерам (график)
         const managerGroups = {};
-        salesData.forEach(s => {
-            const m = s.manager || 'Не указан';
-            if (!managerGroups[m]) managerGroups[m] = 0;
-            managerGroups[m] += parseFloat(s.amount || 0);
-        });
+        salesData.forEach(s => { const m = s.manager || 'Не указан'; managerGroups[m] = (managerGroups[m] || 0) + parseFloat(s.amount || 0); });
         const managerLabels = Object.keys(managerGroups);
         const managerValues = Object.values(managerGroups);
         if (managerChart) managerChart.destroy();
         const ctx2 = document.getElementById('managerChart').getContext('2d');
         managerChart = new Chart(ctx2, {
             type: 'bar',
-            data: {
-                labels: managerLabels,
-                datasets: [{
-                    label: 'Сумма продаж (₽)',
-                    data: managerValues,
-                    backgroundColor: '#4f46e5',
-                    borderRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
-            }
+            data: { labels: managerLabels, datasets: [{ label: 'Сумма продаж (₽)', data: managerValues, backgroundColor: '#4f46e5', borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Таблица этапов
-        const stageOrder = [
-            'Не разобрано','Чат wazzup','Ндз1','Ндз2','Ндз3','Требует дозвона','Запись на ПУ',
-            'Отказ до ПУ','Подтвердили','Повторное назначение','ПУ состоялся','Ждём решения',
-            'Ждём оплату','Отложенные после ПУ','Отказ после ПУ','Сертификат','Отказ банков','Самозапрет'
-        ];
-        const stageRows = stageOrder.map(s => {
-            const count = stageMap[s] || 0;
-            const pct = total > 0 ? (count / total * 100).toFixed(1) : 0;
-            return `<tr><td>${s}</td><td>${count}</td><td>${pct}%</td></tr>`;
-        }).join('');
-        document.getElementById('stageContent').innerHTML = `<table><thead><tr><th>Этап</th><th>Кол-во</th><th>%</th></tr></thead><tbody>${stageRows}</tbody></table>`;
+        // Таблицы
+        const stageOrder = ['Не разобрано','Чат wazzup','Ндз1','Ндз2','Ндз3','Требует дозвона','Запись на ПУ','Отказ до ПУ','Подтвердили','Повторное назначение','ПУ состоялся','Ждём решения','Ждём оплату','Отложенные после ПУ','Отказ после ПУ','Сертификат','Отказ банков','Самозапрет'];
+        document.getElementById('stageContent').innerHTML = `<table><thead><tr><th>Этап</th><th>Кол-во</th><th>%</th></tr></thead><tbody>${stageOrder.map(s => { const c = stageMap[s] || 0; return `<tr><td>${s}</td><td>${c}</td><td>${total ? (c/total*100).toFixed(1) : 0}%</td></tr>`; }).join('')}</tbody></table>`;
 
-        // Источники
         const sourceGroups = {};
-        filtered.forEach(l => {
-            const src = l.source || 'Не указан';
-            if (!sourceGroups[src]) sourceGroups[src] = { total: 0, success: 0 };
-            sourceGroups[src].total++;
-            if (l.stage.includes('ПУ состоялся')) sourceGroups[src].success++;
-        });
+        filtered.forEach(l => { const src = l.source || 'Не указан'; if (!sourceGroups[src]) sourceGroups[src] = { total: 0, success: 0 }; sourceGroups[src].total++; if (l.stage.includes('ПУ состоялся')) sourceGroups[src].success++; });
         const sourceSorted = Object.entries(sourceGroups).sort((a,b) => b[1].total - a[1].total);
-        document.getElementById('sourceContent').innerHTML = `<table><thead><tr><th>Источник</th><th>Всего</th><th>Успешных</th><th>Конв.</th></tr></thead><tbody>
-            ${sourceSorted.map(([src, data]) => `<tr><td>${src}</td><td>${data.total}</td><td>${data.success}</td><td>${data.total>0?(data.success/data.total*100).toFixed(1):0}%</td></tr>`).join('')}
-        </tbody></table>`;
+        document.getElementById('sourceContent').innerHTML = `<table><thead><tr><th>Источник</th><th>Всего</th><th>Успешных</th><th>Конв.</th></tr></thead><tbody>${sourceSorted.map(([s,d]) => `<tr><td>${s}</td><td>${d.total}</td><td>${d.success}</td><td>${d.total>0 ? (d.success/d.total*100).toFixed(1) : 0}%</td></tr>`).join('')}</tbody></table>`;
 
-        document.getElementById('leadsTableBody').innerHTML = filtered.map(l=>
-            `<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`
-        ).join('');
+        document.getElementById('leadsTableBody').innerHTML = filtered.map(l => `<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
 
         updateSalesStatus();
     }
@@ -405,6 +333,7 @@
         salesData = data || [];
     }
 
+    // Универсальный парсер лидов (поддерживает оба формата)
     async function uploadLeads() {
         const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
         input.onchange = async (e) => {
@@ -415,11 +344,14 @@
                 const wb = XLSX.read(data, {type:'array'});
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
                 const parsed = [];
-                const firstRow = rows[0] ? rows[0].join(' ') : '';
-                if (firstRow.toLowerCase().includes('новые лиды')) {
+                const firstRow = (rows[0] || []).join(' ').toLowerCase();
+
+                // Определяем формат
+                if (firstRow.includes('новые лиды')) {
+                    // Формат "Новые лиды"
                     let dataStartIdx = 0;
                     for (let i = 0; i < rows.length; i++) {
-                        const rowStr = rows[i] ? rows[i].join(' ') : '';
+                        const rowStr = (rows[i] || []).join(' ');
                         if (rowStr.toLowerCase().includes('новые лиды')) continue;
                         if (rowStr.toLowerCase().includes('за период')) { dataStartIdx = i + 1; break; }
                     }
@@ -439,6 +371,7 @@
                         parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDuplicate, is_bad_contact: isBadContact });
                     }
                 } else {
+                    // Формат "Все лиды" (дата добавления, наименование, этап, источник)
                     const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
                     if (headerIdx === -1) { customAlert('Не удалось определить формат файла.'); return; }
                     const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
@@ -461,6 +394,7 @@
                         });
                     }
                 }
+
                 if (parsed.length === 0) { customAlert('Не найдено записей в файле.'); return; }
                 const { error: delErr } = await _supabase.from('leads').delete().neq('id', 0);
                 if (delErr) { customAlert('Ошибка очистки: ' + delErr.message); return; }
@@ -474,6 +408,7 @@
         input.click();
     }
 
+    // Загрузка продаж (без изменений, но с проверкой колонки manager)
     async function uploadSales() {
         const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
         input.onchange = async (e) => {
@@ -485,10 +420,8 @@
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
                 let headerRow = -1;
                 for (let i = 0; i < Math.min(rows.length, 5); i++) {
-                    const rowStr = rows[i] ? rows[i].join(' ').toLowerCase() : '';
-                    if (rowStr.includes('дата') && (rowStr.includes('клиент') || rowStr.includes('плательщик'))) {
-                        headerRow = i; break;
-                    }
+                    const rowStr = (rows[i] || []).join(' ').toLowerCase();
+                    if (rowStr.includes('дата') && (rowStr.includes('клиент') || rowStr.includes('плательщик'))) { headerRow = i; break; }
                 }
                 if (headerRow === -1) { customAlert('Не найдена строка заголовка со столбцами "Дата" и "Клиент"/"Плательщик".'); return; }
                 const headers = rows[headerRow].map(h => String(h).trim().toLowerCase());
@@ -499,16 +432,9 @@
                 let managerIdx = -1;
                 headers.forEach((h, idx) => {
                     const clean = h.replace(/\s/g, '');
-                    if (clean === 'менеджер(фамилияимя)' || clean === 'менеджер' || clean === 'менеджерфамилияимя') {
-                        managerIdx = idx;
-                    }
+                    if (clean === 'менеджер(фамилияимя)' || clean === 'менеджер' || clean === 'менеджерфамилияимя') managerIdx = idx;
                 });
                 if (managerIdx === -1) managerIdx = headers.findIndex(h => h.includes('менеджер') && !h.includes('ответственный'));
-
-                if (dateIdx === -1 || amountIdx === -1 || clientIdx === -1) {
-                    customAlert('Не найдены обязательные столбцы: Дата, Сумма, Клиент/Плательщик.');
-                    return;
-                }
 
                 const parsed = [];
                 for (let i = headerRow + 1; i < rows.length; i++) {
