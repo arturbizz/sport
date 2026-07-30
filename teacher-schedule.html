@@ -35,8 +35,6 @@
             position: sticky; top: 20px; z-index: 20;
             background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
             padding: 0.8rem 1.2rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-            background-image: url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%237c5ce7' fill-opacity='0.15'%3E%3Ccircle cx='20' cy='30' r='8' fill='%23f9ca24' /%3E%3Ccircle cx='140' cy='30' r='8' fill='%23f9ca24' /%3E%3Cpath d='M10 70l8 4-8 4-8-4z' fill='%23ff8c94' /%3E%3Cpath d='M150 70l8 4-8 4-8-4z' fill='%23ff8c94' /%3E%3Cpath d='M80 50l10 16-10 16-10-16z' fill='%2355efc4' /%3E%3Cpath d='M60 100l10 6-10 6-10-6z' fill='%237c5ce7' /%3E%3Cpath d='M100 100l10 6-10 6-10-6z' fill='%237c5ce7' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            background-size: 100px 100px;
             border: 1px solid rgba(124,92,231,0.15);
             position: relative;
             overflow: hidden;
@@ -518,14 +516,13 @@
                     <span style="font-size:0.8rem;color:var(--text-light);">${r.subjects.join(', ')||'—'}</span>
                 </div>`;
             }).join('') + '<button class="clear-search-btn" id="clearSearchBtn">Сбросить</button>';
-            // Клик по преподавателю — открыть его календарь
             document.querySelectorAll('.found-teacher').forEach(el => {
                 el.addEventListener('click', function() {
                     const tid = this.dataset.teacherId;
                     if (tid) {
                         document.getElementById('teacherSelect').value = tid;
                         onSelectTeacher({ target: { value: tid } });
-                        switchTab('calendar'); // переключаемся на вкладку календаря
+                        switchTab('calendar');
                     }
                 });
             });
