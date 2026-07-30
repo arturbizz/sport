@@ -333,7 +333,6 @@
         salesData = data || [];
     }
 
-    // Универсальный парсер лидов (поддерживает оба формата)
     async function uploadLeads() {
         const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
         input.onchange = async (e) => {
@@ -346,9 +345,7 @@
                 const parsed = [];
                 const firstRow = (rows[0] || []).join(' ').toLowerCase();
 
-                // Определяем формат
                 if (firstRow.includes('новые лиды')) {
-                    // Формат "Новые лиды"
                     let dataStartIdx = 0;
                     for (let i = 0; i < rows.length; i++) {
                         const rowStr = (rows[i] || []).join(' ');
@@ -371,14 +368,30 @@
                         parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDuplicate, is_bad_contact: isBadContact });
                     }
                 } else {
-                    // Формат "Все лиды" (дата добавления, наименование, этап, источник)
-                    const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
-                    if (headerIdx === -1) { customAlert('Не удалось определить формат файла.'); return; }
+                    let headerIdx = -1;
+                    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+                        const row = rows[i];
+                        if (!row) continue;
+                        const rowStr = row.map(c => String(c).toLowerCase()).join(' ');
+                        if (rowStr.includes('дата добавления') || (rowStr.includes('дата') && rowStr.includes('наименование'))) {
+                            headerIdx = i;
+                            break;
+                        }
+                    }
+                    if (headerIdx === -1) {
+                        const preview = rows.slice(0, 5).map(r => (r||[]).join(' | ')).join('\n');
+                        customAlert(`Не удалось определить формат файла. Первые строки:\n${preview}`);
+                        return;
+                    }
                     const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
-                    const dateIdx = headers.findIndex(h => h.includes('дата добавления'));
-                    const nameIdx = headers.findIndex(h => h.includes('наименование'));
+                    const dateIdx = headers.findIndex(h => h.includes('дата добавления') || h === 'дата');
+                    const nameIdx = headers.findIndex(h => h.includes('наименование') || h === 'имя');
                     const stageIdx = headers.findIndex(h => h.includes('этап'));
                     const sourceIdx = headers.findIndex(h => h.includes('источник'));
+                    if (dateIdx === -1 || nameIdx === -1 || stageIdx === -1 || sourceIdx === -1) {
+                        customAlert('Не найдены все обязательные столбцы: Дата добавления, Наименование, Этап, Источник.');
+                        return;
+                    }
                     for (let i = headerIdx + 1; i < rows.length; i++) {
                         const row = rows[i]; if (!row || row.length < 2) continue;
                         const name = String(row[nameIdx] || '').trim();
@@ -408,7 +421,6 @@
         input.click();
     }
 
-    // Загрузка продаж (без изменений, но с проверкой колонки manager)
     async function uploadSales() {
         const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
         input.onchange = async (e) => {
