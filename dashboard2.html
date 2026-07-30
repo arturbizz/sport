@@ -181,6 +181,10 @@
     let leadsData = [], salesData = [];
     let currentMode = 'new'; // new | all
 
+    // Установка текущего месяца в фильтр
+    const now = new Date();
+    document.getElementById('monthFilter').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
     function customAlert(msg) {
         document.getElementById('alertMessage').textContent = msg;
         document.getElementById('alertModal').style.display = 'flex';
@@ -303,8 +307,200 @@
         updateSalesStatus();
     }
 
-    // ... остальные функции (loadLeads, loadSales, uploadLeads, uploadSales с улучшенным поиском менеджера)
-    // Полный код представлен в следующем сообщении для экономии места.
+    function updateSalesStatus() {
+        const statusEl = document.getElementById('salesStatus');
+        if (salesData.length > 0) {
+            statusEl.textContent = `Загружено продаж: ${salesData.length}`;
+        } else {
+            statusEl.textContent = 'Продажи не загружены';
+        }
+    }
+
+    async function loadLeads() {
+        const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false });
+        leadsData = data || [];
+    }
+
+    async function loadSales() {
+        const { data } = await _supabase.from('sales_report').select('*');
+        salesData = data || [];
+    }
+
+    async function uploadLeads() {
+        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+        input.onchange = async (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, {type:'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+                const parsed = [];
+                const firstRow = rows[0] ? rows[0].join(' ') : '';
+                if (firstRow.toLowerCase().includes('новые лиды')) {
+                    let dataStartIdx = 0;
+                    for (let i = 0; i < rows.length; i++) {
+                        const rowStr = rows[i] ? rows[i].join(' ') : '';
+                        if (rowStr.toLowerCase().includes('новые лиды')) continue;
+                        if (rowStr.toLowerCase().includes('за период')) { dataStartIdx = i + 1; break; }
+                    }
+                    for (let i = dataStartIdx; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (!row || row.length < 4) continue;
+                        const dateStr = String(row[1] || '').trim();
+                        const name = String(row[2] || '').trim();
+                        const stage = String(row[3] || '').trim();
+                        const source = String(row[4] || '').trim();
+                        if (!dateStr) continue;
+                        const parts = dateStr.split(' ');
+                        const datePart = parts[0];
+                        const timePart = parts[1] || '00:00';
+                        const [day, month, year] = datePart.split('.').map(Number);
+                        const [hours, minutes] = timePart.split(':').map(Number);
+                        const validDate = new Date(year, month - 1, day, hours || 0, minutes || 0);
+                        const isDuplicate = /8\.\s*Дубль/.test(name);
+                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+                        parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDuplicate, is_bad_contact: isBadContact });
+                    }
+                } else {
+                    const headerIdx = rows.findIndex(r => r && r.some(cell => String(cell).toLowerCase().includes('дата добавления')));
+                    if (headerIdx === -1) { customAlert('Не удалось определить формат файла.'); return; }
+                    const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
+                    const dateIdx = headers.findIndex(h => h.includes('дата добавления'));
+                    const nameIdx = headers.findIndex(h => h.includes('наименование'));
+                    const stageIdx = headers.findIndex(h => h.includes('этап'));
+                    const sourceIdx = headers.findIndex(h => h.includes('источник'));
+                    for (let i = headerIdx + 1; i < rows.length; i++) {
+                        const row = rows[i]; if (!row || row.length < 2) continue;
+                        const name = String(row[nameIdx] || '').trim();
+                        const isDuplicate = /8\.\s*Дубль/.test(name);
+                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+                        parsed.push({
+                            date_added: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : null,
+                            name,
+                            stage: String(row[stageIdx] || '').trim(),
+                            source: String(row[sourceIdx] || '').trim(),
+                            is_duplicate: isDuplicate,
+                            is_bad_contact: isBadContact
+                        });
+                    }
+                }
+                if (parsed.length === 0) { customAlert('Не найдено записей в файле.'); return; }
+                const { error: delErr } = await _supabase.from('leads').delete().neq('id', 0);
+                if (delErr) { customAlert('Ошибка удаления старых лидов: ' + delErr.message); return; }
+                const { error } = await _supabase.from('leads').insert(parsed);
+                if (error) { customAlert('ОШИБКА ЗАГРУЗКИ: ' + error.message); await loadLeads(); renderAll(); return; }
+                await loadLeads();
+                renderAll();
+                customAlert('Лиды загружены (' + parsed.length + ' записей)');
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
+
+    async function uploadSales() {
+        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
+        input.onchange = async (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const data = new Uint8Array(ev.target.result);
+                const wb = XLSX.read(data, {type:'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+                let headerRow = -1;
+                for (let i = 0; i < Math.min(rows.length, 5); i++) {
+                    const rowStr = rows[i] ? rows[i].join(' ').toLowerCase() : '';
+                    if (rowStr.includes('дата') && (rowStr.includes('клиент') || rowStr.includes('плательщик'))) {
+                        headerRow = i;
+                        break;
+                    }
+                }
+                if (headerRow === -1) { customAlert('Не найдена строка заголовка со столбцами "Дата" и "Клиент"/"Плательщик".'); return; }
+                const headers = rows[headerRow].map(h => String(h).trim().toLowerCase());
+                const dateIdx = headers.findIndex(h => h === 'дата');
+                const amountIdx = headers.findIndex(h => h === 'сумма');
+                let clientIdx = headers.findIndex(h => h === 'клиент');
+                if (clientIdx === -1) clientIdx = headers.findIndex(h => h === 'плательщик');
+                // Ищем менеджера (игнорируем "Ответственный менеджер")
+                let managerIdx = -1;
+                headers.forEach((h, idx) => {
+                    const clean = h.replace(/\s/g, '');
+                    if (clean === 'менеджер(фамилияимя)' || clean === 'менеджер' || clean === 'менеджерфамилияимя') {
+                        managerIdx = idx;
+                    }
+                });
+                if (managerIdx === -1) managerIdx = headers.findIndex(h => h.includes('менеджер') && !h.includes('ответственный'));
+
+                if (dateIdx === -1 || amountIdx === -1 || clientIdx === -1) {
+                    customAlert('Не найдены обязательные столбцы: Дата, Сумма, Клиент/Плательщик.');
+                    return;
+                }
+
+                const parsed = [];
+                for (let i = headerRow + 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row || row.length < Math.max(dateIdx, amountIdx, clientIdx) + 1) continue;
+                    const dateStr = String(row[dateIdx] || '').trim();
+                    const amountStr = String(row[amountIdx] || '0').replace(/\s/g, '').replace(',', '.');
+                    const client = String(row[clientIdx] || '').trim();
+                    let manager = '';
+                    if (managerIdx !== -1) {
+                        manager = String(row[managerIdx] || '').trim();
+                        if (manager === 'Кто менеджер?' || manager === 'Ресепшен Орёл') manager = 'Не указан';
+                    }
+                    if (!dateStr || !client) continue;
+                    const amount = parseFloat(amountStr);
+                    if (isNaN(amount) || amount === 0) continue;
+                    let isoDate = dateStr;
+                    if (dateStr.includes('.')) {
+                        const parts = dateStr.split('.');
+                        if (parts.length === 3) {
+                            isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+                        }
+                    }
+                    parsed.push({ operation_date: isoDate, amount, client, manager });
+                }
+
+                if (parsed.length === 0) { customAlert('Не найдено ни одной продажи в файле.'); return; }
+                const { error: delErr } = await _supabase.from('sales_report').delete().neq('id', 0);
+                if (delErr) { customAlert('Ошибка очистки таблицы продаж: ' + delErr.message); return; }
+                const { error: insErr } = await _supabase.from('sales_report').insert(parsed);
+                if (insErr) { customAlert('Ошибка загрузки продаж: ' + insErr.message); return; }
+                await loadSales();
+                renderAll();
+                customAlert('Продажи загружены (' + parsed.length + ' записей)');
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
+
+    async function init() {
+        if (!await checkAccess('leads')) return;
+        await Promise.all([loadLeads(), loadSales()]);
+        renderAll();
+    }
+
+    // Переключение режима
+    document.getElementById('leadModeGroup').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            document.querySelectorAll('#leadModeGroup .btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentMode = e.target.dataset.mode;
+            renderAll();
+        }
+    });
+    document.getElementById('monthFilter').addEventListener('change', renderAll);
+
+    document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads);
+    document.getElementById('uploadSalesBtn').addEventListener('click', uploadSales);
+
+    document.getElementById('homeSidebarBtn').addEventListener('click', ()=>{ window.location.href='index.html'; });
+    document.getElementById('logoutSidebarBtn').addEventListener('click', async ()=>{ await _supabase.auth.signOut(); window.location.href='login.html'; });
+
+    init();
 })();
 </script>
 </body>
+</html>
