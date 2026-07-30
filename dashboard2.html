@@ -20,11 +20,9 @@
             --positive: #059669;
             --negative: #dc2626;
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.03);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.02), 0 2px 4px rgba(0,0,0,0.02);
             --shadow-lg: 0 12px 24px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.02);
             --radius-xl: 24px;
             --radius-lg: 20px;
-            --radius-md: 16px;
             --radius-sm: 12px;
             --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
             --sidebar-width: 72px;
@@ -78,7 +76,7 @@
         .btn-primary { background:var(--accent); border-color:var(--accent); color:white; }
         .btn-primary:hover { background:#4338ca; }
         .filters-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); }
-        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:var(--space-6); }
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:var(--space-6); }
         .kpi-card {
             background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
             border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
@@ -103,7 +101,6 @@
         .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:12px; font-weight:550; background:#fef3c7; color:#b45309; }
         .badge.red { background:#fee2e2; color:#b91c1c; }
 
-        /* Модальное окно */
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.3);
             backdrop-filter: blur(8px);
@@ -151,13 +148,13 @@
     <div class="widget-grid">
         <div class="widget-card" id="stageWidget"><div class="widget-title">По этапам</div><div id="stageContent"></div></div>
         <div class="widget-card" id="sourceWidget"><div class="widget-title">По источникам</div><div id="sourceContent"></div></div>
+        <div class="widget-card" id="managerWidget"><div class="widget-title">Продажи по менеджерам</div><div id="managerContent"></div></div>
     </div>
     <div class="table-container">
         <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Статус</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
     </div>
 </main>
 
-<!-- Модальное окно уведомлений -->
 <div class="modal-overlay" id="alertModal" style="display:none;">
     <div class="modal">
         <p id="alertMessage"></p>
@@ -185,7 +182,7 @@
         const { data: { session } } = await _supabase.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return false; }
         const userEmail = session.user.email;
-        if (userEmail === 'arturgalkin.ru@mail.ru') return true; // главный админ
+        if (userEmail === 'arturgalkin.ru@mail.ru') return true;
 
         const { data: emp } = await _supabase.from('employees').select('id').eq('email', userEmail).single();
         if (!emp) { window.location.href = 'index.html'; return false; }
@@ -335,6 +332,9 @@
                 const amountIdx = headers.findIndex(h => h === 'сумма');
                 let clientIdx = headers.findIndex(h => h === 'клиент');
                 if (clientIdx === -1) clientIdx = headers.findIndex(h => h === 'плательщик');
+                // Ищем менеджера
+                let managerIdx = headers.findIndex(h => h === 'менеджер' || h === 'ответственный');
+                if (managerIdx === -1) managerIdx = headers.findIndex(h => h.includes('менеджер') || h.includes('ответственный'));
 
                 if (dateIdx === -1 || amountIdx === -1 || clientIdx === -1) {
                     customAlert('Не найдены обязательные столбцы: Дата, Сумма, Клиент/Плательщик.');
@@ -348,6 +348,7 @@
                     const dateStr = String(row[dateIdx] || '').trim();
                     const amountStr = String(row[amountIdx] || '0').replace(/\s/g, '').replace(',', '.');
                     const client = String(row[clientIdx] || '').trim();
+                    const manager = managerIdx !== -1 ? String(row[managerIdx] || '').trim() : '';
                     if (!dateStr || !client) continue;
                     const amount = parseFloat(amountStr);
                     if (isNaN(amount) || amount === 0) continue;
@@ -358,7 +359,7 @@
                             isoDate = `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
                         }
                     }
-                    parsed.push({ operation_date: isoDate, amount, client });
+                    parsed.push({ operation_date: isoDate, amount, client, manager });
                 }
 
                 if (parsed.length === 0) { customAlert('Не найдено ни одной продажи в файле.'); return; }
@@ -378,30 +379,34 @@
     function renderAll() {
         const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact);
         const total = all.length;
-        const successStage = all.filter(l => l.stage.includes('ПУ состоялся'));
-        const successCount = successStage.length;
-        const conversion = total > 0 ? (successCount / total * 100).toFixed(1) : 0;
+        const booked = all.filter(l => l.stage.includes('Запись на ПУ') || l.stage.includes('Записан')).length;
+        const pu = all.filter(l => l.stage.includes('ПУ состоялся')).length;
         const notProcessed = all.filter(l => l.stage === 'Не разобрано').length;
         const rejectBefore = all.filter(l => l.stage.includes('Отказ до ПУ')).length;
 
-        // Продажи просто из загруженного файла
         const salesCount = salesData.length;
         const revenue = salesData.reduce((sum, s) => sum + parseFloat(s.amount || 0), 0);
         const avgCheck = salesCount > 0 ? (revenue / salesCount).toFixed(0) : 0;
-        const salesConversion = total > 0 ? (salesCount / total * 100).toFixed(1) : 0;
+
+        // Конверсии
+        const conversionLeadToBooked = total > 0 ? (booked / total * 100).toFixed(1) : 0;
+        const conversionBookedToPU = booked > 0 ? (pu / booked * 100).toFixed(1) : 0;
+        const conversionLeadToPU = total > 0 ? (pu / total * 100).toFixed(1) : 0;
+        const conversionPUToSale = pu > 0 ? (salesCount / pu * 100).toFixed(1) : 0;
 
         document.getElementById('leadsKPI').innerHTML = `
             <div class="kpi-card"><span class="kpi-label">Всего лидов</span><span class="kpi-value">${total}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Успешных (ПУ)</span><span class="kpi-value">${successCount}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Конверсия в ПУ</span><span class="kpi-value">${conversion}%</span></div>
+            <div class="kpi-card"><span class="kpi-label">Запись на ПУ</span><span class="kpi-value">${booked}</span><span class="kpi-change">${conversionLeadToBooked}% от лидов</span></div>
+            <div class="kpi-card"><span class="kpi-label">ПУ состоялся</span><span class="kpi-value">${pu}</span><span class="kpi-change">${conversionBookedToPU}% от записи</span></div>
+            <div class="kpi-card"><span class="kpi-label">Конв. Лид → ПУ</span><span class="kpi-value">${conversionLeadToPU}%</span></div>
+            <div class="kpi-card"><span class="kpi-label">Продажи</span><span class="kpi-value">${salesCount}</span><span class="kpi-change">${conversionPUToSale}% от ПУ</span></div>
+            <div class="kpi-card"><span class="kpi-label">Выручка</span><span class="kpi-value">${revenue.toLocaleString()} ₽</span></div>
+            <div class="kpi-card"><span class="kpi-label">Средний чек</span><span class="kpi-value">${avgCheck} ₽</span></div>
             <div class="kpi-card"><span class="kpi-label">Не разобрано</span><span class="kpi-value">${notProcessed}</span></div>
             <div class="kpi-card"><span class="kpi-label">Отказы до ПУ</span><span class="kpi-value">${rejectBefore}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Выручка по лидам</span><span class="kpi-value">${revenue.toLocaleString()} ₽</span></div>
-            <div class="kpi-card"><span class="kpi-label">Продаж</span><span class="kpi-value">${salesCount}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Средний чек</span><span class="kpi-value">${avgCheck} ₽</span></div>
-            <div class="kpi-card"><span class="kpi-label">Конв. в продажу</span><span class="kpi-value">${salesConversion}%</span></div>
         `;
 
+        // По этапам
         const stageGroups = {};
         all.forEach(l => { const s = l.stage || '—'; stageGroups[s] = (stageGroups[s] || 0) + 1; });
         const stageSorted = Object.entries(stageGroups).sort((a,b) => b[1] - a[1]);
@@ -412,6 +417,7 @@
             if (stageTable) applyGradientColors(stageTable, stageValues);
         }, 0);
 
+        // По источникам
         const sourceGroups = {};
         all.forEach(l => {
             const src = l.source || 'Не указан';
@@ -428,6 +434,19 @@
             const sourceTable = document.querySelector('#sourceContent table tbody');
             if (sourceTable) applyGradientColors(sourceTable, sourceValues);
         }, 0);
+
+        // По менеджерам (продажи)
+        const managerGroups = {};
+        salesData.forEach(s => {
+            const m = s.manager || 'Не указан';
+            if (!managerGroups[m]) managerGroups[m] = { count: 0, sum: 0 };
+            managerGroups[m].count++;
+            managerGroups[m].sum += parseFloat(s.amount || 0);
+        });
+        const managerSorted = Object.entries(managerGroups).sort((a,b) => b[1].sum - a[1].sum);
+        document.getElementById('managerContent').innerHTML = managerSorted.length ? `<table><thead><tr><th>Менеджер</th><th>Продаж</th><th>Сумма</th></tr></thead><tbody>
+            ${managerSorted.map(([m, data]) => `<tr><td>${m}</td><td>${data.count}</td><td>${data.sum.toLocaleString()} ₽</td></tr>`).join('')}
+        </tbody></table>` : '<p style="color:var(--text-tertiary);">Нет данных. Если в файле продаж есть столбец "Менеджер" или "Ответственный", он будет учтён.</p>';
 
         document.getElementById('leadsTableBody').innerHTML = all.map(l=>`<tr><td>${l.date_added?new Date(l.date_added).toLocaleDateString('ru'):''}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
 
