@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
     <title>Аналитика лидов · Music Club Орёл</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* Оставляем стили из предыдущей версии leads.html, но можно скопировать полностью заново */
         :root {
             --bg: #F7F8FA; --surface: #ffffff; --border: rgba(15,23,42,0.06);
             --text-primary: #0f172a; --text-secondary: #475569; --text-tertiary: #94a3b8;
@@ -62,8 +62,8 @@
         .btn-group .btn:first-child { border-radius:var(--radius-sm) 0 0 var(--radius-sm); }
         .btn-group .btn:last-child { border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
         .btn-group .btn.active { background:var(--accent-light); color:var(--accent); border-color:var(--accent); }
-        .filters-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); }
-        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:var(--space-6); }
+        .filters-row { display:flex; flex-wrap:wrap; align-items:center; gap:var(--space-3); margin-bottom:var(--space-6); }
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:var(--space-6); margin-bottom:var(--space-8); }
         .kpi-card {
             background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
             border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
@@ -75,7 +75,7 @@
         .kpi-delta { font-size:13px; margin-top:var(--space-1); }
         .kpi-delta.up { color:var(--positive); }
         .kpi-delta.down { color:var(--negative); }
-        .widget-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(400px,1fr)); gap:var(--space-6); }
+        .widget-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(400px,1fr)); gap:var(--space-6); margin-bottom:var(--space-8); }
         .widget-card {
             background:var(--surface); border-radius:var(--radius-xl); padding:var(--space-6);
             border:1px solid var(--border); box-shadow:var(--shadow-sm); transition:all var(--transition-base);
@@ -91,6 +91,19 @@
         .badge { display:inline-block; padding:2px 10px; border-radius:100px; font-size:12px; font-weight:550; background:#fef3c7; color:#b45309; }
         .badge.red { background:#fee2e2; color:#b91c1c; }
         .chart-container { position:relative; width:100%; height:300px; margin-bottom:var(--space-6); }
+        .modal-overlay {
+            position:fixed; inset:0; background:rgba(0,0,0,0.3); backdrop-filter:blur(8px);
+            display:flex; align-items:center; justify-content:center; z-index:1000;
+        }
+        .modal {
+            background:rgba(255,255,255,0.9); backdrop-filter:blur(12px);
+            border-radius:var(--radius-xl); padding:var(--space-8); max-width:400px; width:90%;
+            box-shadow:var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.5) inset;
+            animation:slideUp 0.25s ease-out; text-align:center;
+        }
+        @keyframes slideUp { from{opacity:0;transform:translateY(16px);} to{opacity:1;transform:translateY(0);} }
+        .modal p { margin-bottom:var(--space-6); color:var(--text-primary); font-size:16px; line-height:1.5; }
+        .modal .btn { margin:0 4px; }
         @media(max-width:900px) { .sidebar{display:none} .main{margin-left:0;padding:var(--space-4)} .kpi-grid{grid-template-columns:repeat(2,1fr)} .widget-grid{grid-template-columns:1fr} }
     </style>
 </head>
@@ -115,7 +128,8 @@
     </div>
     <div class="filters-row">
         <input type="month" id="monthFilter" style="padding:10px 14px; border-radius:12px; border:1px solid var(--border); font-family:inherit;"/>
-        <button class="btn" id="uploadLeadsBtn">Загрузить лиды</button>
+        <button class="btn" id="uploadSimpleLeadsBtn">Загрузить новые лиды</button>
+        <button class="btn" id="uploadDetailedLeadsBtn">Загрузить обработанные лиды</button>
         <button class="btn btn-primary" id="uploadSalesBtn">Загрузить продажи</button>
         <span id="salesStatus" style="font-size:13px; color:var(--text-tertiary);"></span>
     </div>
@@ -156,7 +170,7 @@
     </div>
 
     <div class="table-container">
-        <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Статус</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
+        <table><thead><tr><th>Дата</th><th>Имя</th><th>Этап</th><th>Источник</th><th>Ответственный</th><th>Предмет</th></tr></thead><tbody id="leadsTableBody"></tbody></table>
     </div>
 </main>
 
@@ -173,7 +187,9 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let leadsData = [], financeData = [];
+    let leadsSimple = [];      // новые лиды (таблица leads)
+    let leadsFunnel = [];      // обработанные лиды (таблица lead_funnel)
+    let financeData = [];
     let currentMode = 'new';
     let funnelChart, managerChart, categoryChart;
 
@@ -192,311 +208,374 @@
         return true;
     }
 
-    function getFilteredLeads() {
-        const all = leadsData.filter(l => !l.is_duplicate && !l.is_bad_contact);
-        if (currentMode === 'new') {
-            const monthVal = document.getElementById('monthFilter').value;
-            if (!monthVal) return all;
-            const [year, month] = monthVal.split('-').map(Number);
-            const start = `${year}-${String(month).padStart(2,'0')}-01`;
-            const end = `${year}-${String(month).padStart(2,'0')}-${new Date(year, month, 0).getDate()}`;
-            return all.filter(l => l.date_added && l.date_added >= start && l.date_added <= end + 'T23:59:59');
-        }
-        // "Все обработанные" – все лиды, кроме дублей/брака (без фильтра по дате)
-        return all;
+    // Загрузка всех данных
+    async function loadAllData() {
+        const [simpleRes, funnelRes, finRes] = await Promise.all([
+            _supabase.from('leads').select('*'),
+            _supabase.from('lead_funnel').select('*'),
+            _supabase.from('crm_finance').select('*')
+        ]);
+        leadsSimple = simpleRes.data || [];
+        leadsFunnel = funnelRes.data || [];
+        financeData = finRes.data || [];
     }
 
-    function getSalesForPeriod() {
-        const monthVal = document.getElementById('monthFilter').value;
-        if (!monthVal) return financeData;
-        const [year, month] = monthVal.split('-').map(Number);
-        const start = `${year}-${String(month).padStart(2,'0')}-01`;
-        const end = `${year}-${String(month).padStart(2,'0')}-${new Date(year, month, 0).getDate()}`;
+    // Получить начало и конец выбранного месяца
+    function getMonthRange() {
+        const val = document.getElementById('monthFilter').value;
+        if (!val) return { start: null, end: null };
+        const [y, m] = val.split('-').map(Number);
+        const start = `${y}-${String(m).padStart(2,'0')}-01`;
+        const end = `${y}-${String(m).padStart(2,'0')}-${new Date(y, m, 0).getDate()}`;
+        return { start, end };
+    }
+
+    // Текущий набор лидов в зависимости от режима и месяца
+    function getCurrentLeads() {
+        const { start, end } = getMonthRange();
+        let source = currentMode === 'new' ? leadsSimple : leadsFunnel;
+        if (!start) return source;
+        return source.filter(l => {
+            const dateStr = l.created_at || l.date_added;
+            return dateStr && dateStr >= start && dateStr <= end + 'T23:59:59';
+        });
+    }
+
+    // Продажи за месяц
+    function getSales() {
+        const { start, end } = getMonthRange();
+        if (!start) return financeData;
         return financeData.filter(t =>
-            t.operation_date >= start &&
-            t.operation_date <= end &&
+            t.operation_date >= start && t.operation_date <= end &&
             (t.operation_type?.toLowerCase().includes('доход') || t.operation_type?.toLowerCase().includes('продажа'))
         );
     }
 
-    function linkSalesToLeads(leads, sales) {
-        // Сопоставление по имени клиента (нечеткое, но достаточное)
-        const leadNames = leads.map(l => l.name.trim().toLowerCase());
+    // Связать продажи с лидами по имени клиента
+    function matchSales(leads, sales) {
+        const names = leads.map(l => (l.full_name || l.name || '').toLowerCase().trim());
         return sales.filter(s => {
-            const clientName = (s.client || '').trim().toLowerCase();
-            return clientName && leadNames.some(ln => ln.includes(clientName) || clientName.includes(ln));
+            const client = (s.client || '').toLowerCase().trim();
+            return client && names.some(n => n.includes(client) || client.includes(n));
         });
     }
 
+    // Основная отрисовка
     function renderAll() {
-        const filteredLeads = getFilteredLeads();
-        const sales = getSalesForPeriod();
-        const linkedSales = linkSalesToLeads(filteredLeads, sales);
+        const leads = getCurrentLeads();
+        const sales = getSales();
+        const linkedSales = matchSales(leads, sales);
 
-        // Этапы
-        const stageCounts = {
-            'Не разобрано': 0,
-            'Запись на ПУ': 0,
-            'ПУ состоялся': 0,
-            'Продажи': 0
-        };
-        filteredLeads.forEach(l => {
-            const st = l.stage || '';
-            if (st.includes('Не разобрано')) stageCounts['Не разобрано']++;
-            if (st.includes('Запись на ПУ')) stageCounts['Запись на ПУ']++;
-            if (st.includes('ПУ состоялся')) stageCounts['ПУ состоялся']++;
+        // Подсчёт этапов
+        const stageCounts = { 'Не разобрано': 0, 'Запись на ПУ': 0, 'ПУ состоялся': 0 };
+        leads.forEach(l => {
+            const st = (l.funnel_stage || l.stage || '').toLowerCase();
+            if (st.includes('не разобрано')) stageCounts['Не разобрано']++;
+            else if (st.includes('запись на пу')) stageCounts['Запись на ПУ']++;
+            else if (st.includes('пу состоялся')) stageCounts['ПУ состоялся']++;
         });
-        stageCounts['Продажи'] = linkedSales.length;
+        const sold = linkedSales.length;
 
-        // Конверсии
-        const totalLeads = filteredLeads.length;
+        const total = leads.length;
         const booked = stageCounts['Запись на ПУ'];
-        const puDone = stageCounts['ПУ состоялся'];
-        const salesCount = stageCounts['Продажи'];
+        const pu = stageCounts['ПУ состоялся'];
+        const conv1 = total ? (booked/total*100).toFixed(1) : 0;
+        const conv2 = booked ? (pu/booked*100).toFixed(1) : 0;
+        const conv3 = pu ? (sold/pu*100).toFixed(1) : 0;
+        const convTotal = total ? (sold/total*100).toFixed(1) : 0;
 
-        const convLeadsToBooked = totalLeads ? (booked / totalLeads * 100).toFixed(1) : 0;
-        const convBookedToPU = booked ? (puDone / booked * 100).toFixed(1) : 0;
-        const convPUToSale = puDone ? (salesCount / puDone * 100).toFixed(1) : 0;
-        const convLeadsToSale = totalLeads ? (salesCount / totalLeads * 100).toFixed(1) : 0;
-
-        // KPI карточки
+        // KPI
         document.getElementById('leadsKPI').innerHTML = `
-            <div class="kpi-card"><span class="kpi-label">Обработано лидов</span><span class="kpi-value">${totalLeads}</span></div>
-            <div class="kpi-card"><span class="kpi-label">Запись на ПУ</span><span class="kpi-value">${booked}</span><span class="kpi-change">${convLeadsToBooked}%</span></div>
-            <div class="kpi-card"><span class="kpi-label">ПУ состоялся</span><span class="kpi-value">${puDone}</span><span class="kpi-change">${convBookedToPU}% от записей</span></div>
-            <div class="kpi-card"><span class="kpi-label">Продажи</span><span class="kpi-value">${salesCount}</span><span class="kpi-change">${convPUToSale}% от ПУ</span></div>
-            <div class="kpi-card"><span class="kpi-label">Конверсия лид→продажа</span><span class="kpi-value">${convLeadsToSale}%</span></div>
+            <div class="kpi-card"><span class="kpi-label">Обработано лидов</span><span class="kpi-value">${total}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Запись на ПУ</span><span class="kpi-value">${booked}</span><span class="kpi-change">${conv1}%</span></div>
+            <div class="kpi-card"><span class="kpi-label">ПУ состоялся</span><span class="kpi-value">${pu}</span><span class="kpi-change">${conv2}% от записей</span></div>
+            <div class="kpi-card"><span class="kpi-label">Продажи</span><span class="kpi-value">${sold}</span><span class="kpi-change">${conv3}% от ПУ</span></div>
+            <div class="kpi-card"><span class="kpi-label">Конверсия лид→продажа</span><span class="kpi-value">${convTotal}%</span></div>
         `;
 
         // График воронки
         if (funnelChart) funnelChart.destroy();
-        const ctx = document.getElementById('funnelChart').getContext('2d');
-        funnelChart = new Chart(ctx, {
+        funnelChart = new Chart(document.getElementById('funnelChart'), {
             type: 'bar',
             data: {
                 labels: ['Лиды', 'Запись на ПУ', 'ПУ состоялся', 'Продажи'],
-                datasets: [{
-                    label: 'Количество',
-                    data: [totalLeads, booked, puDone, salesCount],
-                    backgroundColor: ['#4f46e5','#7c5ce7','#0fb9b1','#55efc4'],
-                    borderRadius: 8
-                }]
+                datasets: [{ data: [total, booked, pu, sold], backgroundColor: ['#4f46e5','#7c5ce7','#0fb9b1','#55efc4'], borderRadius: 8 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Продажи по менеджерам (из связанных продаж)
-        const managerGroups = {};
-        linkedSales.forEach(s => {
-            const m = s.manager || 'Не указан';
-            managerGroups[m] = (managerGroups[m] || 0) + parseFloat(s.amount || 0);
-        });
-        const managerLabels = Object.keys(managerGroups);
-        const managerValues = Object.values(managerGroups);
+        // Продажи по менеджерам
+        const mgrMap = {};
+        linkedSales.forEach(s => { const m = s.manager || 'Не указан'; mgrMap[m] = (mgrMap[m]||0) + parseFloat(s.amount||0); });
+        const mgrLabels = Object.keys(mgrMap), mgrValues = Object.values(mgrMap);
         if (managerChart) managerChart.destroy();
-        const ctx2 = document.getElementById('managerSalesChart').getContext('2d');
-        managerChart = new Chart(ctx2, {
+        managerChart = new Chart(document.getElementById('managerSalesChart'), {
             type: 'bar',
-            data: {
-                labels: managerLabels,
-                datasets: [{
-                    label: 'Сумма продаж (₽)',
-                    data: managerValues,
-                    backgroundColor: '#4f46e5',
-                    borderRadius: 8
-                }]
-            },
+            data: { labels: mgrLabels, datasets: [{ data: mgrValues, backgroundColor: '#4f46e5', borderRadius: 8 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Продажи по категориям (типам продаж)
-        const categoryGroups = {};
-        linkedSales.forEach(s => {
-            const cat = s.category || 'Без категории';
-            categoryGroups[cat] = (categoryGroups[cat] || 0) + parseFloat(s.amount || 0);
-        });
-        const catLabels = Object.keys(categoryGroups);
-        const catValues = Object.values(categoryGroups);
+        // Продажи по категориям
+        const catMap = {};
+        linkedSales.forEach(s => { const c = s.category || 'Без категории'; catMap[c] = (catMap[c]||0) + parseFloat(s.amount||0); });
+        const catLabels = Object.keys(catMap), catValues = Object.values(catMap);
         if (categoryChart) categoryChart.destroy();
-        const ctx3 = document.getElementById('categorySalesChart').getContext('2d');
-        categoryChart = new Chart(ctx3, {
+        categoryChart = new Chart(document.getElementById('categorySalesChart'), {
             type: 'bar',
-            data: {
-                labels: catLabels,
-                datasets: [{
-                    label: 'Сумма продаж (₽)',
-                    data: catValues,
-                    backgroundColor: '#0fb9b1',
-                    borderRadius: 8
-                }]
-            },
+            data: { labels: catLabels, datasets: [{ data: catValues, backgroundColor: '#0fb9b1', borderRadius: 8 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Детализация по этапам (таблица)
+        // Детализация этапов
         const stageOrder = ['Не разобрано','Запись на ПУ','ПУ состоялся','Продажи'];
-        document.getElementById('stageContent').innerHTML = `<table><thead><tr><th>Этап</th><th>Кол-во</th><th>% от лидов</th></tr></thead><tbody>${stageOrder.map(s => `<tr><td>${s}</td><td>${stageCounts[s]}</td><td>${totalLeads ? (stageCounts[s]/totalLeads*100).toFixed(1) : 0}%</td></tr>`).join('')}</tbody></table>`;
+        document.getElementById('stageContent').innerHTML = `<table><thead><tr><th>Этап</th><th>Кол-во</th><th>%</th></tr></thead><tbody>
+            ${stageOrder.map(s => `<tr><td>${s}</td><td>${s==='Продажи'?sold:stageCounts[s]}</td><td>${total?( (s==='Продажи'?sold:stageCounts[s]) / total * 100).toFixed(1):0}%</td></tr>`).join('')}
+        </tbody></table>`;
 
         // Источники
-        const sourceGroups = {};
-        filteredLeads.forEach(l => {
+        const srcMap = {};
+        leads.forEach(l => {
             const src = l.source || 'Не указан';
-            if (!sourceGroups[src]) sourceGroups[src] = { total: 0, pu: 0 };
-            sourceGroups[src].total++;
-            if (l.stage?.includes('ПУ состоялся')) sourceGroups[src].pu++;
+            if (!srcMap[src]) srcMap[src] = { total: 0, pu: 0 };
+            srcMap[src].total++;
+            if ((l.funnel_stage||l.stage||'').includes('ПУ состоялся')) srcMap[src].pu++;
         });
-        const sourceSorted = Object.entries(sourceGroups).sort((a,b) => b[1].total - a[1].total);
-        document.getElementById('sourceContent').innerHTML = `<table><thead><tr><th>Источник</th><th>Всего</th><th>ПУ состоялся</th><th>Конв.</th></tr></thead><tbody>${sourceSorted.map(([s,d]) => `<tr><td>${s}</td><td>${d.total}</td><td>${d.pu}</td><td>${d.total ? (d.pu/d.total*100).toFixed(1) : 0}%</td></tr>`).join('')}</tbody></table>`;
+        document.getElementById('sourceContent').innerHTML = `<table><thead><tr><th>Источник</th><th>Всего</th><th>ПУ</th><th>Конв.</th></tr></thead><tbody>
+            ${Object.entries(srcMap).sort((a,b)=>b[1].total-a[1].total).map(([s,d])=>`<tr><td>${s}</td><td>${d.total}</td><td>${d.pu}</td><td>${d.total?(d.pu/d.total*100).toFixed(1):0}%</td></tr>`).join('')}
+        </tbody></table>`;
 
-        // Детализация по менеджерам (таблица)
-        document.getElementById('managerDetailContent').innerHTML = `<table><thead><tr><th>Менеджер</th><th>Сумма продаж</th><th>Кол-во сделок</th></tr></thead><tbody>${managerLabels.map(m => {
-            const cnt = linkedSales.filter(s => (s.manager || 'Не указан') === m).length;
-            return `<tr><td>${m}</td><td>${managerGroups[m].toLocaleString()} ₽</td><td>${cnt}</td></tr>`;
-        }).join('')}</tbody></table>`;
+        // Детализация менеджеров (таблица)
+        document.getElementById('managerDetailContent').innerHTML = `<table><thead><tr><th>Менеджер</th><th>Сумма</th><th>Сделок</th></tr></thead><tbody>
+            ${mgrLabels.map(m => {
+                const cnt = linkedSales.filter(s => (s.manager||'Не указан')===m).length;
+                return `<tr><td>${m}</td><td>${mgrMap[m].toLocaleString()} ₽</td><td>${cnt}</td></tr>`;
+            }).join('')}
+        </tbody></table>`;
 
-        // Таблица лидов (как раньше)
-        document.getElementById('leadsTableBody').innerHTML = filteredLeads.slice(0, 100).map(l => `<tr><td>${l.date_added?.slice(0,10)}</td><td>${l.name}</td><td>${l.stage}</td><td>${l.source}</td><td>${l.is_duplicate?'<span class="badge">Дубль</span>':l.is_bad_contact?'<span class="badge red">Некорр.</span>':''}</td></tr>`).join('');
+        // Таблица лидов
+        document.getElementById('leadsTableBody').innerHTML = leads.slice(0, 100).map(l => {
+            const date = l.created_at ? l.created_at.slice(0,10) : (l.date_added ? l.date_added.slice(0,10) : '');
+            return `<tr><td>${date}</td><td>${l.full_name || l.name || ''}</td><td>${l.funnel_stage || l.stage || ''}</td><td>${l.source||''}</td><td>${l.responsible||''}</td><td>${l.subject||''}</td></tr>`;
+        }).join('');
 
-        updateSalesStatus(sales.length);
+        document.getElementById('salesStatus').textContent = `Продаж в периоде: ${sales.length} (сопоставлено: ${linkedSales.length})`;
     }
 
-    function updateSalesStatus(salesCount) {
-        document.getElementById('salesStatus').textContent = salesCount ? `Продаж за период: ${salesCount}` : 'Продажи не загружены';
-    }
-
-    async function loadLeads() {
-        const { data } = await _supabase.from('leads').select('*').order('date_added', { ascending: false });
-        leadsData = data || [];
-    }
-
-    async function loadFinance() {
-        const { data } = await _supabase.from('crm_finance').select('*');
-        financeData = data || [];
-    }
-
-    async function uploadLeads() {
-        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
-        input.onchange = async (e) => {
+    // ====== ЗАГРУЗКА НОВЫХ ЛИДОВ (старый формат) ======
+    function uploadSimpleLeads() {
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='.xlsx';
+        inp.onchange = async e => {
             const file = e.target.files[0]; if(!file) return;
             const reader = new FileReader();
-            reader.onload = async (ev) => {
-                const data = new Uint8Array(ev.target.result);
-                const wb = XLSX.read(data, {type:'array'});
+            reader.onload = async ev => {
+                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                // Используем ту же логику парсинга, что и в оригинальном leads.html
+                // Логика парсинга новых лидов (как в старом leads.html)
                 const parsed = [];
-                const firstRow = (rows[0] || []).join(' ').toLowerCase();
+                const firstRow = (rows[0]||[]).join(' ').toLowerCase();
                 if (firstRow.includes('новые лиды')) {
-                    let dataStartIdx = 0;
+                    let dataIdx = 0;
                     for (let i = 0; i < rows.length; i++) {
-                        const rowStr = (rows[i] || []).join(' ');
+                        const rowStr = (rows[i]||[]).join(' ');
                         if (rowStr.toLowerCase().includes('новые лиды')) continue;
-                        if (rowStr.toLowerCase().includes('за период')) { dataStartIdx = i + 1; break; }
+                        if (rowStr.toLowerCase().includes('за период')) { dataIdx = i + 1; break; }
                     }
-                    for (let i = dataStartIdx; i < rows.length; i++) {
+                    for (let i = dataIdx; i < rows.length; i++) {
                         const row = rows[i]; if (!row || row.length < 4) continue;
-                        const dateStr = String(row[1] || '').trim();
-                        const name = String(row[2] || '').trim();
-                        const stage = String(row[3] || '').trim();
-                        const source = String(row[4] || '').trim();
+                        const dateStr = String(row[1]||'').trim();
+                        const name = String(row[2]||'').trim();
+                        const stage = String(row[3]||'').trim();
+                        const source = String(row[4]||'').trim();
                         if (!dateStr) continue;
                         const parts = dateStr.split(' ');
-                        const [day, month, year] = parts[0].split('.').map(Number);
-                        const [hours, minutes] = (parts[1] || '00:00').split(':').map(Number);
-                        const validDate = new Date(year, month - 1, day, hours || 0, minutes || 0);
-                        const isDuplicate = /8\.\s*Дубль/.test(name);
-                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
-                        parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDuplicate, is_bad_contact: isBadContact });
+                        const [d,m,y] = parts[0].split('.').map(Number);
+                        const [hh,mm] = (parts[1]||'00:00').split(':').map(Number);
+                        const validDate = new Date(y, m-1, d, hh||0, mm||0);
+                        const isDup = /8\.\s*Дубль/.test(name);
+                        const isBad = /13\.\s*Некорректные\s*контакты/.test(name);
+                        parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDup, is_bad_contact: isBad });
                     }
                 } else {
-                    // Общий парсинг с автоопределением заголовков
+                    // Альтернативный парсинг с заголовками
                     let headerIdx = -1;
                     for (let i = 0; i < Math.min(rows.length, 20); i++) {
-                        const row = rows[i];
-                        if (!row) continue;
-                        const rowStr = row.map(c => String(c).toLowerCase()).join(' ');
+                        const row = rows[i]; if (!row) continue;
+                        const rowStr = row.map(c=>String(c).toLowerCase()).join(' ');
                         if (rowStr.includes('дата добавления') || (rowStr.includes('дата') && rowStr.includes('наименование'))) {
                             headerIdx = i; break;
                         }
                     }
-                    if (headerIdx === -1) {
-                        customAlert('Не удалось определить формат файла.');
-                        return;
-                    }
-                    const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
-                    const dateIdx = headers.findIndex(h => h.includes('дата добавления') || h === 'дата');
-                    const nameIdx = headers.findIndex(h => h.includes('наименование') || h === 'имя');
-                    const stageIdx = headers.findIndex(h => h.includes('этап'));
-                    const sourceIdx = headers.findIndex(h => h.includes('источник'));
-                    if (dateIdx === -1 || nameIdx === -1 || stageIdx === -1 || sourceIdx === -1) {
-                        customAlert('Не найдены обязательные столбцы.');
-                        return;
-                    }
-                    for (let i = headerIdx + 1; i < rows.length; i++) {
+                    if (headerIdx === -1) { customAlert('Не найден заголовок в файле новых лидов.'); return; }
+                    const headers = rows[headerIdx].map(h=>String(h).trim().toLowerCase());
+                    const dateIdx = headers.findIndex(h=>h.includes('дата добавления')||h==='дата');
+                    const nameIdx = headers.findIndex(h=>h.includes('наименование')||h==='имя');
+                    const stageIdx = headers.findIndex(h=>h.includes('этап'));
+                    const sourceIdx = headers.findIndex(h=>h.includes('источник'));
+                    if (dateIdx===-1||nameIdx===-1||stageIdx===-1||sourceIdx===-1) { customAlert('Не найдены обязательные столбцы.'); return; }
+                    for (let i = headerIdx+1; i<rows.length; i++) {
                         const row = rows[i]; if (!row || row.length < 2) continue;
-                        const name = String(row[nameIdx] || '').trim();
-                        const isDuplicate = /8\.\s*Дубль/.test(name);
-                        const isBadContact = /13\.\s*Некорректные\s*контакты/.test(name);
+                        const name = String(row[nameIdx]||'').trim();
                         parsed.push({
                             date_added: row[dateIdx] ? new Date(row[dateIdx]).toISOString() : null,
                             name,
-                            stage: String(row[stageIdx] || '').trim(),
-                            source: String(row[sourceIdx] || '').trim(),
-                            is_duplicate: isDuplicate,
-                            is_bad_contact: isBadContact
+                            stage: String(row[stageIdx]||'').trim(),
+                            source: String(row[sourceIdx]||'').trim(),
+                            is_duplicate: /8\.\s*Дубль/.test(name),
+                            is_bad_contact: /13\.\s*Некорректные\s*контакты/.test(name)
                         });
                     }
                 }
                 if (parsed.length === 0) { customAlert('Нет записей.'); return; }
                 await _supabase.from('leads').delete().neq('id', 0);
                 const { error } = await _supabase.from('leads').insert(parsed);
-                if (error) { customAlert('Ошибка загрузки: ' + error.message); await loadLeads(); renderAll(); return; }
-                await loadLeads(); renderAll();
-                customAlert('Лиды загружены (' + parsed.length + ')');
+                if (error) { customAlert('Ошибка загрузки новых лидов: '+error.message); return; }
+                customAlert(`Загружено ${parsed.length} новых лидов.`);
+                await loadAllData();
+                renderAll();
             };
             reader.readAsArrayBuffer(file);
         };
-        input.click();
+        inp.click();
     }
 
-    async function uploadSales() {
-        // Загрузка продаж в crm_finance (уже есть в crm-sync.html, можно вызвать или повторить логику)
-        const input = document.createElement('input'); input.type='file'; input.accept='.xlsx';
-        input.onchange = async (e) => {
+    // ====== ЗАГРУЗКА ОБРАБОТАННЫХ ЛИДОВ (расширенный отчёт) ======
+    function uploadDetailedLeads() {
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='.xlsx';
+        inp.onchange = async e => {
             const file = e.target.files[0]; if(!file) return;
             const reader = new FileReader();
-            reader.onload = async (ev) => {
-                const data = new Uint8Array(ev.target.result);
-                const wb = XLSX.read(data, {type:'array'});
+            reader.onload = async ev => {
+                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                // Ищем заголовок
-                let headerRow = -1;
+                const parsed = parseDetailedLeads(rows);
+                if (parsed.length === 0) { customAlert('Не удалось распознать данные. Проверьте столбцы.'); return; }
+                // Очищаем таблицу lead_funnel и вставляем новые
+                await _supabase.from('lead_funnel').delete().neq('id', 0);
+                const { error } = await _supabase.from('lead_funnel').insert(parsed);
+                if (error) { customAlert('Ошибка загрузки обработанных лидов: '+error.message); return; }
+                customAlert(`Загружено ${parsed.length} обработанных лидов.`);
+                await loadAllData();
+                renderAll();
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        inp.click();
+    }
+
+    // Парсинг обработанных лидов (ищем заголовки: ID, ФИО, Телефон, E-mail, Источник, Ответственный, Педагог, Этап, Предмет, Уровень, Примечание, Дата добавления)
+    function parseDetailedLeads(rows) {
+        // Ищем строку с заголовками (содержит "ID" или "ФИО")
+        let headerIdx = -1;
+        for (let i = 0; i < Math.min(rows.length, 30); i++) {
+            const row = rows[i];
+            if (!row) continue;
+            const str = row.map(c => String(c).toLowerCase()).join(' ');
+            if (str.includes('id') && (str.includes('фио') || str.includes('клиент'))) {
+                headerIdx = i;
+                break;
+            }
+        }
+        if (headerIdx === -1) {
+            // Попробуем найти строку, где есть "фио" и "телефон"
+            for (let i = 0; i < Math.min(rows.length, 30); i++) {
+                const row = rows[i];
+                if (!row) continue;
+                const str = row.map(c => String(c).toLowerCase()).join(' ');
+                if (str.includes('фио') && str.includes('телефон')) {
+                    headerIdx = i;
+                    break;
+                }
+            }
+        }
+        if (headerIdx === -1) return [];
+
+        const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
+        // Определяем индексы
+        const getIdx = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
+        const dateIdx = getIdx(['дата добавления', 'добавлен', 'дата']);
+        const nameIdx = getIdx(['фио', 'клиент', 'наименование']);
+        const phoneIdx = getIdx(['телефон']);
+        const emailIdx = getIdx(['e-mail', 'email']);
+        const sourceIdx = getIdx(['источник']);
+        const respIdx = getIdx(['ответственный']);
+        const teacherIdx = getIdx(['педагог']);
+        const stageIdx = getIdx(['этап']);
+        const subjectIdx = getIdx(['предмет']);
+        const levelIdx = getIdx(['уровень']);
+        const noteIdx = getIdx(['примечание']);
+
+        const result = [];
+        for (let i = headerIdx + 1; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length < 2) continue;
+            const get = (idx) => idx !== -1 ? String(row[idx] || '').trim() : '';
+            const dateRaw = get(dateIdx);
+            let createdAt = null;
+            if (dateRaw) {
+                const parts = dateRaw.split(' ');
+                const datePart = parts[0];
+                const [d,m,y] = datePart.split('.').map(Number);
+                if (y && m && d) {
+                    const timePart = parts[1] || '00:00';
+                    const [hh,mm] = timePart.split(':').map(Number);
+                    createdAt = new Date(y, m-1, d, hh||0, mm||0).toISOString();
+                } else {
+                    createdAt = dateRaw; // fallback
+                }
+            }
+            const name = get(nameIdx);
+            if (!name) continue; // пропускаем пустые строки
+            result.push({
+                created_at: createdAt,
+                full_name: name,
+                phone: get(phoneIdx),
+                email: get(emailIdx),
+                source: get(sourceIdx),
+                responsible: get(respIdx),
+                teacher: get(teacherIdx),
+                funnel_stage: get(stageIdx),
+                subject: get(subjectIdx),
+                level: get(levelIdx),
+                note: get(noteIdx),
+                is_test: /тест|цоколь|артур/i.test(name)
+            });
+        }
+        return result;
+    }
+
+    // ====== ЗАГРУЗКА ПРОДАЖ (Excel с колонками: Дата, Сумма, Клиент, Менеджер, Статья) ======
+    function uploadSales() {
+        const inp = document.createElement('input'); inp.type='file'; inp.accept='.xlsx';
+        inp.onchange = async e => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async ev => {
+                const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
+                // Ищем заголовок (Дата, Сумма, Клиент)
+                let headerIdx = -1;
                 for (let i = 0; i < Math.min(rows.length, 10); i++) {
-                    const rowStr = (rows[i] || []).join(' ').toLowerCase();
-                    if (rowStr.includes('дата') && (rowStr.includes('клиент') || rowStr.includes('плательщик'))) {
-                        headerRow = i; break;
+                    const row = rows[i]; if (!row) continue;
+                    const str = row.map(c => String(c).toLowerCase()).join(' ');
+                    if (str.includes('дата') && (str.includes('клиент') || str.includes('плательщик'))) {
+                        headerIdx = i; break;
                     }
                 }
-                if (headerRow === -1) { customAlert('Не найдена строка заголовка.'); return; }
-                const headers = rows[headerRow].map(h => String(h).trim().toLowerCase());
+                if (headerIdx === -1) { customAlert('Не найдена строка заголовка с Датой и Клиентом.'); return; }
+                const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
                 const dateIdx = headers.findIndex(h => h === 'дата');
-                const amountIdx = headers.findIndex(h => h === 'сумма');
+                const sumIdx = headers.findIndex(h => h === 'сумма');
                 let clientIdx = headers.findIndex(h => h === 'клиент' || h === 'плательщик');
                 let managerIdx = headers.findIndex(h => h.includes('менеджер') && !h.includes('ответственный'));
                 let catIdx = headers.findIndex(h => h === 'статья' || h === 'категория');
                 const parsed = [];
-                for (let i = headerRow + 1; i < rows.length; i++) {
+                for (let i = headerIdx + 1; i < rows.length; i++) {
                     const row = rows[i];
-                    if (!row || row.length < Math.max(dateIdx, amountIdx, clientIdx) + 1) continue;
+                    if (!row || row.length < Math.max(dateIdx, sumIdx, clientIdx) + 1) continue;
                     const dateStr = String(row[dateIdx] || '').trim();
-                    const amountStr = String(row[amountIdx] || '0').replace(/\s/g, '').replace(',', '.');
+                    const amount = parseFloat(String(row[sumIdx]||'0').replace(/\s/g,'').replace(',','.'));
                     const client = String(row[clientIdx] || '').trim();
-                    let manager = '', category = '';
-                    if (managerIdx !== -1) manager = String(row[managerIdx] || '').trim();
-                    if (catIdx !== -1) category = String(row[catIdx] || '').trim();
-                    if (!dateStr || !client) continue;
-                    const amount = parseFloat(amountStr);
-                    if (isNaN(amount) || amount === 0) continue;
+                    if (!dateStr || !client || isNaN(amount)) continue;
                     let isoDate = dateStr;
                     if (dateStr.includes('.')) {
                         const parts = dateStr.split('.');
@@ -507,44 +586,49 @@
                         operation_type: 'Доход',
                         amount,
                         client,
-                        manager,
-                        category,
+                        manager: managerIdx !== -1 ? String(row[managerIdx]||'').trim() : '',
+                        category: catIdx !== -1 ? String(row[catIdx]||'').trim() : '',
                         account: '',
                         payment_type: '',
                         comment: ''
                     });
                 }
-                if (parsed.length === 0) { customAlert('Нет продаж.'); return; }
+                if (parsed.length === 0) { customAlert('Нет продаж для загрузки.'); return; }
                 const { error } = await _supabase.from('crm_finance').insert(parsed);
                 if (error) { customAlert('Ошибка загрузки продаж: ' + error.message); return; }
-                await loadFinance();
+                customAlert(`Загружено ${parsed.length} продаж.`);
+                await loadAllData();
                 renderAll();
-                customAlert('Продажи загружены (' + parsed.length + ')');
             };
             reader.readAsArrayBuffer(file);
         };
-        input.click();
+        inp.click();
     }
 
+    // Инициализация
     async function init() {
         if (!await checkAccess()) return;
-        await Promise.all([loadLeads(), loadFinance()]);
+        await loadAllData();
         renderAll();
-    }
 
-    document.getElementById('leadModeGroup').addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            document.querySelectorAll('#leadModeGroup .btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentMode = e.target.dataset.mode;
-            renderAll();
-        }
-    });
-    document.getElementById('monthFilter').addEventListener('change', renderAll);
-    document.getElementById('uploadLeadsBtn').addEventListener('click', uploadLeads);
-    document.getElementById('uploadSalesBtn').addEventListener('click', uploadSales);
-    document.getElementById('homeSidebarBtn').addEventListener('click', ()=> window.location.href='index.html');
-    document.getElementById('logoutSidebarBtn').addEventListener('click', async ()=> { await _supabase.auth.signOut(); window.location.href='login.html'; });
+        document.getElementById('leadModeGroup').addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON') {
+                document.querySelectorAll('#leadModeGroup .btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentMode = e.target.dataset.mode;
+                renderAll();
+            }
+        });
+        document.getElementById('monthFilter').addEventListener('change', renderAll);
+        document.getElementById('uploadSimpleLeadsBtn').addEventListener('click', uploadSimpleLeads);
+        document.getElementById('uploadDetailedLeadsBtn').addEventListener('click', uploadDetailedLeads);
+        document.getElementById('uploadSalesBtn').addEventListener('click', uploadSales);
+        document.getElementById('homeSidebarBtn').addEventListener('click', () => window.location.href = 'index.html');
+        document.getElementById('logoutSidebarBtn').addEventListener('click', async () => {
+            await _supabase.auth.signOut();
+            window.location.href = 'login.html';
+        });
+    }
 
     init();
 })();
