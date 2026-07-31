@@ -891,18 +891,28 @@
             const source = m.dataset.source;
             const data = { teacher_id: selectedTeacherId, type, start_time: startTime||null, end_time: endTime||null, note };
             try {
-                if (editId) {
-                    if (source==='override') await _supabase.from('teacher_unavailability').update(data).eq('id', editId);
-                    else await _supabase.from('teacher_settings').update(data).eq('id', editId);
-                } else if (isOverride) {
+                if (isOverride) {
+                    // Шаблон на день недели
+                    if (editId && source === 'override') {
+                        // Раньше это была разовая запись на конкретную дату — убираем её (и любые задвоения) перед переносом в шаблон
+                        await _supabase.from('teacher_unavailability').delete().eq('teacher_id', selectedTeacherId).eq('date', m.dataset.date);
+                    }
                     const dow = new Date(dateFrom).getDay();
                     await _supabase.from('teacher_settings').upsert({ ...data, day_of_week: dow }, { onConflict: 'teacher_id, day_of_week' });
                 } else {
+                    if (editId && source === 'setting') {
+                        // Раньше это был шаблон на день недели — убираем его, раз теперь это разовая запись
+                        await _supabase.from('teacher_settings').delete().eq('id', editId);
+                    }
                     const dates = [];
                     let cur = new Date(dateFrom);
                     const to = new Date(dateTo);
                     while (cur <= to) { dates.push(cur.toISOString().slice(0,10)); cur.setDate(cur.getDate()+1); }
-                    if (dates.length) await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
+                    if (dates.length) {
+                        // Сначала удаляем любые существующие (в т.ч. задвоенные) записи на эти даты, затем вставляем свежие
+                        await _supabase.from('teacher_unavailability').delete().eq('teacher_id', selectedTeacherId).in('date', dates);
+                        await _supabase.from('teacher_unavailability').insert(dates.map(d => ({ ...data, date: d })));
+                    }
                 }
                 m.style.display = 'none';
                 await Promise.all([loadSettings(), loadOverrides()]);
@@ -915,8 +925,12 @@
         async function deleteSetting() {
             const m = document.getElementById('settingModal');
             if (!m.dataset.editId) return;
-            if (m.dataset.source==='override') await _supabase.from('teacher_unavailability').delete().eq('id', m.dataset.editId);
-            else await _supabase.from('teacher_settings').delete().eq('id', m.dataset.editId);
+            if (m.dataset.source==='override') {
+                // Удаляем ВСЕ записи на эту дату у этого преподавателя — на случай задвоений из прошлого
+                await _supabase.from('teacher_unavailability').delete().eq('teacher_id', selectedTeacherId).eq('date', m.dataset.date);
+            } else {
+                await _supabase.from('teacher_settings').delete().eq('id', m.dataset.editId);
+            }
             m.style.display = 'none';
             await Promise.all([loadSettings(), loadOverrides()]);
             renderCalendar();
