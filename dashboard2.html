@@ -187,8 +187,8 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let leadsSimple = [];      // новые лиды (таблица leads)
-    let leadsFunnel = [];      // обработанные лиды (таблица lead_funnel)
+    let leadsSimple = [];
+    let leadsFunnel = [];
     let financeData = [];
     let currentMode = 'new';
     let funnelChart, managerChart, categoryChart;
@@ -208,7 +208,6 @@
         return true;
     }
 
-    // Загрузка всех данных
     async function loadAllData() {
         const [simpleRes, funnelRes, finRes] = await Promise.all([
             _supabase.from('leads').select('*'),
@@ -220,7 +219,6 @@
         financeData = finRes.data || [];
     }
 
-    // Получить начало и конец выбранного месяца
     function getMonthRange() {
         const val = document.getElementById('monthFilter').value;
         if (!val) return { start: null, end: null };
@@ -230,10 +228,14 @@
         return { start, end };
     }
 
-    // Текущий набор лидов в зависимости от режима и месяца
-    function getCurrentLeads() {
+    function getCleanLeads() {
         const { start, end } = getMonthRange();
-        let source = currentMode === 'new' ? leadsSimple : leadsFunnel;
+        let source = [];
+        if (currentMode === 'new') {
+            source = leadsSimple.filter(l => !l.is_duplicate && !l.is_bad_contact);
+        } else {
+            source = leadsFunnel.filter(l => !(l.is_test === true));
+        }
         if (!start) return source;
         return source.filter(l => {
             const dateStr = l.created_at || l.date_added;
@@ -241,7 +243,6 @@
         });
     }
 
-    // Продажи за месяц
     function getSales() {
         const { start, end } = getMonthRange();
         if (!start) return financeData;
@@ -251,7 +252,6 @@
         );
     }
 
-    // Связать продажи с лидами по имени клиента
     function matchSales(leads, sales) {
         const names = leads.map(l => (l.full_name || l.name || '').toLowerCase().trim());
         return sales.filter(s => {
@@ -260,13 +260,11 @@
         });
     }
 
-    // Основная отрисовка
     function renderAll() {
-        const leads = getCurrentLeads();
+        const leads = getCleanLeads();
         const sales = getSales();
         const linkedSales = matchSales(leads, sales);
 
-        // Подсчёт этапов
         const stageCounts = { 'Не разобрано': 0, 'Запись на ПУ': 0, 'ПУ состоялся': 0 };
         leads.forEach(l => {
             const st = (l.funnel_stage || l.stage || '').toLowerCase();
@@ -284,16 +282,14 @@
         const conv3 = pu ? (sold/pu*100).toFixed(1) : 0;
         const convTotal = total ? (sold/total*100).toFixed(1) : 0;
 
-        // KPI
         document.getElementById('leadsKPI').innerHTML = `
-            <div class="kpi-card"><span class="kpi-label">Обработано лидов</span><span class="kpi-value">${total}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Обработано лидов (чистых)</span><span class="kpi-value">${total}</span></div>
             <div class="kpi-card"><span class="kpi-label">Запись на ПУ</span><span class="kpi-value">${booked}</span><span class="kpi-change">${conv1}%</span></div>
             <div class="kpi-card"><span class="kpi-label">ПУ состоялся</span><span class="kpi-value">${pu}</span><span class="kpi-change">${conv2}% от записей</span></div>
             <div class="kpi-card"><span class="kpi-label">Продажи</span><span class="kpi-value">${sold}</span><span class="kpi-change">${conv3}% от ПУ</span></div>
             <div class="kpi-card"><span class="kpi-label">Конверсия лид→продажа</span><span class="kpi-value">${convTotal}%</span></div>
         `;
 
-        // График воронки
         if (funnelChart) funnelChart.destroy();
         funnelChart = new Chart(document.getElementById('funnelChart'), {
             type: 'bar',
@@ -304,7 +300,6 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Продажи по менеджерам
         const mgrMap = {};
         linkedSales.forEach(s => { const m = s.manager || 'Не указан'; mgrMap[m] = (mgrMap[m]||0) + parseFloat(s.amount||0); });
         const mgrLabels = Object.keys(mgrMap), mgrValues = Object.values(mgrMap);
@@ -315,7 +310,6 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Продажи по категориям
         const catMap = {};
         linkedSales.forEach(s => { const c = s.category || 'Без категории'; catMap[c] = (catMap[c]||0) + parseFloat(s.amount||0); });
         const catLabels = Object.keys(catMap), catValues = Object.values(catMap);
@@ -326,13 +320,11 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
 
-        // Детализация этапов
         const stageOrder = ['Не разобрано','Запись на ПУ','ПУ состоялся','Продажи'];
         document.getElementById('stageContent').innerHTML = `<table><thead><tr><th>Этап</th><th>Кол-во</th><th>%</th></tr></thead><tbody>
             ${stageOrder.map(s => `<tr><td>${s}</td><td>${s==='Продажи'?sold:stageCounts[s]}</td><td>${total?( (s==='Продажи'?sold:stageCounts[s]) / total * 100).toFixed(1):0}%</td></tr>`).join('')}
         </tbody></table>`;
 
-        // Источники
         const srcMap = {};
         leads.forEach(l => {
             const src = l.source || 'Не указан';
@@ -344,7 +336,6 @@
             ${Object.entries(srcMap).sort((a,b)=>b[1].total-a[1].total).map(([s,d])=>`<tr><td>${s}</td><td>${d.total}</td><td>${d.pu}</td><td>${d.total?(d.pu/d.total*100).toFixed(1):0}%</td></tr>`).join('')}
         </tbody></table>`;
 
-        // Детализация менеджеров (таблица)
         document.getElementById('managerDetailContent').innerHTML = `<table><thead><tr><th>Менеджер</th><th>Сумма</th><th>Сделок</th></tr></thead><tbody>
             ${mgrLabels.map(m => {
                 const cnt = linkedSales.filter(s => (s.manager||'Не указан')===m).length;
@@ -352,7 +343,6 @@
             }).join('')}
         </tbody></table>`;
 
-        // Таблица лидов
         document.getElementById('leadsTableBody').innerHTML = leads.slice(0, 100).map(l => {
             const date = l.created_at ? l.created_at.slice(0,10) : (l.date_added ? l.date_added.slice(0,10) : '');
             return `<tr><td>${date}</td><td>${l.full_name || l.name || ''}</td><td>${l.funnel_stage || l.stage || ''}</td><td>${l.source||''}</td><td>${l.responsible||''}</td><td>${l.subject||''}</td></tr>`;
@@ -361,7 +351,7 @@
         document.getElementById('salesStatus').textContent = `Продаж в периоде: ${sales.length} (сопоставлено: ${linkedSales.length})`;
     }
 
-    // ====== ЗАГРУЗКА НОВЫХ ЛИДОВ (старый формат) ======
+    // ====== ЗАГРУЗКА НОВЫХ ЛИДОВ (таблица leads) ======
     function uploadSimpleLeads() {
         const inp = document.createElement('input'); inp.type='file'; inp.accept='.xlsx';
         inp.onchange = async e => {
@@ -370,7 +360,6 @@
             reader.onload = async ev => {
                 const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                // Логика парсинга новых лидов (как в старом leads.html)
                 const parsed = [];
                 const firstRow = (rows[0]||[]).join(' ').toLowerCase();
                 if (firstRow.includes('новые лиды')) {
@@ -396,7 +385,6 @@
                         parsed.push({ date_added: validDate.toISOString(), name, stage, source, is_duplicate: isDup, is_bad_contact: isBad });
                     }
                 } else {
-                    // Альтернативный парсинг с заголовками
                     let headerIdx = -1;
                     for (let i = 0; i < Math.min(rows.length, 20); i++) {
                         const row = rows[i]; if (!row) continue;
@@ -438,7 +426,7 @@
         inp.click();
     }
 
-    // ====== ЗАГРУЗКА ОБРАБОТАННЫХ ЛИДОВ (расширенный отчёт) ======
+    // ====== ЗАГРУЗКА ОБРАБОТАННЫХ ЛИДОВ (lead_funnel) ======
     function uploadDetailedLeads() {
         const inp = document.createElement('input'); inp.type='file'; inp.accept='.xlsx';
         inp.onchange = async e => {
@@ -449,7 +437,6 @@
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
                 const parsed = parseDetailedLeads(rows);
                 if (parsed.length === 0) { customAlert('Не удалось распознать данные. Проверьте столбцы.'); return; }
-                // Очищаем таблицу lead_funnel и вставляем новые
                 await _supabase.from('lead_funnel').delete().neq('id', 0);
                 const { error } = await _supabase.from('lead_funnel').insert(parsed);
                 if (error) { customAlert('Ошибка загрузки обработанных лидов: '+error.message); return; }
@@ -462,35 +449,15 @@
         inp.click();
     }
 
-    // Парсинг обработанных лидов (ищем заголовки: ID, ФИО, Телефон, E-mail, Источник, Ответственный, Педагог, Этап, Предмет, Уровень, Примечание, Дата добавления)
     function parseDetailedLeads(rows) {
-        // Ищем строку с заголовками (содержит "ID" или "ФИО")
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 30); i++) {
-            const row = rows[i];
-            if (!row) continue;
+            const row = rows[i]; if (!row) continue;
             const str = row.map(c => String(c).toLowerCase()).join(' ');
-            if (str.includes('id') && (str.includes('фио') || str.includes('клиент'))) {
-                headerIdx = i;
-                break;
-            }
-        }
-        if (headerIdx === -1) {
-            // Попробуем найти строку, где есть "фио" и "телефон"
-            for (let i = 0; i < Math.min(rows.length, 30); i++) {
-                const row = rows[i];
-                if (!row) continue;
-                const str = row.map(c => String(c).toLowerCase()).join(' ');
-                if (str.includes('фио') && str.includes('телефон')) {
-                    headerIdx = i;
-                    break;
-                }
-            }
+            if (str.includes('фио') && str.includes('телефон')) { headerIdx = i; break; }
         }
         if (headerIdx === -1) return [];
-
         const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase());
-        // Определяем индексы
         const getIdx = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(k)));
         const dateIdx = getIdx(['дата добавления', 'добавлен', 'дата']);
         const nameIdx = getIdx(['фио', 'клиент', 'наименование']);
@@ -503,11 +470,9 @@
         const subjectIdx = getIdx(['предмет']);
         const levelIdx = getIdx(['уровень']);
         const noteIdx = getIdx(['примечание']);
-
         const result = [];
         for (let i = headerIdx + 1; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length < 2) continue;
+            const row = rows[i]; if (!row || row.length < 2) continue;
             const get = (idx) => idx !== -1 ? String(row[idx] || '').trim() : '';
             const dateRaw = get(dateIdx);
             let createdAt = null;
@@ -519,12 +484,10 @@
                     const timePart = parts[1] || '00:00';
                     const [hh,mm] = timePart.split(':').map(Number);
                     createdAt = new Date(y, m-1, d, hh||0, mm||0).toISOString();
-                } else {
-                    createdAt = dateRaw; // fallback
-                }
+                } else createdAt = dateRaw;
             }
             const name = get(nameIdx);
-            if (!name) continue; // пропускаем пустые строки
+            if (!name) continue;
             result.push({
                 created_at: createdAt,
                 full_name: name,
@@ -543,7 +506,7 @@
         return result;
     }
 
-    // ====== ЗАГРУЗКА ПРОДАЖ (Excel с колонками: Дата, Сумма, Клиент, Менеджер, Статья) ======
+    // ====== ЗАГРУЗКА ПРОДАЖ ======
     function uploadSales() {
         const inp = document.createElement('input'); inp.type='file'; inp.accept='.xlsx';
         inp.onchange = async e => {
@@ -552,7 +515,6 @@
             reader.onload = async ev => {
                 const wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'});
                 const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1});
-                // Ищем заголовок (Дата, Сумма, Клиент)
                 let headerIdx = -1;
                 for (let i = 0; i < Math.min(rows.length, 10); i++) {
                     const row = rows[i]; if (!row) continue;
