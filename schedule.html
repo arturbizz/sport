@@ -481,46 +481,6 @@
         return total;
       }
 
-      function getSalary(emp) {
-        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
-        let worked = 0, sales = 0;
-        for (let d = 1; d <= daysInMonth; d++) {
-          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const rec = worklog[`${emp.id}_${dateStr}`];
-          if (!rec || rec.status !== 'working') continue;
-          if (emp.role === 'Менеджер') sales += rec.daily_sales || 0;
-          if ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16)) {
-            worked++;
-          }
-        }
-        const params = salaryParams[emp.id] || {};
-        const norm = getNormDays(emp.role, params);
-        const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
-        const dailyRate = (rates[emp.role] || 0) / norm;
-        let base = dailyRate * worked;
-
-        if (emp.role === 'Менеджер') {
-          const plan = params.plan_amount || 0;
-          const bonusPercent = (plan > 0 && sales >= plan) ? 7 : 5;
-          const bonus = currentPeriod === 'first' ? 0 : sales * bonusPercent / 100;
-          return base + bonus;
-        }
-        if (emp.role === 'Администратор') {
-          const managersSales = employees.filter(e => e.role === 'Менеджер')
-            .reduce((sum, m) => sum + getFullMonthSales(m), 0);
-          const bonus = currentPeriod !== 'first' ? managersSales * 0.01 : 0;
-          return base + bonus;
-        }
-        if (emp.role === 'Управляющий') {
-          const managersSales = employees.filter(e => e.role === 'Менеджер')
-            .reduce((sum, m) => sum + getFullMonthSales(m), 0);
-          const plan = params.plan_amount || 0;
-          const bonus = (plan > 0 && managersSales >= plan && currentPeriod !== 'first') ? managersSales * 0.01 : 0;
-          return base + bonus;
-        }
-        return base;
-      }
-
       function getFullMonthSales(emp) {
         const days = new Date(currentYear, currentMonth, 0).getDate();
         let total = 0;
@@ -530,6 +490,83 @@
           if (rec && rec.status === 'working') total += rec.daily_sales || 0;
         }
         return total;
+      }
+
+      function getSalaryDetails(emp) {
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        const params = salaryParams[emp.id] || {};
+        const norm = getNormDays(emp.role, params);
+        const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
+        const baseSalary = rates[emp.role] || 0;
+        const dailyRate = baseSalary / norm;
+
+        let workedFull = 0, workedPeriod = 0;
+        let salesFull = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${currentYear}-${String(currentMonth).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = worklog[`${emp.id}_${dateStr}`];
+          if (!rec || rec.status !== 'working') continue;
+          workedFull++;
+          if ((currentPeriod === 'full') || (currentPeriod === 'first' && d <= 15) || (currentPeriod === 'second' && d >= 16)) {
+            workedPeriod++;
+          }
+          if (emp.role === 'Менеджер') {
+            salesFull += rec.daily_sales || 0;
+          }
+        }
+
+        const basePay = dailyRate * workedPeriod;
+
+        let bonus = 0, bonusDescription = '';
+        if (emp.role === 'Менеджер') {
+          const plan = params.plan_amount || 0;
+          const bonusPercent = (plan > 0 && salesFull >= plan) ? 7 : 5;
+          if (currentPeriod !== 'first') {
+            bonus = salesFull * bonusPercent / 100;
+            bonusDescription = `${bonusPercent}% от продаж (${salesFull.toLocaleString()} ₽)`;
+          } else {
+            bonusDescription = 'В первой половине месяца бонус не начисляется';
+          }
+        } else if (emp.role === 'Администратор') {
+          const managersSales = employees.filter(e => e.role === 'Менеджер')
+            .reduce((sum, m) => sum + getFullMonthSales(m), 0);
+          if (currentPeriod !== 'first') {
+            bonus = managersSales * 0.01;
+            bonusDescription = `1% от продаж всех менеджеров (${managersSales.toLocaleString()} ₽)`;
+          } else {
+            bonusDescription = 'В первой половине месяца бонус не начисляется';
+          }
+        } else if (emp.role === 'Управляющий') {
+          const managersSales = employees.filter(e => e.role === 'Менеджер')
+            .reduce((sum, m) => sum + getFullMonthSales(m), 0);
+          const plan = params.plan_amount || 0;
+          if (currentPeriod !== 'first' && plan > 0 && managersSales >= plan) {
+            bonus = managersSales * 0.01;
+            bonusDescription = `1% от продаж менеджеров (${managersSales.toLocaleString()} ₽), план выполнен`;
+          } else if (currentPeriod === 'first') {
+            bonusDescription = 'В первой половине месяца бонус не начисляется';
+          } else {
+            bonusDescription = plan > 0 ? `План не выполнен (${managersSales.toLocaleString()} из ${plan.toLocaleString()} ₽)` : 'План продаж не установлен';
+          }
+        }
+
+        const total = basePay + bonus;
+        return {
+          baseSalary,
+          normDays: norm,
+          workedFull,
+          workedPeriod,
+          dailyRate,
+          basePay,
+          bonus,
+          bonusDescription,
+          total
+        };
+      }
+
+      function getSalary(emp) {
+        const details = getSalaryDetails(emp);
+        return details.total;
       }
 
       function renderSchedule() {
@@ -649,6 +686,7 @@
           return;
         }
         const params = salaryParams[empId] || {};
+        const details = getSalaryDetails(emp);
         let html = `<p style="font-weight:600; margin-bottom:0.5rem;">${emp.name} (${emp.role})</p>`;
         const rates = { 'Менеджер': 20000, 'Администратор': 25000, 'Управляющий': 50000 };
         if (rates[emp.role]) {
@@ -660,6 +698,20 @@
           <option value="5/2">5/2 (стандарт)</option>
         </select>`;
         html += `<div class="label-row"><span>Норма дней:</span><input type="number" id="normDays" value="${params.norm_days || getNormDays(emp.role, params)}" style="width:80px;"></div>`;
+
+        // Детализация расчёта
+        html += `
+          <div class="stats-block" style="margin-top:1rem;">
+            <div class="stats-row"><span>Оклад:</span><strong>${details.baseSalary.toLocaleString()} ₽</strong></div>
+            <div class="stats-row"><span>Норма дней:</span><strong>${details.normDays}</strong></div>
+            <div class="stats-row"><span>Отработано дней (всего):</span><strong>${details.workedFull}</strong></div>
+            <div class="stats-row"><span>Отработано в периоде:</span><strong>${details.workedPeriod}</strong></div>
+            <div class="stats-row"><span>Ставка за день:</span><strong>${details.dailyRate.toFixed(2)} ₽</strong></div>
+            <div class="stats-row"><span>Базовая часть:</span><strong>${details.basePay.toFixed(2)} ₽</strong></div>
+            ${details.bonusDescription ? `<div class="stats-row"><span>Бонус:</span><strong>${details.bonus > 0 ? details.bonus.toFixed(2) + ' ₽' : '—'}</strong><br><small>${details.bonusDescription}</small></div>` : ''}
+            <div class="stats-row" style="font-size:1.1rem; margin-top:0.5rem;"><span>Итого:</span><strong>${details.total.toFixed(0)} ₽</strong></div>
+          </div>
+        `;
 
         if (emp.role === 'Менеджер' || emp.role === 'Управляющий') {
           const totalSales = (emp.role === 'Менеджер') ? getPeriodSales(emp, currentPeriod) : employees.filter(e=>e.role==='Менеджер').reduce((sum,m)=>sum+getPeriodSales(m, currentPeriod),0);
