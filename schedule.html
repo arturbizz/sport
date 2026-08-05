@@ -185,6 +185,10 @@
     .day-cell.vacation { background: #e0e7ff; color: #3730a3; }
     .day-cell.leave { background: #ffedd5; color: #9a3412; }
     .summary-cell { font-weight: 600; background: #fafafa; }
+    .total-row td {
+      background: #f4f0ff; font-weight: 700; color: var(--violet);
+      border-top: 2px solid var(--violet);
+    }
     .role-header td {
       background: #f4f0ff; font-weight: 700; color: var(--violet);
       text-align: left; padding: 0.6rem 1rem; font-size: 0.9rem;
@@ -245,7 +249,6 @@
       font-size: 0.9rem;
     }
 
-    /* Модальное окно уведомлений (кастомный алерт) */
     .alert-modal-content {
       text-align: center;
     }
@@ -352,7 +355,6 @@
       let currentRoleFilter = 'all';
       const DISPLAY_ROLES = ['Управляющий', 'Менеджер', 'Администратор'];
 
-      // Кастомное уведомление
       function showAlert(message) {
         document.getElementById('alertMessage').textContent = message;
         document.getElementById('alertModal').style.display = 'flex';
@@ -453,8 +455,14 @@
         }
       }
 
+      // Исправленная норма дней: если не задана в salary_params, считаем по производственному календарю (пн-пт)
       function getNormDays(role, params) {
         const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+        // Если норма явно указана в настройках сотрудника — используем её
+        if (params.norm_days != null && params.norm_days !== '') {
+          return Number(params.norm_days);
+        }
+        // Для менеджера (3/3) и администратора (2/2) — свой график
         if (role === 'Менеджер') {
           let count = 0;
           for (let d = 1; d <= daysInMonth; d++) if ((d - 1) % 6 < 3) count++;
@@ -463,9 +471,16 @@
         if (role === 'Администратор') {
           let count = 0;
           for (let d = 1; d <= daysInMonth; d++) if ((d - 1) % 4 < 2) count++;
-          return params.norm_days || count;
+          return count;
         }
-        return params.norm_days || 22;
+        // Для управляющего и остальных — стандартная пятидневка (пн–пт)
+        let weekdays = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          const date = new Date(currentYear, currentMonth - 1, d);
+          const day = date.getDay(); // 0 = вс, 6 = сб
+          if (day !== 0 && day !== 6) weekdays++;
+        }
+        return weekdays;
       }
 
       function getPeriodSales(emp, period) {
@@ -587,6 +602,8 @@
         }
         html += '<th>Смен</th><th>ЗП</th></tr></thead><tbody>';
 
+        let totalWorked = 0, totalSalary = 0;
+
         DISPLAY_ROLES.forEach(role => {
           const group = filtered.filter(e => e.role === role);
           if (!group.length) return;
@@ -612,6 +629,8 @@
               cells += `<td class="${cellClass}" data-emp="${emp.id}" data-date="${dateStr}">${content}</td>`;
             }
             const salary = getSalary(emp);
+            totalWorked += worked;
+            totalSalary += salary;
             const isOwner = currentUserEmail === OWNER_EMAIL;
             const displaySalary = (emp.role === 'Управляющий' && !isOwner) ? '***' : `${salary.toFixed(0)} ₽`;
             html += `<tr>
@@ -622,6 +641,15 @@
             </tr>`;
           });
         });
+
+        // Итоговая строка
+        html += `<tr class="total-row">
+          <td class="employee-name">ИТОГО</td>
+          ${'<td></td>'.repeat(daysInMonth)}
+          <td class="summary-cell">${totalWorked}</td>
+          <td class="summary-cell">${totalSalary.toFixed(0)} ₽</td>
+        </tr>`;
+
         html += '</tbody></table>';
         container.innerHTML = html;
 
@@ -629,7 +657,9 @@
           cell.addEventListener('click', () => openDayModal(cell.dataset.emp, cell.dataset.date));
         });
         container.querySelectorAll('.employee-name').forEach(el => {
-          el.addEventListener('click', () => openSalaryModal(el.dataset.emp));
+          el.addEventListener('click', () => {
+            if (el.textContent !== 'ИТОГО') openSalaryModal(el.dataset.emp);
+          });
         });
       }
 
