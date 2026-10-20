@@ -249,6 +249,12 @@ button { font-family: inherit; }
   transition: max-height 0.35s ease;
 }
 
+/* ⬇⬇⬇ ВОТ ЭТО ПРАВИЛО РЕШАЕТ ПРОБЛЕМУ С ПУСТЫМ ПРЕВЬЮ ⬇⬇⬇ */
+.article.expanded .article-expanded {
+  max-height: none;
+  overflow: visible;
+}
+
 .article-expanded > .inner {
   padding: 8px 0 32px;
   border-top: 1px solid var(--hairline);
@@ -306,6 +312,7 @@ button { font-family: inherit; }
 .prose table { border-collapse: collapse; margin-bottom: 1em; width: 100%; }
 .prose th, .prose td { border-bottom: 1px solid var(--hairline); padding: 8px 12px; text-align: left; }
 .prose th { font-weight: 600; color: var(--ink); }
+.prose img { max-width: 100%; height: auto; border-radius: 6px; margin: 12px 0; display: block; }
 
 /* ============= EMPTY / LOADING ============= */
 
