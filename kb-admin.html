@@ -3,28 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Редактор базы знаний</title>
+  <title>Редактор БЗ — диагностика</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
   <style>
-    /* Дополнительные стили для приветственного экрана */
-    .welcome {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 60vh; text-align: center;
-      color: var(--ink-3); padding: 40px 20px;
+    .welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; color:var(--ink-3); padding:40px 20px; }
+    .welcome h2 { font-family:var(--font-display); font-weight:400; font-size:26px; color:var(--ink); margin-bottom:12px; letter-spacing:-0.01em; }
+    .welcome p { max-width:400px; margin-bottom:24px; font-size:14.5px; line-height:1.65; }
+
+    /* Видимая панель диагностики */
+    .debug-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #1a1815; color: #f7f4ee; padding: 10px 16px;
+      font-family: ui-monospace, monospace; font-size: 12px;
+      display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center;
+      border-bottom: 2px solid #a8472a;
     }
-    .welcome h2 {
-      font-family: var(--font-display); font-weight: 400;
-      font-size: 26px; color: var(--ink); margin-bottom: 12px;
-      letter-spacing: -0.01em;
-    }
-    .welcome p { max-width: 400px; margin-bottom: 24px; font-size: 14.5px; line-height: 1.65; }
-    .welcome .btn { margin-top: 8px; }
+    .debug-bar .ok { color: #6ee7a0; }
+    .debug-bar .err { color: #ff8a7a; }
+    .debug-bar .wait { color: #fbbf24; }
+    .debug-bar strong { color: #f7f4ee; font-weight: 600; margin-right: 4px; }
+    .debug-bar button { background: #a8472a; color: white; border: none; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; margin-left: auto; }
+    body { padding-top: 44px; }
   </style>
 </head>
 <body>
+
+  <!-- Диагностика -->
+  <div class="debug-bar" id="debug-bar">
+    <span><strong>SB:</strong><span id="db-sb" class="wait">…</span></span>
+    <span><strong>Auth:</strong><span id="db-auth" class="wait">…</span></span>
+    <span><strong>Table:</strong><span id="db-table" class="wait">…</span></span>
+    <span><strong>View:</strong><span id="db-view" class="wait">…</span></span>
+    <button onclick="location.reload(true)">↻ Hard reload</button>
+  </div>
 
   <!-- LOGIN -->
   <div class="login-wrap" id="login-view" style="display:none;">
@@ -73,14 +87,12 @@
     </aside>
 
     <main class="editor" id="editor-main">
-      <!-- Welcome state -->
       <div class="welcome" id="welcome-state">
         <h2>Редактор базы знаний</h2>
-        <p>Создавайте статьи с инструкциями, скриптами и регламентами. Статьи хранятся в формате Markdown и сразу появляются на публичной странице базы знаний.</p>
+        <p>Создавайте статьи с инструкциями, скриптами и регламентами. Статьи хранятся в Markdown и сразу появляются на публичной странице базы знаний.</p>
         <button class="btn btn-primary" id="welcome-new-btn">Создать первую статью</button>
       </div>
 
-      <!-- Editor form -->
       <div id="editor-form" style="display:none;">
         <div class="editor-header">
           <div class="editor-status" id="editor-status">—</div>
@@ -124,11 +136,38 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script>
-    // ==== КОНФИГ (основной проект, тот же что в index.html) ====
+    // ===== ДИАГНОСТИКА =====
+    const db = {
+      sb:   document.getElementById('db-sb'),
+      auth: document.getElementById('db-auth'),
+      table:document.getElementById('db-table'),
+      view: document.getElementById('db-view'),
+      set(el, status, text) {
+        el.className = status; // 'ok' | 'err' | 'wait'
+        el.textContent = ' ' + text;
+      }
+    };
+    window.addEventListener('error', (e) => {
+      console.error('GLOBAL ERROR:', e.error || e.message);
+      db.set(db.sb, 'err', 'JS ERROR: ' + (e.message || ''));
+    });
+
+    // ===== КОНФИГ =====
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
 
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Проверка, что библиотеки загрузились
+    if (typeof window.supabase === 'undefined') {
+      db.set(db.sb, 'err', '❌ Supabase CDN не загрузился');
+      throw new Error('supabase lib missing');
+    }
+    if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+      db.set(db.sb, 'err', '❌ marked/DOMPurify не загрузились');
+    } else {
+      db.set(db.sb, 'ok', '✅ ok');
+    }
+
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const $ = (id) => document.getElementById(id);
     const loginView = $('login-view');
@@ -139,35 +178,41 @@
     let articles = [];
     let currentId = null;
 
-    // ==== AUTH ====
-    async function checkAuth() {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) console.error('getSession error:', error);
-        if (session) {
-          console.log('Auth: session found for', session.user.email);
-          showAdmin();
-        } else {
-          console.log('Auth: no session, showing login');
-          showLogin();
-        }
-      } catch (e) {
-        console.error('checkAuth failed:', e);
-        showLogin();
-      }
-    }
-
     function showLogin() {
       loginView.style.display = 'grid';
       adminView.style.display = 'none';
+      db.set(db.view, 'ok', 'login');
     }
 
     function showAdmin() {
       loginView.style.display = 'none';
       adminView.style.display = 'grid';
+      db.set(db.view, 'ok', 'admin');
       loadArticles();
     }
 
+    async function checkAuth() {
+      try {
+        const { data: { session }, error } = await supabaseClient.auth.getSession();
+        if (error) {
+          db.set(db.auth, 'err', '❌ ' + error.message);
+          showLogin();
+          return;
+        }
+        if (session) {
+          db.set(db.auth, 'ok', '✅ ' + session.user.email);
+          showAdmin();
+        } else {
+          db.set(db.auth, 'wait', 'нет сессии');
+          showLogin();
+        }
+      } catch (e) {
+        db.set(db.auth, 'err', '❌ ' + e.message);
+        showLogin();
+      }
+    }
+
+    // ===== LOGIN =====
     $('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = $('login-submit');
@@ -176,7 +221,7 @@
       btn.disabled = true;
       btn.textContent = 'Вход…';
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
         email: $('login-email').value.trim(),
         password: $('login-password').value,
       });
@@ -186,38 +231,40 @@
 
       if (error) {
         err.textContent = 'Неверный email или пароль';
-        console.error('Login error:', error);
+        db.set(db.auth, 'err', '❌ ' + error.message);
         return;
       }
       $('login-password').value = '';
+      db.set(db.auth, 'ok', '✅ ' + data.user.email);
       showAdmin();
     });
 
     $('logout-btn').addEventListener('click', async () => {
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
+      db.set(db.auth, 'wait', 'вышел');
       showLogin();
     });
 
-    // ==== LOAD ====
+    // ===== LOAD =====
     async function loadArticles() {
-      const { data, error } = await supabase
+      db.set(db.table, 'wait', 'запрос…');
+      const { data, error, count } = await supabaseClient
         .from('knowledge_articles')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('category', { ascending: true })
         .order('title', { ascending: true });
 
       if (error) {
-        console.error('loadArticles error:', error);
+        db.set(db.table, 'err', '❌ ' + error.message);
         $('admin-article-list').innerHTML =
-          `<div class="empty-state" style="padding:24px 0;font-size:13px;">Ошибка: ${escapeHtml(error.message)}</div>`;
+          `<div class="empty-state" style="padding:24px 0;font-size:13px;color:#a8472a;">Ошибка загрузки: ${escapeHtml(error.message)}</div>`;
         return;
       }
       articles = data || [];
-      console.log('Loaded', articles.length, 'articles');
+      db.set(db.table, 'ok', `✅ ${articles.length} шт. (count=${count ?? '?'})`);
       renderArticleList();
       renderCategoryDatalist();
 
-      // Автовыбор первой статьи или приветственный экран
       if (articles.length && !currentId) {
         openArticle(articles[0].id);
       } else if (!articles.length) {
@@ -237,7 +284,6 @@
           <span class="admin-article-item-cat">${escapeHtml(a.category)}</span>
         </button>
       `).join('');
-
       list.querySelectorAll('.admin-article-item').forEach(item => {
         item.addEventListener('click', () => openArticle(item.dataset.id));
       });
@@ -248,13 +294,11 @@
       $('category-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
     }
 
-    // ==== FORM ====
+    // ===== FORM =====
     function showWelcome() {
       welcomeState.style.display = 'flex';
       editorForm.style.display = 'none';
-      $('editor-status').textContent = '—';
     }
-
     function showForm() {
       welcomeState.style.display = 'none';
       editorForm.style.display = 'block';
@@ -299,8 +343,7 @@
 
     $('view-edit').addEventListener('click', switchToEdit);
     $('view-preview').addEventListener('click', () => {
-      const md = $('f-content').value;
-      $('preview-pane').innerHTML = DOMPurify.sanitize(marked.parse(md || ''));
+      $('preview-pane').innerHTML = DOMPurify.sanitize(marked.parse($('f-content').value || ''));
       $('f-content').style.display = 'none';
       $('preview-pane').style.display = 'block';
       $('view-edit').classList.remove('active');
@@ -310,7 +353,7 @@
     $('new-article-btn').addEventListener('click', clearForm);
     $('welcome-new-btn').addEventListener('click', clearForm);
 
-    // ==== SAVE ====
+    // ===== SAVE =====
     $('save-btn').addEventListener('click', async () => {
       const title = $('f-title').value.trim();
       const category = $('f-category').value.trim();
@@ -326,12 +369,12 @@
 
       let error;
       if (currentId) {
-        ({ error } = await supabase
+        ({ error } = await supabaseClient
           .from('knowledge_articles')
           .update({ title, category, content, tags, updated_at: new Date().toISOString() })
           .eq('id', currentId));
       } else {
-        const res = await supabase
+        const res = await supabaseClient
           .from('knowledge_articles')
           .insert({ title, category, content, tags })
           .select()
@@ -343,43 +386,45 @@
       btn.disabled = false;
       btn.textContent = 'Сохранить';
 
-      if (error) { alert('Ошибка сохранения: ' + error.message); console.error(error); return; }
+      if (error) {
+        alert('Ошибка сохранения: ' + error.message);
+        db.set(db.table, 'err', '❌ save: ' + error.message);
+        return;
+      }
 
       await loadArticles();
       if (currentId) openArticle(currentId);
       $('editor-status').textContent = 'Сохранено ✓';
     });
 
-    // ==== DELETE ====
+    // ===== DELETE =====
     $('delete-btn').addEventListener('click', async () => {
       if (!currentId) return;
       const a = articles.find(x => x.id === currentId);
       if (!confirm(`Удалить статью «${a?.title || ''}»?`)) return;
-
-      const { error } = await supabase.from('knowledge_articles').delete().eq('id', currentId);
+      const { error } = await supabaseClient.from('knowledge_articles').delete().eq('id', currentId);
       if (error) { alert('Ошибка удаления: ' + error.message); return; }
-
       currentId = null;
       await loadArticles();
       if (!articles.length) showWelcome();
       else openArticle(articles[0].id);
     });
 
-    // ==== UTIL ====
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, c =>
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
 
-    // ==== INIT ====
-    window.addEventListener('DOMContentLoaded', () => {
+    // ===== INIT =====
+    (async () => {
       try {
-        checkAuth();
+        await checkAuth();
       } catch (e) {
-        console.error('Init failed:', e);
+        console.error(e);
+        db.set(db.sb, 'err', '❌ init: ' + e.message);
         showLogin();
       }
-    });
+    })();
   </script>
 </body>
 </html>
