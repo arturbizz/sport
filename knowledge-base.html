@@ -8,18 +8,67 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
+  <style>
+    /* Wizard styles */
+    .wizard { padding: 8px 0 32px; }
+    .wizard-step-title {
+      font-family: var(--font-display); font-size: 24px; font-weight: 400;
+      letter-spacing: -0.01em; line-height: 1.3; color: var(--ink);
+      margin-bottom: 14px;
+    }
+    .wizard-step-content {
+      color: var(--ink-2); font-size: 15px; line-height: 1.7; margin-bottom: 20px;
+    }
+    .wizard-step-content img { max-width: 100%; height: auto; border-radius: 6px; margin: 12px 0; }
+    .wizard-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .wizard-option {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border: 1px solid var(--hairline-2);
+      border-radius: 6px; background: var(--bg-elevated);
+      font-size: 15px; color: var(--ink); text-align: left;
+      cursor: pointer; transition: border-color .15s, background .15s;
+      font-family: var(--font-body); width: 100%;
+    }
+    .wizard-option:hover { border-color: var(--ink-3); background: var(--accent-soft); }
+    .wizard-option::after {
+      content: '→'; color: var(--ink-3); font-family: var(--font-body);
+    }
+    .wizard-option:hover::after { color: var(--accent); }
+
+    .wizard-nav { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--hairline); }
+    .wizard-progress { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .1em; margin-left: auto; font-variant-numeric: tabular-nums; }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: none; border: none; padding: 6px 0; margin-bottom: 12px;
+      font-family: var(--font-body); font-size: 13px; color: var(--ink-3);
+      cursor: pointer; transition: color .15s;
+    }
+    .back-btn:hover { color: var(--accent); }
+
+    .badge-scenario {
+      display: inline-block; font-size: 10px; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--accent); border: 1px solid currentColor;
+      padding: 2px 6px; border-radius: 2px; margin-left: 8px;
+      vertical-align: middle; font-weight: 500;
+    }
+    .article-title .badge-scenario { font-size: 9px; }
+
+    /* Prose images */
+    .prose img { max-width: 100%; height: auto; border-radius: 6px; margin: 12px 0; display: block; }
+  </style>
 </head>
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <a class="brand" href="index.html">
+      <div class="brand" style="cursor:default;">
         <span class="brand-mark"></span>
         <span class="brand-name">Руководство</span>
-      </a>
+      </div>
       <div class="section-label">Разделы</div>
       <nav class="categories" id="categories"></nav>
       <div class="sidebar-footer">
-        <a href="kb-admin.html">Администрирование →</a>
+        <span style="font-size:12px;color:var(--ink-4);">База знаний колл-центра</span>
       </div>
     </aside>
 
@@ -43,14 +92,16 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script>
-    // ==== КОНФИГ ====
-    const SUPABASE_URL = 'https://wzcysenonxyjlksnaezi.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6Y3lzZW5vbnh5amxrc25hZXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MzkwMzIsImV4cCI6MjA5ODMxNTAzMn0.z9yitIF0-gYrEqS_5ZRYop0xGm4OeCbJ3SEZH1kcOhk';
-
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allArticles = [];
     let activeCategory = '';
+    let expandedId = null;
+
+    // Wizard state per-article: { stepId, history: [] }
+    const wizardState = {};
 
     const els = {
       results: document.getElementById('results'),
@@ -59,27 +110,22 @@
     };
 
     function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, c =>
+      return String(s ?? '').replace(/[&<>"']/g, c =>
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
-
     function renderMarkdown(text) {
       if (!text) return '';
-      return DOMPurify.sanitize(marked.parse(text));
+      return DOMPurify.sanitize(marked.parse(text), { ADD_TAGS: ['img'], ADD_ATTR: ['src','alt','width','height'] });
     }
-
     function excerpt(text, len = 180) {
-      const plain = (text || '').replace(/[#*`>\-]/g, '').replace(/\n+/g, ' ').trim();
+      const plain = (text || '').replace(/[#*`>\-!\[\]\(\)]/g, '').replace(/\n+/g, ' ').trim();
       return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
     }
 
     async function loadArticles() {
-      const { data, error } = await supabase
-        .from('knowledge_articles')
-        .select('*')
-        .order('category', { ascending: true })
-        .order('title', { ascending: true });
-
+      const { data, error } = await supabaseClient
+        .from('knowledge_articles').select('*')
+        .order('category', { ascending: true }).order('title', { ascending: true });
       if (error) {
         els.results.innerHTML = `<div class="empty-state"><strong>Не удалось загрузить</strong>${escapeHtml(error.message)}</div>`;
         return;
@@ -92,11 +138,9 @@
     function renderCategories() {
       const counts = {};
       allArticles.forEach(a => { counts[a.category] = (counts[a.category] || 0) + 1; });
-
       let html = `<button class="category-btn ${activeCategory === '' ? 'active' : ''}" data-cat="">
         <span>Все разделы</span><span class="category-count">${allArticles.length}</span>
       </button>`;
-
       Object.keys(counts).sort().forEach(cat => {
         html += `<button class="category-btn ${activeCategory === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}">
           <span>${escapeHtml(cat)}</span>
@@ -104,7 +148,6 @@
         </button>`;
       });
       els.categories.innerHTML = html;
-
       els.categories.querySelectorAll('.category-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           activeCategory = btn.dataset.cat;
@@ -133,39 +176,166 @@
         </div>`;
         return;
       }
-
-      els.results.innerHTML = articles.map(a => `
-        <article class="article" data-id="${a.id}">
-          <div class="article-head">
-            <div class="article-meta">
-              <span>${escapeHtml(a.category)}</span>
-              <span class="dot"></span>
-              <span>${new Date(a.updated_at).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' })}</span>
+      els.results.innerHTML = articles.map(a => {
+        const isWizard = a.steps && a.steps.steps && a.steps.steps.length;
+        const isOpen = expandedId === a.id;
+        return `
+          <article class="article ${isOpen ? 'expanded' : ''}" data-id="${a.id}">
+            <div class="article-head">
+              <div class="article-meta">
+                <span>${escapeHtml(a.category)}</span>
+                <span class="dot"></span>
+                <span>${new Date(a.updated_at).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' })}</span>
+              </div>
+              <h2 class="article-title">${escapeHtml(a.title)}${isWizard ? '<span class="badge-scenario">Сценарий</span>' : ''}</h2>
+              <p class="article-excerpt">${escapeHtml(excerpt(a.content || (isWizard ? 'Пошаговый сценарий диагностики' : '')))}</p>
             </div>
-            <h2 class="article-title">${escapeHtml(a.title)}</h2>
-            <p class="article-excerpt">${escapeHtml(excerpt(a.content))}</p>
-          </div>
-          <div class="article-expanded">
-            <div class="inner prose">${renderMarkdown(a.content)}</div>
-          </div>
-        </article>
-      `).join('');
+            <div class="article-expanded">
+              <div class="inner">${isOpen ? renderArticleBody(a) : ''}</div>
+            </div>
+          </article>
+        `;
+      }).join('');
 
       els.results.querySelectorAll('.article-head').forEach(head => {
         head.addEventListener('click', () => toggleArticle(head.parentElement));
       });
+
+      // Bind back button, wizard buttons, etc. in open article
+      if (expandedId) {
+        const article = articles.find(a => a.id === expandedId);
+        if (article) bindArticleInteractions(article);
+      }
     }
 
-    function toggleArticle(el) {
-      const expanded = el.querySelector('.article-expanded');
-      const isOpen = el.classList.contains('expanded');
-      if (isOpen) {
-        expanded.style.maxHeight = '0px';
-        el.classList.remove('expanded');
+    function renderArticleBody(a) {
+      const isWizard = a.steps && a.steps.steps && a.steps.steps.length;
+      let body = '<button class="back-btn" data-back>← Назад к списку</button>';
+      if (isWizard) {
+        body += `<div class="wizard" data-wizard-article="${a.id}">${renderWizardStep(a)}</div>`;
       } else {
-        el.classList.add('expanded');
-        expanded.style.maxHeight = expanded.scrollHeight + 40 + 'px';
+        body += `<div class="prose">${renderMarkdown(a.content)}</div>`;
       }
+      return body;
+    }
+
+    // ===== WIZARD RENDER =====
+    function ensureWizardState(a) {
+      if (!wizardState[a.id]) {
+        wizardState[a.id] = { stepId: a.steps.start, history: [] };
+      }
+      return wizardState[a.id];
+    }
+
+    function renderWizardStep(a) {
+      const st = ensureWizardState(a);
+      const step = a.steps.steps.find(s => s.id === st.stepId);
+      if (!step) {
+        return `<div class="wizard-step-title">Шаг не найден</div>
+          <button class="btn btn-ghost" data-wizard-reset>Начать сначала</button>`;
+      }
+
+      const contentHtml = step.content ? `<div class="wizard-step-content prose">${renderMarkdown(step.content)}</div>` : '';
+
+      let optionsHtml = '';
+      if (step.kind === 'question' && step.options && step.options.length) {
+        optionsHtml = `<div class="wizard-options">${step.options.map(o => {
+          const disabled = !o.next;
+          return `<button class="wizard-option" data-wizard-next="${o.next || ''}" ${disabled ? 'disabled' : ''}>
+            ${escapeHtml(o.label || '(без названия)')}
+          </button>`;
+        }).join('')}</div>`;
+      } else if (step.kind === 'info' && step.next) {
+        optionsHtml = `<div class="wizard-options">
+          <button class="wizard-option" data-wizard-next="${step.next}">Далее</button>
+        </div>`;
+      } else if (step.kind === 'end') {
+        optionsHtml = `<div class="wizard-options" style="margin-bottom:0;">
+          <div style="padding:16px 18px;border:1px dashed var(--hairline-2);border-radius:6px;text-align:center;color:var(--ink-3);font-size:14px;">
+            Сценарий завершён
+          </div>
+        </div>`;
+      }
+
+      const canBack = st.history.length > 0;
+      const progress = st.history.length + 1;
+
+      return `
+        <div class="wizard-step-title">${escapeHtml(step.title || 'Шаг')}</div>
+        ${contentHtml}
+        ${optionsHtml}
+        <div class="wizard-nav">
+          ${canBack ? '<button class="btn btn-ghost btn-sm" data-wizard-back>← Назад</button>' : ''}
+          <button class="btn btn-ghost btn-sm" data-wizard-reset>Начать сначала</button>
+          <span class="wizard-progress">Шаг ${progress}</span>
+        </div>
+      `;
+    }
+
+    function bindArticleInteractions(a) {
+      const container = document.querySelector(`.article[data-id="${a.id}"]`);
+      if (!container) return;
+
+      // Back to list
+      const backBtn = container.querySelector('[data-back]');
+      if (backBtn) backBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        expandedId = null;
+        renderList(filterArticles());
+      });
+
+      if (!a.steps || !a.steps.steps) return;
+
+      // Wizard
+      const wizardEl = container.querySelector('[data-wizard-article]');
+      if (!wizardEl) return;
+
+      function rerender() {
+        wizardEl.innerHTML = renderWizardStep(a);
+        bindWizard();
+      }
+      function bindWizard() {
+        wizardEl.querySelectorAll('[data-wizard-next]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = btn.dataset.wizardNext;
+            if (!target) return;
+            const st = ensureWizardState(a);
+            st.history.push(st.stepId);
+            st.stepId = target;
+            rerender();
+          });
+        });
+        const backBtn = wizardEl.querySelector('[data-wizard-back]');
+        if (backBtn) backBtn.addEventListener('click', () => {
+          const st = ensureWizardState(a);
+          if (!st.history.length) return;
+          st.stepId = st.history.pop();
+          rerender();
+        });
+        const resetBtn = wizardEl.querySelector('[data-wizard-reset]');
+        if (resetBtn) resetBtn.addEventListener('click', () => {
+          const st = ensureWizardState(a);
+          st.stepId = a.steps.start;
+          st.history = [];
+          rerender();
+        });
+      }
+      bindWizard();
+    }
+
+    // ===== TOGGLE =====
+    function toggleArticle(articleEl) {
+      const id = articleEl.dataset.id;
+      if (expandedId === id) {
+        expandedId = null;
+        renderList(filterArticles());
+        return;
+      }
+      expandedId = id;
+      const article = allArticles.find(a => a.id === id);
+      // reset wizard for freshly opened article
+      if (article && article.steps) wizardState[id] = null;
+      renderList(filterArticles());
     }
 
     els.search.addEventListener('input', () => renderList(filterArticles()));
