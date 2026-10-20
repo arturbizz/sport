@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Администрирование — Руководство</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kb-styles.css">
+</head>
+<body>
+
+  <!-- LOGIN VIEW -->
+  <div class="login-wrap" id="login-view" style="display:none;">
+    <div class="login-card">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <span class="brand-name">Руководство</span>
+      </div>
+      <div class="login-title">Вход в админку</div>
+      <div class="login-subtitle">Только для администраторов базы знаний</div>
+      <form id="login-form">
+        <div class="field">
+          <label class="field-label" for="login-email">Email</label>
+          <input class="field-input" type="email" id="login-email" required autocomplete="email">
+        </div>
+        <div class="field">
+          <label class="field-label" for="login-password">Пароль</label>
+          <input class="field-input" type="password" id="login-password" required autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary" type="submit" id="login-submit">Войти</button>
+        <div class="form-error" id="login-error"></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div class="admin-layout" id="admin-view" style="display:none;">
+    <aside class="admin-sidebar">
+      <a class="brand" href="knowledge-base.html">
+        <span class="brand-mark"></span>
+        <span class="brand-name">Руководство</span>
+        <span class="brand-badge">Admin</span>
+      </a>
+
+      <div class="admin-sidebar-top">
+        <button class="btn btn-primary btn-sm" id="new-article-btn">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M8 2v12M2 8h12"/>
+          </svg>
+          Новая статья
+        </button>
+        <button class="btn btn-ghost btn-sm" id="logout-btn">Выйти</button>
+      </div>
+
+      <div class="admin-article-list" id="admin-article-list"></div>
+    </aside>
+
+    <main class="editor">
+      <div class="editor-header">
+        <div class="editor-status" id="editor-status">—</div>
+        <div class="editor-actions">
+          <button class="btn btn-danger btn-sm" id="delete-btn" style="display:none;">Удалить</button>
+          <button class="btn btn-primary" id="save-btn">Сохранить</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="f-title">Заголовок</label>
+        <input class="field-input title-input" id="f-title" placeholder="Например: Как оформить заявку на ремонт стиральной машины">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="f-category">Категория</label>
+        <input class="field-input" id="f-category" list="category-list" placeholder="Оформление заявки">
+        <datalist id="category-list"></datalist>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="f-tags">Теги</label>
+        <input class="field-input" id="f-tags" placeholder="через запятую: стиральная машина, гарантия">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Содержимое (Markdown)</label>
+        <div class="view-toggle">
+          <button id="view-edit" class="active">Редактор</button>
+          <button id="view-preview">Превью</button>
+        </div>
+        <textarea class="content-textarea" id="f-content" placeholder="# Заголовок раздела&#10;&#10;Пошаговая инструкция…"></textarea>
+        <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
+        <div class="field-hint">Поддерживается Markdown: заголовки, списки, **жирный**, `код`, таблицы.</div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <script>
+    // ==== КОНФИГ ====
+    const SUPABASE_URL = 'ТВОЙ_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'ТВОЙ_ANON_KEY';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ==== DOM ====
+    const $ = (id) => document.getElementById(id);
+    const loginView = $('login-view');
+    const adminView = $('admin-view');
+
+    let articles = [];
+    let currentId = null;  // null = new article
+
+    // ==== AUTH ====
+    async function checkAuth() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        showAdmin();
+      } else {
+        showLogin();
+      }
+    }
+
+    function showLogin() {
+      loginView.style.display = 'grid';
+      adminView.style.display = 'none';
+    }
+
+    function showAdmin() {
+      loginView.style.display = 'none';
+      adminView.style.display = 'grid';
+      loadArticles();
+    }
+
+    $('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = $('login-submit');
+      const err = $('login-error');
+      err.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Вход…';
+
+      const { error } = await supabase.auth.signInWithPassword({
+        email: $('login-email').value.trim(),
+        password: $('login-password').value,
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Войти';
+
+      if (error) {
+        err.textContent = 'Неверный email или пароль';
+        return;
+      }
+      $('login-password').value = '';
+      showAdmin();
+    });
+
+    $('logout-btn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+      showLogin();
+    });
+
+    // ==== LOAD ARTICLES ====
+    async function loadArticles() {
+      const { data, error } = await supabase
+        .from('knowledge_articles')
+        .select('*')
+        .order('category', { ascending: true })
+        .order('title', { ascending: true });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+      articles = data || [];
+      renderArticleList();
+      renderCategoryDatalist();
+    }
+
+    function renderArticleList() {
+      const list = $('admin-article-list');
+      if (!articles.length) {
+        list.innerHTML = `<div class="empty-state" style="padding:32px 0;font-size:13px;">Пока нет статей</div>`;
+        return;
+      }
+      list.innerHTML = articles.map(a => `
+        <button class="admin-article-item ${currentId === a.id ? 'active' : ''}" data-id="${a.id}">
+          ${escapeHtml(a.title)}
+          <span class="admin-article-item-cat">${escapeHtml(a.category)}</span>
+        </button>
+      `).join('');
+
+      list.querySelectorAll('.admin-article-item').forEach(item => {
+        item.addEventListener('click', () => openArticle(item.dataset.id));
+      });
+    }
+
+    function renderCategoryDatalist() {
+      const cats = [...new Set(articles.map(a => a.category))].sort();
+      $('category-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+    }
+
+    // ==== FORM ====
+    function clearForm() {
+      currentId = null;
+      $('f-title').value = '';
+      $('f-category').value = '';
+      $('f-tags').value = '';
+      $('f-content').value = '';
+      $('editor-status').textContent = 'Новая статья';
+      $('delete-btn').style.display = 'none';
+      switchToEdit();
+    }
+
+    function openArticle(id) {
+      const a = articles.find(x => x.id === id);
+      if (!a) return;
+      currentId = id;
+      $('f-title').value = a.title || '';
+      $('f-category').value = a.category || '';
+      $('f-tags').value = (a.tags || []).join(', ');
+      $('f-content').value = a.content || '';
+      $('editor-status').textContent =
+        'Изменено ' + new Date(a.updated_at).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      $('delete-btn').style.display = 'inline-flex';
+      switchToEdit();
+      renderArticleList();
+    }
+
+    function switchToEdit() {
+      $('f-content').style.display = 'block';
+      $('preview-pane').style.display = 'none';
+      $('view-edit').classList.add('active');
+      $('view-preview').classList.remove('active');
+    }
+
+    $('view-edit').addEventListener('click', switchToEdit);
+    $('view-preview').addEventListener('click', () => {
+      const md = $('f-content').value;
+      $('preview-pane').innerHTML = DOMPurify.sanitize(marked.parse(md || ''));
+      $('f-content').style.display = 'none';
+      $('preview-pane').style.display = 'block';
+      $('view-edit').classList.remove('active');
+      $('view-preview').classList.add('active');
+    });
+
+    $('new-article-btn').addEventListener('click', clearForm);
+
+    // ==== SAVE ====
+    $('save-btn').addEventListener('click', async () => {
+      const title = $('f-title').value.trim();
+      const category = $('f-category').value.trim();
+      const content = $('f-content').value;
+      const tags = $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+
+      if (!title) { alert('Введите заголовок'); return; }
+      if (!category) { alert('Введите категорию'); return; }
+
+      const btn = $('save-btn');
+      btn.disabled = true;
+      btn.textContent = 'Сохранение…';
+
+      let error;
+      if (currentId) {
+        ({ error } = await supabase
+          .from('knowledge_articles')
+          .update({ title, category, content, tags, updated_at: new Date().toISOString() })
+          .eq('id', currentId));
+      } else {
+        const res = await supabase
+          .from('knowledge_articles')
+          .insert({ title, category, content, tags })
+          .select()
+          .single();
+        error = res.error;
+        if (!error && res.data) currentId = res.data.id;
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Сохранить';
+
+      if (error) { alert('Ошибка сохранения: ' + error.message); return; }
+
+      await loadArticles();
+      if (currentId) openArticle(currentId);
+      $('editor-status').textContent = 'Сохранено ✓';
+    });
+
+    // ==== DELETE ====
+    $('delete-btn').addEventListener('click', async () => {
+      if (!currentId) return;
+      const a = articles.find(x => x.id === currentId);
+      if (!confirm(`Удалить статью «${a?.title || ''}»?`)) return;
+
+      const { error } = await supabase.from('knowledge_articles').delete().eq('id', currentId);
+      if (error) { alert('Ошибка удаления: ' + error.message); return; }
+
+      currentId = null;
+      clearForm();
+      await loadArticles();
+    });
+
+    // ==== UTIL ====
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    // ==== INIT ====
+    checkAuth();
+  </script>
+</body>
+</html>
