@@ -100,8 +100,8 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script>
     // ==== КОНФИГ ====
-    const SUPABASE_URL = 'ТВОЙ_SUPABASE_URL';
-    const SUPABASE_ANON_KEY = 'ТВОЙ_ANON_KEY';
+    const SUPABASE_URL = 'https://wzcysenonxyjlksnaezi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6Y3lzZW5vbnh5amxrc25hZXppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3MzkwMzIsImV4cCI6MjA5ODMxNTAzMn0.z9yitIF0-gYrEqS_5ZRYop0xGm4OeCbJ3SEZH1kcOhk';
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -111,7 +111,7 @@
     const adminView = $('admin-view');
 
     let articles = [];
-    let currentId = null;  // null = new article
+    let currentId = null;
 
     // ==== AUTH ====
     async function checkAuth() {
@@ -213,6 +213,7 @@
       $('editor-status').textContent = 'Новая статья';
       $('delete-btn').style.display = 'none';
       switchToEdit();
+      renderArticleList();
     }
 
     function openArticle(id) {
