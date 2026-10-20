@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>База знаний — Колл-центр</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1a1a1a; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    input[type="search"] { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 1rem; }
+    select { padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc; }
+    .article-card { border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; background: #fafafa; }
+    .article-card h2 { margin-top: 0; font-size: 1.2rem; }
+    .meta { font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; }
+    .tag { display: inline-block; background: #e8f0fe; color: #1a56db; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.75rem; margin-right: 0.3rem; }
+    .content { margin-top: 0.75rem; white-space: pre-wrap; }
+    #export-btn { background: #1a56db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
+    #export-btn:hover { background: #1e40af; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📚 База знаний</h1>
+    <div>
+      <button id="export-btn">⬇ Экспорт JSON</button>
+      <a href="index.html" style="margin-left:1rem;">← На главную</a>
+    </div>
+  </header>
+
+  <input type="search" id="search-input" placeholder="🔍 Поиск по статьям...">
+  <div style="margin-bottom: 1rem;">
+    <label for="category-filter">Категория:</label>
+    <select id="category-filter"><option value="">Все</option></select>
+  </div>
+
+  <div id="articles-container">Загрузка...</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'ТВОЙ_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'ТВОЙ_ANON_KEY';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allArticles = [];
+
+    async function loadArticles() {
+      const { data, error } = await supabase
+        .from('knowledge_articles')
+        .select('*')
+        .order('category')
+        .order('title');
+
+      if (error) {
+        document.getElementById('articles-container').textContent = 'Ошибка загрузки: ' + error.message;
+        return;
+      }
+      allArticles = data || [];
+      populateCategories();
+      renderArticles(allArticles);
+    }
+
+    function populateCategories() {
+      const select = document.getElementById('category-filter');
+      const categories = [...new Set(allArticles.map(a => a.category))];
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderArticles(articles) {
+      const container = document.getElementById('articles-container');
+      if (!articles.length) {
+        container.innerHTML = '<p>Ничего не найдено.</p>';
+        return;
+      }
+      container.innerHTML = articles.map(a => `
+        <div class="article-card">
+          <h2>${escapeHtml(a.title)}</h2>
+          <div class="meta">${escapeHtml(a.category)} · обновлено ${new Date(a.updated_at).toLocaleDateString('ru-RU')}</div>
+          <div>${(a.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+          <div class="content">${renderMarkdown(a.content)}</div>
+        </div>
+      `).join('');
+    }
+
+    function filterArticles() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const category = document.getElementById('category-filter').value;
+      let filtered = allArticles;
+      if (category) filtered = filtered.filter(a => a.category === category);
+      if (query) {
+        filtered = filtered.filter(a =>
+          a.title.toLowerCase().includes(query) ||
+          a.content.toLowerCase().includes(query) ||
+          (a.tags || []).some(t => t.toLowerCase().includes(query))
+        );
+      }
+      renderArticles(filtered);
+    }
+
+    // Простейший рендер Markdown (без внешних библиотек, чтобы не усложнять)
+    function renderMarkdown(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/\n/g, '<br>');
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
+    }
+
+    // Экспорт всех статей в JSON-файл
+    document.getElementById('export-btn').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(allArticles, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `knowledge-base-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('search-input').addEventListener('input', filterArticles);
+    document.getElementById('category-filter').addEventListener('change', filterArticles);
+
+    loadArticles();
+  </script>
+</body>
+</html>
