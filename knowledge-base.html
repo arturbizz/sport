@@ -3,135 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>База знаний — Колл-центр</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; color: #1a1a1a; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
-    input[type="search"] { width: 100%; padding: 0.75rem; font-size: 1rem; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 1rem; }
-    select { padding: 0.5rem; border-radius: 6px; border: 1px solid #ccc; }
-    .article-card { border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; background: #fafafa; }
-    .article-card h2 { margin-top: 0; font-size: 1.2rem; }
-    .meta { font-size: 0.85rem; color: #666; margin-bottom: 0.5rem; }
-    .tag { display: inline-block; background: #e8f0fe; color: #1a56db; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.75rem; margin-right: 0.3rem; }
-    .content { margin-top: 0.75rem; white-space: pre-wrap; }
-    #export-btn { background: #1a56db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
-    #export-btn:hover { background: #1e40af; }
-    .hidden { display: none; }
-  </style>
+  <title>Руководство — Колл-центр</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kb-styles.css">
 </head>
 <body>
-  <header>
-    <h1>📚 База знаний</h1>
-    <div>
-      <button id="export-btn">⬇ Экспорт JSON</button>
-      <a href="index.html" style="margin-left:1rem;">← На главную</a>
-    </div>
-  </header>
+  <div class="layout">
+    <aside class="sidebar">
+      <a class="brand" href="index.html">
+        <span class="brand-mark"></span>
+        <span class="brand-name">Руководство</span>
+      </a>
+      <div class="section-label">Разделы</div>
+      <nav class="categories" id="categories"></nav>
+      <div class="sidebar-footer">
+        <a href="kb-admin.html">Администрирование →</a>
+      </div>
+    </aside>
 
-  <input type="search" id="search-input" placeholder="🔍 Поиск по статьям...">
-  <div style="margin-bottom: 1rem;">
-    <label for="category-filter">Категория:</label>
-    <select id="category-filter"><option value="">Все</option></select>
+    <main class="main">
+      <div class="search-wrap">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="8" cy="8" r="5"/>
+          <path d="M12 12l4 4"/>
+        </svg>
+        <input type="search" class="search-input" id="search-input"
+               placeholder="Найти процедуру, скрипт или проблему" autocomplete="off">
+      </div>
+
+      <div class="results" id="results">
+        <div class="loading-text">Загрузка…</div>
+      </div>
+    </main>
   </div>
 
-  <div id="articles-container">Загрузка...</div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script>
+    // ==== КОНФИГ ====
     const SUPABASE_URL = 'ТВОЙ_SUPABASE_URL';
     const SUPABASE_ANON_KEY = 'ТВОЙ_ANON_KEY';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allArticles = [];
+    let activeCategory = '';
+
+    const els = {
+      results: document.getElementById('results'),
+      categories: document.getElementById('categories'),
+      search: document.getElementById('search-input'),
+    };
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function renderMarkdown(text) {
+      if (!text) return '';
+      return DOMPurify.sanitize(marked.parse(text));
+    }
+
+    function excerpt(text, len = 180) {
+      const plain = (text || '').replace(/[#*`>\-]/g, '').replace(/\n+/g, ' ').trim();
+      return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
+    }
 
     async function loadArticles() {
       const { data, error } = await supabase
         .from('knowledge_articles')
         .select('*')
-        .order('category')
-        .order('title');
+        .order('category', { ascending: true })
+        .order('title', { ascending: true });
 
       if (error) {
-        document.getElementById('articles-container').textContent = 'Ошибка загрузки: ' + error.message;
+        els.results.innerHTML = `<div class="empty-state"><strong>Не удалось загрузить</strong>${escapeHtml(error.message)}</div>`;
         return;
       }
       allArticles = data || [];
-      populateCategories();
-      renderArticles(allArticles);
+      renderCategories();
+      renderList(filterArticles());
     }
 
-    function populateCategories() {
-      const select = document.getElementById('category-filter');
-      const categories = [...new Set(allArticles.map(a => a.category))];
-      categories.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        select.appendChild(opt);
+    function renderCategories() {
+      const counts = {};
+      allArticles.forEach(a => { counts[a.category] = (counts[a.category] || 0) + 1; });
+
+      let html = `<button class="category-btn ${activeCategory === '' ? 'active' : ''}" data-cat="">
+        <span>Все разделы</span><span class="category-count">${allArticles.length}</span>
+      </button>`;
+
+      Object.keys(counts).sort().forEach(cat => {
+        html += `<button class="category-btn ${activeCategory === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}">
+          <span>${escapeHtml(cat)}</span>
+          <span class="category-count">${counts[cat]}</span>
+        </button>`;
+      });
+      els.categories.innerHTML = html;
+
+      els.categories.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeCategory = btn.dataset.cat;
+          renderCategories();
+          renderList(filterArticles());
+        });
       });
     }
 
-    function renderArticles(articles) {
-      const container = document.getElementById('articles-container');
+    function filterArticles() {
+      const q = els.search.value.trim().toLowerCase();
+      return allArticles.filter(a => {
+        if (activeCategory && a.category !== activeCategory) return false;
+        if (!q) return true;
+        return a.title.toLowerCase().includes(q)
+          || (a.content || '').toLowerCase().includes(q)
+          || (a.tags || []).some(t => t.toLowerCase().includes(q));
+      });
+    }
+
+    function renderList(articles) {
       if (!articles.length) {
-        container.innerHTML = '<p>Ничего не найдено.</p>';
+        els.results.innerHTML = `<div class="empty-state">
+          <strong>Ничего не найдено</strong>
+          Попробуйте изменить запрос или выбрать другой раздел.
+        </div>`;
         return;
       }
-      container.innerHTML = articles.map(a => `
-        <div class="article-card">
-          <h2>${escapeHtml(a.title)}</h2>
-          <div class="meta">${escapeHtml(a.category)} · обновлено ${new Date(a.updated_at).toLocaleDateString('ru-RU')}</div>
-          <div>${(a.tags || []).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
-          <div class="content">${renderMarkdown(a.content)}</div>
-        </div>
+
+      els.results.innerHTML = articles.map(a => `
+        <article class="article" data-id="${a.id}">
+          <div class="article-head">
+            <div class="article-meta">
+              <span>${escapeHtml(a.category)}</span>
+              <span class="dot"></span>
+              <span>${new Date(a.updated_at).toLocaleDateString('ru-RU', { day:'numeric', month:'short', year:'numeric' })}</span>
+            </div>
+            <h2 class="article-title">${escapeHtml(a.title)}</h2>
+            <p class="article-excerpt">${escapeHtml(excerpt(a.content))}</p>
+          </div>
+          <div class="article-expanded">
+            <div class="inner prose">${renderMarkdown(a.content)}</div>
+          </div>
+        </article>
       `).join('');
+
+      els.results.querySelectorAll('.article-head').forEach(head => {
+        head.addEventListener('click', () => toggleArticle(head.parentElement));
+      });
     }
 
-    function filterArticles() {
-      const query = document.getElementById('search-input').value.toLowerCase().trim();
-      const category = document.getElementById('category-filter').value;
-      let filtered = allArticles;
-      if (category) filtered = filtered.filter(a => a.category === category);
-      if (query) {
-        filtered = filtered.filter(a =>
-          a.title.toLowerCase().includes(query) ||
-          a.content.toLowerCase().includes(query) ||
-          (a.tags || []).some(t => t.toLowerCase().includes(query))
-        );
+    function toggleArticle(el) {
+      const expanded = el.querySelector('.article-expanded');
+      const isOpen = el.classList.contains('expanded');
+      if (isOpen) {
+        expanded.style.maxHeight = '0px';
+        el.classList.remove('expanded');
+      } else {
+        el.classList.add('expanded');
+        expanded.style.maxHeight = expanded.scrollHeight + 40 + 'px';
       }
-      renderArticles(filtered);
     }
 
-    // Простейший рендер Markdown (без внешних библиотек, чтобы не усложнять)
-    function renderMarkdown(text) {
-      if (!text) return '';
-      return text
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/\n/g, '<br>');
-    }
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]));
-    }
-
-    // Экспорт всех статей в JSON-файл
-    document.getElementById('export-btn').addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(allArticles, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `knowledge-base-${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
-    document.getElementById('search-input').addEventListener('input', filterArticles);
-    document.getElementById('category-filter').addEventListener('change', filterArticles);
+    els.search.addEventListener('input', () => renderList(filterArticles()));
 
     loadArticles();
   </script>
