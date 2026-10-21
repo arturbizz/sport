@@ -11,6 +11,76 @@
   <style>
     body { overflow: hidden; }
     .login-wrap .brand-mark { width: 24px; height: 24px; }
+
+    /* ==== Fullscreen mode ==== */
+    .admin-layout.fullscreen { grid-template-columns: 0 1fr; }
+    .admin-layout.fullscreen .admin-sidebar {
+      display: none;
+    }
+    .admin-layout.fullscreen .editor-content {
+      max-width: 100%;
+      padding: 24px 40px 96px;
+    }
+    .admin-layout.fullscreen .content-textarea {
+      min-height: calc(100vh - 280px);
+    }
+    .admin-layout.fullscreen .preview-pane {
+      min-height: calc(100vh - 280px);
+    }
+
+    /* ==== Floating upload button ==== */
+    .fab-upload {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 100;
+      padding: 13px 22px;
+      background: linear-gradient(135deg, var(--accent), var(--violet));
+      color: white;
+      border: none;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(79, 142, 255, 0.4), 0 2px 6px rgba(79, 142, 255, 0.2);
+      transition: all 0.25s var(--spring);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-body);
+      animation: fabIn 0.35s var(--spring);
+    }
+    .fab-upload.show { display: inline-flex; }
+    .fab-upload:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 40px rgba(79, 142, 255, 0.55), 0 4px 12px rgba(79, 142, 255, 0.3);
+    }
+    .fab-upload:active {
+      transform: translateY(0);
+    }
+    .fab-upload svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    @keyframes fabIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.9); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Upload status above FAB */
+    .upload-status {
+      bottom: 90px !important;
+    }
+
+    /* Fullscreen icon swap */
+    .fullscreen-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; background: var(--bg-elevated); border: 1px solid var(--hairline-2); border-radius: var(--radius-md); color: var(--ink-2); cursor: pointer; transition: all 0.15s; flex-shrink: 0; box-shadow: var(--shadow-sm); }
+    .fullscreen-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .fullscreen-btn svg { width: 16px; height: 16px; }
+
+    /* Hide inline upload button — FAB replaces it */
+    #upload-img-btn { display: none !important; }
   </style>
 </head>
 <body>
@@ -18,6 +88,17 @@
   <div class="toast-container" id="toast-container"></div>
   <div class="upload-status" id="upload-status"></div>
 
+  <!-- Floating upload FAB -->
+  <button class="fab-upload" id="fab-upload" title="Загрузить фото в позицию курсора">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <circle cx="8.5" cy="8.5" r="1.5"/>
+      <path d="M21 15l-5-5L5 21"/>
+    </svg>
+    Загрузить фото
+  </button>
+
+  <!-- LOGIN -->
   <div class="login-wrap" id="login-view" style="display:none;">
     <div class="login-card">
       <div class="brand">
@@ -41,6 +122,7 @@
     </div>
   </div>
 
+  <!-- ADMIN -->
   <div class="admin-layout" id="admin-view" style="display:none;">
     <aside class="admin-sidebar" id="admin-sidebar">
       <div class="brand" style="cursor:default;">
@@ -69,6 +151,14 @@
             <line x1="3" y1="6" x2="21" y2="6"/>
             <line x1="3" y1="12" x2="21" y2="12"/>
             <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <button class="fullscreen-btn" id="fullscreen-btn" title="На весь экран">
+          <svg id="fullscreen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
+            <path d="M3 16v3a2 2 0 0 0 2 2h3"/>
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3"/>
           </svg>
         </button>
         <div class="editor-toolbar-status">
@@ -126,24 +216,12 @@
               <button id="view-edit" class="active">Редактор</button>
               <button id="view-preview">Превью</button>
             </div>
-            <div class="content-actions">
-              <button type="button" class="img-btn" id="upload-img-btn">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
-                  <rect x="2" y="2" width="12" height="12" rx="2"/>
-                  <circle cx="5.5" cy="5.5" r="1.2"/>
-                  <path d="M2 12l4-4 3 3 2-2 3 3"/>
-                </svg>
-                Загрузить фото
-              </button>
-            </div>
           </div>
           <textarea class="content-textarea" id="f-content" placeholder="# Заголовок раздела&#10;&#10;Пошаговая инструкция…"></textarea>
           <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
           <div class="field-hint">
-            <strong>Как вставить фото в нужное место:</strong><br>
-            1. Кликни в тексте туда, где должно быть фото &nbsp;→&nbsp; 2. Нажми «Загрузить фото» (или вставь <kbd>Ctrl</kbd>+<kbd>V</kbd>) &nbsp;→&nbsp; 3. Фото вставится ровно в это место.<br>
-            <br>
-            <strong>Другие способы:</strong> перетащи файл в поле · сохранить статью — <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
+            <strong>Как вставить фото:</strong> кликни в тексте в нужное место → нажми круглую кнопку <strong>«Загрузить фото»</strong> справа внизу (или вставь <kbd>Ctrl</kbd>+<kbd>V</kbd>). Фото вставится ровно туда, где был курсор.<br>
+            <strong>Сохранить статью:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
           </div>
         </div>
 
@@ -174,6 +252,7 @@
     const editorContent = $('editor-content');
     const editorToolbar = $('editor-toolbar');
     const adminLayout = $('admin-view');
+    const fabUpload = $('fab-upload');
 
     let articles = [];
     let currentId = null;
@@ -182,7 +261,9 @@
     let pendingInsertPos = null;
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
+    const FULLSCREEN_KEY = 'kb_admin_fullscreen';
 
+    // ===== SIDEBAR COLLAPSE =====
     function initSidebar() {
       const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
       adminLayout.classList.toggle('sidebar-collapsed', collapsed);
@@ -192,6 +273,36 @@
       localStorage.setItem(SIDEBAR_KEY, isCollapsed ? '1' : '0');
     });
 
+    // ===== FULLSCREEN MODE =====
+    const ICON_EXPAND = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
+    const ICON_COLLAPSE = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
+
+    function updateFullscreenIcon() {
+      const isFs = adminLayout.classList.contains('fullscreen');
+      $('fullscreen-icon').innerHTML = isFs ? ICON_COLLAPSE : ICON_EXPAND;
+      $('fullscreen-btn').title = isFs ? 'Свернуть' : 'На весь экран';
+    }
+
+    function initFullscreen() {
+      const fs = localStorage.getItem(FULLSCREEN_KEY) === '1';
+      adminLayout.classList.toggle('fullscreen', fs);
+      updateFullscreenIcon();
+    }
+
+    $('fullscreen-btn').addEventListener('click', () => {
+      const isFs = adminLayout.classList.toggle('fullscreen');
+      localStorage.setItem(FULLSCREEN_KEY, isFs ? '1' : '0');
+      updateFullscreenIcon();
+    });
+
+    // ===== FAB VISIBILITY =====
+    function updateFabVisibility() {
+      const isEditorVisible = editorContent.style.display !== 'none';
+      const isTextTabActive = $('pane-text').style.display !== 'none';
+      fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive);
+    }
+
+    // ===== TOAST =====
     function toast(message, type = 'info', duration = 3500) {
       const el = document.createElement('div');
       el.className = 'toast ' + type;
@@ -217,6 +328,7 @@
     }
     function markError(msg) { setStatus('error', 'Ошибка: ' + (msg || '').slice(0, 60)); }
 
+    // ===== DRAFT =====
     function saveDraft() {
       if (!editorContent.style.display || editorContent.style.display === 'none') return;
       const draft = {
@@ -262,15 +374,17 @@
       setStatus('unsaved', 'Восстановлен черновик');
     }
 
+    // ===== AUTH =====
     async function checkAuth() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) showAdmin(); else showLogin();
     }
-    function showLogin() { loginView.style.display = 'grid'; adminView.style.display = 'none'; }
+    function showLogin() { loginView.style.display = 'grid'; adminView.style.display = 'none'; fabUpload.classList.remove('show'); }
     function showAdmin() {
       loginView.style.display = 'none';
       adminView.style.display = 'grid';
       initSidebar();
+      initFullscreen();
       loadArticles();
       checkDraft();
     }
@@ -294,6 +408,7 @@
       showLogin();
     });
 
+    // ===== LOAD =====
     async function loadArticles() {
       const { data, error } = await supabaseClient
         .from('knowledge_articles').select('*')
@@ -334,15 +449,18 @@
       $('category-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
     }
 
+    // ===== FORM =====
     function showWelcome() {
       welcomeState.style.display = 'flex';
       editorContent.style.display = 'none';
       editorToolbar.style.display = 'none';
+      updateFabVisibility();
     }
     function showEditor() {
       welcomeState.style.display = 'none';
       editorContent.style.display = 'block';
       editorToolbar.style.display = 'flex';
+      updateFabVisibility();
     }
     function updatePinToggle() {
       $('pin-toggle-label').classList.toggle('checked', $('f-pinned').checked);
@@ -387,20 +505,24 @@
       renderArticleList();
     }
 
+    // ===== TABS =====
     function switchTab(tab) {
       $('tab-text').classList.toggle('active', tab === 'text');
       $('tab-steps').classList.toggle('active', tab === 'steps');
       $('pane-text').style.display = tab === 'text' ? 'block' : 'none';
       $('pane-steps').style.display = tab === 'steps' ? 'block' : 'none';
+      updateFabVisibility();
     }
     $('tab-text').addEventListener('click', () => switchTab('text'));
     $('tab-steps').addEventListener('click', () => switchTab('steps'));
 
+    // ===== MARKDOWN =====
     function switchToEdit() {
       $('f-content').style.display = 'block';
       $('preview-pane').style.display = 'none';
       $('view-edit').classList.add('active');
       $('view-preview').classList.remove('active');
+      updateFabVisibility();
     }
     $('view-edit').addEventListener('click', switchToEdit);
     $('view-preview').addEventListener('click', () => {
@@ -409,8 +531,10 @@
       $('preview-pane').style.display = 'block';
       $('view-edit').classList.remove('active');
       $('view-preview').classList.add('active');
+      updateFabVisibility();
     });
 
+    // ===== IMAGE UPLOAD =====
     function showUploadStatus(text) {
       const el = $('upload-status');
       if (!text) { el.classList.remove('show'); return; }
@@ -449,8 +573,7 @@
     async function uploadFiles(files) {
       const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
       if (!imageFiles.length) { pendingInsertPos = null; return; }
-      const btn = $('upload-img-btn');
-      btn.disabled = true;
+      fabUpload.disabled = true;
       let successCount = 0;
       let lastInsertLine = 0;
       for (let i = 0; i < imageFiles.length; i++) {
@@ -478,7 +601,7 @@
       } else {
         showUploadStatus('');
       }
-      btn.disabled = false;
+      fabUpload.disabled = false;
       pendingInsertPos = null;
     }
 
@@ -500,7 +623,8 @@
       return lineNumber;
     }
 
-    $('upload-img-btn').addEventListener('click', () => {
+    // ===== Общий обработчик загрузки — FAB + Ctrl+V =====
+    function handleUploadClick() {
       const el = $('f-content');
       pendingInsertPos = {
         start: el.selectionStart ?? el.value.length,
@@ -510,7 +634,9 @@
       input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
       input.onchange = (e) => uploadFiles(e.target.files);
       input.click();
-    });
+    }
+
+    fabUpload.addEventListener('click', handleUploadClick);
 
     $('f-content').addEventListener('paste', async (e) => {
       const items = e.clipboardData?.items;
@@ -552,6 +678,7 @@
       }
     });
 
+    // ===== STEPS EDITOR =====
     $('add-step-btn').addEventListener('click', () => {
       if (!currentSteps) currentSteps = { start: null, steps: [] };
       const id = 'step-' + Date.now().toString(36);
@@ -711,6 +838,7 @@
       renderStepsEditor();
     }
 
+    // ===== SAVE =====
     async function saveArticle() {
       const title = $('f-title').value.trim();
       const category = $('f-category').value.trim();
