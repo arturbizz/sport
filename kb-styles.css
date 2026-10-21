@@ -1155,3 +1155,82 @@ button { font-family: inherit; }
   .article-title { font-size: 16px; }
   .lightbox { padding: 16px; }
 }
+/* ===== ARTICLE VIEW MODE (статья на весь экран) ===== */
+body.article-open .main {
+  max-width: 1400px;
+  padding: 36px 56px 96px;
+}
+
+.article-view {
+  animation: fadeUp 0.35s var(--smooth);
+}
+
+.article-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--hairline-2);
+  border-radius: var(--radius-md);
+  padding: 9px 16px;
+  margin-bottom: 28px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.2s var(--smooth);
+  box-shadow: var(--shadow-sm);
+}
+.article-back-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateX(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.article-view-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--ink-3);
+  margin-bottom: 12px;
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+.article-view-meta .dot {
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+
+.article-view-title {
+  font-family: var(--font-body);
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin-bottom: 32px;
+  color: var(--ink);
+}
+
+.article-view-body .prose {
+  font-size: 15.5px;
+  line-height: 1.8;
+}
+.article-view-body .prose h1 { font-size: 26px; }
+.article-view-body .prose h2 { font-size: 21px; }
+.article-view-body .prose h3 { font-size: 18px; }
+
+@media (max-width: 900px) {
+  body.article-open .main {
+    max-width: 100%;
+    padding: 24px 20px 64px;
+  }
+  .article-view-title { font-size: 22px; }
+  .article-view-body .prose { font-size: 14.5px; }
+}
