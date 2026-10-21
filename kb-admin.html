@@ -12,8 +12,11 @@
     body { overflow: hidden; }
     .login-wrap .brand-mark { width: 24px; height: 24px; }
 
-    /* ==== Fullscreen mode ==== */
-    .admin-layout.fullscreen { grid-template-columns: 0 1fr; }
+    /* ==== FULLSCREEN MODE ==== */
+    /* ВАЖНО: grid-template-columns 1fr — одна колонка. Main занимает всю ширину. */
+    .admin-layout.fullscreen {
+      grid-template-columns: 1fr;
+    }
     .admin-layout.fullscreen .admin-sidebar {
       display: none;
     }
@@ -28,7 +31,7 @@
       min-height: calc(100vh - 280px);
     }
 
-    /* ==== Floating upload button ==== */
+    /* ==== FAB — floating upload button ==== */
     .fab-upload {
       position: fixed;
       bottom: 28px;
@@ -55,28 +58,39 @@
       transform: translateY(-2px);
       box-shadow: 0 14px 40px rgba(79, 142, 255, 0.55), 0 4px 12px rgba(79, 142, 255, 0.3);
     }
-    .fab-upload:active {
-      transform: translateY(0);
-    }
-    .fab-upload svg {
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-    }
+    .fab-upload:active { transform: translateY(0); }
+    .fab-upload:disabled { opacity: 0.6; cursor: wait; }
+    .fab-upload svg { width: 16px; height: 16px; flex-shrink: 0; }
 
     @keyframes fabIn {
       from { opacity: 0; transform: translateY(20px) scale(0.9); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* Upload status above FAB */
-    .upload-status {
-      bottom: 90px !important;
-    }
+    .upload-status { bottom: 90px !important; }
 
-    /* Fullscreen icon swap */
-    .fullscreen-btn { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; background: var(--bg-elevated); border: 1px solid var(--hairline-2); border-radius: var(--radius-md); color: var(--ink-2); cursor: pointer; transition: all 0.15s; flex-shrink: 0; box-shadow: var(--shadow-sm); }
-    .fullscreen-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    /* Fullscreen icon button */
+    .fullscreen-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      background: var(--bg-elevated);
+      border: 1px solid var(--hairline-2);
+      border-radius: var(--radius-md);
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: all 0.15s;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+    .fullscreen-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
     .fullscreen-btn svg { width: 16px; height: 16px; }
 
     /* Hide inline upload button — FAB replaces it */
@@ -88,7 +102,6 @@
   <div class="toast-container" id="toast-container"></div>
   <div class="upload-status" id="upload-status"></div>
 
-  <!-- Floating upload FAB -->
   <button class="fab-upload" id="fab-upload" title="Загрузить фото в позицию курсора">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -153,7 +166,7 @@
             <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
-        <button class="fullscreen-btn" id="fullscreen-btn" title="На весь экран">
+        <button class="fullscreen-btn" id="fullscreen-btn" title="На весь экран (Esc — выйти)">
           <svg id="fullscreen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 3H5a2 2 0 0 0-2 2v3"/>
             <path d="M21 8V5a2 2 0 0 0-2-2h-3"/>
@@ -221,7 +234,7 @@
           <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
           <div class="field-hint">
             <strong>Как вставить фото:</strong> кликни в тексте в нужное место → нажми круглую кнопку <strong>«Загрузить фото»</strong> справа внизу (или вставь <kbd>Ctrl</kbd>+<kbd>V</kbd>). Фото вставится ровно туда, где был курсор.<br>
-            <strong>Сохранить статью:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
+            <strong>Сохранить статью:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd> &nbsp;·&nbsp; <strong>Полный экран:</strong> кнопка в углу тулбара или <kbd>Esc</kbd>
           </div>
         </div>
 
@@ -261,7 +274,7 @@
     let pendingInsertPos = null;
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
-    const FULLSCREEN_KEY = 'kb_admin_fullscreen';
+    // Больше не храним fullscreen в localStorage — чтобы не застревать
 
     // ===== SIDEBAR COLLAPSE =====
     function initSidebar() {
@@ -280,26 +293,35 @@
     function updateFullscreenIcon() {
       const isFs = adminLayout.classList.contains('fullscreen');
       $('fullscreen-icon').innerHTML = isFs ? ICON_COLLAPSE : ICON_EXPAND;
-      $('fullscreen-btn').title = isFs ? 'Свернуть' : 'На весь экран';
+      $('fullscreen-btn').title = isFs ? 'Свернуть (Esc)' : 'На весь экран';
     }
 
     function initFullscreen() {
-      const fs = localStorage.getItem(FULLSCREEN_KEY) === '1';
-      adminLayout.classList.toggle('fullscreen', fs);
+      // Принудительно убираем возможное «застрявшее» значение из прошлых версий
+      try { localStorage.removeItem('kb_admin_fullscreen'); } catch(e) {}
+      adminLayout.classList.remove('fullscreen');
       updateFullscreenIcon();
     }
 
     $('fullscreen-btn').addEventListener('click', () => {
-      const isFs = adminLayout.classList.toggle('fullscreen');
-      localStorage.setItem(FULLSCREEN_KEY, isFs ? '1' : '0');
+      adminLayout.classList.toggle('fullscreen');
       updateFullscreenIcon();
+    });
+
+    // Escape — выход из fullscreen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && adminLayout.classList.contains('fullscreen')) {
+        adminLayout.classList.remove('fullscreen');
+        updateFullscreenIcon();
+      }
     });
 
     // ===== FAB VISIBILITY =====
     function updateFabVisibility() {
       const isEditorVisible = editorContent.style.display !== 'none';
       const isTextTabActive = $('pane-text').style.display !== 'none';
-      fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive);
+      const isEditMode = $('f-content').style.display !== 'none';
+      fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditMode);
     }
 
     // ===== TOAST =====
@@ -623,7 +645,6 @@
       return lineNumber;
     }
 
-    // ===== Общий обработчик загрузки — FAB + Ctrl+V =====
     function handleUploadClick() {
       const el = $('f-content');
       pendingInsertPos = {
