@@ -116,18 +116,20 @@
     };
 
     const CALLOUT_TITLES = {
-      note: 'Заметка', tip: 'Совет', warning: 'Внимание',
-      danger: 'Опасно', success: 'Готово', important: 'Важно'
+      note: 'Заметка',
+      tip: 'Совет',
+      warning: 'Внимание',
+      danger: 'Запрещено',
+      success: 'Готово',
+      important: 'Важно'
     };
 
     function preprocessMarkdown(md) {
-      // Callouts :::type\nbody\n:::
       md = md.replace(/^:::(\w+)[ \t]*\n([\s\S]*?)\n:::[ \t]*$/gm, (m, type, body) => {
         const title = CALLOUT_TITLES[type] || type;
         const inner = marked.parse(body.trim());
         return `\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
       });
-      // Highlight ==text==
       md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
       return md;
     }
@@ -188,6 +190,8 @@
       els.mustKnowBtn.onclick = () => {
         activePinned = !activePinned;
         if (activePinned) activeCategory = '';
+        expandedId = null;
+        document.body.classList.remove('article-open');
         renderCategories();
         renderList(filterArticles());
       };
@@ -206,6 +210,8 @@
         btn.addEventListener('click', () => {
           activePinned = false;
           activeCategory = btn.dataset.cat;
+          expandedId = null;
+          document.body.classList.remove('article-open');
           renderCategories();
           renderList(filterArticles());
         });
@@ -224,7 +230,22 @@
       });
     }
 
+    // ===== ГЛАВНЫЙ РЕНДЕР =====
     function renderList(articles) {
+      if (expandedId) {
+        const article = allArticles.find(a => a.id === expandedId);
+        if (article) {
+          renderArticleView(article);
+          return;
+        }
+        expandedId = null;
+        document.body.classList.remove('article-open');
+      }
+      renderArticleList(articles);
+    }
+
+    // ===== СПИСОК СТАТЕЙ =====
+    function renderArticleList(articles) {
       if (!articles.length) {
         els.results.innerHTML = `<div class="empty-state">
           <strong>Ничего не найдено</strong>
@@ -234,11 +255,10 @@
       }
       els.results.innerHTML = articles.map(a => {
         const isWizard = a.steps && a.steps.steps && a.steps.steps.length;
-        const isOpen = expandedId === a.id;
         const badges = (isWizard ? '<span class="badge-scenario">Сценарий</span>' : '')
           + (a.pinned ? '<span class="badge-pinned">Особенность</span>' : '');
         return `
-          <article class="article ${isOpen ? 'expanded' : ''}" data-id="${a.id}">
+          <article class="article" data-id="${a.id}">
             <div class="article-head">
               <div class="article-meta">
                 <span>${escapeHtml(a.category)}</span>
@@ -248,33 +268,48 @@
               <h2 class="article-title">${escapeHtml(a.title)}${badges}</h2>
               <p class="article-excerpt">${escapeHtml(excerpt(a.content || (isWizard ? 'Пошаговый сценарий диагностики' : '')))}</p>
             </div>
-            <div class="article-expanded">
-              <div class="inner">${isOpen ? renderArticleBody(a) : ''}</div>
-            </div>
           </article>
         `;
       }).join('');
 
       els.results.querySelectorAll('.article-head').forEach(head => {
-        head.addEventListener('click', () => toggleArticle(head.parentElement));
+        head.addEventListener('click', () => openArticle(head.parentElement.dataset.id));
       });
-      if (expandedId) {
-        const article = articles.find(a => a.id === expandedId);
-        if (article) bindArticleInteractions(article);
-      }
     }
 
-    function renderArticleBody(a) {
-      const isWizard = a.steps && a.steps.steps && a.steps.steps.length;
-      let body = '<button class="back-btn" data-back>← Назад к списку</button>';
-      if (isWizard) {
-        body += `<div class="wizard" data-wizard-article="${a.id}">${renderWizardStep(a)}</div>`;
-      } else {
-        body += `<div class="prose">${renderMarkdown(a.content)}</div>`;
-      }
-      return body;
+    // ===== ОДНА СТАТЬЯ НА ВЕСЬ ЭКРАН =====
+    function renderArticleView(article) {
+      const isWizard = article.steps && article.steps.steps && article.steps.steps.length;
+      const badges = (isWizard ? '<span class="badge-scenario">Сценарий</span>' : '')
+        + (article.pinned ? '<span class="badge-pinned">Особенность</span>' : '');
+
+      const bodyHtml = isWizard
+        ? `<div class="wizard" data-wizard-article="${article.id}">${renderWizardStep(article)}</div>`
+        : `<div class="prose">${renderMarkdown(article.content)}</div>`;
+
+      els.results.innerHTML = `
+        <div class="article-view">
+          <button class="article-back-btn" data-back>← Назад к списку</button>
+          <div class="article-view-meta">
+            <span>${escapeHtml(article.category)}</span>
+            <span class="dot"></span>
+            <span>${new Date(article.updated_at).toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' })}</span>
+          </div>
+          <h1 class="article-view-title">${escapeHtml(article.title)}${badges}</h1>
+          <div class="article-view-body">${bodyHtml}</div>
+        </div>
+      `;
+
+      els.results.querySelector('[data-back]').addEventListener('click', closeArticle);
+
+      els.results.querySelectorAll('.prose img').forEach(img => {
+        img.addEventListener('click', () => openLightbox(img.src, img.alt));
+      });
+
+      if (isWizard) bindWizard(article);
     }
 
+    // ===== WIZARD =====
     function ensureWizardState(a) {
       if (!wizardState[a.id]) wizardState[a.id] = { stepId: a.steps.start, history: [] };
       return wizardState[a.id];
@@ -319,69 +354,62 @@
       `;
     }
 
-    function bindArticleInteractions(a) {
-      const container = document.querySelector(`.article[data-id="${a.id}"]`);
-      if (!container) return;
-      const backBtn = container.querySelector('[data-back]');
-      if (backBtn) backBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        expandedId = null;
-        renderList(filterArticles());
-      });
-      container.querySelectorAll('.prose img').forEach(img => {
-        img.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openLightbox(img.src, img.alt);
-        });
-      });
-      if (!a.steps || !a.steps.steps) return;
-      const wizardEl = container.querySelector('[data-wizard-article]');
+    function bindWizard(article) {
+      const wizardEl = document.querySelector(`.wizard[data-wizard-article="${article.id}"]`);
       if (!wizardEl) return;
-      function rerender() { wizardEl.innerHTML = renderWizardStep(a); bindWizard(); }
-      function bindWizard() {
+
+      function rerender() {
+        wizardEl.innerHTML = renderWizardStep(article);
+        bindWizard(article);
         wizardEl.querySelectorAll('.prose img').forEach(img => {
-          img.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openLightbox(img.src, img.alt);
-          });
-        });
-        wizardEl.querySelectorAll('[data-wizard-next]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const target = btn.dataset.wizardNext;
-            if (!target) return;
-            const st = ensureWizardState(a);
-            st.history.push(st.stepId);
-            st.stepId = target;
-            rerender();
-          });
-        });
-        const b = wizardEl.querySelector('[data-wizard-back]');
-        if (b) b.addEventListener('click', () => {
-          const st = ensureWizardState(a);
-          if (!st.history.length) return;
-          st.stepId = st.history.pop();
-          rerender();
-        });
-        const r = wizardEl.querySelector('[data-wizard-reset]');
-        if (r) r.addEventListener('click', () => {
-          const st = ensureWizardState(a);
-          st.stepId = a.steps.start;
-          st.history = [];
-          rerender();
+          img.addEventListener('click', () => openLightbox(img.src, img.alt));
         });
       }
-      bindWizard();
+
+      wizardEl.querySelectorAll('[data-wizard-next]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.wizardNext;
+          if (!target) return;
+          const st = ensureWizardState(article);
+          st.history.push(st.stepId);
+          st.stepId = target;
+          rerender();
+        });
+      });
+      const b = wizardEl.querySelector('[data-wizard-back]');
+      if (b) b.addEventListener('click', () => {
+        const st = ensureWizardState(article);
+        if (!st.history.length) return;
+        st.stepId = st.history.pop();
+        rerender();
+      });
+      const r = wizardEl.querySelector('[data-wizard-reset]');
+      if (r) r.addEventListener('click', () => {
+        const st = ensureWizardState(article);
+        st.stepId = article.steps.start;
+        st.history = [];
+        rerender();
+      });
     }
 
-    function toggleArticle(articleEl) {
-      const id = articleEl.dataset.id;
-      if (expandedId === id) { expandedId = null; renderList(filterArticles()); return; }
+    // ===== ОТКРЫТЬ / ЗАКРЫТЬ =====
+    function openArticle(id) {
       expandedId = id;
       const article = allArticles.find(a => a.id === id);
       if (article && article.steps) wizardState[id] = null;
+      document.body.classList.add('article-open');
       renderList(filterArticles());
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    function closeArticle() {
+      expandedId = null;
+      document.body.classList.remove('article-open');
+      renderList(filterArticles());
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ===== LIGHTBOX =====
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     function openLightbox(src, alt) {
@@ -396,10 +424,21 @@
     document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+      if (e.key === 'Escape') {
+        if (lightbox.classList.contains('open')) closeLightbox();
+        else if (expandedId) closeArticle();
+      }
     });
 
-    els.search.addEventListener('input', () => renderList(filterArticles()));
+    // ===== SEARCH =====
+    els.search.addEventListener('input', () => {
+      if (expandedId) {
+        expandedId = null;
+        document.body.classList.remove('article-open');
+      }
+      renderList(filterArticles());
+    });
+
     loadArticles();
   </script>
 </body>
