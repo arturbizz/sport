@@ -337,7 +337,7 @@
           <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
           <div class="field-hint">
             <strong>Как вставить фото:</strong> кликни в тексте → нажми круглую кнопку <strong>«Загрузить фото»</strong> справа внизу (или <kbd>Ctrl</kbd>+<kbd>V</kbd>).<br>
-            <strong>Украшения:</strong> выдели текст → нажми кнопку на панели (Маркер, Подчеркнуть, рамки). Или поставь курсор без выделения — появится шаблон.<br>
+            <strong>Украшения:</strong> выдели текст → нажми кнопку. Форматирование применится к выделенному. <strong>Повторное нажатие снимает форматирование.</strong><br>
             <strong>Сохранить:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd> &nbsp;·&nbsp; <strong>Полный экран:</strong> кнопка в тулбаре или <kbd>Esc</kbd>
           </div>
         </div>
@@ -376,6 +376,8 @@
     let currentSteps = null;
     let isDirty = false;
     let pendingInsertPos = null;
+    // ⬇ Сохранённое выделение в textarea (чтобы не терялось при клике на тулбар)
+    let savedSelection = { start: 0, end: 0 };
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
 
@@ -644,14 +646,9 @@
       updateFabVisibility();
     });
 
-    // Обработка callouts и == для превью (как на публичной странице)
     const CALLOUT_TITLES = {
-      note: 'Заметка',
-      tip: 'Совет',
-      warning: 'Внимание',
-      danger: 'Запрещено',
-      success: 'Готово',
-      important: 'Важно'
+      note: 'Заметка', tip: 'Совет', warning: 'Внимание',
+      danger: 'Запрещено', success: 'Готово', important: 'Важно'
     };
     function renderMarkdownForPreview(md) {
       md = md.replace(/^:::(\w+)[ \t]*\n([\s\S]*?)\n:::[ \t]*$/gm, (m, type, body) => {
@@ -663,37 +660,83 @@
       return marked.parse(md);
     }
 
-    // ===== TOOLBAR (украшения) =====
+    // ===== СОХРАНЕНИЕ ВЫДЕЛЕНИЯ =====
+    // Проблема: при клике на кнопку тулбара фокус уходит из textarea и selectionStart/End сбрасываются.
+    // Решение: сохраняем позицию до потери фокуса (mousedown, select, keyup, click) и восстанавливаем.
+
+    const contentEl = $('f-content');
+
+    function saveSelectionNow() {
+      savedSelection.start = contentEl.selectionStart ?? 0;
+      savedSelection.end = contentEl.selectionEnd ?? 0;
+    }
+    contentEl.addEventListener('select', saveSelectionNow);
+    contentEl.addEventListener('click', saveSelectionNow);
+    contentEl.addEventListener('keyup', saveSelectionNow);
+    contentEl.addEventListener('mouseup', saveSelectionNow);
+
+    // Не даём кнопкам тулбара украсть фокус + сохраняем выделение прямо перед кликом
+    $('md-toolbar').addEventListener('mousedown', (e) => {
+      if (e.target.closest('button[data-md]')) {
+        e.preventDefault(); // фокус остаётся в textarea, выделение не сбрасывается
+        saveSelectionNow();
+      }
+    });
+
+    // ===== WRAP / UNWRAP =====
     function wrapSelection(before, after, placeholder) {
-      const el = $('f-content');
-      const start = el.selectionStart ?? el.value.length;
-      const end = el.selectionEnd ?? el.value.length;
+      const el = contentEl;
+      let { start, end } = savedSelection;
+      // Валидация: если позиции устарели — берём актуальные
+      if (typeof start !== 'number' || start < 0 || start > el.value.length) start = el.selectionStart ?? 0;
+      if (typeof end !== 'number' || end < start || end > el.value.length) end = el.selectionEnd ?? start;
+
       const selected = el.value.slice(start, end);
 
-      let newText, cursorPos;
-      if (selected) {
-        newText = before + selected + after;
-        cursorPos = start + newText.length;
-      } else {
-        newText = before + placeholder + after;
-        cursorPos = start + before.length + placeholder.length;
+      // Если выделенный фрагмент уже обёрнут в before/after — снимаем обёртку
+      if (selected.length >= (before.length + after.length) &&
+          selected.startsWith(before) && selected.endsWith(after)) {
+        const inner = selected.slice(before.length, selected.length - after.length);
+        el.value = el.value.slice(0, start) + inner + el.value.slice(end);
+        el.focus();
+        el.selectionStart = start;
+        el.selectionEnd = start + inner.length;
+        savedSelection = { start, end: start + inner.length };
+        markDirty();
+        return;
       }
 
+      // Оборачиваем (с выделением — вокруг выделенного, без — placeholder)
+      let inner, innerStart, innerEnd;
+      if (selected) {
+        inner = selected;
+      } else {
+        inner = placeholder;
+      }
+      const newText = before + inner + after;
       el.value = el.value.slice(0, start) + newText + el.value.slice(end);
-      el.selectionStart = el.selectionEnd = cursorPos;
       el.focus();
+      innerStart = start + before.length;
+      innerEnd = innerStart + inner.length;
+      el.selectionStart = innerStart;
+      el.selectionEnd = innerEnd;
+      savedSelection = { start: innerStart, end: innerEnd };
       markDirty();
     }
 
     function insertCallout(type) {
-      const el = $('f-content');
-      const start = el.selectionStart ?? el.value.length;
-      const end = el.selectionEnd ?? el.value.length;
+      const el = contentEl;
+      let { start, end } = savedSelection;
+      if (typeof start !== 'number' || start < 0 || start > el.value.length) start = el.selectionStart ?? 0;
+      if (typeof end !== 'number' || end < start || end > el.value.length) end = el.selectionEnd ?? start;
+
       const selected = el.value.slice(start, end) || 'Текст внутри рамочки';
       const block = `\n:::${type}\n${selected}\n:::\n`;
       el.value = el.value.slice(0, start) + block + el.value.slice(end);
-      el.selectionStart = el.selectionEnd = start + block.length;
       el.focus();
+      const cursorPos = start + block.length;
+      el.selectionStart = el.selectionEnd = cursorPos;
+      savedSelection = { start: cursorPos, end: cursorPos };
       markDirty();
     }
 
@@ -702,15 +745,9 @@
       if (!btn) return;
       const action = btn.dataset.md;
       switch (action) {
-        case 'highlight':
-          wrapSelection('==', '==', 'выделенный текст');
-          break;
-        case 'underline':
-          wrapSelection('<u>', '</u>', 'подчёркнутый текст');
-          break;
-        case 'strike':
-          wrapSelection('~~', '~~', 'зачёркнутый текст');
-          break;
+        case 'highlight': wrapSelection('==', '==', 'выделенный текст'); break;
+        case 'underline': wrapSelection('<u>', '</u>', 'подчёркнутый текст'); break;
+        case 'strike': wrapSelection('~~', '~~', 'зачёркнутый текст'); break;
         case 'note':
         case 'tip':
         case 'warning':
@@ -1119,7 +1156,7 @@
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c =>
-        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'#39;' }[c]));
     }
 
     checkAuth();
