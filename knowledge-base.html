@@ -161,8 +161,16 @@
       return String(s ?? '').replace(/[&<>"']/g, c =>
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
+
+    // ⬇⬇⬇ ИСПРАВЛЕНО: сначала убираем HTML-теги, потом markdown-символы ⬇⬇⬇
     function excerpt(text, len = 180) {
-      const plain = (text || '').replace(/[#*`>\-!\[\]\(\)=:]/g, '').replace(/\n+/g, ' ').trim();
+      const plain = (text || '')
+        .replace(/<[^>]*>/g, '')           // вырезаем все HTML-теги: <u>, </u>, <mark>, <br> и т.д.
+        .replace(/:::\w+/g, '')            // убираем маркеры callout-блоков :::tip
+        .replace(/:::+/g, '')
+        .replace(/[#*`>\-!\[\]\(\)=:]/g, '') // остальные markdown-символы
+        .replace(/\s+/g, ' ')              // сжимаем пробелы
+        .trim();
       return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
     }
 
@@ -230,7 +238,6 @@
       });
     }
 
-    // ===== ГЛАВНЫЙ РЕНДЕР =====
     function renderList(articles) {
       if (expandedId) {
         const article = allArticles.find(a => a.id === expandedId);
@@ -244,7 +251,6 @@
       renderArticleList(articles);
     }
 
-    // ===== СПИСОК СТАТЕЙ =====
     function renderArticleList(articles) {
       if (!articles.length) {
         els.results.innerHTML = `<div class="empty-state">
@@ -277,7 +283,6 @@
       });
     }
 
-    // ===== ОДНА СТАТЬЯ НА ВЕСЬ ЭКРАН =====
     function renderArticleView(article) {
       const isWizard = article.steps && article.steps.steps && article.steps.steps.length;
       const badges = (isWizard ? '<span class="badge-scenario">Сценарий</span>' : '')
@@ -309,7 +314,6 @@
       if (isWizard) bindWizard(article);
     }
 
-    // ===== WIZARD =====
     function ensureWizardState(a) {
       if (!wizardState[a.id]) wizardState[a.id] = { stepId: a.steps.start, history: [] };
       return wizardState[a.id];
@@ -392,7 +396,6 @@
       });
     }
 
-    // ===== ОТКРЫТЬ / ЗАКРЫТЬ =====
     function openArticle(id) {
       expandedId = id;
       const article = allArticles.find(a => a.id === id);
@@ -409,7 +412,6 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ===== LIGHTBOX =====
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     function openLightbox(src, alt) {
@@ -430,7 +432,6 @@
       }
     });
 
-    // ===== SEARCH =====
     els.search.addEventListener('input', () => {
       if (expandedId) {
         expandedId = null;
