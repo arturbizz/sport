@@ -6,459 +6,11 @@
   <title>Редактор базы знаний</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
   <style>
-    /* ===== ADMIN v3 — просторный, сворачиваемый ===== */
     body { overflow: hidden; }
-
-    .admin-layout {
-      display: grid;
-      grid-template-columns: 320px 1fr;
-      height: 100vh;
-      transition: grid-template-columns 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .admin-layout.sidebar-collapsed {
-      grid-template-columns: 0 1fr;
-    }
-
-    /* Sidebar */
-    .admin-sidebar {
-      border-right: 1px solid var(--hairline);
-      padding: 24px 20px;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      background: linear-gradient(180deg, var(--bg) 0%, #F5F1E8 100%);
-      transition: opacity 0.25s, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      min-width: 0;
-    }
-    .admin-layout.sidebar-collapsed .admin-sidebar {
-      opacity: 0;
-      transform: translateX(-20px);
-      pointer-events: none;
-      padding: 0;
-    }
-    .admin-sidebar .brand { margin-bottom: 24px; }
-    .admin-sidebar-top { display: flex; gap: 8px; margin-bottom: 16px; }
-    .admin-sidebar-top .btn { flex: 1; }
-
-    .admin-article-list {
-      flex: 1;
-      overflow-y: auto;
-      margin: 0 -20px;
-      padding: 0 20px;
-    }
-    .admin-article-item {
-      display: block;
-      width: 100%;
-      text-align: left;
-      background: none;
-      border: none;
-      border-bottom: 1px solid var(--hairline);
-      padding: 12px 8px;
-      font-family: var(--font-body);
-      font-size: 13.5px;
-      color: var(--ink-2);
-      cursor: pointer;
-      transition: color 0.15s, background 0.15s, padding 0.2s;
-      line-height: 1.4;
-      border-radius: 4px;
-    }
-    .admin-article-item:hover { color: var(--ink); background: rgba(0,0,0,0.02); padding-left: 12px; }
-    .admin-article-item.active { color: var(--accent); background: var(--accent-soft); }
-    .admin-article-item-cat {
-      display: block;
-      font-size: 10.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--ink-4);
-      margin-top: 3px;
-    }
-    .admin-article-item.active .admin-article-item-cat { color: var(--accent); opacity: 0.7; }
-
-    /* Main editor area */
-    .editor-main {
-      height: 100vh;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    /* Sticky toolbar */
-    .editor-toolbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 40px;
-      background: rgba(251, 249, 245, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--hairline);
-    }
-
-    /* Кнопка сворачивания сайдбара */
-    .sidebar-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      background: transparent;
-      border: 1px solid var(--hairline-2);
-      border-radius: 6px;
-      color: var(--ink-2);
-      cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-    }
-    .sidebar-toggle:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: var(--accent-soft);
-    }
-    .sidebar-toggle svg { width: 16px; height: 16px; }
-
-    .editor-toolbar-status {
-      font-size: 12.5px;
-      color: var(--ink-3);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .status-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--ink-4);
-      flex-shrink: 0;
-    }
-    .status-dot.unsaved { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); animation: pulseGlow 2s ease-in-out infinite; }
-    .status-dot.saved { background: #2F9E5F; }
-    .status-dot.error { background: #D93025; }
-    .editor-toolbar-actions { display: flex; gap: 8px; flex-shrink: 0; }
-
-    /* Content inside editor */
-    .editor-content {
-      padding: 36px 40px 80px;
-      max-width: 1100px;
-      width: 100%;
-      margin: 0 auto;
-      flex: 1;
-    }
-    .admin-layout.sidebar-collapsed .editor-content {
-      max-width: 1200px;
-    }
-
-    /* Welcome */
-    .welcome {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 60vh;
-      text-align: center;
-      color: var(--ink-3);
-      padding: 40px 20px;
-    }
-    .welcome h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; color: var(--ink); margin-bottom: 12px; letter-spacing: -0.01em; }
-    .welcome p { max-width: 440px; margin-bottom: 28px; font-size: 15px; line-height: 1.65; }
-
-    /* Form fields */
-    .field { margin-bottom: 28px; }
-    .field-label {
-      display: block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--ink-3);
-      margin-bottom: 10px;
-      font-weight: 500;
-    }
-    .field-input {
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-family: var(--font-body);
-      color: var(--ink);
-      padding: 10px 0;
-      border-bottom: 1px solid var(--hairline);
-      transition: border-color 0.2s;
-      font-size: 16px;
-    }
-    .field-input:focus { outline: none; border-bottom-color: var(--accent); }
-
-    .title-input {
-      font-family: var(--font-display) !important;
-      font-size: 32px !important;
-      font-weight: 400;
-      letter-spacing: -0.015em;
-      line-height: 1.2;
-      padding: 12px 0 !important;
-      border-bottom: 2px solid var(--hairline);
-    }
-    .title-input:focus { border-bottom-color: var(--accent); }
-
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-
-    /* Pin toggle */
-    .pin-toggle {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 16px 20px;
-      border: 1px solid var(--hairline);
-      border-radius: 8px;
-      cursor: pointer;
-      user-select: none;
-      transition: border-color 0.15s, background 0.15s;
-      font-size: 14px;
-    }
-    .pin-toggle:hover { border-color: var(--hairline-2); }
-    .pin-toggle.checked { border-color: var(--accent); background: var(--accent-soft); }
-    .pin-toggle input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin-top: 1px; }
-    .pin-toggle strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 3px; font-size: 14.5px; }
-    .pin-toggle small { display: block; color: var(--ink-3); font-weight: 400; font-size: 13px; line-height: 1.5; }
-
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 1px solid var(--hairline);
-      margin-bottom: 28px;
-    }
-    .tab {
-      background: none;
-      border: none;
-      padding: 14px 24px;
-      font-family: var(--font-body);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--ink-3);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .tab:hover { color: var(--ink); }
-    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-    /* Content editor */
-    .content-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .content-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-
-    .content-textarea {
-      width: 100%;
-      min-height: 500px;
-      resize: vertical;
-      font-family: var(--font-mono) !important;
-      font-size: 14px !important;
-      line-height: 1.75;
-      border: 1px solid var(--hairline) !important;
-      border-radius: 10px;
-      padding: 24px !important;
-      background: var(--bg-elevated);
-      color: var(--ink);
-      transition: border-color 0.2s, box-shadow 0.2s, background 0.6s;
-    }
-    .content-textarea:focus {
-      outline: none;
-      border-color: var(--accent) !important;
-      box-shadow: 0 0 0 4px var(--accent-soft);
-    }
-    .content-textarea.just-inserted {
-      background: var(--accent-soft);
-      border-color: var(--accent) !important;
-    }
-
-    .preview-pane {
-      padding: 32px 40px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--hairline);
-      border-radius: 10px;
-      min-height: 500px;
-      animation: fadeIn 0.3s ease-out;
-    }
-
-    .view-toggle {
-      display: inline-flex;
-      border: 1px solid var(--hairline-2);
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    .view-toggle button {
-      background: transparent;
-      border: none;
-      padding: 8px 18px;
-      font-size: 13px;
-      color: var(--ink-3);
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-    .view-toggle button.active { background: var(--ink); color: var(--bg); }
-
-    .img-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      font-size: 13px;
-      background: var(--bg-elevated);
-      border: 1px solid var(--hairline-2);
-      border-radius: 6px;
-      cursor: pointer;
-      color: var(--ink-2);
-      transition: all 0.15s;
-      font-family: var(--font-body);
-    }
-    .img-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-    .img-btn:disabled { opacity: 0.5; cursor: wait; }
-
-    .field-hint {
-      font-size: 12.5px;
-      color: var(--ink-4);
-      margin-top: 10px;
-      line-height: 1.6;
-      padding: 12px 16px;
-      background: var(--bg-subtle);
-      border-radius: 6px;
-      border-left: 2px solid var(--hairline-2);
-    }
-    .field-hint strong { color: var(--ink-2); font-weight: 500; }
-    .field-hint kbd {
-      background: var(--bg-elevated);
-      padding: 1px 6px;
-      border-radius: 3px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      border: 1px solid var(--hairline);
-    }
-
-    .drop-active {
-      outline: 2px dashed var(--accent) !important;
-      outline-offset: -6px;
-      background: var(--accent-soft) !important;
-    }
-
-    /* Upload status */
-    .upload-status {
-      display: none;
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--ink);
-      color: var(--bg);
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-size: 13.5px;
-      box-shadow: var(--shadow-lg);
-      z-index: 1000;
-      animation: fadeUp 0.3s ease-out;
-    }
-    .upload-status.show { display: block; }
-
-    /* Toasts */
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 2000;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: 400px;
-    }
-    .toast {
-      background: var(--bg-elevated);
-      border: 1px solid var(--hairline);
-      border-left: 3px solid var(--accent);
-      border-radius: 8px;
-      padding: 14px 18px;
-      box-shadow: var(--shadow-lg);
-      font-size: 13.5px;
-      color: var(--ink);
-      animation: fadeUp 0.3s ease-out;
-      line-height: 1.5;
-    }
-    .toast.success { border-left-color: #2F9E5F; }
-    .toast.error { border-left-color: #D93025; }
-    .toast strong { display: block; margin-bottom: 4px; font-size: 14px; font-weight: 500; }
-
-    /* Steps editor */
-    .step-card { border:1px solid var(--hairline); border-radius:10px; padding:20px 22px; margin-bottom:16px; background:var(--bg-elevated); }
-    .step-card-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-    .step-id { font-family:var(--font-mono); font-size:12px; color:var(--ink-3); background:var(--bg-subtle); padding:3px 9px; border-radius:4px; }
-    .step-kind { font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--accent); font-weight: 500; }
-    .step-card-actions { margin-left:auto; display:flex; gap:6px; }
-    .step-row { margin-bottom:12px; }
-    .step-row label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-3); margin-bottom:6px; font-weight:500; }
-    .step-row input, .step-row select, .step-row textarea {
-      width:100%; padding:9px 12px; border:1px solid var(--hairline); border-radius:6px;
-      font-family:var(--font-body); font-size:14px; background:var(--bg-elevated); color:var(--ink);
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .step-row input:focus, .step-row select:focus, .step-row textarea:focus {
-      outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
-    }
-    .step-row textarea { min-height:80px; resize:vertical; font-family:var(--font-mono); font-size:13px; }
-    .option-row { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px; }
-    .option-row input, .option-row select { padding:8px 10px; border:1px solid var(--hairline); border-radius:6px; font-size:13px; font-family:var(--font-body); background:var(--bg-elevated); color:var(--ink); }
-    .option-row button { background:none; border:1px solid var(--hairline-2); border-radius:4px; padding:5px 10px; cursor:pointer; color:var(--accent); font-size:12px; }
-    .option-row button:hover { border-color:var(--accent); background:var(--accent-soft); }
-    .add-option-btn { background:none; border:1px dashed var(--hairline-2); border-radius:6px; padding:8px 12px; font-size:13px; color:var(--ink-3); cursor:pointer; width:100%; transition: all .15s; }
-    .add-option-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
-    .step-toolbar { display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
-    .start-select { padding:8px 12px; border:1px solid var(--hairline); border-radius:6px; font-size:13.5px; background:var(--bg-elevated); color:var(--ink); }
-    .empty-steps { padding:48px 32px; text-align:center; color:var(--ink-3); font-size:14px; border:1px dashed var(--hairline-2); border-radius:10px; }
-
-    /* Login */
-    .login-wrap {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-    }
-
-    /* Scrollbar */
-    .editor-main::-webkit-scrollbar,
-    .admin-article-list::-webkit-scrollbar { width: 8px; }
-    .editor-main::-webkit-scrollbar-thumb,
-    .admin-article-list::-webkit-scrollbar-thumb { background: var(--hairline-2); border-radius: 4px; }
-    .editor-main::-webkit-scrollbar-thumb:hover,
-    .admin-article-list::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
-
-    /* Responsive */
-    @media (max-width: 900px) {
-      .admin-layout, .admin-layout.sidebar-collapsed { grid-template-columns: 1fr; }
-      .admin-sidebar { display: none; }
-      .editor-toolbar { padding: 12px 20px; }
-      .editor-content { padding: 24px 20px 60px; }
-      .field-row { grid-template-columns: 1fr; }
-      .title-input { font-size: 24px !important; }
-      .content-textarea { min-height: 400px; padding: 16px !important; }
-    }
+    .login-wrap .brand-mark { width: 24px; height: 24px; }
   </style>
 </head>
 <body>
@@ -466,7 +18,6 @@
   <div class="toast-container" id="toast-container"></div>
   <div class="upload-status" id="upload-status"></div>
 
-  <!-- LOGIN -->
   <div class="login-wrap" id="login-view" style="display:none;">
     <div class="login-card">
       <div class="brand">
@@ -484,13 +35,12 @@
           <label class="field-label" for="login-password">Пароль</label>
           <input class="field-input" type="password" id="login-password" required autocomplete="current-password">
         </div>
-        <button class="btn btn-primary" type="submit" id="login-submit" style="width:100%;margin-top:8px;">Войти</button>
+        <button class="btn btn-primary" type="submit" id="login-submit">Войти</button>
         <div class="form-error" id="login-error"></div>
       </form>
     </div>
   </div>
 
-  <!-- ADMIN -->
   <div class="admin-layout" id="admin-view" style="display:none;">
     <aside class="admin-sidebar" id="admin-sidebar">
       <div class="brand" style="cursor:default;">
@@ -501,7 +51,7 @@
 
       <div class="admin-sidebar-top">
         <button class="btn btn-primary btn-sm" id="new-article-btn">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M8 2v12M2 8h12"/>
           </svg>
           Новая
@@ -578,8 +128,8 @@
             </div>
             <div class="content-actions">
               <button type="button" class="img-btn" id="upload-img-btn">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <rect x="2" y="2" width="12" height="12" rx="1.5"/>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="2" y="2" width="12" height="12" rx="2"/>
                   <circle cx="5.5" cy="5.5" r="1.2"/>
                   <path d="M2 12l4-4 3 3 2-2 3 3"/>
                 </svg>
@@ -633,18 +183,15 @@
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
 
-    // ===== SIDEBAR COLLAPSE =====
     function initSidebar() {
       const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
       adminLayout.classList.toggle('sidebar-collapsed', collapsed);
     }
-
     $('sidebar-toggle').addEventListener('click', () => {
       const isCollapsed = adminLayout.classList.toggle('sidebar-collapsed');
       localStorage.setItem(SIDEBAR_KEY, isCollapsed ? '1' : '0');
     });
 
-    // ===== TOAST =====
     function toast(message, type = 'info', duration = 3500) {
       const el = document.createElement('div');
       el.className = 'toast ' + type;
@@ -670,7 +217,6 @@
     }
     function markError(msg) { setStatus('error', 'Ошибка: ' + (msg || '').slice(0, 60)); }
 
-    // ===== DRAFT =====
     function saveDraft() {
       if (!editorContent.style.display || editorContent.style.display === 'none') return;
       const draft = {
@@ -716,7 +262,6 @@
       setStatus('unsaved', 'Восстановлен черновик');
     }
 
-    // ===== AUTH =====
     async function checkAuth() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) showAdmin(); else showLogin();
@@ -743,14 +288,12 @@
       $('login-password').value = '';
       showAdmin();
     });
-
     $('logout-btn').addEventListener('click', async () => {
       if (isDirty && !confirm('Есть несохранённые изменения. Выйти?')) return;
       await supabaseClient.auth.signOut();
       showLogin();
     });
 
-    // ===== LOAD =====
     async function loadArticles() {
       const { data, error } = await supabaseClient
         .from('knowledge_articles').select('*')
@@ -774,7 +317,7 @@
           .filter(Boolean).join(' · ');
         return `
           <button class="admin-article-item ${currentId === a.id ? 'active' : ''}" data-id="${a.id}">
-            ${a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;margin-right:8px;vertical-align:middle;"></span>' : ''}${escapeHtml(a.title)}
+            ${a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--violet);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px var(--violet-glow);"></span>' : ''}${escapeHtml(a.title)}
             <span class="admin-article-item-cat">${escapeHtml(suffix)}</span>
           </button>
         `;
@@ -791,7 +334,6 @@
       $('category-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
     }
 
-    // ===== FORM =====
     function showWelcome() {
       welcomeState.style.display = 'flex';
       editorContent.style.display = 'none';
@@ -805,7 +347,6 @@
     function updatePinToggle() {
       $('pin-toggle-label').classList.toggle('checked', $('f-pinned').checked);
     }
-
     function clearForm() {
       if (isDirty && !confirm('Есть несохранённые изменения. Создать новую статью?')) return;
       currentId = null;
@@ -825,7 +366,6 @@
       renderArticleList();
       $('f-title').focus();
     }
-
     function openArticle(id) {
       const a = articles.find(x => x.id === id);
       if (!a) return;
@@ -847,7 +387,6 @@
       renderArticleList();
     }
 
-    // ===== TABS =====
     function switchTab(tab) {
       $('tab-text').classList.toggle('active', tab === 'text');
       $('tab-steps').classList.toggle('active', tab === 'steps');
@@ -857,7 +396,6 @@
     $('tab-text').addEventListener('click', () => switchTab('text'));
     $('tab-steps').addEventListener('click', () => switchTab('steps'));
 
-    // ===== MARKDOWN =====
     function switchToEdit() {
       $('f-content').style.display = 'block';
       $('preview-pane').style.display = 'none';
@@ -873,7 +411,6 @@
       $('view-preview').classList.add('active');
     });
 
-    // ===== IMAGE UPLOAD =====
     function showUploadStatus(text) {
       const el = $('upload-status');
       if (!text) { el.classList.remove('show'); return; }
@@ -912,12 +449,10 @@
     async function uploadFiles(files) {
       const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
       if (!imageFiles.length) { pendingInsertPos = null; return; }
-
       const btn = $('upload-img-btn');
       btn.disabled = true;
       let successCount = 0;
       let lastInsertLine = 0;
-
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         const prefix = imageFiles.length > 1 ? `Загружаю ${i + 1} из ${imageFiles.length}: ` : 'Загружаю: ';
@@ -937,7 +472,6 @@
           toast('Не удалось загрузить фото: ' + err.message, 'error', 6000);
         }
       }
-
       if (successCount > 0) {
         showUploadStatus('');
         toast(`Фото вставлено в строку ${lastInsertLine}`, 'success', 3000);
@@ -948,36 +482,24 @@
       pendingInsertPos = null;
     }
 
-    // Вставка в сохранённую позицию + подсветка + прокрутка
     function insertAtCursor(text) {
       const el = $('f-content');
       const start = pendingInsertPos ? pendingInsertPos.start : (el.selectionStart ?? el.value.length);
       const end = pendingInsertPos ? pendingInsertPos.end : (el.selectionEnd ?? el.value.length);
-
       el.value = el.value.slice(0, start) + text + el.value.slice(end);
       const newPos = start + text.length;
       el.selectionStart = el.selectionEnd = newPos;
       el.focus();
-
-      // Номер строки, куда вставили
       const lineNumber = el.value.substring(0, start).split('\n').length;
-
-      // Прокрутить так, чтобы вставка была видна (примерно)
       const lineHeight = 14 * 1.75;
       el.scrollTop = Math.max(0, (lineNumber - 5) * lineHeight);
-
-      // Подсветить поле на мгновение
       el.classList.add('just-inserted');
       setTimeout(() => el.classList.remove('just-inserted'), 700);
-
-      // Обновить позицию для следующего файла в мультивыборе
       pendingInsertPos = { start: newPos, end: newPos };
-
       markDirty();
       return lineNumber;
     }
 
-    // Кнопка «Загрузить фото» — СОХРАНЯЕМ позицию курсора перед диалогом
     $('upload-img-btn').addEventListener('click', () => {
       const el = $('f-content');
       pendingInsertPos = {
@@ -990,7 +512,6 @@
       input.click();
     });
 
-    // Ctrl+V — тоже сохраняем позицию
     $('f-content').addEventListener('paste', async (e) => {
       const items = e.clipboardData?.items;
       if (!items) return;
@@ -1006,7 +527,6 @@
       if (files.length) await uploadFiles(files);
     });
 
-    // Drag & Drop — позиция курсора не сдвигается, вставляем туда где он был
     const textarea = $('f-content');
     ['dragenter', 'dragover'].forEach(evt => {
       textarea.addEventListener(evt, (e) => {
@@ -1032,7 +552,6 @@
       }
     });
 
-    // ===== STEPS EDITOR =====
     $('add-step-btn').addEventListener('click', () => {
       if (!currentSteps) currentSteps = { start: null, steps: [] };
       const id = 'step-' + Date.now().toString(36);
@@ -1192,7 +711,6 @@
       renderStepsEditor();
     }
 
-    // ===== SAVE =====
     async function saveArticle() {
       const title = $('f-title').value.trim();
       const category = $('f-category').value.trim();
@@ -1229,17 +747,14 @@
       try {
         let error, savedId = currentId;
         if (currentId) {
-          const res = await supabaseClient
-            .from('knowledge_articles').update(payload).eq('id', currentId).select().single();
+          const res = await supabaseClient.from('knowledge_articles').update(payload).eq('id', currentId).select().single();
           error = res.error;
           if (!error && res.data) savedId = res.data.id;
         } else {
-          const res = await supabaseClient
-            .from('knowledge_articles').insert(payload).select().single();
+          const res = await supabaseClient.from('knowledge_articles').insert(payload).select().single();
           error = res.error;
           if (!error && res.data) savedId = res.data.id;
         }
-
         if (error) {
           console.error('SAVE ERROR:', error);
           toast('Не удалось сохранить: ' + error.message, 'error', 10000);
@@ -1247,16 +762,13 @@
           btn.disabled = false; btn.textContent = 'Сохранить';
           return;
         }
-
-        const { data: check } = await supabaseClient
-          .from('knowledge_articles').select('id,title,updated_at').eq('id', savedId).single();
+        const { data: check } = await supabaseClient.from('knowledge_articles').select('id,title,updated_at').eq('id', savedId).single();
         if (!check) {
-          toast('Статья не найдена после сохранения. Проверьте права доступа.', 'error', 8000);
+          toast('Статья не найдена после сохранения.', 'error', 8000);
           markError('verify failed');
           btn.disabled = false; btn.textContent = 'Сохранить';
           return;
         }
-
         currentId = savedId;
         isDirty = false;
         markSaved();
@@ -1273,19 +785,16 @@
     }
 
     $('save-btn').addEventListener('click', saveArticle);
-
     document.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
         if (editorContent.style.display !== 'none') saveArticle();
       }
     });
-
     window.addEventListener('beforeunload', (e) => {
       if (isDirty) { e.preventDefault(); e.returnValue = ''; }
     });
 
-    // ===== DELETE =====
     $('delete-btn').addEventListener('click', async () => {
       if (!currentId) return;
       const a = articles.find(x => x.id === currentId);
@@ -1308,7 +817,6 @@
       $(id).addEventListener('input', markDirty);
     });
     $('f-pinned').addEventListener('change', () => { updatePinToggle(); markDirty(); });
-
     setInterval(() => { if (isDirty) saveDraft(); }, 3000);
 
     function escapeHtml(s) {
