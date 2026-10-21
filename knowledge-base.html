@@ -3,18 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Руководство — Колл-центр</title>
+  <title>База знаний — Колл-центр</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
   <style>
-    /* Pinned section */
-    .must-know-wrap {
-      margin-bottom: 28px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--hairline);
-    }
+    .must-know-wrap { margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--hairline); }
     .must-know-btn {
       width: 100%; text-align: left;
       background: var(--accent-soft); border: 1px solid transparent;
@@ -24,7 +19,7 @@
       transition: all 0.15s;
       display: flex; align-items: center; gap: 10px;
     }
-    .must-know-btn:hover { background: rgba(168, 71, 42, 0.14); border-color: var(--accent); }
+    .must-know-btn:hover { background: rgba(212, 98, 46, 0.14); border-color: var(--accent); }
     .must-know-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
     .must-know-icon { width: 16px; height: 16px; flex-shrink: 0; }
     .must-know-btn .count { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 12px; opacity: 0.7; }
@@ -37,7 +32,6 @@
       vertical-align: middle; font-weight: 500;
     }
 
-    /* Wizard styles */
     .wizard { padding: 8px 0 32px; }
     .wizard-step-title {
       font-family: var(--font-display); font-size: 24px; font-weight: 400;
@@ -45,7 +39,6 @@
       margin-bottom: 14px;
     }
     .wizard-step-content { color: var(--ink-2); font-size: 15px; line-height: 1.7; margin-bottom: 20px; }
-    .wizard-step-content img { max-width: 100%; height: auto; border-radius: 6px; margin: 12px 0; }
     .wizard-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
     .wizard-option {
       display: flex; align-items: center; justify-content: space-between;
@@ -74,9 +67,70 @@
       vertical-align: middle; font-weight: 500;
     }
 
+    /* ⬇⬇⬇ Картинки в статьях ⬇⬇⬇ */
+    .prose img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      margin: 16px 0;
+      display: block;
+      border: 1px solid var(--hairline);
+      cursor: zoom-in;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: var(--bg-subtle);
+      min-height: 40px;
+    }
+    .prose img:hover {
+      transform: scale(1.01);
+      box-shadow: 0 8px 24px rgba(26, 26, 26, 0.12);
+    }
+    .prose figure { margin: 16px 0; }
+    .prose figure img { margin: 0 0 6px; }
+    .prose figcaption {
+      font-size: 12.5px;
+      color: var(--ink-3);
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* Лайтбокс */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(20, 20, 20, 0.92);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      cursor: zoom-out;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 4px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 20px; right: 24px;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      font-size: 22px;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lightbox-close:hover { background: rgba(255, 255, 255, 0.2); }
+
     @media (max-width: 860px) {
       .must-know-wrap { margin-bottom: 16px; padding-bottom: 16px; }
       .must-know-btn { font-size: 13px; padding: 10px 12px; }
+      .prose img { margin: 12px 0; }
+      .lightbox { padding: 16px; }
     }
   </style>
 </head>
@@ -85,7 +139,7 @@
     <aside class="sidebar">
       <div class="brand" style="cursor:default;">
         <span class="brand-mark"></span>
-        <span class="brand-name">Руководство</span>
+        <span class="brand-name">База знаний</span>
       </div>
 
       <div class="must-know-wrap" id="must-know-wrap" style="display:none;">
@@ -121,6 +175,12 @@
     </main>
   </div>
 
+  <!-- Лайтбокс для фото -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightbox-close" aria-label="Закрыть">×</button>
+    <img id="lightbox-img" alt="">
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.11/dist/purify.min.js"></script>
@@ -144,14 +204,50 @@
       mustKnowCount: document.getElementById('must-know-count'),
     };
 
+    // ==== DOMPurify: явно разрешаем картинки ====
+    const PURIFY_CONFIG = {
+      ADD_TAGS: ['figure', 'figcaption', 'img'],
+      ADD_ATTR: ['src', 'alt', 'title', 'width', 'height', 'loading', 'target', 'rel'],
+      ALLOW_DATA_ATTR: false,
+    };
+
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c =>
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
+
+    // Рендер markdown → HTML → sanitize → пост-обработка (lazy + wrap figure)
     function renderMarkdown(text) {
       if (!text) return '';
-      return DOMPurify.sanitize(marked.parse(text), { ADD_TAGS: ['img'], ADD_ATTR: ['src','alt','width','height'] });
+      const rawHtml = marked.parse(text);
+      const clean = DOMPurify.sanitize(rawHtml, PURIFY_CONFIG);
+
+      // Логируем, если контент содержал img, но после sanitize их стало меньше
+      const before = (rawHtml.match(/<img/gi) || []).length;
+      const after = (clean.match(/<img/gi) || []).length;
+      if (before > 0 && after < before) {
+        console.warn('[KB] DOMPurify вырезал картинки:', { before, after });
+      }
+
+      // Пост-обработка через временный DOM
+      const tmp = document.createElement('div');
+      tmp.innerHTML = clean;
+      tmp.querySelectorAll('img').forEach(img => {
+        img.setAttribute('loading', 'lazy');
+        img.setAttribute('decoding', 'async');
+        const alt = img.getAttribute('alt') || '';
+        if (alt && alt.length > 2) {
+          const fig = document.createElement('figure');
+          img.replaceWith(fig);
+          fig.appendChild(img);
+          const cap = document.createElement('figcaption');
+          cap.textContent = alt;
+          fig.appendChild(cap);
+        }
+      });
+      return tmp.innerHTML;
     }
+
     function excerpt(text, len = 180) {
       const plain = (text || '').replace(/[#*`>\-!\[\]\(\)]/g, '').replace(/\n+/g, ' ').trim();
       return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
@@ -322,11 +418,27 @@
         expandedId = null;
         renderList(filterArticles());
       });
+
+      // Клик по картинке → лайтбокс
+      container.querySelectorAll('.prose img').forEach(img => {
+        img.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openLightbox(img.src, img.alt);
+        });
+      });
+
       if (!a.steps || !a.steps.steps) return;
       const wizardEl = container.querySelector('[data-wizard-article]');
       if (!wizardEl) return;
       function rerender() { wizardEl.innerHTML = renderWizardStep(a); bindWizard(); }
       function bindWizard() {
+        // Перепривязать картинки в wizard-шаге
+        wizardEl.querySelectorAll('.prose img').forEach(img => {
+          img.addEventListener('click', (e) => {
+            e.stopPropagation();
+            openLightbox(img.src, img.alt);
+          });
+        });
         wizardEl.querySelectorAll('[data-wizard-next]').forEach(btn => {
           btn.addEventListener('click', () => {
             const target = btn.dataset.wizardNext;
@@ -367,6 +479,27 @@
       if (article && article.steps) wizardState[id] = null;
       renderList(filterArticles());
     }
+
+    // ==== Лайтбокс ====
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    function openLightbox(src, alt) {
+      lightboxImg.src = src;
+      lightboxImg.alt = alt || '';
+      lightbox.classList.add('open');
+    }
+    function closeLightbox() {
+      lightbox.classList.remove('open');
+      lightboxImg.src = '';
+    }
+    document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+    });
 
     els.search.addEventListener('input', () => renderList(filterArticles()));
     loadArticles();
