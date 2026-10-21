@@ -12,14 +12,12 @@
     body { overflow: hidden; }
     .login-wrap .brand-mark { width: 24px; height: 24px; }
 
-    /* ==== FULLSCREEN MODE ==== */
     .admin-layout.fullscreen { grid-template-columns: 1fr; }
     .admin-layout.fullscreen .admin-sidebar { display: none; }
     .admin-layout.fullscreen .editor-content { max-width: 100%; padding: 24px 40px 96px; }
-    .admin-layout.fullscreen .content-textarea { min-height: calc(100vh - 280px); }
-    .admin-layout.fullscreen .preview-pane { min-height: calc(100vh - 280px); }
+    .admin-layout.fullscreen .content-textarea { min-height: calc(100vh - 340px); }
+    .admin-layout.fullscreen .preview-pane { min-height: calc(100vh - 340px); }
 
-    /* ==== FAB ==== */
     .fab-upload {
       position: fixed;
       bottom: 28px;
@@ -42,20 +40,12 @@
       animation: fabIn 0.35s var(--spring);
     }
     .fab-upload.show { display: inline-flex; }
-    .fab-upload:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 40px rgba(79, 142, 255, 0.55), 0 4px 12px rgba(79, 142, 255, 0.3);
-    }
+    .fab-upload:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(79, 142, 255, 0.55), 0 4px 12px rgba(79, 142, 255, 0.3); }
     .fab-upload:active { transform: translateY(0); }
     .fab-upload:disabled { opacity: 0.6; cursor: wait; }
     .fab-upload svg { width: 16px; height: 16px; flex-shrink: 0; }
+    @keyframes fabIn { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-    @keyframes fabIn {
-      from { opacity: 0; transform: translateY(20px) scale(0.9); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    /* Upload status — по центру, чуть выше FAB */
     .upload-status {
       bottom: 28px !important;
       left: 50% !important;
@@ -76,20 +66,16 @@
     .upload-status.show { display: inline-flex !important; }
     .upload-status::before {
       content: '';
-      width: 14px;
-      height: 14px;
+      width: 14px; height: 14px;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.25);
       border-top-color: white;
       animation: spinner 0.8s linear infinite;
       flex-shrink: 0;
     }
-    @keyframes spinner {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spinner { to { transform: rotate(360deg); } }
 
-    /* ==== TOASTS — новая версия ==== */
-    /* Переопределяем полностью, чтобы не мешать со старыми стилями из kb-styles.css */
+    /* Toasts снизу справа */
     .toast-container {
       position: fixed !important;
       top: auto !important;
@@ -104,7 +90,6 @@
       max-width: min(420px, calc(100vw - 56px)) !important;
       pointer-events: none;
     }
-
     .toast {
       display: flex !important;
       align-items: flex-start !important;
@@ -127,107 +112,31 @@
       opacity: 1 !important;
       transition: none !important;
     }
-
-    .toast.closing {
-      animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
-    }
-
-    .toast-icon {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
+    .toast.closing { animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
+    .toast-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
     .toast.success .toast-icon { background: var(--success); }
     .toast.error .toast-icon { background: var(--error); }
     .toast.info .toast-icon { background: var(--accent); }
-
-    .toast-content {
-      flex: 1;
-      min-width: 0;
-      padding-top: 2px;
-    }
-
-    .toast-title {
-      font-weight: 600 !important;
-      font-size: 13.5px !important;
-      color: var(--ink) !important;
-      margin-bottom: 2px !important;
-      line-height: 1.3;
-    }
-
-    .toast-message {
-      color: var(--ink-2) !important;
-      font-size: 12.5px !important;
-      line-height: 1.5 !important;
-      word-break: break-word;
-    }
-
-    /* Progress bar снизу тоста */
-    .toast::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      height: 2px;
-      width: 100%;
-      background: var(--accent);
-      opacity: 0.5;
-      animation: toastProgress var(--toast-duration, 3500ms) linear forwards;
-    }
+    .toast-content { flex: 1; min-width: 0; padding-top: 2px; }
+    .toast-title { font-weight: 600 !important; font-size: 13.5px !important; color: var(--ink) !important; margin-bottom: 2px !important; line-height: 1.3; }
+    .toast-message { color: var(--ink-2) !important; font-size: 12.5px !important; line-height: 1.5 !important; word-break: break-word; }
+    .toast::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; width: 100%; background: var(--accent); opacity: 0.5; animation: toastProgress var(--toast-duration, 3500ms) linear forwards; }
     .toast.success::after { background: var(--success); }
     .toast.error::after { background: var(--error); }
+    @keyframes toastSlideIn { from { opacity: 0; transform: translateX(40px) scale(0.94); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes toastSlideOut { to { opacity: 0; transform: translateX(40px) scale(0.94); } }
+    @keyframes toastProgress { from { width: 100%; } to { width: 0%; } }
 
-    @keyframes toastSlideIn {
-      from {
-        opacity: 0;
-        transform: translateX(40px) scale(0.94);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-      }
-    }
-
-    @keyframes toastSlideOut {
-      to {
-        opacity: 0;
-        transform: translateX(40px) scale(0.94);
-      }
-    }
-
-    @keyframes toastProgress {
-      from { width: 100%; }
-      to { width: 0%; }
-    }
-
-    /* На узких экранах тосты — на всю ширину */
     @media (max-width: 640px) {
-      .toast-container {
-        right: 12px !important;
-        left: 12px !important;
-        bottom: 90px !important;
-        align-items: stretch !important;
-        max-width: none !important;
-      }
-      .toast {
-        min-width: 0 !important;
-        max-width: none !important;
-      }
+      .toast-container { right: 12px !important; left: 12px !important; bottom: 90px !important; align-items: stretch !important; max-width: none !important; }
+      .toast { min-width: 0 !important; max-width: none !important; }
     }
 
-    /* ==== Fullscreen icon button ==== */
     .fullscreen-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 36px; height: 36px;
       padding: 0;
       background: var(--bg-elevated);
       border: 1px solid var(--hairline-2);
@@ -238,14 +147,20 @@
       flex-shrink: 0;
       box-shadow: var(--shadow-sm);
     }
-    .fullscreen-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-      background: var(--accent-soft);
-    }
+    .fullscreen-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
     .fullscreen-btn svg { width: 16px; height: 16px; }
-
     #upload-img-btn { display: none !important; }
+
+    /* Иконки в md-toolbar */
+    .md-toolbar button svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .md-toolbar button[data-md="highlight"] svg { color: #D97706; }
+    .md-toolbar button[data-md="underline"] svg { color: var(--accent); }
+    .md-toolbar button[data-md="strike"] svg { color: var(--ink-3); }
+    .md-toolbar button[data-md="tip"] svg { color: #10B981; }
+    .md-toolbar button[data-md="warning"] svg { color: #F59E0B; }
+    .md-toolbar button[data-md="danger"] svg { color: #EF4444; }
+    .md-toolbar button[data-md="important"] svg { color: #7C5DF5; }
+    .md-toolbar button[data-md="note"] svg { color: #4F8EFF; }
   </style>
 </head>
 <body>
@@ -381,11 +296,49 @@
               <button id="view-preview">Превью</button>
             </div>
           </div>
+
+          <!-- Панель украшений Markdown -->
+          <div class="md-toolbar" id="md-toolbar">
+            <button type="button" data-md="highlight" title="Выделить маркером ==текст==">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l-6 6v3h3l6-6"/><path d="M22 12l-4.5-4.5a2.12 2.12 0 0 0-3 0L9 13l3 3 6.5-6.5a2.12 2.12 0 0 0 0-3z"/></svg>
+              Маркер
+            </button>
+            <button type="button" data-md="underline" title="Подчеркнуть <u>текст</u>">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+              Подчеркнуть
+            </button>
+            <button type="button" data-md="strike" title="Зачеркнуть ~~текст~~">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="20" y2="12"/><path d="M16 6a4 4 0 0 0-4-2c-2 0-4 1-4 3s2 3 4 3 4 1 4 3-2 3-4 3a4 4 0 0 1-4-2"/></svg>
+              Зачеркнуть
+            </button>
+            <button type="button" data-md="note" title="Синяя рамочка-заметка">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Заметка
+            </button>
+            <button type="button" data-md="tip" title="Зелёная рамочка-совет">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+              Совет
+            </button>
+            <button type="button" data-md="warning" title="Жёлтая рамочка-внимание">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Внимание
+            </button>
+            <button type="button" data-md="danger" title="Красная рамочка-опасно">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+              Опасно
+            </button>
+            <button type="button" data-md="important" title="Фиолетовая рамочка-важно">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Важно
+            </button>
+          </div>
+
           <textarea class="content-textarea" id="f-content" placeholder="# Заголовок раздела&#10;&#10;Пошаговая инструкция…"></textarea>
           <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
           <div class="field-hint">
-            <strong>Как вставить фото:</strong> кликни в тексте в нужное место → нажми круглую кнопку <strong>«Загрузить фото»</strong> справа внизу (или вставь <kbd>Ctrl</kbd>+<kbd>V</kbd>). Фото вставится ровно туда, где был курсор.<br>
-            <strong>Сохранить статью:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd> &nbsp;·&nbsp; <strong>Полный экран:</strong> кнопка в углу тулбара или <kbd>Esc</kbd>
+            <strong>Как вставить фото:</strong> кликни в тексте → нажми круглую кнопку <strong>«Загрузить фото»</strong> справа внизу (или <kbd>Ctrl</kbd>+<kbd>V</kbd>).<br>
+            <strong>Украшения:</strong> выдели текст → нажми кнопку на панели (Маркер, Подчеркнуть, рамки). Или поставь курсор без выделения — появится шаблон.<br>
+            <strong>Сохранить:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd> &nbsp;·&nbsp; <strong>Полный экран:</strong> кнопка в тулбаре или <kbd>Esc</kbd>
           </div>
         </div>
 
@@ -469,7 +422,7 @@
       fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditMode);
     }
 
-    // ===== TOAST — красивая версия =====
+    // ===== TOAST =====
     const ICON_SUCCESS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>';
     const ICON_ERROR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     const ICON_INFO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
@@ -478,10 +431,8 @@
       const el = document.createElement('div');
       el.className = 'toast ' + type;
       el.style.setProperty('--toast-duration', duration + 'ms');
-
       const icon = type === 'success' ? ICON_SUCCESS : type === 'error' ? ICON_ERROR : ICON_INFO;
       const title = type === 'success' ? 'Готово' : type === 'error' ? 'Ошибка' : 'Инфо';
-
       el.innerHTML = `
         <div class="toast-icon">${icon}</div>
         <div class="toast-content">
@@ -489,10 +440,7 @@
           <div class="toast-message">${escapeHtml(message)}</div>
         </div>
       `;
-
       $('toast-container').appendChild(el);
-
-      // Автоудаление с анимацией ухода
       setTimeout(() => {
         el.classList.add('closing');
         setTimeout(() => el.remove(), 320);
@@ -688,12 +636,85 @@
     }
     $('view-edit').addEventListener('click', switchToEdit);
     $('view-preview').addEventListener('click', () => {
-      $('preview-pane').innerHTML = DOMPurify.sanitize(marked.parse($('f-content').value || ''));
+      $('preview-pane').innerHTML = DOMPurify.sanitize(renderMarkdownForPreview($('f-content').value || ''));
       $('f-content').style.display = 'none';
       $('preview-pane').style.display = 'block';
       $('view-edit').classList.remove('active');
       $('view-preview').classList.add('active');
       updateFabVisibility();
+    });
+
+    // Обработка callouts и == для превью (как на публичной странице)
+    const CALLOUT_TITLES = {
+      note: 'Заметка', tip: 'Совет', warning: 'Внимание',
+      danger: 'Опасно', success: 'Готово', important: 'Важно'
+    };
+    function renderMarkdownForPreview(md) {
+      md = md.replace(/^:::(\w+)[ \t]*\n([\s\S]*?)\n:::[ \t]*$/gm, (m, type, body) => {
+        const title = CALLOUT_TITLES[type] || type;
+        const inner = marked.parse(body.trim());
+        return `\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+      });
+      md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
+      return marked.parse(md);
+    }
+
+    // ===== TOOLBAR (украшения) =====
+    function wrapSelection(before, after, placeholder) {
+      const el = $('f-content');
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const selected = el.value.slice(start, end);
+
+      let newText, cursorPos;
+      if (selected) {
+        newText = before + selected + after;
+        cursorPos = start + newText.length;
+      } else {
+        newText = before + placeholder + after;
+        cursorPos = start + before.length + placeholder.length;
+      }
+
+      el.value = el.value.slice(0, start) + newText + el.value.slice(end);
+      el.selectionStart = el.selectionEnd = cursorPos;
+      el.focus();
+      markDirty();
+    }
+
+    function insertCallout(type) {
+      const el = $('f-content');
+      const start = el.selectionStart ?? el.value.length;
+      const end = el.selectionEnd ?? el.value.length;
+      const selected = el.value.slice(start, end) || 'Текст внутри рамочки';
+      const block = `\n:::${type}\n${selected}\n:::\n`;
+      el.value = el.value.slice(0, start) + block + el.value.slice(end);
+      el.selectionStart = el.selectionEnd = start + block.length;
+      el.focus();
+      markDirty();
+    }
+
+    $('md-toolbar').addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-md]');
+      if (!btn) return;
+      const action = btn.dataset.md;
+      switch (action) {
+        case 'highlight':
+          wrapSelection('==', '==', 'выделенный текст');
+          break;
+        case 'underline':
+          wrapSelection('<u>', '</u>', 'подчёркнутый текст');
+          break;
+        case 'strike':
+          wrapSelection('~~', '~~', 'зачёркнутый текст');
+          break;
+        case 'note':
+        case 'tip':
+        case 'warning':
+        case 'danger':
+        case 'important':
+          insertCallout(action);
+          break;
+      }
     });
 
     // ===== IMAGE UPLOAD =====
