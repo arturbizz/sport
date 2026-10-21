@@ -13,25 +13,13 @@
     .login-wrap .brand-mark { width: 24px; height: 24px; }
 
     /* ==== FULLSCREEN MODE ==== */
-    /* ВАЖНО: grid-template-columns 1fr — одна колонка. Main занимает всю ширину. */
-    .admin-layout.fullscreen {
-      grid-template-columns: 1fr;
-    }
-    .admin-layout.fullscreen .admin-sidebar {
-      display: none;
-    }
-    .admin-layout.fullscreen .editor-content {
-      max-width: 100%;
-      padding: 24px 40px 96px;
-    }
-    .admin-layout.fullscreen .content-textarea {
-      min-height: calc(100vh - 280px);
-    }
-    .admin-layout.fullscreen .preview-pane {
-      min-height: calc(100vh - 280px);
-    }
+    .admin-layout.fullscreen { grid-template-columns: 1fr; }
+    .admin-layout.fullscreen .admin-sidebar { display: none; }
+    .admin-layout.fullscreen .editor-content { max-width: 100%; padding: 24px 40px 96px; }
+    .admin-layout.fullscreen .content-textarea { min-height: calc(100vh - 280px); }
+    .admin-layout.fullscreen .preview-pane { min-height: calc(100vh - 280px); }
 
-    /* ==== FAB — floating upload button ==== */
+    /* ==== FAB ==== */
     .fab-upload {
       position: fixed;
       bottom: 28px;
@@ -67,9 +55,173 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .upload-status { bottom: 90px !important; }
+    /* Upload status — по центру, чуть выше FAB */
+    .upload-status {
+      bottom: 28px !important;
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%) !important;
+      background: var(--ink) !important;
+      color: white !important;
+      padding: 12px 20px !important;
+      border-radius: 999px !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+      border: none !important;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+    .upload-status.show { display: inline-flex !important; }
+    .upload-status::before {
+      content: '';
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-top-color: white;
+      animation: spinner 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spinner {
+      to { transform: rotate(360deg); }
+    }
 
-    /* Fullscreen icon button */
+    /* ==== TOASTS — новая версия ==== */
+    /* Переопределяем полностью, чтобы не мешать со старыми стилями из kb-styles.css */
+    .toast-container {
+      position: fixed !important;
+      top: auto !important;
+      bottom: 90px !important;
+      right: 28px !important;
+      left: auto !important;
+      z-index: 2000;
+      display: flex !important;
+      flex-direction: column-reverse !important;
+      align-items: flex-end !important;
+      gap: 10px !important;
+      max-width: min(420px, calc(100vw - 56px)) !important;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex !important;
+      align-items: flex-start !important;
+      gap: 12px !important;
+      padding: 14px 18px 16px !important;
+      border-radius: 14px !important;
+      background: var(--bg-elevated) !important;
+      border: 1px solid var(--hairline) !important;
+      border-left: 1px solid var(--hairline) !important;
+      box-shadow: 0 12px 40px rgba(16, 24, 40, 0.12), 0 4px 12px rgba(16, 24, 40, 0.06) !important;
+      position: relative !important;
+      overflow: hidden !important;
+      min-width: 280px !important;
+      max-width: 420px !important;
+      animation: toastSlideIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+      color: var(--ink) !important;
+      font-size: 13.5px !important;
+      line-height: 1.5 !important;
+      pointer-events: auto;
+      opacity: 1 !important;
+      transition: none !important;
+    }
+
+    .toast.closing {
+      animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+    }
+
+    .toast-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .toast.success .toast-icon { background: var(--success); }
+    .toast.error .toast-icon { background: var(--error); }
+    .toast.info .toast-icon { background: var(--accent); }
+
+    .toast-content {
+      flex: 1;
+      min-width: 0;
+      padding-top: 2px;
+    }
+
+    .toast-title {
+      font-weight: 600 !important;
+      font-size: 13.5px !important;
+      color: var(--ink) !important;
+      margin-bottom: 2px !important;
+      line-height: 1.3;
+    }
+
+    .toast-message {
+      color: var(--ink-2) !important;
+      font-size: 12.5px !important;
+      line-height: 1.5 !important;
+      word-break: break-word;
+    }
+
+    /* Progress bar снизу тоста */
+    .toast::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 2px;
+      width: 100%;
+      background: var(--accent);
+      opacity: 0.5;
+      animation: toastProgress var(--toast-duration, 3500ms) linear forwards;
+    }
+    .toast.success::after { background: var(--success); }
+    .toast.error::after { background: var(--error); }
+
+    @keyframes toastSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(40px) scale(0.94);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+
+    @keyframes toastSlideOut {
+      to {
+        opacity: 0;
+        transform: translateX(40px) scale(0.94);
+      }
+    }
+
+    @keyframes toastProgress {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    /* На узких экранах тосты — на всю ширину */
+    @media (max-width: 640px) {
+      .toast-container {
+        right: 12px !important;
+        left: 12px !important;
+        bottom: 90px !important;
+        align-items: stretch !important;
+        max-width: none !important;
+      }
+      .toast {
+        min-width: 0 !important;
+        max-width: none !important;
+      }
+    }
+
+    /* ==== Fullscreen icon button ==== */
     .fullscreen-btn {
       display: inline-flex;
       align-items: center;
@@ -93,7 +245,6 @@
     }
     .fullscreen-btn svg { width: 16px; height: 16px; }
 
-    /* Hide inline upload button — FAB replaces it */
     #upload-img-btn { display: none !important; }
   </style>
 </head>
@@ -274,9 +425,8 @@
     let pendingInsertPos = null;
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
-    // Больше не храним fullscreen в localStorage — чтобы не застревать
 
-    // ===== SIDEBAR COLLAPSE =====
+    // ===== SIDEBAR =====
     function initSidebar() {
       const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
       adminLayout.classList.toggle('sidebar-collapsed', collapsed);
@@ -286,7 +436,7 @@
       localStorage.setItem(SIDEBAR_KEY, isCollapsed ? '1' : '0');
     });
 
-    // ===== FULLSCREEN MODE =====
+    // ===== FULLSCREEN =====
     const ICON_EXPAND = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
     const ICON_COLLAPSE = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
 
@@ -295,20 +445,15 @@
       $('fullscreen-icon').innerHTML = isFs ? ICON_COLLAPSE : ICON_EXPAND;
       $('fullscreen-btn').title = isFs ? 'Свернуть (Esc)' : 'На весь экран';
     }
-
     function initFullscreen() {
-      // Принудительно убираем возможное «застрявшее» значение из прошлых версий
       try { localStorage.removeItem('kb_admin_fullscreen'); } catch(e) {}
       adminLayout.classList.remove('fullscreen');
       updateFullscreenIcon();
     }
-
     $('fullscreen-btn').addEventListener('click', () => {
       adminLayout.classList.toggle('fullscreen');
       updateFullscreenIcon();
     });
-
-    // Escape — выход из fullscreen
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && adminLayout.classList.contains('fullscreen')) {
         adminLayout.classList.remove('fullscreen');
@@ -316,7 +461,7 @@
       }
     });
 
-    // ===== FAB VISIBILITY =====
+    // ===== FAB =====
     function updateFabVisibility() {
       const isEditorVisible = editorContent.style.display !== 'none';
       const isTextTabActive = $('pane-text').style.display !== 'none';
@@ -324,16 +469,33 @@
       fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditMode);
     }
 
-    // ===== TOAST =====
+    // ===== TOAST — красивая версия =====
+    const ICON_SUCCESS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>';
+    const ICON_ERROR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    const ICON_INFO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+
     function toast(message, type = 'info', duration = 3500) {
       const el = document.createElement('div');
       el.className = 'toast ' + type;
-      el.innerHTML = `<strong>${type === 'error' ? 'Ошибка' : type === 'success' ? 'Готово' : 'Инфо'}</strong>${escapeHtml(message)}`;
+      el.style.setProperty('--toast-duration', duration + 'ms');
+
+      const icon = type === 'success' ? ICON_SUCCESS : type === 'error' ? ICON_ERROR : ICON_INFO;
+      const title = type === 'success' ? 'Готово' : type === 'error' ? 'Ошибка' : 'Инфо';
+
+      el.innerHTML = `
+        <div class="toast-icon">${icon}</div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-message">${escapeHtml(message)}</div>
+        </div>
+      `;
+
       $('toast-container').appendChild(el);
+
+      // Автоудаление с анимацией ухода
       setTimeout(() => {
-        el.style.opacity = '0';
-        el.style.transition = 'opacity 0.3s';
-        setTimeout(() => el.remove(), 300);
+        el.classList.add('closing');
+        setTimeout(() => el.remove(), 320);
       }, duration);
     }
 
@@ -354,14 +516,9 @@
     function saveDraft() {
       if (!editorContent.style.display || editorContent.style.display === 'none') return;
       const draft = {
-        id: currentId,
-        title: $('f-title').value,
-        category: $('f-category').value,
-        tags: $('f-tags').value,
-        content: $('f-content').value,
-        pinned: $('f-pinned').checked,
-        steps: currentSteps,
-        savedAt: Date.now()
+        id: currentId, title: $('f-title').value, category: $('f-category').value,
+        tags: $('f-tags').value, content: $('f-content').value,
+        pinned: $('f-pinned').checked, steps: currentSteps, savedAt: Date.now()
       };
       try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch(e) {}
     }
@@ -375,9 +532,7 @@
         if (!d.title && !d.content) return;
         if (confirm(`Есть несохранённый черновик «${d.title || '(без заголовка)'}». Восстановить?`)) {
           applyDraft(d);
-        } else {
-          clearDraft();
-        }
+        } else { clearDraft(); }
       } catch(e) {}
     }
     function applyDraft(d) {
@@ -416,8 +571,7 @@
       const btn = $('login-submit'); const err = $('login-error');
       err.textContent = ''; btn.disabled = true; btn.textContent = 'Вход…';
       const { error } = await supabaseClient.auth.signInWithPassword({
-        email: $('login-email').value.trim(),
-        password: $('login-password').value,
+        email: $('login-email').value.trim(), password: $('login-password').value,
       });
       btn.disabled = false; btn.textContent = 'Войти';
       if (error) { err.textContent = 'Неверный email или пароль'; return; }
@@ -489,39 +643,25 @@
     }
     function clearForm() {
       if (isDirty && !confirm('Есть несохранённые изменения. Создать новую статью?')) return;
-      currentId = null;
-      currentSteps = null;
-      isDirty = false;
-      $('f-title').value = '';
-      $('f-category').value = '';
-      $('f-tags').value = '';
-      $('f-content').value = '';
-      $('f-pinned').checked = false;
+      currentId = null; currentSteps = null; isDirty = false;
+      $('f-title').value = ''; $('f-category').value = ''; $('f-tags').value = '';
+      $('f-content').value = ''; $('f-pinned').checked = false;
       updatePinToggle();
       $('delete-btn').style.display = 'none';
-      switchTab('text');
-      renderStepsEditor();
-      showEditor();
-      setStatus('saved', 'Новая статья');
-      renderArticleList();
-      $('f-title').focus();
+      switchTab('text'); renderStepsEditor(); showEditor();
+      setStatus('saved', 'Новая статья'); renderArticleList(); $('f-title').focus();
     }
     function openArticle(id) {
       const a = articles.find(x => x.id === id);
       if (!a) return;
-      currentId = id;
-      isDirty = false;
-      $('f-title').value = a.title || '';
-      $('f-category').value = a.category || '';
-      $('f-tags').value = (a.tags || []).join(', ');
-      $('f-content').value = a.content || '';
+      currentId = id; isDirty = false;
+      $('f-title').value = a.title || ''; $('f-category').value = a.category || '';
+      $('f-tags').value = (a.tags || []).join(', '); $('f-content').value = a.content || '';
       $('f-pinned').checked = !!a.pinned;
       updatePinToggle();
       currentSteps = a.steps || null;
       $('delete-btn').style.display = 'inline-flex';
-      switchTab('text');
-      renderStepsEditor();
-      showEditor();
+      switchTab('text'); renderStepsEditor(); showEditor();
       const dt = new Date(a.updated_at).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
       setStatus('saved', 'Изменено ' + dt);
       renderArticleList();
@@ -617,11 +757,9 @@
           toast('Не удалось загрузить фото: ' + err.message, 'error', 6000);
         }
       }
+      showUploadStatus('');
       if (successCount > 0) {
-        showUploadStatus('');
         toast(`Фото вставлено в строку ${lastInsertLine}`, 'success', 3000);
-      } else {
-        showUploadStatus('');
       }
       fabUpload.disabled = false;
       pendingInsertPos = null;
@@ -699,7 +837,7 @@
       }
     });
 
-    // ===== STEPS EDITOR =====
+    // ===== STEPS =====
     $('add-step-btn').addEventListener('click', () => {
       if (!currentSteps) currentSteps = { start: null, steps: [] };
       const id = 'step-' + Date.now().toString(36);
@@ -821,13 +959,10 @@
         step.kind = el.value;
         if (step.kind === 'question' && !step.options) step.options = [];
         if (step.kind !== 'question') delete step.options;
-        markDirty();
-        renderStepsEditor();
-        return;
+        markDirty(); renderStepsEditor(); return;
       }
       if (field === 'next') { step.next = el.value || null; markDirty(); return; }
-      step[field] = el.value;
-      markDirty();
+      step[field] = el.value; markDirty();
       if (field === 'title') {
         const ss = $('start-step-select');
         const opt = ss.querySelector(`option[value="${sid}"]`);
@@ -840,23 +975,20 @@
       if (!confirm('Удалить шаг?')) return;
       currentSteps.steps = currentSteps.steps.filter(s => s.id !== id);
       if (currentSteps.start === id) currentSteps.start = currentSteps.steps[0]?.id || null;
-      markDirty();
-      renderStepsEditor();
+      markDirty(); renderStepsEditor();
     }
     function addOption(stepId) {
       const step = currentSteps.steps.find(s => s.id === stepId);
       if (!step) return;
       if (!step.options) step.options = [];
       step.options.push({ label: '', next: null });
-      markDirty();
-      renderStepsEditor();
+      markDirty(); renderStepsEditor();
     }
     function deleteOption(stepId, idx) {
       const step = currentSteps.steps.find(s => s.id === stepId);
       if (!step || !step.options) return;
       step.options.splice(idx, 1);
-      markDirty();
-      renderStepsEditor();
+      markDirty(); renderStepsEditor();
     }
 
     // ===== SAVE =====
@@ -882,16 +1014,10 @@
       }
 
       const btn = $('save-btn');
-      btn.disabled = true;
-      btn.textContent = 'Сохранение…';
+      btn.disabled = true; btn.textContent = 'Сохранение…';
       setStatus('unsaved', 'Сохранение…');
 
-      const payload = {
-        title, category, content, tags,
-        steps: stepsPayload,
-        pinned,
-        updated_at: new Date().toISOString()
-      };
+      const payload = { title, category, content, tags, steps: stepsPayload, pinned, updated_at: new Date().toISOString() };
 
       try {
         let error, savedId = currentId;
@@ -921,7 +1047,7 @@
         currentId = savedId;
         isDirty = false;
         markSaved();
-        toast('Статья сохранена', 'success', 2000);
+        toast('Статья сохранена', 'success', 2200);
         await loadArticles();
         openArticle(currentId);
       } catch (e) {
@@ -950,13 +1076,11 @@
       if (!confirm(`Удалить статью «${a?.title || ''}»? Действие необратимо.`)) return;
       const { error } = await supabaseClient.from('knowledge_articles').delete().eq('id', currentId);
       if (error) { toast('Не удалось удалить: ' + error.message, 'error', 8000); return; }
-      currentId = null;
-      isDirty = false;
-      clearDraft();
+      currentId = null; isDirty = false; clearDraft();
       await loadArticles();
       if (!articles.length) showWelcome();
       else openArticle(articles[0].id);
-      toast('Статья удалена', 'success', 2000);
+      toast('Статья удалена', 'success', 2200);
     });
 
     $('new-article-btn').addEventListener('click', clearForm);
