@@ -10,11 +10,25 @@
   <link rel="stylesheet" href="kb-styles.css">
 </head>
 <body>
-  <div class="layout">
+
+  <button class="sidebar-open-fab" id="sidebar-open-fab" title="Открыть меню">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="21" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <div class="layout" id="kb-layout">
     <aside class="sidebar">
       <div class="brand" style="cursor:default;">
         <span class="brand-mark"></span>
         <span class="brand-name">База знаний</span>
+        <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Свернуть меню">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
       </div>
 
       <div class="must-know-wrap" id="must-know-wrap" style="display:none;">
@@ -41,10 +55,7 @@
         <input type="search" class="search-input" id="search-input"
                placeholder="Найти процедуру, скрипт или проблему" autocomplete="off">
       </div>
-
-      <div class="results" id="results">
-        <div class="loading-text">Загрузка…</div>
-      </div>
+      <div class="results" id="results"><div class="loading-text">Загрузка…</div></div>
     </main>
   </div>
 
@@ -74,22 +85,57 @@
       mustKnowWrap: document.getElementById('must-know-wrap'),
       mustKnowBtn: document.getElementById('must-know-btn'),
       mustKnowCount: document.getElementById('must-know-count'),
+      layout: document.getElementById('kb-layout'),
+      collapseBtn: document.getElementById('sidebar-collapse-btn'),
+      openFab: document.getElementById('sidebar-open-fab'),
     };
 
+    const SIDEBAR_KEY = 'kb_public_sidebar_hidden';
+
+    // ===== SIDEBAR COLLAPSE =====
+    function updateSidebarState() {
+      const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
+      els.layout.classList.toggle('sidebar-hidden', hidden);
+      els.openFab.classList.toggle('show', hidden);
+    }
+    els.collapseBtn.addEventListener('click', () => {
+      localStorage.setItem(SIDEBAR_KEY, '1');
+      updateSidebarState();
+    });
+    els.openFab.addEventListener('click', () => {
+      localStorage.setItem(SIDEBAR_KEY, '0');
+      updateSidebarState();
+    });
+    updateSidebarState();
+
+    // ===== MARKDOWN =====
     const PURIFY_CONFIG = {
-      ADD_TAGS: ['figure', 'figcaption', 'img'],
-      ADD_ATTR: ['src', 'alt', 'title', 'width', 'height', 'loading', 'target', 'rel'],
+      ADD_TAGS: ['figure', 'figcaption', 'img', 'mark', 'u', 'del', 'div', 'span'],
+      ADD_ATTR: ['src', 'alt', 'title', 'width', 'height', 'loading', 'target', 'rel', 'class'],
       ALLOW_DATA_ATTR: false,
     };
 
-    function escapeHtml(s) {
-      return String(s ?? '').replace(/[&<>"']/g, c =>
-        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    const CALLOUT_TITLES = {
+      note: 'Заметка', tip: 'Совет', warning: 'Внимание',
+      danger: 'Опасно', success: 'Готово', important: 'Важно'
+    };
+
+    function preprocessMarkdown(md) {
+      // Callouts :::type\nbody\n:::
+      md = md.replace(/^:::(\w+)[ \t]*\n([\s\S]*?)\n:::[ \t]*$/gm, (m, type, body) => {
+        const title = CALLOUT_TITLES[type] || type;
+        const inner = marked.parse(body.trim());
+        return `\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+      });
+      // Highlight ==text==
+      md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
+      return md;
     }
 
     function renderMarkdown(text) {
       if (!text) return '';
-      const rawHtml = marked.parse(text);
+      const preprocessed = preprocessMarkdown(text);
+      const rawHtml = marked.parse(preprocessed);
       const clean = DOMPurify.sanitize(rawHtml, PURIFY_CONFIG);
       const tmp = document.createElement('div');
       tmp.innerHTML = clean;
@@ -109,8 +155,12 @@
       return tmp.innerHTML;
     }
 
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
     function excerpt(text, len = 180) {
-      const plain = (text || '').replace(/[#*`>\-!\[\]\(\)]/g, '').replace(/\n+/g, ' ').trim();
+      const plain = (text || '').replace(/[#*`>\-!\[\]\(\)=:]/g, '').replace(/\n+/g, ' ').trim();
       return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
     }
 
@@ -208,7 +258,6 @@
       els.results.querySelectorAll('.article-head').forEach(head => {
         head.addEventListener('click', () => toggleArticle(head.parentElement));
       });
-
       if (expandedId) {
         const article = articles.find(a => a.id === expandedId);
         if (article) bindArticleInteractions(article);
@@ -326,11 +375,7 @@
 
     function toggleArticle(articleEl) {
       const id = articleEl.dataset.id;
-      if (expandedId === id) {
-        expandedId = null;
-        renderList(filterArticles());
-        return;
-      }
+      if (expandedId === id) { expandedId = null; renderList(filterArticles()); return; }
       expandedId = id;
       const article = allArticles.find(a => a.id === id);
       if (article && article.steps) wizardState[id] = null;
