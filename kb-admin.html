@@ -9,80 +9,414 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
   <style>
-    .welcome { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center; color:var(--ink-3); padding:40px 20px; }
-    .welcome h2 { font-family:var(--font-display); font-weight:400; font-size:26px; color:var(--ink); margin-bottom:12px; letter-spacing:-0.01em; }
-    .welcome p { max-width:400px; margin-bottom:24px; font-size:14.5px; line-height:1.65; }
+    /* ===== ADMIN v2 — просторный редактор ===== */
+    body { overflow: hidden; }
 
-    .tabs { display:flex; gap:0; border-bottom:1px solid var(--hairline); margin-bottom:24px; }
-    .tab { background:none; border:none; padding:12px 20px; font-family:var(--font-body); font-size:13.5px; font-weight:500; color:var(--ink-3); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .15s, border-color .15s; }
-    .tab:hover { color:var(--ink); }
-    .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      height: 100vh;
+    }
 
-    .img-btn { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:12.5px; background:var(--bg-elevated); border:1px solid var(--hairline-2); border-radius:4px; cursor:pointer; color:var(--ink-2); margin-bottom:8px; transition: all .15s; }
-    .img-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
-    .img-btn:disabled { opacity:.5; cursor:wait; }
+    /* Sidebar */
+    .admin-sidebar {
+      border-right: 1px solid var(--hairline);
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--bg) 0%, #F5F1E8 100%);
+    }
+    .admin-sidebar .brand { margin-bottom: 24px; }
+    .admin-sidebar-top { display: flex; gap: 8px; margin-bottom: 16px; }
+    .admin-sidebar-top .btn { flex: 1; }
 
+    .admin-article-list {
+      flex: 1;
+      overflow-y: auto;
+      margin: 0 -20px;
+      padding: 0 20px;
+    }
+    .admin-article-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--hairline);
+      padding: 12px 8px;
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      color: var(--ink-2);
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s, padding 0.2s;
+      line-height: 1.4;
+      border-radius: 4px;
+    }
+    .admin-article-item:hover { color: var(--ink); background: rgba(0,0,0,0.02); padding-left: 12px; }
+    .admin-article-item.active { color: var(--accent); background: var(--accent-soft); }
+    .admin-article-item-cat {
+      display: block;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ink-4);
+      margin-top: 3px;
+    }
+    .admin-article-item.active .admin-article-item-cat { color: var(--accent); opacity: 0.7; }
+
+    /* Main editor area */
+    .editor-main {
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Sticky toolbar */
+    .editor-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 40px;
+      background: rgba(251, 249, 245, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--hairline);
+    }
+    .editor-toolbar-status {
+      font-size: 12.5px;
+      color: var(--ink-3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--ink-4);
+      flex-shrink: 0;
+    }
+    .status-dot.unsaved { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); animation: pulseGlow 2s ease-in-out infinite; }
+    .status-dot.saved { background: #2F9E5F; }
+    .status-dot.error { background: #D93025; }
+    .editor-toolbar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* Content inside editor */
+    .editor-content {
+      padding: 36px 40px 80px;
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+      flex: 1;
+    }
+
+    /* Welcome */
+    .welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      color: var(--ink-3);
+      padding: 40px 20px;
+    }
+    .welcome h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; color: var(--ink); margin-bottom: 12px; letter-spacing: -0.01em; }
+    .welcome p { max-width: 440px; margin-bottom: 28px; font-size: 15px; line-height: 1.65; }
+
+    /* Form fields — крупные, воздушные */
+    .field { margin-bottom: 28px; }
+    .field-label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-3);
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+    .field-input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      color: var(--ink);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--hairline);
+      transition: border-color 0.2s;
+      font-size: 16px;
+    }
+    .field-input:focus { outline: none; border-bottom-color: var(--accent); }
+
+    .title-input {
+      font-family: var(--font-display) !important;
+      font-size: 32px !important;
+      font-weight: 400;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+      padding: 12px 0 !important;
+      border-bottom: 2px solid var(--hairline);
+    }
+    .title-input:focus { border-bottom-color: var(--accent); }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    /* Pin toggle */
+    .pin-toggle {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 20px;
+      border: 1px solid var(--hairline);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s, background 0.15s;
+      font-size: 14px;
+    }
+    .pin-toggle:hover { border-color: var(--hairline-2); }
+    .pin-toggle.checked { border-color: var(--accent); background: var(--accent-soft); }
+    .pin-toggle input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin-top: 1px; }
+    .pin-toggle strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 3px; font-size: 14.5px; }
+    .pin-toggle small { display: block; color: var(--ink-3); font-weight: 400; font-size: 13px; line-height: 1.5; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 28px;
+    }
+    .tab {
+      background: none;
+      border: none;
+      padding: 14px 24px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab:hover { color: var(--ink); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* Content editor */
+    .content-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .content-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .content-textarea {
+      width: 100%;
+      min-height: 500px;
+      resize: vertical;
+      font-family: var(--font-mono) !important;
+      font-size: 14px !important;
+      line-height: 1.75;
+      border: 1px solid var(--hairline) !important;
+      border-radius: 10px;
+      padding: 24px !important;
+      background: var(--bg-elevated);
+      color: var(--ink);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .content-textarea:focus {
+      outline: none;
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .preview-pane {
+      margin-top: 0;
+      padding: 32px 40px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--hairline);
+      border-radius: 10px;
+      min-height: 500px;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .view-toggle {
+      display: inline-flex;
+      border: 1px solid var(--hairline-2);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .view-toggle button {
+      background: transparent;
+      border: none;
+      padding: 8px 18px;
+      font-size: 13px;
+      color: var(--ink-3);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .view-toggle button.active { background: var(--ink); color: var(--bg); }
+
+    .img-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 13px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--hairline-2);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--ink-2);
+      transition: all 0.15s;
+      font-family: var(--font-body);
+    }
+    .img-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .img-btn:disabled { opacity: 0.5; cursor: wait; }
+
+    .field-hint {
+      font-size: 12.5px;
+      color: var(--ink-4);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+    .field-hint kbd {
+      background: var(--bg-subtle);
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      border: 1px solid var(--hairline);
+    }
+
+    /* Drop zone */
+    .drop-active {
+      outline: 2px dashed var(--accent) !important;
+      outline-offset: -6px;
+      background: var(--accent-soft) !important;
+    }
+
+    /* Upload status */
     .upload-status {
       display: none;
       position: fixed;
-      bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: var(--ink); color: var(--bg);
-      padding: 10px 20px; border-radius: 8px;
-      font-size: 13px; font-family: var(--font-body);
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 13.5px;
       box-shadow: var(--shadow-lg);
       z-index: 1000;
       animation: fadeUp 0.3s ease-out;
     }
     .upload-status.show { display: block; }
 
-    .drop-active {
-      outline: 2px dashed var(--accent) !important;
-      outline-offset: -4px;
-      background: var(--accent-soft) !important;
+    /* Toasts */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 400px;
     }
-
-    .pin-toggle {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 14px 16px; border: 1px solid var(--hairline); border-radius: 6px;
-      cursor: pointer; user-select: none;
-      transition: border-color .15s, background .15s;
-      font-size: 14px;
+    .toast {
+      background: var(--bg-elevated);
+      border: 1px solid var(--hairline);
+      border-left: 3px solid var(--accent);
+      border-radius: 8px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow-lg);
+      font-size: 13.5px;
+      color: var(--ink);
+      animation: fadeUp 0.3s ease-out;
+      line-height: 1.5;
     }
-    .pin-toggle:hover { border-color: var(--hairline-2); }
-    .pin-toggle.checked { border-color: var(--accent); background: var(--accent-soft); }
-    .pin-toggle input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; margin-top: 2px; }
-    .pin-toggle strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 2px; }
-    .pin-toggle small { display: block; color: var(--ink-3); font-weight: 400; font-size: 12.5px; line-height: 1.5; }
+    .toast.success { border-left-color: #2F9E5F; }
+    .toast.error { border-left-color: #D93025; }
+    .toast strong { display: block; margin-bottom: 4px; font-size: 14px; font-weight: 500; }
 
-    .pin-mark { display: inline-block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; margin-right: 8px; vertical-align: middle; }
-
-    .step-card { border:1px solid var(--hairline); border-radius:8px; padding:16px 18px; margin-bottom:14px; background:var(--bg-elevated); }
-    .step-card-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-    .step-id { font-family:var(--font-mono); font-size:12px; color:var(--ink-3); background:var(--bg-subtle); padding:2px 8px; border-radius:3px; }
-    .step-kind { font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--accent); }
+    /* Steps editor */
+    .step-card { border:1px solid var(--hairline); border-radius:10px; padding:20px 22px; margin-bottom:16px; background:var(--bg-elevated); }
+    .step-card-head { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .step-id { font-family:var(--font-mono); font-size:12px; color:var(--ink-3); background:var(--bg-subtle); padding:3px 9px; border-radius:4px; }
+    .step-kind { font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--accent); font-weight: 500; }
     .step-card-actions { margin-left:auto; display:flex; gap:6px; }
-    .step-row { margin-bottom:10px; }
-    .step-row label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-3); margin-bottom:4px; font-weight:500; }
+    .step-row { margin-bottom:12px; }
+    .step-row label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-3); margin-bottom:6px; font-weight:500; }
     .step-row input, .step-row select, .step-row textarea {
-      width:100%; padding:7px 10px; border:1px solid var(--hairline); border-radius:4px;
-      font-family:var(--font-body); font-size:13.5px; background:var(--bg-elevated); color:var(--ink);
+      width:100%; padding:9px 12px; border:1px solid var(--hairline); border-radius:6px;
+      font-family:var(--font-body); font-size:14px; background:var(--bg-elevated); color:var(--ink);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .step-row input:focus, .step-row select:focus, .step-row textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
-    .step-row textarea { min-height:70px; resize:vertical; font-family:var(--font-mono); font-size:12.5px; }
-    .option-row { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:center; margin-bottom:6px; }
-    .option-row input, .option-row select { padding:6px 9px; border:1px solid var(--hairline); border-radius:4px; font-size:12.5px; font-family:var(--font-body); background:var(--bg-elevated); color:var(--ink); }
-    .option-row button { background:none; border:1px solid var(--hairline-2); border-radius:4px; padding:4px 8px; cursor:pointer; color:var(--accent); font-size:12px; }
-    .option-row button:hover { border-color:var(--accent); }
-    .add-option-btn { background:none; border:1px dashed var(--hairline-2); border-radius:4px; padding:6px 10px; font-size:12px; color:var(--ink-3); cursor:pointer; width:100%; }
-    .add-option-btn:hover { border-color:var(--ink-3); color:var(--ink); }
-    .step-toolbar { display:flex; gap:8px; align-items:center; margin-bottom:18px; flex-wrap:wrap; }
-    .start-select { padding:6px 10px; border:1px solid var(--hairline); border-radius:4px; font-size:13px; background:var(--bg-elevated); color:var(--ink); }
-    .empty-steps { padding:32px; text-align:center; color:var(--ink-3); font-size:14px; border:1px dashed var(--hairline-2); border-radius:8px; }
+    .step-row input:focus, .step-row select:focus, .step-row textarea:focus {
+      outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+    }
+    .step-row textarea { min-height:80px; resize:vertical; font-family:var(--font-mono); font-size:13px; }
+    .option-row { display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:center; margin-bottom:8px; }
+    .option-row input, .option-row select { padding:8px 10px; border:1px solid var(--hairline); border-radius:6px; font-size:13px; font-family:var(--font-body); background:var(--bg-elevated); color:var(--ink); }
+    .option-row button { background:none; border:1px solid var(--hairline-2); border-radius:4px; padding:5px 10px; cursor:pointer; color:var(--accent); font-size:12px; }
+    .option-row button:hover { border-color:var(--accent); background:var(--accent-soft); }
+    .add-option-btn { background:none; border:1px dashed var(--hairline-2); border-radius:6px; padding:8px 12px; font-size:13px; color:var(--ink-3); cursor:pointer; width:100%; transition: all .15s; }
+    .add-option-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+    .step-toolbar { display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+    .start-select { padding:8px 12px; border:1px solid var(--hairline); border-radius:6px; font-size:13.5px; background:var(--bg-elevated); color:var(--ink); }
+    .empty-steps { padding:48px 32px; text-align:center; color:var(--ink-3); font-size:14px; border:1px dashed var(--hairline-2); border-radius:10px; }
+
+    /* Login */
+    .login-wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    /* Scrollbar */
+    .editor-main::-webkit-scrollbar,
+    .admin-article-list::-webkit-scrollbar { width: 8px; }
+    .editor-main::-webkit-scrollbar-thumb,
+    .admin-article-list::-webkit-scrollbar-thumb { background: var(--hairline-2); border-radius: 4px; }
+    .editor-main::-webkit-scrollbar-thumb:hover,
+    .admin-article-list::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .admin-layout { grid-template-columns: 1fr; }
+      .admin-sidebar { display: none; }
+      .admin-sidebar.mobile-open { display: flex; position: fixed; top: 0; left: 0; width: 280px; z-index: 100; box-shadow: var(--shadow-lg); }
+      .editor-toolbar { padding: 12px 20px; }
+      .editor-content { padding: 24px 20px 60px; }
+      .field-row { grid-template-columns: 1fr; }
+      .title-input { font-size: 24px !important; }
+      .content-textarea { min-height: 400px; padding: 16px !important; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- Загрузка -->
+  <!-- Toasts -->
+  <div class="toast-container" id="toast-container"></div>
+  <!-- Upload status -->
   <div class="upload-status" id="upload-status"></div>
 
   <!-- LOGIN -->
@@ -93,7 +427,7 @@
         <span class="brand-name">Руководство</span>
       </div>
       <div class="login-title">Вход в редактор</div>
-      <div class="login-subtitle">Используйте тот же аккаунт, что и на платформе</div>
+      <div class="login-subtitle">Используйте аккаунт платформы</div>
       <form id="login-form">
         <div class="field">
           <label class="field-label" for="login-email">Email</label>
@@ -103,7 +437,7 @@
           <label class="field-label" for="login-password">Пароль</label>
           <input class="field-input" type="password" id="login-password" required autocomplete="current-password">
         </div>
-        <button class="btn btn-primary" type="submit" id="login-submit">Войти</button>
+        <button class="btn btn-primary" type="submit" id="login-submit" style="width:100%;margin-top:8px;">Войти</button>
         <div class="form-error" id="login-error"></div>
       </form>
     </div>
@@ -111,7 +445,7 @@
 
   <!-- ADMIN -->
   <div class="admin-layout" id="admin-view" style="display:none;">
-    <aside class="admin-sidebar">
+    <aside class="admin-sidebar" id="admin-sidebar">
       <div class="brand" style="cursor:default;">
         <span class="brand-mark"></span>
         <span class="brand-name">Руководство</span>
@@ -123,7 +457,7 @@
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M8 2v12M2 8h12"/>
           </svg>
-          Новая статья
+          Новая
         </button>
         <button class="btn btn-ghost btn-sm" id="logout-btn">Выйти</button>
       </div>
@@ -131,36 +465,42 @@
       <div class="admin-article-list" id="admin-article-list"></div>
     </aside>
 
-    <main class="editor" id="editor-main">
+    <main class="editor-main" id="editor-main">
+      <!-- Sticky toolbar -->
+      <div class="editor-toolbar" id="editor-toolbar" style="display:none;">
+        <div class="editor-toolbar-status">
+          <span class="status-dot saved" id="status-dot"></span>
+          <span id="status-text">Готово</span>
+        </div>
+        <div class="editor-toolbar-actions">
+          <button class="btn btn-danger btn-sm" id="delete-btn" style="display:none;">Удалить</button>
+          <button class="btn btn-primary" id="save-btn">Сохранить</button>
+        </div>
+      </div>
+
+      <!-- Welcome -->
       <div class="welcome" id="welcome-state">
         <h2>Редактор базы знаний</h2>
         <p>Создавайте обычные статьи, пошаговые сценарии и отмечайте «Особенности по технике» — то, что оператор должен запомнить сразу.</p>
         <button class="btn btn-primary" id="welcome-new-btn">Создать первую статью</button>
       </div>
 
-      <div id="editor-form" style="display:none;">
-        <div class="editor-header">
-          <div class="editor-status" id="editor-status">—</div>
-          <div class="editor-actions">
-            <button class="btn btn-danger btn-sm" id="delete-btn" style="display:none;">Удалить</button>
-            <button class="btn btn-primary" id="save-btn">Сохранить</button>
-          </div>
-        </div>
-
+      <!-- Editor content -->
+      <div class="editor-content" id="editor-content" style="display:none;">
         <div class="field">
           <label class="field-label" for="f-title">Заголовок</label>
-          <input class="field-input title-input" id="f-title" placeholder="Например: Диагностика принтера">
+          <input class="field-input title-input" id="f-title" placeholder="Например: Как оформить заявку на ремонт принтера">
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="field-row">
           <div class="field">
             <label class="field-label" for="f-category">Категория</label>
-            <input class="field-input" id="f-category" list="category-list" placeholder="Диагностика">
+            <input class="field-input" id="f-category" list="category-list" placeholder="Например: Принтеры">
             <datalist id="category-list"></datalist>
           </div>
           <div class="field">
             <label class="field-label" for="f-tags">Теги</label>
-            <input class="field-input" id="f-tags" placeholder="принтер, диагностика">
+            <input class="field-input" id="f-tags" placeholder="принтер, диагностика, скрипт">
           </div>
         </div>
 
@@ -169,7 +509,7 @@
             <input type="checkbox" id="f-pinned">
             <span>
               <strong>Особенности по технике</strong>
-              <small>Статья появится в отдельном акцентном блоке наверху базы знаний — то, что оператор должен сразу запомнить. Останется и в своей категории.</small>
+              <small>Статья появится в акцентном блоке наверху — то, что оператор должен сразу запомнить.</small>
             </span>
           </label>
         </div>
@@ -180,27 +520,27 @@
         </div>
 
         <div id="pane-text">
-          <div class="field">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-              <label class="field-label" style="margin:0;">Содержимое (Markdown)</label>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button type="button" class="img-btn" id="upload-img-btn">
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="2" width="12" height="12" rx="1.5"/>
-                    <circle cx="5.5" cy="5.5" r="1.2"/>
-                    <path d="M2 12l4-4 3 3 2-2 3 3"/>
-                  </svg>
-                  Загрузить фото
-                </button>
-              </div>
-            </div>
+          <div class="content-toolbar">
             <div class="view-toggle">
               <button id="view-edit" class="active">Редактор</button>
               <button id="view-preview">Превью</button>
             </div>
-            <textarea class="content-textarea" id="f-content" placeholder="# Заголовок&#10;&#10;Пошаговая инструкция…"></textarea>
-            <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
-            <div class="field-hint">💡 Способы добавить фото: <b>Ctrl+V</b> (вставить из буфера), перетащить файл в поле, или кнопка «Загрузить фото». Фото сжимаются автоматически.</div>
+            <div class="content-actions">
+              <button type="button" class="img-btn" id="upload-img-btn">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="2" y="2" width="12" height="12" rx="1.5"/>
+                  <circle cx="5.5" cy="5.5" r="1.2"/>
+                  <path d="M2 12l4-4 3 3 2-2 3 3"/>
+                </svg>
+                Загрузить фото
+              </button>
+            </div>
+          </div>
+          <textarea class="content-textarea" id="f-content" placeholder="# Заголовок раздела&#10;&#10;Пошаговая инструкция…"></textarea>
+          <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
+          <div class="field-hint">
+            Фото: <kbd>Ctrl</kbd>+<kbd>V</kbd> из буфера · перетащить файл в поле · кнопка «Загрузить фото». Фото сжимаются автоматически.
+            Сохранить: <kbd>Ctrl</kbd>+<kbd>Enter</kbd>
           </div>
         </div>
 
@@ -228,11 +568,103 @@
     const loginView = $('login-view');
     const adminView = $('admin-view');
     const welcomeState = $('welcome-state');
-    const editorForm = $('editor-form');
+    const editorContent = $('editor-content');
+    const editorToolbar = $('editor-toolbar');
 
     let articles = [];
     let currentId = null;
     let currentSteps = null;
+    let isDirty = false;
+    const DRAFT_KEY = 'kb_admin_draft';
+
+    // ===== TOAST =====
+    function toast(message, type = 'info', duration = 3500) {
+      const el = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.innerHTML = `<strong>${type === 'error' ? 'Ошибка' : type === 'success' ? 'Готово' : 'Инфо'}</strong>${escapeHtml(message)}`;
+      $('toast-container').appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.3s';
+        setTimeout(() => el.remove(), 300);
+      }, duration);
+    }
+
+    // ===== STATUS =====
+    function setStatus(state, text) {
+      const dot = $('status-dot');
+      const txt = $('status-text');
+      dot.className = 'status-dot ' + state;
+      txt.textContent = text;
+    }
+
+    function markDirty() {
+      isDirty = true;
+      setStatus('unsaved', 'Не сохранено · Ctrl+Enter');
+      saveDraft();
+    }
+
+    function markSaved() {
+      isDirty = false;
+      const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      setStatus('saved', 'Сохранено в ' + time);
+      clearDraft();
+    }
+
+    function markError(msg) {
+      setStatus('error', 'Ошибка: ' + (msg || '').slice(0, 60));
+    }
+
+    // ===== DRAFT (localStorage) =====
+    function saveDraft() {
+      if (!editorContent.style.display || editorContent.style.display === 'none') return;
+      const draft = {
+        id: currentId,
+        title: $('f-title').value,
+        category: $('f-category').value,
+        tags: $('f-tags').value,
+        content: $('f-content').value,
+        pinned: $('f-pinned').checked,
+        steps: currentSteps,
+        savedAt: Date.now()
+      };
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch(e) {}
+    }
+
+    function clearDraft() {
+      try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    }
+
+    function checkDraft() {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const d = JSON.parse(raw);
+        if (!d.savedAt || Date.now() - d.savedAt > 24 * 3600 * 1000) { clearDraft(); return; }
+        if (!d.title && !d.content) return;
+        if (confirm(`Есть несохранённый черновик «${d.title || '(без заголовка)'}». Восстановить?`)) {
+          applyDraft(d);
+        } else {
+          clearDraft();
+        }
+      } catch(e) {}
+    }
+
+    function applyDraft(d) {
+      currentId = d.id || null;
+      $('f-title').value = d.title || '';
+      $('f-category').value = d.category || '';
+      $('f-tags').value = d.tags || '';
+      $('f-content').value = d.content || '';
+      $('f-pinned').checked = !!d.pinned;
+      currentSteps = d.steps || null;
+      updatePinToggle();
+      switchTab('text');
+      renderStepsEditor();
+      showEditor();
+      isDirty = true;
+      setStatus('unsaved', 'Восстановлен черновик');
+    }
 
     // ===== AUTH =====
     async function checkAuth() {
@@ -240,29 +672,42 @@
       if (session) showAdmin(); else showLogin();
     }
     function showLogin() { loginView.style.display = 'grid'; adminView.style.display = 'none'; }
-    function showAdmin() { loginView.style.display = 'none'; adminView.style.display = 'grid'; loadArticles(); }
+    function showAdmin() {
+      loginView.style.display = 'none';
+      adminView.style.display = 'grid';
+      loadArticles();
+      checkDraft();
+    }
 
     $('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = $('login-submit'); const err = $('login-error');
       err.textContent = ''; btn.disabled = true; btn.textContent = 'Вход…';
       const { error } = await supabaseClient.auth.signInWithPassword({
-        email: $('login-email').value.trim(), password: $('login-password').value,
+        email: $('login-email').value.trim(),
+        password: $('login-password').value,
       });
       btn.disabled = false; btn.textContent = 'Войти';
       if (error) { err.textContent = 'Неверный email или пароль'; return; }
-      $('login-password').value = ''; showAdmin();
+      $('login-password').value = '';
+      showAdmin();
     });
-    $('logout-btn').addEventListener('click', async () => { await supabaseClient.auth.signOut(); showLogin(); });
+
+    $('logout-btn').addEventListener('click', async () => {
+      if (isDirty && !confirm('Есть несохранённые изменения. Выйти?')) return;
+      await supabaseClient.auth.signOut();
+      showLogin();
+    });
 
     // ===== LOAD =====
     async function loadArticles() {
       const { data, error } = await supabaseClient
         .from('knowledge_articles').select('*')
         .order('category', { ascending: true }).order('title', { ascending: true });
-      if (error) { console.error(error); return; }
+      if (error) { toast('Не удалось загрузить статьи: ' + error.message, 'error', 8000); return; }
       articles = data || [];
-      renderArticleList(); renderCategoryDatalist();
+      renderArticleList();
+      renderCategoryDatalist();
       if (articles.length && !currentId) openArticle(articles[0].id);
       else if (!articles.length) showWelcome();
     }
@@ -278,13 +723,16 @@
           .filter(Boolean).join(' · ');
         return `
           <button class="admin-article-item ${currentId === a.id ? 'active' : ''}" data-id="${a.id}">
-            ${a.pinned ? '<span class="pin-mark"></span>' : ''}${escapeHtml(a.title)}
+            ${a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;margin-right:8px;vertical-align:middle;"></span>' : ''}${escapeHtml(a.title)}
             <span class="admin-article-item-cat">${escapeHtml(suffix)}</span>
           </button>
         `;
       }).join('');
       list.querySelectorAll('.admin-article-item').forEach(el =>
-        el.addEventListener('click', () => openArticle(el.dataset.id)));
+        el.addEventListener('click', () => {
+          if (isDirty && !confirm('Есть несохранённые изменения. Переключить статью?')) return;
+          openArticle(el.dataset.id);
+        }));
     }
 
     function renderCategoryDatalist() {
@@ -293,28 +741,47 @@
     }
 
     // ===== FORM =====
-    function showWelcome() { welcomeState.style.display = 'flex'; editorForm.style.display = 'none'; }
-    function showForm() { welcomeState.style.display = 'none'; editorForm.style.display = 'block'; }
+    function showWelcome() {
+      welcomeState.style.display = 'flex';
+      editorContent.style.display = 'none';
+      editorToolbar.style.display = 'none';
+    }
+
+    function showEditor() {
+      welcomeState.style.display = 'none';
+      editorContent.style.display = 'block';
+      editorToolbar.style.display = 'flex';
+    }
 
     function updatePinToggle() {
       $('pin-toggle-label').classList.toggle('checked', $('f-pinned').checked);
     }
 
     function clearForm() {
-      currentId = null; currentSteps = null;
-      $('f-title').value = ''; $('f-category').value = ''; $('f-tags').value = '';
-      $('f-content').value = ''; $('f-pinned').checked = false;
+      if (isDirty && !confirm('Есть несохранённые изменения. Создать новую статью?')) return;
+      currentId = null;
+      currentSteps = null;
+      isDirty = false;
+      $('f-title').value = '';
+      $('f-category').value = '';
+      $('f-tags').value = '';
+      $('f-content').value = '';
+      $('f-pinned').checked = false;
       updatePinToggle();
-      $('editor-status').textContent = 'Новая статья';
       $('delete-btn').style.display = 'none';
-      switchTab('text'); renderStepsEditor();
-      showForm(); renderArticleList(); $('f-title').focus();
+      switchTab('text');
+      renderStepsEditor();
+      showEditor();
+      setStatus('saved', 'Новая статья');
+      renderArticleList();
+      $('f-title').focus();
     }
 
     function openArticle(id) {
       const a = articles.find(x => x.id === id);
       if (!a) return;
       currentId = id;
+      isDirty = false;
       $('f-title').value = a.title || '';
       $('f-category').value = a.category || '';
       $('f-tags').value = (a.tags || []).join(', ');
@@ -322,11 +789,13 @@
       $('f-pinned').checked = !!a.pinned;
       updatePinToggle();
       currentSteps = a.steps || null;
-      $('editor-status').textContent =
-        'Изменено ' + new Date(a.updated_at).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
       $('delete-btn').style.display = 'inline-flex';
-      switchTab('text'); renderStepsEditor();
-      showForm(); renderArticleList();
+      switchTab('text');
+      renderStepsEditor();
+      showEditor();
+      const dt = new Date(a.updated_at).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+      setStatus('saved', 'Изменено ' + dt);
+      renderArticleList();
     }
 
     // ===== TABS =====
@@ -363,7 +832,6 @@
       el.classList.add('show');
     }
 
-    // Сжатие изображения: webp, max 1600px, качество 85%
     async function compressImage(file, maxDim = 1600, quality = 0.85) {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -376,16 +844,14 @@
               height = Math.round(height * ratio);
             }
             const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
+            canvas.width = width; canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(0, 0, width, height);
             ctx.drawImage(img, 0, 0, width, height);
             canvas.toBlob(blob => {
               URL.revokeObjectURL(img.src);
-              if (blob) resolve(blob);
-              else reject(new Error('Не удалось сжать изображение'));
+              if (blob) resolve(blob); else reject(new Error('Не удалось сжать'));
             }, 'image/webp', quality);
           } catch (e) { reject(e); }
         };
@@ -397,42 +863,29 @@
     async function uploadFiles(files) {
       const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
       if (!imageFiles.length) return;
-
       const btn = $('upload-img-btn');
       btn.disabled = true;
-
       let successCount = 0;
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         const prefix = imageFiles.length > 1 ? `Загружаю ${i + 1} из ${imageFiles.length}: ` : 'Загружаю: ';
         showUploadStatus(prefix + file.name);
-
         try {
-          // Сжимаем
           const blob = await compressImage(file);
-          const ext = 'webp';
-          const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
+          const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
           const { error } = await supabaseClient.storage
-            .from('kb-images')
-            .upload(path, blob, { upsert: false, contentType: 'image/webp' });
-
+            .from('kb-images').upload(path, blob, { upsert: false, contentType: 'image/webp' });
           if (error) throw error;
-
           const { data } = supabaseClient.storage.from('kb-images').getPublicUrl(path);
           const altText = file.name.replace(/\.[^.]+$/, '');
           insertAtCursor(`\n![${altText}](${data.publicUrl})\n`);
           successCount++;
         } catch (err) {
-          console.error('Upload failed:', err);
-          showUploadStatus('❌ Ошибка: ' + err.message);
-          await new Promise(r => setTimeout(r, 2500));
+          toast('Не удалось загрузить фото: ' + err.message, 'error', 6000);
         }
       }
-
       showUploadStatus(successCount > 0 ? `✅ Готово (${successCount})` : '');
       if (successCount > 0) setTimeout(() => showUploadStatus(''), 1500);
-
       btn.disabled = false;
     }
 
@@ -443,19 +896,16 @@
       el.value = el.value.slice(0, start) + text + el.value.slice(end);
       el.selectionStart = el.selectionEnd = start + text.length;
       el.focus();
+      markDirty();
     }
 
-    // Кнопка
     $('upload-img-btn').addEventListener('click', () => {
       const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.multiple = true;
+      input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
       input.onchange = (e) => uploadFiles(e.target.files);
       input.click();
     });
 
-    // Ctrl+V — вставка из буфера (скриншоты, копии)
     $('f-content').addEventListener('paste', async (e) => {
       const items = e.clipboardData?.items;
       if (!items) return;
@@ -466,19 +916,16 @@
       if (files.length) await uploadFiles(files);
     });
 
-    // Drag & Drop
     const textarea = $('f-content');
     ['dragenter', 'dragover'].forEach(evt => {
       textarea.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         textarea.classList.add('drop-active');
       });
     });
     ['dragleave', 'drop'].forEach(evt => {
       textarea.addEventListener(evt, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         if (evt === 'dragleave' && textarea.contains(e.relatedTarget)) return;
         textarea.classList.remove('drop-active');
       });
@@ -494,23 +941,22 @@
       const id = 'step-' + Date.now().toString(36);
       currentSteps.steps.push({ id, kind: 'info', title: 'Новый шаг', content: '', next: null });
       if (!currentSteps.start) currentSteps.start = id;
+      markDirty();
       renderStepsEditor();
     });
 
     function renderStepsEditor() {
       const container = $('steps-container');
       const startSelect = $('start-step-select');
-
       if (!currentSteps || !currentSteps.steps || !currentSteps.steps.length) {
         container.innerHTML = `<div class="empty-steps">Пока нет шагов. Нажмите «Добавить шаг», чтобы собрать пошаговый сценарий.</div>`;
         startSelect.innerHTML = '';
         return;
       }
-
       startSelect.innerHTML = currentSteps.steps.map(s =>
         `<option value="${s.id}" ${currentSteps.start === s.id ? 'selected' : ''}>${escapeHtml(s.title || s.id)}</option>`
       ).join('');
-      startSelect.onchange = () => { currentSteps.start = startSelect.value; };
+      startSelect.onchange = () => { currentSteps.start = startSelect.value; markDirty(); };
 
       const stepOptions = (selected) => '<option value="">— конец —</option>' +
         currentSteps.steps.map(s =>
@@ -537,7 +983,7 @@
                 </div>
               `).join('')}
             </div>
-            <button type="button" class="add-option-btn" data-add-opt="${s.id}" style="margin-top:6px;">+ Добавить вариант</button>
+            <button type="button" class="add-option-btn" data-add-opt="${s.id}" style="margin-top:8px;">+ Добавить вариант</button>
           </div>
         ` : '';
         const nextHtml = (!isQuestion && !isEnd) ? `
@@ -568,7 +1014,7 @@
               <input type="text" data-step="${s.id}" data-field="title" value="${escapeHtml(s.title || '')}" placeholder="Струйный или лазерный принтер?">
             </div>
             <div class="step-row">
-              <label>Дополнительное описание (Markdown, можно вставить фото)</label>
+              <label>Дополнительное описание (Markdown)</label>
               <textarea data-step="${s.id}" data-field="content" placeholder="Уточните у клиента…">${escapeHtml(s.content || '')}</textarea>
             </div>
             ${optionsHtml}
@@ -603,6 +1049,7 @@
         if (!step.options) step.options = [];
         if (!step.options[optIdx]) step.options[optIdx] = { label: '', next: null };
         step.options[optIdx][field] = field === 'next' ? (el.value || null) : el.value;
+        markDirty();
         return;
       }
       const field = el.dataset.field;
@@ -610,11 +1057,13 @@
         step.kind = el.value;
         if (step.kind === 'question' && !step.options) step.options = [];
         if (step.kind !== 'question') delete step.options;
+        markDirty();
         renderStepsEditor();
         return;
       }
-      if (field === 'next') { step.next = el.value || null; return; }
+      if (field === 'next') { step.next = el.value || null; markDirty(); return; }
       step[field] = el.value;
+      markDirty();
       if (field === 'title') {
         const ss = $('start-step-select');
         const opt = ss.querySelector(`option[value="${sid}"]`);
@@ -627,6 +1076,7 @@
       if (!confirm('Удалить шаг?')) return;
       currentSteps.steps = currentSteps.steps.filter(s => s.id !== id);
       if (currentSteps.start === id) currentSteps.start = currentSteps.steps[0]?.id || null;
+      markDirty();
       renderStepsEditor();
     }
     function addOption(stepId) {
@@ -634,29 +1084,31 @@
       if (!step) return;
       if (!step.options) step.options = [];
       step.options.push({ label: '', next: null });
+      markDirty();
       renderStepsEditor();
     }
     function deleteOption(stepId, idx) {
       const step = currentSteps.steps.find(s => s.id === stepId);
       if (!step || !step.options) return;
       step.options.splice(idx, 1);
+      markDirty();
       renderStepsEditor();
     }
 
     // ===== SAVE =====
-    $('save-btn').addEventListener('click', async () => {
+    async function saveArticle() {
       const title = $('f-title').value.trim();
       const category = $('f-category').value.trim();
       const content = $('f-content').value;
       const tags = $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
       const pinned = $('f-pinned').checked;
 
-      if (!title) { alert('Введите заголовок'); return; }
-      if (!category) { alert('Введите категорию'); return; }
+      if (!title) { toast('Введите заголовок', 'error'); $('f-title').focus(); return; }
+      if (!category) { toast('Введите категорию', 'error'); $('f-category').focus(); return; }
 
       let stepsPayload = null;
       if (currentSteps && currentSteps.steps && currentSteps.steps.length) {
-        if (!currentSteps.start) { alert('Выберите стартовый шаг'); return; }
+        if (!currentSteps.start) { toast('Выберите стартовый шаг сценария', 'error'); return; }
         const ids = new Set(currentSteps.steps.map(s => s.id));
         for (const s of currentSteps.steps) {
           if (s.next && !ids.has(s.next)) s.next = null;
@@ -666,38 +1118,123 @@
       }
 
       const btn = $('save-btn');
-      btn.disabled = true; btn.textContent = 'Сохранение…';
+      btn.disabled = true;
+      btn.textContent = 'Сохранение…';
+      setStatus('unsaved', 'Сохранение…');
 
-      const payload = { title, category, content, tags, steps: stepsPayload, pinned, updated_at: new Date().toISOString() };
-      let error;
-      if (currentId) {
-        ({ error } = await supabaseClient.from('knowledge_articles').update(payload).eq('id', currentId));
-      } else {
-        const res = await supabaseClient.from('knowledge_articles').insert(payload).select().single();
-        error = res.error;
-        if (!error && res.data) currentId = res.data.id;
+      const payload = {
+        title, category, content, tags,
+        steps: stepsPayload,
+        pinned,
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        let error, savedId = currentId;
+        if (currentId) {
+          const res = await supabaseClient
+            .from('knowledge_articles')
+            .update(payload)
+            .eq('id', currentId)
+            .select()
+            .single();
+          error = res.error;
+          if (!error && res.data) savedId = res.data.id;
+        } else {
+          const res = await supabaseClient
+            .from('knowledge_articles')
+            .insert(payload)
+            .select()
+            .single();
+          error = res.error;
+          if (!error && res.data) savedId = res.data.id;
+        }
+
+        if (error) {
+          console.error('SAVE ERROR:', error);
+          toast('Не удалось сохранить: ' + error.message, 'error', 10000);
+          markError(error.message);
+          btn.disabled = false;
+          btn.textContent = 'Сохранить';
+          return;
+        }
+
+        // Verify
+        const { data: check } = await supabaseClient
+          .from('knowledge_articles')
+          .select('id,title,updated_at')
+          .eq('id', savedId)
+          .single();
+
+        if (!check) {
+          toast('Статья не найдена после сохранения. Проверьте права доступа.', 'error', 8000);
+          markError('verify failed');
+          btn.disabled = false;
+          btn.textContent = 'Сохранить';
+          return;
+        }
+
+        currentId = savedId;
+        isDirty = false;
+        markSaved();
+        toast('Статья сохранена', 'success', 2000);
+        await loadArticles();
+        openArticle(currentId);
+      } catch (e) {
+        console.error('UNEXPECTED SAVE ERROR:', e);
+        toast('Неожиданная ошибка: ' + e.message, 'error', 8000);
+        markError(e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Сохранить';
       }
-      btn.disabled = false; btn.textContent = 'Сохранить';
-      if (error) { alert('Ошибка сохранения: ' + error.message); return; }
-      await loadArticles();
-      if (currentId) openArticle(currentId);
-      $('editor-status').textContent = 'Сохранено ✓';
+    }
+
+    $('save-btn').addEventListener('click', saveArticle);
+
+    // Ctrl+Enter — сохранение
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (editorContent.style.display !== 'none') saveArticle();
+      }
+    });
+
+    // Warn on leaving
+    window.addEventListener('beforeunload', (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
     });
 
     // ===== DELETE =====
     $('delete-btn').addEventListener('click', async () => {
       if (!currentId) return;
       const a = articles.find(x => x.id === currentId);
-      if (!confirm(`Удалить статью «${a?.title || ''}»?`)) return;
+      if (!confirm(`Удалить статью «${a?.title || ''}»? Действие необратимо.`)) return;
       const { error } = await supabaseClient.from('knowledge_articles').delete().eq('id', currentId);
-      if (error) { alert('Ошибка: ' + error.message); return; }
-      currentId = null; await loadArticles();
-      if (!articles.length) showWelcome(); else openArticle(articles[0].id);
+      if (error) { toast('Не удалось удалить: ' + error.message, 'error', 8000); return; }
+      currentId = null;
+      isDirty = false;
+      clearDraft();
+      await loadArticles();
+      if (!articles.length) showWelcome();
+      else openArticle(articles[0].id);
+      toast('Статья удалена', 'success', 2000);
     });
 
     $('new-article-btn').addEventListener('click', clearForm);
     $('welcome-new-btn').addEventListener('click', clearForm);
-    $('f-pinned').addEventListener('change', updatePinToggle);
+
+    // Mark dirty on any form change
+    ['f-title','f-category','f-tags','f-content'].forEach(id => {
+      $(id).addEventListener('input', markDirty);
+    });
+    $('f-pinned').addEventListener('change', () => { updatePinToggle(); markDirty(); });
+
+    // Autosave draft every 3s
+    setInterval(() => { if (isDirty) saveDraft(); }, 3000);
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c =>
