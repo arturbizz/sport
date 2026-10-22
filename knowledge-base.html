@@ -92,6 +92,7 @@
 
     const SIDEBAR_KEY = 'kb_public_sidebar_hidden';
 
+    // ===== SIDEBAR COLLAPSE =====
     function updateSidebarState() {
       const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
       els.layout.classList.toggle('sidebar-hidden', hidden);
@@ -107,6 +108,7 @@
     });
     updateSidebarState();
 
+    // ===== MARKDOWN =====
     const PURIFY_CONFIG = {
       ADD_TAGS: ['figure', 'figcaption', 'img', 'mark', 'u', 'del', 'div', 'span'],
       ADD_ATTR: ['src', 'alt', 'title', 'width', 'height', 'loading', 'target', 'rel', 'class'],
@@ -114,16 +116,35 @@
     };
 
     const CALLOUT_TITLES = {
-      note: 'Заметка', tip: 'Совет', warning: 'Внимание',
-      danger: 'Запрещено', success: 'Готово', important: 'Важно'
+      note: 'Заметка',
+      tip: 'Совет',
+      warning: 'Внимание',
+      danger: 'Запрещено',
+      success: 'Готово',
+      important: 'Важно'
     };
+    const CALLOUT_TYPES = 'note|tip|warning|danger|success|important';
 
     function preprocessMarkdown(md) {
-      md = md.replace(/^:::(\w+)[ \t]*\n([\s\S]*?)\n:::[ \t]*$/gm, (m, type, body) => {
-        const title = CALLOUT_TITLES[type] || type;
-        const inner = marked.parse(body.trim());
-        return `\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
-      });
+      // 1. Многострочный: :::type\nтекст\n:::
+      md = md.replace(
+        new RegExp(`(^|\\n):::(${CALLOUT_TYPES})[ \\t]*\\n([\\s\\S]*?)\\n:::[ \\t]*(?=\\n|$)`, 'g'),
+        (m, prefix, type, body) => {
+          const title = CALLOUT_TITLES[type] || type;
+          const inner = marked.parse(body.trim());
+          return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+        }
+      );
+      // 2. Однострочный / смешанный: :::type текст :::  или  :::type текст\n:::
+      md = md.replace(
+        new RegExp(`(^|\\n):::(${CALLOUT_TYPES})[ \\t]+([\\s\\S]*?)[ \\t]*\\n?:::[ \\t]*(?=\\n|$)`, 'g'),
+        (m, prefix, type, body) => {
+          const title = CALLOUT_TITLES[type] || type;
+          const inner = marked.parse(body.trim());
+          return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+        }
+      );
+      // 3. Highlight ==text==
       md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
       return md;
     }
@@ -167,7 +188,7 @@
       return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
     }
 
-    // ⬇⬇⬇ ССЫЛКИ МЕЖДУ СТАТЬЯМИ ⬇⬇⬇
+    // ===== ССЫЛКИ МЕЖДУ СТАТЬЯМИ =====
     function findArticleByKey(key) {
       const k = decodeURIComponent(key).toLowerCase().trim();
       return allArticles.find(a => a.title.toLowerCase().includes(k));
@@ -433,6 +454,7 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    // ===== LIGHTBOX =====
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
     function openLightbox(src, alt) {
