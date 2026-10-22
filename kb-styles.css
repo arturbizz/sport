@@ -1286,3 +1286,34 @@ body.article-open .main {
   background: var(--accent-soft);
   border-radius: 3px;
 }
+/* ===== SPLIT VIEW в редакторе ===== */
+.content-area { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.content-area[data-view="preview"] .content-area-edit { display: none; }
+.content-area[data-view="edit"] .content-area-preview { display: none; }
+.content-area[data-view="split"] { grid-template-columns: 1fr 1fr; }
+.content-area[data-view="split"] .content-area-edit,
+.content-area[data-view="split"] .content-area-preview { min-width: 0; }
+.content-area[data-view="split"] .content-textarea { min-height: 500px; height: 500px; }
+.content-area[data-view="split"] .preview-pane { min-height: 500px; max-height: 500px; overflow-y: auto; }
+.content-area[data-view="split"] .content-textarea { border-radius: var(--radius-md) !important; }
+
+@media (max-width: 1200px) {
+  .content-area[data-view="split"] { grid-template-columns: 1fr; }
+  .content-area[data-view="split"] .preview-pane { max-height: none; }
+}
+
+/* ===== Индикатор разметки ===== */
+.markup-indicator {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--ink-3);
+  padding: 8px 4px;
+  font-variant-numeric: tabular-nums;
+  min-height: 20px;
+}
+.markup-indicator span { display: inline-flex; align-items: center; gap: 4px; }
+.markup-indicator .ok { color: #059669; font-weight: 500; }
+.markup-indicator .warn { color: #DC2626; font-weight: 500; }
+.markup-indicator .neutral { color: var(--ink-4); }
