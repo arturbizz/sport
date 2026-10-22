@@ -36,7 +36,7 @@
           <svg class="must-know-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
-          <span>Особенности по технике</span>
+          <span>Важное</span>
           <span class="count" id="must-know-count">0</span>
         </button>
       </div>
@@ -92,7 +92,6 @@
 
     const SIDEBAR_KEY = 'kb_public_sidebar_hidden';
 
-    // ===== SIDEBAR COLLAPSE =====
     function updateSidebarState() {
       const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
       els.layout.classList.toggle('sidebar-hidden', hidden);
@@ -108,7 +107,6 @@
     });
     updateSidebarState();
 
-    // ===== MARKDOWN =====
     const PURIFY_CONFIG = {
       ADD_TAGS: ['figure', 'figcaption', 'img', 'mark', 'u', 'del', 'div', 'span'],
       ADD_ATTR: ['src', 'alt', 'title', 'width', 'height', 'loading', 'target', 'rel', 'class'],
@@ -116,12 +114,8 @@
     };
 
     const CALLOUT_TITLES = {
-      note: 'Заметка',
-      tip: 'Совет',
-      warning: 'Внимание',
-      danger: 'Запрещено',
-      success: 'Готово',
-      important: 'Важно'
+      note: 'Заметка', tip: 'Совет', warning: 'Внимание',
+      danger: 'Запрещено', success: 'Готово', important: 'Важно'
     };
 
     function preprocessMarkdown(md) {
@@ -162,16 +156,38 @@
         ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
 
-    // ⬇⬇⬇ ИСПРАВЛЕНО: сначала убираем HTML-теги, потом markdown-символы ⬇⬇⬇
     function excerpt(text, len = 180) {
       const plain = (text || '')
-        .replace(/<[^>]*>/g, '')           // вырезаем все HTML-теги: <u>, </u>, <mark>, <br> и т.д.
-        .replace(/:::\w+/g, '')            // убираем маркеры callout-блоков :::tip
+        .replace(/<[^>]*>/g, '')
+        .replace(/:::\w+/g, '')
         .replace(/:::+/g, '')
-        .replace(/[#*`>\-!\[\]\(\)=:]/g, '') // остальные markdown-символы
-        .replace(/\s+/g, ' ')              // сжимаем пробелы
+        .replace(/[#*`>\-!\[\]\(\)=:]/g, '')
+        .replace(/\s+/g, ' ')
         .trim();
       return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
+    }
+
+    // ⬇⬇⬇ ССЫЛКИ МЕЖДУ СТАТЬЯМИ ⬇⬇⬇
+    function findArticleByKey(key) {
+      const k = decodeURIComponent(key).toLowerCase().trim();
+      return allArticles.find(a => a.title.toLowerCase().includes(k));
+    }
+
+    function bindArticleLinks(container) {
+      container.querySelectorAll('a[href^="#article:"]').forEach(a => {
+        a.classList.add('article-link');
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const key = a.getAttribute('href').slice('#article:'.length);
+          const target = findArticleByKey(key);
+          if (target) {
+            openArticle(target.id);
+          } else {
+            console.warn('[KB] Статья не найдена по ключу:', key);
+          }
+        });
+      });
     }
 
     async function loadArticles() {
@@ -262,7 +278,7 @@
       els.results.innerHTML = articles.map(a => {
         const isWizard = a.steps && a.steps.steps && a.steps.steps.length;
         const badges = (isWizard ? '<span class="badge-scenario">Сценарий</span>' : '')
-          + (a.pinned ? '<span class="badge-pinned">Особенность</span>' : '');
+          + (a.pinned ? '<span class="badge-pinned">Важное</span>' : '');
         return `
           <article class="article" data-id="${a.id}">
             <div class="article-head">
@@ -286,7 +302,7 @@
     function renderArticleView(article) {
       const isWizard = article.steps && article.steps.steps && article.steps.steps.length;
       const badges = (isWizard ? '<span class="badge-scenario">Сценарий</span>' : '')
-        + (article.pinned ? '<span class="badge-pinned">Особенность</span>' : '');
+        + (article.pinned ? '<span class="badge-pinned">Важное</span>' : '');
 
       const bodyHtml = isWizard
         ? `<div class="wizard" data-wizard-article="${article.id}">${renderWizardStep(article)}</div>`
@@ -310,6 +326,8 @@
       els.results.querySelectorAll('.prose img').forEach(img => {
         img.addEventListener('click', () => openLightbox(img.src, img.alt));
       });
+
+      bindArticleLinks(els.results);
 
       if (isWizard) bindWizard(article);
     }
@@ -368,6 +386,7 @@
         wizardEl.querySelectorAll('.prose img').forEach(img => {
           img.addEventListener('click', () => openLightbox(img.src, img.alt));
         });
+        bindArticleLinks(wizardEl);
       }
 
       wizardEl.querySelectorAll('[data-wizard-next]').forEach(btn => {
@@ -394,6 +413,8 @@
         st.history = [];
         rerender();
       });
+
+      bindArticleLinks(wizardEl);
     }
 
     function openArticle(id) {
