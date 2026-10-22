@@ -16,7 +16,6 @@
     .admin-layout.fullscreen .admin-sidebar { display: none; }
     .admin-layout.fullscreen .editor-content { max-width: 100%; padding: 24px 40px 96px; }
     .admin-layout.fullscreen .content-textarea { min-height: calc(100vh - 340px); }
-    .admin-layout.fullscreen .preview-pane { min-height: calc(100vh - 340px); }
 
     .fab-upload {
       position: fixed;
@@ -75,7 +74,6 @@
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
 
-    /* Toasts снизу справа */
     .toast-container {
       position: fixed !important;
       top: auto !important;
@@ -98,7 +96,6 @@
       border-radius: 14px !important;
       background: var(--bg-elevated) !important;
       border: 1px solid var(--hairline) !important;
-      border-left: 1px solid var(--hairline) !important;
       box-shadow: 0 12px 40px rgba(16, 24, 40, 0.12), 0 4px 12px rgba(16, 24, 40, 0.06) !important;
       position: relative !important;
       overflow: hidden !important;
@@ -110,7 +107,6 @@
       line-height: 1.5 !important;
       pointer-events: auto;
       opacity: 1 !important;
-      transition: none !important;
     }
     .toast.closing { animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
     .toast-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
@@ -151,7 +147,6 @@
     .fullscreen-btn svg { width: 16px; height: 16px; }
     #upload-img-btn { display: none !important; }
 
-    /* Иконки в md-toolbar */
     .md-toolbar button svg { width: 13px; height: 13px; flex-shrink: 0; }
     .md-toolbar button[data-md="highlight"] svg { color: #D97706; }
     .md-toolbar button[data-md="underline"] svg { color: var(--accent); }
@@ -252,7 +247,7 @@
 
       <div class="welcome" id="welcome-state">
         <h2>Редактор базы знаний</h2>
-        <p>Создавайте обычные статьи, пошаговые сценарии и отмечайте «Особенности по технике» — то, что оператор должен запомнить сразу.</p>
+        <p>Создавайте обычные статьи, пошаговые сценарии и отмечайте «Важное» — то, что оператор должен запомнить сразу.</p>
         <button class="btn btn-primary" id="welcome-new-btn">Создать первую статью</button>
       </div>
 
@@ -278,7 +273,7 @@
           <label class="pin-toggle" id="pin-toggle-label">
             <input type="checkbox" id="f-pinned">
             <span>
-              <strong>Особенности по технике</strong>
+              <strong>Важное</strong>
               <small>Статья появится в акцентном блоке наверху — то, что оператор должен сразу запомнить.</small>
             </span>
           </label>
@@ -291,10 +286,15 @@
 
         <div id="pane-text">
           <div class="content-toolbar">
-            <div class="view-toggle">
-              <button id="view-edit" class="active">Редактор</button>
-              <button id="view-preview">Превью</button>
+            <div class="view-toggle" id="view-toggle">
+              <button data-view="edit">Редактор</button>
+              <button data-view="split" class="active">Оба</button>
+              <button data-view="preview">Превью</button>
             </div>
+            <button type="button" class="img-btn" id="check-markup-btn" title="Проверить, все ли callout-блоки закрыты">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Проверить разметку
+            </button>
           </div>
 
           <!-- Панель украшений Markdown -->
@@ -333,11 +333,23 @@
             </button>
           </div>
 
-          <textarea class="content-textarea" id="f-content" placeholder="# Заголовок раздела&#10;&#10;Пошаговая инструкция…"></textarea>
-          <div class="preview-pane prose" id="preview-pane" style="display:none;"></div>
+          <!-- Split view: редактор + живое превью -->
+          <div class="content-area" id="content-area" data-view="split">
+            <div class="content-area-edit">
+              <textarea class="content-textarea" id="f-content" placeholder="# Заголовок раздела&#10;&#10;Пошаговая инструкция…"></textarea>
+            </div>
+            <div class="content-area-preview">
+              <div class="preview-pane prose" id="preview-pane"></div>
+            </div>
+          </div>
+
+          <!-- Индикатор разметки -->
+          <div class="markup-indicator" id="markup-indicator"></div>
+
           <div class="field-hint">
             <strong>Как вставить фото:</strong> кликни в тексте → нажми круглую кнопку <strong>«Загрузить фото»</strong> справа внизу (или <kbd>Ctrl</kbd>+<kbd>V</kbd>).<br>
-            <strong>Украшения:</strong> выдели текст → нажми кнопку. Форматирование применится к выделенному. <strong>Повторное нажатие снимает форматирование.</strong><br>
+            <strong>Украшения:</strong> выдели текст → нажми кнопку. Повторное нажатие снимает форматирование.<br>
+            <strong>Callout-блоки</strong> (Заметка/Совет/Внимание/Запрещено/Важно): вставляются через тулбар — синтаксис правильный автоматически. <strong>Справа — живое превью: сразу видно, отрендерилось или нет.</strong><br>
             <strong>Сохранить:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd> &nbsp;·&nbsp; <strong>Полный экран:</strong> кнопка в тулбаре или <kbd>Esc</kbd>
           </div>
         </div>
@@ -370,16 +382,18 @@
     const editorToolbar = $('editor-toolbar');
     const adminLayout = $('admin-view');
     const fabUpload = $('fab-upload');
+    const contentArea = $('content-area');
 
     let articles = [];
     let currentId = null;
     let currentSteps = null;
     let isDirty = false;
     let pendingInsertPos = null;
-    // ⬇ Сохранённое выделение в textarea (чтобы не терялось при клике на тулбар)
     let savedSelection = { start: 0, end: 0 };
+    let previewTimer = null;
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
+    const VIEW_KEY = 'kb_admin_view_mode';
 
     // ===== SIDEBAR =====
     function initSidebar() {
@@ -394,7 +408,6 @@
     // ===== FULLSCREEN =====
     const ICON_EXPAND = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
     const ICON_COLLAPSE = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
-
     function updateFullscreenIcon() {
       const isFs = adminLayout.classList.contains('fullscreen');
       $('fullscreen-icon').innerHTML = isFs ? ICON_COLLAPSE : ICON_EXPAND;
@@ -416,12 +429,34 @@
       }
     });
 
+    // ===== VIEW MODE (edit / split / preview) =====
+    function initViewMode() {
+      const saved = localStorage.getItem(VIEW_KEY) || 'split';
+      setViewMode(saved, false);
+    }
+    function setViewMode(mode, save = true) {
+      contentArea.dataset.view = mode;
+      document.querySelectorAll('#view-toggle button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === mode);
+      });
+      if (save) localStorage.setItem(VIEW_KEY, mode);
+      // Обновить превью
+      if (mode === 'split' || mode === 'preview') {
+        refreshPreview();
+      }
+      updateFabVisibility();
+    }
+    document.querySelectorAll('#view-toggle button').forEach(btn => {
+      btn.addEventListener('click', () => setViewMode(btn.dataset.view));
+    });
+
     // ===== FAB =====
     function updateFabVisibility() {
       const isEditorVisible = editorContent.style.display !== 'none';
       const isTextTabActive = $('pane-text').style.display !== 'none';
-      const isEditMode = $('f-content').style.display !== 'none';
-      fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditMode);
+      const viewMode = contentArea.dataset.view || 'edit';
+      const isEditVisible = viewMode === 'edit' || viewMode === 'split';
+      fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditVisible);
     }
 
     // ===== TOAST =====
@@ -499,6 +534,8 @@
       showEditor();
       isDirty = true;
       setStatus('unsaved', 'Восстановлен черновик');
+      refreshPreview();
+      updateMarkupIndicator();
     }
 
     // ===== AUTH =====
@@ -512,6 +549,7 @@
       adminView.style.display = 'grid';
       initSidebar();
       initFullscreen();
+      initViewMode();
       loadArticles();
       checkDraft();
     }
@@ -554,7 +592,7 @@
         return;
       }
       list.innerHTML = articles.map(a => {
-        const suffix = [a.category, a.steps ? 'сценарий' : null, a.pinned ? 'особенность' : null]
+        const suffix = [a.category, a.steps ? 'сценарий' : null, a.pinned ? 'важное' : null]
           .filter(Boolean).join(' · ');
         return `
           <button class="admin-article-item ${currentId === a.id ? 'active' : ''}" data-id="${a.id}">
@@ -600,6 +638,8 @@
       $('delete-btn').style.display = 'none';
       switchTab('text'); renderStepsEditor(); showEditor();
       setStatus('saved', 'Новая статья'); renderArticleList(); $('f-title').focus();
+      refreshPreview();
+      updateMarkupIndicator();
     }
     function openArticle(id) {
       const a = articles.find(x => x.id === id);
@@ -615,6 +655,8 @@
       const dt = new Date(a.updated_at).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
       setStatus('saved', 'Изменено ' + dt);
       renderArticleList();
+      refreshPreview();
+      updateMarkupIndicator();
     }
 
     // ===== TABS =====
@@ -629,41 +671,97 @@
     $('tab-steps').addEventListener('click', () => switchTab('steps'));
 
     // ===== MARKDOWN =====
-    function switchToEdit() {
-      $('f-content').style.display = 'block';
-      $('preview-pane').style.display = 'none';
-      $('view-edit').classList.add('active');
-      $('view-preview').classList.remove('active');
-      updateFabVisibility();
-    }
-    $('view-edit').addEventListener('click', switchToEdit);
-    $('view-preview').addEventListener('click', () => {
-      $('preview-pane').innerHTML = DOMPurify.sanitize(renderMarkdownForPreview($('f-content').value || ''));
-      $('f-content').style.display = 'none';
-      $('preview-pane').style.display = 'block';
-      $('view-edit').classList.remove('active');
-      $('view-preview').classList.add('active');
-      updateFabVisibility();
-    });
-
     const CALLOUT_TITLES = {
       note: 'Заметка', tip: 'Совет', warning: 'Внимание',
       danger: 'Запрещено', success: 'Готово', important: 'Важно'
     };
-    function renderMarkdownForPreview(md) {
-      md = md.replace(/^:::(\w+)[ \t]*\n([\s\S]*?)\n:::[ \t]*$/gm, (m, type, body) => {
-        const title = CALLOUT_TITLES[type] || type;
-        const inner = marked.parse(body.trim());
-        return `\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
-      });
+    const CALLOUT_TYPES = 'note|tip|warning|danger|success|important';
+
+    function preprocessMarkdown(md) {
+      // 1. Многострочный: :::type\nтекст\n:::
+      md = md.replace(
+        new RegExp(`(^|\\n):::(${CALLOUT_TYPES})[ \\t]*\\n([\\s\\S]*?)\\n:::[ \\t]*(?=\\n|$)`, 'g'),
+        (m, prefix, type, body) => {
+          const title = CALLOUT_TITLES[type] || type;
+          const inner = marked.parse(body.trim());
+          return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+        }
+      );
+      // 2. Однострочный / смешанный: :::type текст :::  или  :::type текст\n:::
+      md = md.replace(
+        new RegExp(`(^|\\n):::(${CALLOUT_TYPES})[ \\t]+([\\s\\S]*?)[ \\t]*\\n?:::[ \\t]*(?=\\n|$)`, 'g'),
+        (m, prefix, type, body) => {
+          const title = CALLOUT_TITLES[type] || type;
+          const inner = marked.parse(body.trim());
+          return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+        }
+      );
+      // 3. Highlight ==text==
       md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
-      return marked.parse(md);
+      return md;
     }
 
-    // ===== СОХРАНЕНИЕ ВЫДЕЛЕНИЯ =====
-    // Проблема: при клике на кнопку тулбара фокус уходит из textarea и selectionStart/End сбрасываются.
-    // Решение: сохраняем позицию до потери фокуса (mousedown, select, keyup, click) и восстанавливаем.
+    function renderMarkdownForPreview(md) {
+      return marked.parse(preprocessMarkdown(md || ''));
+    }
 
+    function refreshPreview() {
+      $('preview-pane').innerHTML = DOMPurify.sanitize(renderMarkdownForPreview($('f-content').value || ''));
+    }
+
+    // ===== MARKUP INDICATOR =====
+    function analyzeMarkup(text) {
+      const openMatches = (text.match(new RegExp(`(^|\\n):::(${CALLOUT_TYPES})\\b`, 'g')) || []).length;
+      const allTripleColons = (text.match(/:::/g) || []).length;
+      const closeCount = allTripleColons - openMatches;
+      const articleLinks = (text.match(/\(#article:[^)]+\)/g) || []).length;
+      const images = (text.match(/!\[[^\]]*\]\([^)]+\)/g) || []).length;
+      return {
+        calloutOpen: openMatches,
+        calloutClose: closeCount,
+        calloutOk: openMatches === closeCount,
+        articleLinks,
+        images
+      };
+    }
+
+    function updateMarkupIndicator() {
+      const stats = analyzeMarkup($('f-content').value);
+      const parts = [];
+
+      if (stats.calloutOpen > 0 || stats.calloutClose > 0) {
+        if (stats.calloutOk) {
+          parts.push(`<span class="ok">✓ ${stats.calloutOpen} callout</span>`);
+        } else {
+          parts.push(`<span class="warn">⚠ ${stats.calloutOpen} открыто · ${stats.calloutClose} закрыто</span>`);
+        }
+      }
+      if (stats.articleLinks > 0) parts.push(`<span class="neutral">🔗 ${stats.articleLinks} ссыл.</span>`);
+      if (stats.images > 0) parts.push(`<span class="neutral">🖼 ${stats.images} фото</span>`);
+
+      $('markup-indicator').innerHTML = parts.length ? parts.join('') : '<span class="neutral">Разметка: чисто</span>';
+    }
+
+    $('check-markup-btn').addEventListener('click', () => {
+      const stats = analyzeMarkup($('f-content').value);
+      const messages = [];
+
+      if (stats.calloutOpen === 0 && stats.calloutClose === 0) {
+        messages.push('Callout-блоков нет');
+      } else if (stats.calloutOk) {
+        messages.push(`✓ ${stats.calloutOpen} callout — всё закрыто`);
+      } else {
+        messages.push(`⚠ Проблема: ${stats.calloutOpen} открыто, ${stats.calloutClose} закрыто. Проверь, что каждый :::type закрыт строкой :::`);
+      }
+      if (stats.articleLinks > 0) messages.push(`Ссылок между статьями: ${stats.articleLinks}`);
+      if (stats.images > 0) messages.push(`Фото: ${stats.images}`);
+
+      const type = stats.calloutOk && stats.calloutOpen > 0 ? 'success' :
+                   (!stats.calloutOk ? 'error' : 'info');
+      toast(messages.join(' · '), type, 6000);
+    });
+
+    // ===== СОХРАНЕНИЕ ВЫДЕЛЕНИЯ =====
     const contentEl = $('f-content');
 
     function saveSelectionNow() {
@@ -675,10 +773,9 @@
     contentEl.addEventListener('keyup', saveSelectionNow);
     contentEl.addEventListener('mouseup', saveSelectionNow);
 
-    // Не даём кнопкам тулбара украсть фокус + сохраняем выделение прямо перед кликом
     $('md-toolbar').addEventListener('mousedown', (e) => {
       if (e.target.closest('button[data-md]')) {
-        e.preventDefault(); // фокус остаётся в textarea, выделение не сбрасывается
+        e.preventDefault();
         saveSelectionNow();
       }
     });
@@ -687,13 +784,11 @@
     function wrapSelection(before, after, placeholder) {
       const el = contentEl;
       let { start, end } = savedSelection;
-      // Валидация: если позиции устарели — берём актуальные
       if (typeof start !== 'number' || start < 0 || start > el.value.length) start = el.selectionStart ?? 0;
       if (typeof end !== 'number' || end < start || end > el.value.length) end = el.selectionEnd ?? start;
 
       const selected = el.value.slice(start, end);
 
-      // Если выделенный фрагмент уже обёрнут в before/after — снимаем обёртку
       if (selected.length >= (before.length + after.length) &&
           selected.startsWith(before) && selected.endsWith(after)) {
         const inner = selected.slice(before.length, selected.length - after.length);
@@ -702,26 +797,20 @@
         el.selectionStart = start;
         el.selectionEnd = start + inner.length;
         savedSelection = { start, end: start + inner.length };
-        markDirty();
+        markDirty(); refreshPreview(); updateMarkupIndicator();
         return;
       }
 
-      // Оборачиваем (с выделением — вокруг выделенного, без — placeholder)
-      let inner, innerStart, innerEnd;
-      if (selected) {
-        inner = selected;
-      } else {
-        inner = placeholder;
-      }
+      let inner = selected || placeholder;
       const newText = before + inner + after;
       el.value = el.value.slice(0, start) + newText + el.value.slice(end);
       el.focus();
-      innerStart = start + before.length;
-      innerEnd = innerStart + inner.length;
+      const innerStart = start + before.length;
+      const innerEnd = innerStart + inner.length;
       el.selectionStart = innerStart;
       el.selectionEnd = innerEnd;
       savedSelection = { start: innerStart, end: innerEnd };
-      markDirty();
+      markDirty(); refreshPreview(); updateMarkupIndicator();
     }
 
     function insertCallout(type) {
@@ -737,7 +826,7 @@
       const cursorPos = start + block.length;
       el.selectionStart = el.selectionEnd = cursorPos;
       savedSelection = { start: cursorPos, end: cursorPos };
-      markDirty();
+      markDirty(); refreshPreview(); updateMarkupIndicator();
     }
 
     $('md-toolbar').addEventListener('click', (e) => {
@@ -825,6 +914,8 @@
       }
       fabUpload.disabled = false;
       pendingInsertPos = null;
+      refreshPreview();
+      updateMarkupIndicator();
     }
 
     function insertAtCursor(text) {
@@ -1099,13 +1190,6 @@
           btn.disabled = false; btn.textContent = 'Сохранить';
           return;
         }
-        const { data: check } = await supabaseClient.from('knowledge_articles').select('id,title,updated_at').eq('id', savedId).single();
-        if (!check) {
-          toast('Статья не найдена после сохранения.', 'error', 8000);
-          markError('verify failed');
-          btn.disabled = false; btn.textContent = 'Сохранить';
-          return;
-        }
         currentId = savedId;
         isDirty = false;
         markSaved();
@@ -1148,15 +1232,30 @@
     $('new-article-btn').addEventListener('click', clearForm);
     $('welcome-new-btn').addEventListener('click', clearForm);
 
-    ['f-title','f-category','f-tags','f-content'].forEach(id => {
+    // Единый обработчик input для всех полей
+    ['f-title','f-category','f-tags'].forEach(id => {
       $(id).addEventListener('input', markDirty);
     });
+
+    $('f-content').addEventListener('input', () => {
+      markDirty();
+      updateMarkupIndicator();
+      // Debounced live preview
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(() => {
+        const view = contentArea.dataset.view;
+        if (view === 'split' || view === 'preview') {
+          refreshPreview();
+        }
+      }, 250);
+    });
+
     $('f-pinned').addEventListener('change', () => { updatePinToggle(); markDirty(); });
     setInterval(() => { if (isDirty) saveDraft(); }, 3000);
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c =>
-        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'#39;' }[c]));
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
 
     checkAuth();
