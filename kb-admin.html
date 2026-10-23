@@ -11,137 +11,73 @@
   <style>
     body { overflow: hidden; }
     .login-wrap .brand-mark { width: 24px; height: 24px; }
-
     .admin-layout.fullscreen { grid-template-columns: 1fr; }
     .admin-layout.fullscreen .admin-sidebar { display: none; }
     .admin-layout.fullscreen .editor-content { max-width: 100%; padding: 24px 40px 96px; }
     .admin-layout.fullscreen .content-textarea { min-height: calc(100vh - 340px); }
+    .admin-layout.fullscreen .preview-pane { min-height: calc(100vh - 340px); }
 
     .fab-upload {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      z-index: 100;
-      padding: 13px 22px;
-      background: linear-gradient(135deg, var(--accent), var(--violet));
-      color: white;
-      border: none;
-      border-radius: 999px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      box-shadow: 0 10px 30px rgba(79, 142, 255, 0.4), 0 2px 6px rgba(79, 142, 255, 0.2);
-      transition: all 0.25s var(--spring);
-      display: none;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-body);
+      position: fixed; bottom: 28px; right: 28px; z-index: 100;
+      padding: 13px 22px; background: linear-gradient(135deg, var(--accent), var(--violet));
+      color: white; border: none; border-radius: 999px; font-size: 14px; font-weight: 500;
+      cursor: pointer; box-shadow: 0 10px 30px rgba(79, 142, 255, 0.4); transition: all 0.25s var(--spring);
+      display: none; align-items: center; gap: 8px; font-family: var(--font-body);
       animation: fabIn 0.35s var(--spring);
     }
     .fab-upload.show { display: inline-flex; }
-    .fab-upload:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(79, 142, 255, 0.55), 0 4px 12px rgba(79, 142, 255, 0.3); }
+    .fab-upload:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(79, 142, 255, 0.55); }
     .fab-upload:active { transform: translateY(0); }
     .fab-upload:disabled { opacity: 0.6; cursor: wait; }
     .fab-upload svg { width: 16px; height: 16px; flex-shrink: 0; }
     @keyframes fabIn { from { opacity: 0; transform: translateY(20px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
     .upload-status {
-      bottom: 28px !important;
-      left: 50% !important;
-      right: auto !important;
-      transform: translateX(-50%) !important;
-      background: var(--ink) !important;
-      color: white !important;
-      padding: 12px 20px !important;
-      border-radius: 999px !important;
-      font-size: 13px !important;
-      font-weight: 500 !important;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
-      border: none !important;
-      display: none;
-      align-items: center;
-      gap: 10px;
+      bottom: 28px !important; left: 50% !important; right: auto !important;
+      transform: translateX(-50%) !important; background: var(--ink) !important; color: white !important;
+      padding: 12px 20px !important; border-radius: 999px !important; font-size: 13px !important;
+      font-weight: 500 !important; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important; border: none !important;
+      display: none; align-items: center; gap: 10px;
     }
     .upload-status.show { display: inline-flex !important; }
     .upload-status::before {
-      content: '';
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      border-top-color: white;
-      animation: spinner 0.8s linear infinite;
-      flex-shrink: 0;
+      content: ''; width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25); border-top-color: white;
+      animation: spinner 0.8s linear infinite; flex-shrink: 0;
     }
     @keyframes spinner { to { transform: rotate(360deg); } }
 
     .toast-container {
-      position: fixed !important;
-      top: auto !important;
-      bottom: 90px !important;
-      right: 28px !important;
-      left: auto !important;
-      z-index: 2000;
-      display: flex !important;
-      flex-direction: column-reverse !important;
-      align-items: flex-end !important;
-      gap: 10px !important;
-      max-width: min(420px, calc(100vw - 56px)) !important;
-      pointer-events: none;
+      position: fixed !important; top: auto !important; bottom: 90px !important; right: 28px !important;
+      left: auto !important; z-index: 2000; display: flex !important; flex-direction: column-reverse !important;
+      align-items: flex-end !important; gap: 10px !important; max-width: min(420px, calc(100vw - 56px)) !important; pointer-events: none;
     }
     .toast {
-      display: flex !important;
-      align-items: flex-start !important;
-      gap: 12px !important;
-      padding: 14px 18px 16px !important;
-      border-radius: 14px !important;
-      background: var(--bg-elevated) !important;
-      border: 1px solid var(--hairline) !important;
-      box-shadow: 0 12px 40px rgba(16, 24, 40, 0.12), 0 4px 12px rgba(16, 24, 40, 0.06) !important;
-      position: relative !important;
-      overflow: hidden !important;
-      min-width: 280px !important;
-      max-width: 420px !important;
-      animation: toastSlideIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-      color: var(--ink) !important;
-      font-size: 13.5px !important;
-      line-height: 1.5 !important;
-      pointer-events: auto;
-      opacity: 1 !important;
+      display: flex !important; align-items: flex-start !important; gap: 12px !important;
+      padding: 14px 18px 16px !important; border-radius: 14px !important; background: var(--bg-elevated) !important;
+      border: 1px solid var(--hairline) !important; box-shadow: 0 12px 40px rgba(16, 24, 40, 0.12) !important;
+      position: relative !important; overflow: hidden !important; min-width: 280px !important; max-width: 420px !important;
+      animation: toastSlideIn 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important; pointer-events: auto;
     }
-    .toast.closing { animation: toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards !important; }
-    .toast-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); }
+    .toast.closing { animation: toastSlideOut 0.3s ease forwards !important; }
+    .toast-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; }
     .toast.success .toast-icon { background: var(--success); }
     .toast.error .toast-icon { background: var(--error); }
     .toast.info .toast-icon { background: var(--accent); }
     .toast-content { flex: 1; min-width: 0; padding-top: 2px; }
-    .toast-title { font-weight: 600 !important; font-size: 13.5px !important; color: var(--ink) !important; margin-bottom: 2px !important; line-height: 1.3; }
-    .toast-message { color: var(--ink-2) !important; font-size: 12.5px !important; line-height: 1.5 !important; word-break: break-word; }
-    .toast::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; width: 100%; background: var(--accent); opacity: 0.5; animation: toastProgress var(--toast-duration, 3500ms) linear forwards; }
+    .toast-title { font-weight: 600 !important; font-size: 13.5px !important; color: var(--ink) !important; margin-bottom: 2px !important; }
+    .toast-message { color: var(--ink-2) !important; font-size: 12.5px !important; word-break: break-word; }
+    .toast::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; width: 100%; background: var(--accent); animation: toastProgress var(--toast-duration, 3500ms) linear forwards; }
     .toast.success::after { background: var(--success); }
     .toast.error::after { background: var(--error); }
     @keyframes toastSlideIn { from { opacity: 0; transform: translateX(40px) scale(0.94); } to { opacity: 1; transform: translateX(0) scale(1); } }
     @keyframes toastSlideOut { to { opacity: 0; transform: translateX(40px) scale(0.94); } }
     @keyframes toastProgress { from { width: 100%; } to { width: 0%; } }
 
-    @media (max-width: 640px) {
-      .toast-container { right: 12px !important; left: 12px !important; bottom: 90px !important; align-items: stretch !important; max-width: none !important; }
-      .toast { min-width: 0 !important; max-width: none !important; }
-    }
-
     .fullscreen-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px; height: 36px;
-      padding: 0;
-      background: var(--bg-elevated);
-      border: 1px solid var(--hairline-2);
-      border-radius: var(--radius-md);
-      color: var(--ink-2);
-      cursor: pointer;
-      transition: all 0.15s;
-      flex-shrink: 0;
-      box-shadow: var(--shadow-sm);
+      display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+      padding: 0; background: var(--bg-elevated); border: 1px solid var(--hairline-2); border-radius: var(--radius-md);
+      color: var(--ink-2); cursor: pointer; transition: all 0.15s; flex-shrink: 0; box-shadow: var(--shadow-sm);
     }
     .fullscreen-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
     .fullscreen-btn svg { width: 16px; height: 16px; }
@@ -156,6 +92,20 @@
     .md-toolbar button[data-md="danger"] svg { color: #EF4444; }
     .md-toolbar button[data-md="important"] svg { color: #7C5DF5; }
     .md-toolbar button[data-md="note"] svg { color: #4F8EFF; }
+
+    /* Split view / Markup indicator */
+    .content-area { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    .content-area[data-view="preview"] .content-area-edit { display: none; }
+    .content-area[data-view="edit"] .content-area-preview { display: none; }
+    .content-area[data-view="split"] { grid-template-columns: 1fr 1fr; }
+    .content-area[data-view="split"] .content-textarea { min-height: 500px; height: 500px; }
+    .content-area[data-view="split"] .preview-pane { min-height: 500px; max-height: 500px; overflow-y: auto; }
+    @media (max-width: 1200px) { .content-area[data-view="split"] { grid-template-columns: 1fr; } .content-area[data-view="split"] .preview-pane { max-height: none; } }
+    .markup-indicator { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-3); padding: 8px 4px; min-height: 20px; }
+    .markup-indicator span { display: inline-flex; align-items: center; gap: 4px; }
+    .markup-indicator .ok { color: #059669; font-weight: 500; }
+    .markup-indicator .warn { color: #DC2626; font-weight: 500; }
+    .markup-indicator .neutral { color: var(--ink-4); }
   </style>
 </head>
 <body>
@@ -172,7 +122,6 @@
     Загрузить фото
   </button>
 
-  <!-- LOGIN -->
   <div class="login-wrap" id="login-view" style="display:none;">
     <div class="login-card">
       <div class="brand">
@@ -196,7 +145,6 @@
     </div>
   </div>
 
-  <!-- ADMIN -->
   <div class="admin-layout" id="admin-view" style="display:none;">
     <aside class="admin-sidebar" id="admin-sidebar">
       <div class="brand" style="cursor:default;">
@@ -297,7 +245,6 @@
             </button>
           </div>
 
-          <!-- Панель украшений Markdown -->
           <div class="md-toolbar" id="md-toolbar">
             <button type="button" data-md="highlight" title="Выделить маркером ==текст==">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l-6 6v3h3l6-6"/><path d="M22 12l-4.5-4.5a2.12 2.12 0 0 0-3 0L9 13l3 3 6.5-6.5a2.12 2.12 0 0 0 0-3z"/></svg>
@@ -333,7 +280,6 @@
             </button>
           </div>
 
-          <!-- Split view: редактор + живое превью -->
           <div class="content-area" id="content-area" data-view="split">
             <div class="content-area-edit">
               <textarea class="content-textarea" id="f-content" placeholder="# Заголовок раздела&#10;&#10;Пошаговая инструкция…"></textarea>
@@ -343,13 +289,11 @@
             </div>
           </div>
 
-          <!-- Индикатор разметки -->
           <div class="markup-indicator" id="markup-indicator"></div>
 
           <div class="field-hint">
             <strong>Как вставить фото:</strong> кликни в тексте → нажми круглую кнопку <strong>«Загрузить фото»</strong> справа внизу (или <kbd>Ctrl</kbd>+<kbd>V</kbd>).<br>
             <strong>Украшения:</strong> выдели текст → нажми кнопку. Повторное нажатие снимает форматирование.<br>
-            <strong>Callout-блоки</strong> (Заметка/Совет/Внимание/Запрещено/Важно): вставляются через тулбар — синтаксис правильный автоматически. <strong>Справа — живое превью: сразу видно, отрендерилось или нет.</strong><br>
             <strong>Сохранить:</strong> <kbd>Ctrl</kbd>+<kbd>Enter</kbd> &nbsp;·&nbsp; <strong>Полный экран:</strong> кнопка в тулбаре или <kbd>Esc</kbd>
           </div>
         </div>
@@ -395,7 +339,6 @@
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
     const VIEW_KEY = 'kb_admin_view_mode';
 
-    // ===== SIDEBAR =====
     function initSidebar() {
       const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
       adminLayout.classList.toggle('sidebar-collapsed', collapsed);
@@ -405,7 +348,6 @@
       localStorage.setItem(SIDEBAR_KEY, isCollapsed ? '1' : '0');
     });
 
-    // ===== FULLSCREEN =====
     const ICON_EXPAND = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
     const ICON_COLLAPSE = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
     function updateFullscreenIcon() {
@@ -429,7 +371,6 @@
       }
     });
 
-    // ===== VIEW MODE (edit / split / preview) =====
     function initViewMode() {
       const saved = localStorage.getItem(VIEW_KEY) || 'split';
       setViewMode(saved, false);
@@ -440,17 +381,13 @@
         btn.classList.toggle('active', btn.dataset.view === mode);
       });
       if (save) localStorage.setItem(VIEW_KEY, mode);
-      // Обновить превью
-      if (mode === 'split' || mode === 'preview') {
-        refreshPreview();
-      }
+      if (mode === 'split' || mode === 'preview') refreshPreview();
       updateFabVisibility();
     }
     document.querySelectorAll('#view-toggle button').forEach(btn => {
       btn.addEventListener('click', () => setViewMode(btn.dataset.view));
     });
 
-    // ===== FAB =====
     function updateFabVisibility() {
       const isEditorVisible = editorContent.style.display !== 'none';
       const isTextTabActive = $('pane-text').style.display !== 'none';
@@ -459,7 +396,6 @@
       fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditVisible);
     }
 
-    // ===== TOAST =====
     const ICON_SUCCESS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>';
     const ICON_ERROR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
     const ICON_INFO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
@@ -497,7 +433,6 @@
     }
     function markError(msg) { setStatus('error', 'Ошибка: ' + (msg || '').slice(0, 60)); }
 
-    // ===== DRAFT =====
     function saveDraft() {
       if (!editorContent.style.display || editorContent.style.display === 'none') return;
       const draft = {
@@ -538,7 +473,6 @@
       updateMarkupIndicator();
     }
 
-    // ===== AUTH =====
     async function checkAuth() {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) showAdmin(); else showLogin();
@@ -572,7 +506,6 @@
       showLogin();
     });
 
-    // ===== LOAD =====
     async function loadArticles() {
       const { data, error } = await supabaseClient
         .from('knowledge_articles').select('*')
@@ -613,7 +546,6 @@
       $('category-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
     }
 
-    // ===== FORM =====
     function showWelcome() {
       welcomeState.style.display = 'flex';
       editorContent.style.display = 'none';
@@ -659,7 +591,6 @@
       updateMarkupIndicator();
     }
 
-    // ===== TABS =====
     function switchTab(tab) {
       $('tab-text').classList.toggle('active', tab === 'text');
       $('tab-steps').classList.toggle('active', tab === 'steps');
@@ -670,7 +601,6 @@
     $('tab-text').addEventListener('click', () => switchTab('text'));
     $('tab-steps').addEventListener('click', () => switchTab('steps'));
 
-    // ===== MARKDOWN =====
     const CALLOUT_TITLES = {
       note: 'Заметка', tip: 'Совет', warning: 'Внимание',
       danger: 'Запрещено', success: 'Готово', important: 'Важно'
@@ -678,25 +608,13 @@
     const CALLOUT_TYPES = 'note|tip|warning|danger|success|important';
 
     function preprocessMarkdown(md) {
-      // 1. Многострочный: :::type\nтекст\n:::
-      md = md.replace(
-        new RegExp(`(^|\\n):::(${CALLOUT_TYPES})[ \\t]*\\n([\\s\\S]*?)\\n:::[ \\t]*(?=\\n|$)`, 'g'),
-        (m, prefix, type, body) => {
-          const title = CALLOUT_TITLES[type] || type;
-          const inner = marked.parse(body.trim());
-          return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
-        }
-      );
-      // 2. Однострочный / смешанный: :::type текст :::  или  :::type текст\n:::
-      md = md.replace(
-        new RegExp(`(^|\\n):::(${CALLOUT_TYPES})[ \\t]+([\\s\\S]*?)[ \\t]*\\n?:::[ \\t]*(?=\\n|$)`, 'g'),
-        (m, prefix, type, body) => {
-          const title = CALLOUT_TITLES[type] || type;
-          const inner = marked.parse(body.trim());
-          return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
-        }
-      );
-      // 3. Highlight ==text==
+      md = md.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const regex = new RegExp(`(^|\\n):::(${CALLOUT_TYPES})([\\s\\S]*?):::[ \\t]*(?=\\n|$)`, 'g');
+      md = md.replace(regex, (m, prefix, type, body) => {
+        const title = CALLOUT_TITLES[type] || type;
+        const inner = marked.parse(body.trim());
+        return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+      });
       md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
       return md;
     }
@@ -709,7 +627,6 @@
       $('preview-pane').innerHTML = DOMPurify.sanitize(renderMarkdownForPreview($('f-content').value || ''));
     }
 
-    // ===== MARKUP INDICATOR =====
     function analyzeMarkup(text) {
       const openMatches = (text.match(new RegExp(`(^|\\n):::(${CALLOUT_TYPES})\\b`, 'g')) || []).length;
       const allTripleColons = (text.match(/:::/g) || []).length;
@@ -728,24 +645,18 @@
     function updateMarkupIndicator() {
       const stats = analyzeMarkup($('f-content').value);
       const parts = [];
-
       if (stats.calloutOpen > 0 || stats.calloutClose > 0) {
-        if (stats.calloutOk) {
-          parts.push(`<span class="ok">✓ ${stats.calloutOpen} callout</span>`);
-        } else {
-          parts.push(`<span class="warn">⚠ ${stats.calloutOpen} открыто · ${stats.calloutClose} закрыто</span>`);
-        }
+        if (stats.calloutOk) parts.push(`<span class="ok">✓ ${stats.calloutOpen} callout</span>`);
+        else parts.push(`<span class="warn">⚠ ${stats.calloutOpen} открыто · ${stats.calloutClose} закрыто</span>`);
       }
       if (stats.articleLinks > 0) parts.push(`<span class="neutral">🔗 ${stats.articleLinks} ссыл.</span>`);
       if (stats.images > 0) parts.push(`<span class="neutral">🖼 ${stats.images} фото</span>`);
-
       $('markup-indicator').innerHTML = parts.length ? parts.join('') : '<span class="neutral">Разметка: чисто</span>';
     }
 
     $('check-markup-btn').addEventListener('click', () => {
       const stats = analyzeMarkup($('f-content').value);
       const messages = [];
-
       if (stats.calloutOpen === 0 && stats.calloutClose === 0) {
         messages.push('Callout-блоков нет');
       } else if (stats.calloutOk) {
@@ -755,15 +666,11 @@
       }
       if (stats.articleLinks > 0) messages.push(`Ссылок между статьями: ${stats.articleLinks}`);
       if (stats.images > 0) messages.push(`Фото: ${stats.images}`);
-
-      const type = stats.calloutOk && stats.calloutOpen > 0 ? 'success' :
-                   (!stats.calloutOk ? 'error' : 'info');
+      const type = stats.calloutOk && stats.calloutOpen > 0 ? 'success' : (!stats.calloutOk ? 'error' : 'info');
       toast(messages.join(' · '), type, 6000);
     });
 
-    // ===== СОХРАНЕНИЕ ВЫДЕЛЕНИЯ =====
     const contentEl = $('f-content');
-
     function saveSelectionNow() {
       savedSelection.start = contentEl.selectionStart ?? 0;
       savedSelection.end = contentEl.selectionEnd ?? 0;
@@ -780,35 +687,25 @@
       }
     });
 
-    // ===== WRAP / UNWRAP =====
     function wrapSelection(before, after, placeholder) {
       const el = contentEl;
       let { start, end } = savedSelection;
       if (typeof start !== 'number' || start < 0 || start > el.value.length) start = el.selectionStart ?? 0;
       if (typeof end !== 'number' || end < start || end > el.value.length) end = el.selectionEnd ?? start;
-
       const selected = el.value.slice(start, end);
-
-      if (selected.length >= (before.length + after.length) &&
-          selected.startsWith(before) && selected.endsWith(after)) {
+      if (selected.length >= (before.length + after.length) && selected.startsWith(before) && selected.endsWith(after)) {
         const inner = selected.slice(before.length, selected.length - after.length);
         el.value = el.value.slice(0, start) + inner + el.value.slice(end);
-        el.focus();
-        el.selectionStart = start;
-        el.selectionEnd = start + inner.length;
+        el.focus(); el.selectionStart = start; el.selectionEnd = start + inner.length;
         savedSelection = { start, end: start + inner.length };
         markDirty(); refreshPreview(); updateMarkupIndicator();
         return;
       }
-
       let inner = selected || placeholder;
       const newText = before + inner + after;
       el.value = el.value.slice(0, start) + newText + el.value.slice(end);
-      el.focus();
-      const innerStart = start + before.length;
-      const innerEnd = innerStart + inner.length;
-      el.selectionStart = innerStart;
-      el.selectionEnd = innerEnd;
+      el.focus(); const innerStart = start + before.length; const innerEnd = innerStart + inner.length;
+      el.selectionStart = innerStart; el.selectionEnd = innerEnd;
       savedSelection = { start: innerStart, end: innerEnd };
       markDirty(); refreshPreview(); updateMarkupIndicator();
     }
@@ -818,12 +715,10 @@
       let { start, end } = savedSelection;
       if (typeof start !== 'number' || start < 0 || start > el.value.length) start = el.selectionStart ?? 0;
       if (typeof end !== 'number' || end < start || end > el.value.length) end = el.selectionEnd ?? start;
-
       const selected = el.value.slice(start, end) || 'Текст внутри рамочки';
       const block = `\n:::${type}\n${selected}\n:::\n`;
       el.value = el.value.slice(0, start) + block + el.value.slice(end);
-      el.focus();
-      const cursorPos = start + block.length;
+      el.focus(); const cursorPos = start + block.length;
       el.selectionStart = el.selectionEnd = cursorPos;
       savedSelection = { start: cursorPos, end: cursorPos };
       markDirty(); refreshPreview(); updateMarkupIndicator();
@@ -837,22 +732,14 @@
         case 'highlight': wrapSelection('==', '==', 'выделенный текст'); break;
         case 'underline': wrapSelection('<u>', '</u>', 'подчёркнутый текст'); break;
         case 'strike': wrapSelection('~~', '~~', 'зачёркнутый текст'); break;
-        case 'note':
-        case 'tip':
-        case 'warning':
-        case 'danger':
-        case 'important':
-          insertCallout(action);
-          break;
+        case 'note': case 'tip': case 'warning': case 'danger': case 'important': insertCallout(action); break;
       }
     });
 
-    // ===== IMAGE UPLOAD =====
     function showUploadStatus(text) {
       const el = $('upload-status');
       if (!text) { el.classList.remove('show'); return; }
-      el.textContent = text;
-      el.classList.add('show');
+      el.textContent = text; el.classList.add('show');
     }
 
     async function compressImage(file, maxDim = 1600, quality = 0.85) {
@@ -863,15 +750,12 @@
             let { width, height } = img;
             if (width > maxDim || height > maxDim) {
               const ratio = Math.min(maxDim / width, maxDim / height);
-              width = Math.round(width * ratio);
-              height = Math.round(height * ratio);
+              width = Math.round(width * ratio); height = Math.round(height * ratio);
             }
             const canvas = document.createElement('canvas');
             canvas.width = width; canvas.height = height;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0, width, height);
+            ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, width, height); ctx.drawImage(img, 0, 0, width, height);
             canvas.toBlob(blob => {
               URL.revokeObjectURL(img.src);
               if (blob) resolve(blob); else reject(new Error('Не удалось сжать'));
@@ -886,9 +770,7 @@
     async function uploadFiles(files) {
       const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
       if (!imageFiles.length) { pendingInsertPos = null; return; }
-      fabUpload.disabled = true;
-      let successCount = 0;
-      let lastInsertLine = 0;
+      fabUpload.disabled = true; let successCount = 0; let lastInsertLine = 0;
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         const prefix = imageFiles.length > 1 ? `Загружаю ${i + 1} из ${imageFiles.length}: ` : 'Загружаю: ';
@@ -896,26 +778,18 @@
         try {
           const blob = await compressImage(file);
           const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-          const { error } = await supabaseClient.storage
-            .from('kb-images').upload(path, blob, { upsert: false, contentType: 'image/webp' });
+          const { error } = await supabaseClient.storage.from('kb-images').upload(path, blob, { upsert: false, contentType: 'image/webp' });
           if (error) throw error;
           const { data } = supabaseClient.storage.from('kb-images').getPublicUrl(path);
           const altText = file.name.replace(/\.[^.]+$/, '');
           const markdown = `\n![${altText}](${data.publicUrl})\n`;
-          lastInsertLine = insertAtCursor(markdown);
-          successCount++;
-        } catch (err) {
-          toast('Не удалось загрузить фото: ' + err.message, 'error', 6000);
-        }
+          lastInsertLine = insertAtCursor(markdown); successCount++;
+        } catch (err) { toast('Не удалось загрузить фото: ' + err.message, 'error', 6000); }
       }
       showUploadStatus('');
-      if (successCount > 0) {
-        toast(`Фото вставлено в строку ${lastInsertLine}`, 'success', 3000);
-      }
-      fabUpload.disabled = false;
-      pendingInsertPos = null;
-      refreshPreview();
-      updateMarkupIndicator();
+      if (successCount > 0) toast(`Фото вставлено в строку ${lastInsertLine}`, 'success', 3000);
+      fabUpload.disabled = false; pendingInsertPos = null;
+      refreshPreview(); updateMarkupIndicator();
     }
 
     function insertAtCursor(text) {
@@ -923,29 +797,19 @@
       const start = pendingInsertPos ? pendingInsertPos.start : (el.selectionStart ?? el.value.length);
       const end = pendingInsertPos ? pendingInsertPos.end : (el.selectionEnd ?? el.value.length);
       el.value = el.value.slice(0, start) + text + el.value.slice(end);
-      const newPos = start + text.length;
-      el.selectionStart = el.selectionEnd = newPos;
-      el.focus();
+      const newPos = start + text.length; el.selectionStart = el.selectionEnd = newPos; el.focus();
       const lineNumber = el.value.substring(0, start).split('\n').length;
-      const lineHeight = 14 * 1.75;
-      el.scrollTop = Math.max(0, (lineNumber - 5) * lineHeight);
-      el.classList.add('just-inserted');
-      setTimeout(() => el.classList.remove('just-inserted'), 700);
-      pendingInsertPos = { start: newPos, end: newPos };
-      markDirty();
-      return lineNumber;
+      el.scrollTop = Math.max(0, (lineNumber - 5) * (14 * 1.75));
+      el.classList.add('just-inserted'); setTimeout(() => el.classList.remove('just-inserted'), 700);
+      pendingInsertPos = { start: newPos, end: newPos }; markDirty(); return lineNumber;
     }
 
     function handleUploadClick() {
       const el = $('f-content');
-      pendingInsertPos = {
-        start: el.selectionStart ?? el.value.length,
-        end: el.selectionEnd ?? el.value.length
-      };
+      pendingInsertPos = { start: el.selectionStart ?? el.value.length, end: el.selectionEnd ?? el.value.length };
       const input = document.createElement('input');
       input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
-      input.onchange = (e) => uploadFiles(e.target.files);
-      input.click();
+      input.onchange = (e) => uploadFiles(e.target.files); input.click();
     }
 
     fabUpload.addEventListener('click', handleUploadClick);
@@ -957,20 +821,14 @@
       if (!imageItems.length) return;
       e.preventDefault();
       const el = $('f-content');
-      pendingInsertPos = {
-        start: el.selectionStart ?? el.value.length,
-        end: el.selectionEnd ?? el.value.length
-      };
+      pendingInsertPos = { start: el.selectionStart ?? el.value.length, end: el.selectionEnd ?? el.value.length };
       const files = imageItems.map(it => it.getAsFile()).filter(Boolean);
       if (files.length) await uploadFiles(files);
     });
 
     const textarea = $('f-content');
     ['dragenter', 'dragover'].forEach(evt => {
-      textarea.addEventListener(evt, (e) => {
-        e.preventDefault(); e.stopPropagation();
-        textarea.classList.add('drop-active');
-      });
+      textarea.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); textarea.classList.add('drop-active'); });
     });
     ['dragleave', 'drop'].forEach(evt => {
       textarea.addEventListener(evt, (e) => {
@@ -982,22 +840,17 @@
     textarea.addEventListener('drop', (e) => {
       const files = e.dataTransfer?.files;
       if (files && files.length) {
-        pendingInsertPos = {
-          start: textarea.selectionStart ?? textarea.value.length,
-          end: textarea.selectionEnd ?? textarea.value.length
-        };
+        pendingInsertPos = { start: textarea.selectionStart ?? textarea.value.length, end: textarea.selectionEnd ?? textarea.value.length };
         uploadFiles(files);
       }
     });
 
-    // ===== STEPS =====
     $('add-step-btn').addEventListener('click', () => {
       if (!currentSteps) currentSteps = { start: null, steps: [] };
       const id = 'step-' + Date.now().toString(36);
       currentSteps.steps.push({ id, kind: 'info', title: 'Новый шаг', content: '', next: null });
       if (!currentSteps.start) currentSteps.start = id;
-      markDirty();
-      renderStepsEditor();
+      markDirty(); renderStepsEditor();
     });
 
     function renderStepsEditor() {
@@ -1005,8 +858,7 @@
       const startSelect = $('start-step-select');
       if (!currentSteps || !currentSteps.steps || !currentSteps.steps.length) {
         container.innerHTML = `<div class="empty-steps">Пока нет шагов. Нажмите «Добавить шаг», чтобы собрать пошаговый сценарий.</div>`;
-        startSelect.innerHTML = '';
-        return;
+        startSelect.innerHTML = ''; return;
       }
       startSelect.innerHTML = currentSteps.steps.map(s =>
         `<option value="${s.id}" ${currentSteps.start === s.id ? 'selected' : ''}>${escapeHtml(s.title || s.id)}</option>`
@@ -1104,8 +956,7 @@
         if (!step.options) step.options = [];
         if (!step.options[optIdx]) step.options[optIdx] = { label: '', next: null };
         step.options[optIdx][field] = field === 'next' ? (el.value || null) : el.value;
-        markDirty();
-        return;
+        markDirty(); return;
       }
       const field = el.dataset.field;
       if (field === 'kind') {
@@ -1144,14 +995,12 @@
       markDirty(); renderStepsEditor();
     }
 
-    // ===== SAVE =====
     async function saveArticle() {
       const title = $('f-title').value.trim();
       const category = $('f-category').value.trim();
       const content = $('f-content').value;
       const tags = $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
       const pinned = $('f-pinned').checked;
-
       if (!title) { toast('Введите заголовок', 'error'); $('f-title').focus(); return; }
       if (!category) { toast('Введите категорию', 'error'); $('f-category').focus(); return; }
 
@@ -1176,26 +1025,20 @@
         let error, savedId = currentId;
         if (currentId) {
           const res = await supabaseClient.from('knowledge_articles').update(payload).eq('id', currentId).select().single();
-          error = res.error;
-          if (!error && res.data) savedId = res.data.id;
+          error = res.error; if (!error && res.data) savedId = res.data.id;
         } else {
           const res = await supabaseClient.from('knowledge_articles').insert(payload).select().single();
-          error = res.error;
-          if (!error && res.data) savedId = res.data.id;
+          error = res.error; if (!error && res.data) savedId = res.data.id;
         }
         if (error) {
           console.error('SAVE ERROR:', error);
           toast('Не удалось сохранить: ' + error.message, 'error', 10000);
           markError(error.message);
-          btn.disabled = false; btn.textContent = 'Сохранить';
-          return;
+          btn.disabled = false; btn.textContent = 'Сохранить'; return;
         }
-        currentId = savedId;
-        isDirty = false;
-        markSaved();
+        currentId = savedId; isDirty = false; markSaved();
         toast('Статья сохранена', 'success', 2200);
-        await loadArticles();
-        openArticle(currentId);
+        await loadArticles(); openArticle(currentId);
       } catch (e) {
         console.error('UNEXPECTED SAVE ERROR:', e);
         toast('Неожиданная ошибка: ' + e.message, 'error', 8000);
@@ -1224,29 +1067,21 @@
       if (error) { toast('Не удалось удалить: ' + error.message, 'error', 8000); return; }
       currentId = null; isDirty = false; clearDraft();
       await loadArticles();
-      if (!articles.length) showWelcome();
-      else openArticle(articles[0].id);
+      if (!articles.length) showWelcome(); else openArticle(articles[0].id);
       toast('Статья удалена', 'success', 2200);
     });
 
     $('new-article-btn').addEventListener('click', clearForm);
     $('welcome-new-btn').addEventListener('click', clearForm);
 
-    // Единый обработчик input для всех полей
-    ['f-title','f-category','f-tags'].forEach(id => {
-      $(id).addEventListener('input', markDirty);
-    });
+    ['f-title','f-category','f-tags'].forEach(id => { $(id).addEventListener('input', markDirty); });
 
     $('f-content').addEventListener('input', () => {
-      markDirty();
-      updateMarkupIndicator();
-      // Debounced live preview
+      markDirty(); updateMarkupIndicator();
       clearTimeout(previewTimer);
       previewTimer = setTimeout(() => {
         const view = contentArea.dataset.view;
-        if (view === 'split' || view === 'preview') {
-          refreshPreview();
-        }
+        if (view === 'split' || view === 'preview') refreshPreview();
       }, 250);
     });
 
