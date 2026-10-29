@@ -100,21 +100,25 @@
     .erp-menu-item:hover { background: #f0f0f0; border-color: #ccc; }
     .erp-menu-item.active { background: #cce8ff; border-color: #99ccff; font-weight: bold; }
     
-    /* СЕТКА КОНТЕНТА */
+    /* НОВАЯ СЕТКА КОНТЕНТА НА FLEXBOX */
     .erp-content { 
       flex: 1; padding: 10px 12px; overflow-y: auto; 
-      display: grid; 
-      grid-template-columns: minmax(0, 1fr) 400px; 
-      grid-template-rows: auto auto auto auto auto; 
-      gap: 8px 12px; 
-      height: 100%; 
-      align-items: start;
+      display: flex; flex-direction: column; gap: 10px; height: 100%; 
     }
-    
-    .erp-left-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-row: 1 / span 4; }
-    .erp-right-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 2; grid-row: 1 / span 3; }
+    .erp-cols {
+      display: flex; gap: 16px; flex: 1; min-height: 0;
+    }
+    .erp-left-col { 
+      flex: 1; /* Растягивается на всё свободное место */
+      display: flex; flex-direction: column; gap: 6px; min-width: 0; 
+    }
+    .erp-right-col { 
+      width: 480px; /* Фиксированная ширина правой колонки */
+      flex-shrink: 0; 
+      display: flex; flex-direction: column; gap: 6px; 
+    }
 
-    .erp-row { display: flex; gap: 6px; align-items: flex-end; min-width: 0; flex-wrap: nowrap; }
+    .erp-row { display: flex; gap: 6px; align-items: flex-end; min-width: 0; width: 100%; }
     .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .erp-label { font-size: 11px; color: #000; white-space: nowrap; margin-bottom: 2px; }
     
@@ -134,9 +138,9 @@
     .erp-table th:nth-child(2) { width: 30%; }
     .erp-table th:nth-child(3) { width: 15%; text-align: center; }
     
-    .erp-bottom-row { display: grid; grid-template-columns: 200px 1fr; gap: 8px; }
+    .erp-bottom-row { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
     
-    .erp-action-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 4px; }
+    .erp-action-row { display: flex; justify-content: flex-end; margin-top: auto; padding-top: 10px; }
     .erp-action-btn { padding: 6px 40px !important; font-weight: bold !important; height: 28px !important; }
 
     /* LK и ALERTS */
@@ -282,144 +286,146 @@
         <!-- Сетка контента -->
         <div class="erp-content">
           
-          <!-- ЛЕВАЯ КОЛОНКА -->
-          <div class="erp-left-col">
-            <!-- Ряд 1 -->
-            <div class="erp-row">
-              <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group" style="flex: 1;"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
-            </div>
-
-            <!-- Ряд 2 -->
-            <div class="erp-row">
-              <div class="erp-group w-100"><div class="erp-label">Осн. телефон КА</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group w-100"><div class="erp-label">Доп. телефон КА</div><input class="erp-input" type="text"></div>
-              <div class="erp-group" style="flex: 1;"><div class="erp-label">Бренд</div><input class="erp-input" type="text"></div>
-            </div>
-
-            <!-- Ряд 3 -->
-            <div class="erp-row">
-              <div class="erp-group w-150"><div class="erp-label">Город клиента</div><select class="erp-input green"><option>Москва</option></select></div>
-              <div class="erp-group" style="flex: 1;"><div class="erp-label">Неисправность</div><input class="erp-input" type="text"></div>
-            </div>
-
-            <!-- Ряд 4 -->
-            <div class="erp-row" style="margin-top: 4px;">
-              <div style="display:flex; gap:10px; margin-right: 20px; align-items: center; height: 22px;">
-                <label><input type="radio" name="erp-type"> Стационар</label>
-                <label><input type="radio" name="erp-type" checked> Выездной</label>
+          <div class="erp-cols">
+            <!-- ЛЕВАЯ КОЛОНКА -->
+            <div class="erp-left-col">
+              <!-- Ряд 1 -->
+              <div class="erp-row">
+                <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
+                <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
+                <div class="erp-group" style="flex: 1;"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
               </div>
-              <div class="erp-group w-150"><div class="erp-label">Промоутер</div><input class="erp-input" type="text"></div>
-            </div>
 
-            <!-- Текстовые блоки -->
-            <div class="erp-row" style="margin-top: 8px;">
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">Проблема со слов клиента</div>
-                <textarea class="erp-input purple" id="erp-problem" rows="3"></textarea>
+              <!-- Ряд 2 -->
+              <div class="erp-row">
+                <div class="erp-group w-100"><div class="erp-label">Осн. телефон КА</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
+                <div class="erp-group w-100"><div class="erp-label">Доп. телефон КА</div><input class="erp-input" type="text"></div>
+                <div class="erp-group" style="flex: 1;"><div class="erp-label">Бренд</div><input class="erp-input" type="text"></div>
               </div>
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">Что озвучено по ценам</div>
-                <textarea class="erp-input purple" rows="3"></textarea>
-              </div>
-            </div>
 
-            <!-- Таблицы -->
-            <div class="erp-row" style="margin-top: 4px;">
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">О клиенте\заказе</div>
-                <table class="erp-table">
-                  <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
-                  <tr><td>Юр. лицо</td><td><input type="checkbox" checked></td><td></td></tr>
-                  <tr><td>Возраст клиента</td><td></td><td></td></tr>
-                  <tr><td>Настройки свойства стандартов Ч...</td><td></td><td></td></tr>
-                </table>
+              <!-- Ряд 3 -->
+              <div class="erp-row">
+                <div class="erp-group w-150"><div class="erp-label">Город клиента</div><select class="erp-input green"><option>Москва</option></select></div>
+                <div class="erp-group" style="flex: 1;"><div class="erp-label">Неисправность</div><input class="erp-input" type="text"></div>
               </div>
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">Об оборудовании</div>
-                <table class="erp-table">
-                  <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
-                  <tr><td>Модель</td><td></td><td></td></tr>
-                  <tr><td>Разрешение экрана</td><td></td><td></td></tr>
-                  <tr><td>Изогнутый</td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
-                  <tr><td>Срочно</td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
-                </table>
-              </div>
-            </div>
 
-            <!-- Низ (Контакты, Обращение) -->
-            <div class="erp-bottom-row">
-              <div class="erp-block-box">
-                <div class="erp-block-title">Контакты</div>
-                <textarea class="erp-input" style="height: 80px;"></textarea>
+              <!-- Ряд 4 -->
+              <div class="erp-row" style="margin-top: 4px;">
+                <div style="display:flex; gap:10px; margin-right: 20px; align-items: center; height: 22px;">
+                  <label><input type="radio" name="erp-type"> Стационар</label>
+                  <label><input type="radio" name="erp-type" checked> Выездной</label>
+                </div>
+                <div class="erp-group w-150"><div class="erp-label">Промоутер</div><input class="erp-input" type="text"></div>
               </div>
-              <div class="erp-block-box">
-                <div class="erp-block-title">Обращение</div>
-                <textarea class="erp-input" style="height: 80px;"></textarea>
-              </div>
-            </div>
-          </div>
 
-          <!-- ПРАВАЯ КОЛОНКА (ТО и АДРЕС) -->
-          <div class="erp-right-col">
-            <!-- Тип оборуд. -->
-            <div class="erp-group" style="width: 100%; margin-bottom: 4px;">
-              <div class="erp-label">Тип оборуд.</div>
-              <div style="display:flex; gap:2px; width: 100%;">
-                <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="width:50px; text-align:center; flex-shrink: 0;">
-                <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название ТО..." style="flex:1;">
-                <button class="erp-btn erp-btn-small">Подсказка</button>
+              <!-- Текстовые блоки -->
+              <div class="erp-row" style="margin-top: 8px;">
+                <div class="erp-block-box" style="flex: 1;">
+                  <div class="erp-block-title">Проблема со слов клиента</div>
+                  <textarea class="erp-input purple" id="erp-problem" rows="3"></textarea>
+                </div>
+                <div class="erp-block-box" style="flex: 1;">
+                  <div class="erp-block-title">Что озвучено по ценам</div>
+                  <textarea class="erp-input purple" rows="3"></textarea>
+                </div>
+              </div>
+
+              <!-- Таблицы -->
+              <div class="erp-row" style="margin-top: 4px;">
+                <div class="erp-block-box" style="flex: 1;">
+                  <div class="erp-block-title">О клиенте\заказе</div>
+                  <table class="erp-table">
+                    <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
+                    <tr><td>Юр. лицо</td><td><input type="checkbox" checked></td><td></td></tr>
+                    <tr><td>Возраст клиента</td><td></td><td></td></tr>
+                    <tr><td>Настройки свойства стандартов Ч...</td><td></td><td></td></tr>
+                  </table>
+                </div>
+                <div class="erp-block-box" style="flex: 1;">
+                  <div class="erp-block-title">Об оборудовании</div>
+                  <table class="erp-table">
+                    <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
+                    <tr><td>Модель</td><td></td><td></td></tr>
+                    <tr><td>Разрешение экрана</td><td></td><td></td></tr>
+                    <tr><td>Изогнутый</td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+                    <tr><td>Срочно</td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Низ (Контакты, Обращение) -->
+              <div class="erp-bottom-row">
+                <div class="erp-block-box">
+                  <div class="erp-block-title">Контакты</div>
+                  <textarea class="erp-input" style="height: 80px;"></textarea>
+                </div>
+                <div class="erp-block-box">
+                  <div class="erp-block-title">Обращение</div>
+                  <textarea class="erp-input" style="height: 80px;"></textarea>
+                </div>
               </div>
             </div>
 
-            <!-- Блок Адреса -->
-            <div class="erp-block-box" id="block-address">
-              <div class="erp-block-title">Адрес КА</div>
-              
-              <div style="display:flex; gap:5px; margin-top:10px;">
-                <input class="erp-input" type="text" placeholder="Поиск по названию">
-                <button class="erp-btn" style="width: 28px; padding: 0;">🔍</button>
-              </div>
-              
-              <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
-                <label><input type="checkbox" checked> Район</label>
-                <label><input type="checkbox" checked> Город</label>
-                <label><input type="checkbox" checked> Нас. пункт</label>
-                <label><input type="checkbox"> Название улицы</label>
-              </div>
-              
-              <div style="display:flex; gap:5px; margin-top:6px;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Регион</div><input class="erp-input" value="Москва г." readonly></div>
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Район</div><input class="erp-input"></div>
-              </div>
-              
-              <div style="display:flex; gap:5px; margin-top:4px;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Город</div><input class="erp-input"></div>
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Нас. пункт</div><input class="erp-input"></div>
+            <!-- ПРАВАЯ КОЛОНКА (ТО и АДРЕС) -->
+            <div class="erp-right-col">
+              <!-- Тип оборуд. -->
+              <div class="erp-group" style="width: 100%; margin-bottom: 4px;">
+                <div class="erp-label">Тип оборуд.</div>
+                <div style="display:flex; gap:2px; width: 100%;">
+                  <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="width:50px; text-align:center; flex-shrink: 0;">
+                  <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название ТО..." style="flex:1;">
+                  <button class="erp-btn erp-btn-small">Подсказка</button>
+                </div>
               </div>
 
-              <div style="display:flex; gap:5px; margin-top:4px; align-items: flex-end;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Улица</div><input class="erp-input" id="erp-address" placeholder="..."></div>
-                <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Дом</div><input class="erp-input"></div>
-                <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Кв.</div><input class="erp-input"></div>
-              </div>
+              <!-- Блок Адреса -->
+              <div class="erp-block-box" id="block-address">
+                <div class="erp-block-title">Адрес КА</div>
+                
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                  <input class="erp-input" type="text" placeholder="Поиск по названию">
+                  <button class="erp-btn" style="width: 28px; padding: 0;">🔍</button>
+                </div>
+                
+                <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
+                  <label><input type="checkbox" checked> Район</label>
+                  <label><input type="checkbox" checked> Город</label>
+                  <label><input type="checkbox" checked> Нас. пункт</label>
+                  <label><input type="checkbox"> Название улицы</label>
+                </div>
+                
+                <div style="display:flex; gap:5px; margin-top:6px;">
+                  <div class="erp-group" style="flex:1;"><div class="erp-label">Регион</div><input class="erp-input" value="Москва г." readonly></div>
+                  <div class="erp-group" style="flex:1;"><div class="erp-label">Район</div><input class="erp-input"></div>
+                </div>
+                
+                <div style="display:flex; gap:5px; margin-top:4px;">
+                  <div class="erp-group" style="flex:1;"><div class="erp-label">Город</div><input class="erp-input"></div>
+                  <div class="erp-group" style="flex:1;"><div class="erp-label">Нас. пункт</div><input class="erp-input"></div>
+                </div>
 
-              <div style="display:flex; gap:5px; margin-top:6px; align-items: flex-end;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Ближайшая станция метро</div><input class="erp-input"></div>
-                <button class="erp-btn" style="height: 22px; width: 22px; padding: 0;">✕</button>
-              </div>
+                <div style="display:flex; gap:5px; margin-top:4px; align-items: flex-end;">
+                  <div class="erp-group" style="flex:1;"><div class="erp-label">Улица</div><input class="erp-input" id="erp-address" placeholder="..."></div>
+                  <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Дом</div><input class="erp-input"></div>
+                  <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Кв.</div><input class="erp-input"></div>
+                </div>
 
-              <div class="erp-group" style="margin-top:6px;">
-                <div class="erp-label">Как добраться</div>
-                <textarea class="erp-input" style="height: 60px;"></textarea>
-              </div>
+                <div style="display:flex; gap:5px; margin-top:6px; align-items: flex-end;">
+                  <div class="erp-group" style="flex:1;"><div class="erp-label">Ближайшая станция метро</div><input class="erp-input"></div>
+                  <button class="erp-btn" style="height: 22px; width: 22px; padding: 0;">✕</button>
+                </div>
 
-              <div class="erp-group" style="margin-top:6px;">
-                <div class="erp-label">Дата выезда</div>
-                <div style="display:flex; gap:5px;">
-                  <input class="erp-input" type="date">
-                  <button class="erp-btn">Граф. инженеров</button>
+                <div class="erp-group" style="margin-top:6px;">
+                  <div class="erp-label">Как добраться</div>
+                  <textarea class="erp-input" style="height: 60px;"></textarea>
+                </div>
+
+                <div class="erp-group" style="margin-top:6px;">
+                  <div class="erp-label">Дата выезда</div>
+                  <div style="display:flex; gap:5px;">
+                    <input class="erp-input" type="date">
+                    <button class="erp-btn">Граф. инженеров</button>
+                  </div>
                 </div>
               </div>
             </div>
