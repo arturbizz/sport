@@ -104,7 +104,7 @@
     .erp-content { 
       flex: 1; padding: 10px 12px; overflow-y: auto; 
       display: grid; 
-      grid-template-columns: 1fr 410px; 
+      grid-template-columns: minmax(0, 1fr) 400px; 
       grid-template-rows: auto auto auto auto auto; 
       gap: 8px 12px; 
       height: 100%; 
@@ -115,16 +115,13 @@
     .erp-right-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 2; grid-row: 1 / span 3; }
 
     .erp-row { display: flex; gap: 6px; align-items: flex-end; min-width: 0; flex-wrap: nowrap; }
-    .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex-shrink: 0; }
+    .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .erp-label { font-size: 11px; color: #000; white-space: nowrap; margin-bottom: 2px; }
     
-    .w-60 { width: 60px; }
-    .w-80 { width: 80px; }
-    .w-100 { width: 100px; }
-    .w-150 { width: 150px; }
-    .w-200 { width: 200px; }
-    .w-250 { width: 250px; }
-    .w-300 { width: 300px; }
+    .w-60 { width: 60px; flex-shrink: 0; }
+    .w-80 { width: 80px; flex-shrink: 0; }
+    .w-100 { width: 100px; flex-shrink: 0; }
+    .w-150 { width: 150px; flex-shrink: 0; }
 
     .erp-block-box { border: 1px solid #a0a0a0; padding: 8px; background: #fff; position: relative; display: flex; flex-direction: column; }
     .erp-block-title { position: absolute; top: -7px; left: 6px; background: #fff; padding: 0 4px; font-size: 11px; color: #333; }
@@ -291,20 +288,20 @@
             <div class="erp-row">
               <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
               <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group w-200"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
+              <div class="erp-group" style="flex: 1;"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
             </div>
 
             <!-- Ряд 2 -->
             <div class="erp-row">
               <div class="erp-group w-100"><div class="erp-label">Осн. телефон КА</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
               <div class="erp-group w-100"><div class="erp-label">Доп. телефон КА</div><input class="erp-input" type="text"></div>
-              <div class="erp-group w-250"><div class="erp-label">Бренд</div><input class="erp-input" type="text"></div>
+              <div class="erp-group" style="flex: 1;"><div class="erp-label">Бренд</div><input class="erp-input" type="text"></div>
             </div>
 
             <!-- Ряд 3 -->
             <div class="erp-row">
               <div class="erp-group w-150"><div class="erp-label">Город клиента</div><select class="erp-input green"><option>Москва</option></select></div>
-              <div class="erp-group w-300"><div class="erp-label">Неисправность</div><input class="erp-input" type="text"></div>
+              <div class="erp-group" style="flex: 1;"><div class="erp-label">Неисправность</div><input class="erp-input" type="text"></div>
             </div>
 
             <!-- Ряд 4 -->
@@ -318,11 +315,11 @@
 
             <!-- Текстовые блоки -->
             <div class="erp-row" style="margin-top: 8px;">
-              <div class="erp-block-box" style="width: 50%;">
+              <div class="erp-block-box" style="flex: 1;">
                 <div class="erp-block-title">Проблема со слов клиента</div>
                 <textarea class="erp-input purple" id="erp-problem" rows="3"></textarea>
               </div>
-              <div class="erp-block-box" style="width: 50%;">
+              <div class="erp-block-box" style="flex: 1;">
                 <div class="erp-block-title">Что озвучено по ценам</div>
                 <textarea class="erp-input purple" rows="3"></textarea>
               </div>
@@ -330,7 +327,7 @@
 
             <!-- Таблицы -->
             <div class="erp-row" style="margin-top: 4px;">
-              <div class="erp-block-box" style="width: 50%;">
+              <div class="erp-block-box" style="flex: 1;">
                 <div class="erp-block-title">О клиенте\заказе</div>
                 <table class="erp-table">
                   <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
@@ -339,7 +336,7 @@
                   <tr><td>Настройки свойства стандартов Ч...</td><td></td><td></td></tr>
                 </table>
               </div>
-              <div class="erp-block-box" style="width: 50%;">
+              <div class="erp-block-box" style="flex: 1;">
                 <div class="erp-block-title">Об оборудовании</div>
                 <table class="erp-table">
                   <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
@@ -404,8 +401,8 @@
 
               <div style="display:flex; gap:5px; margin-top:4px; align-items: flex-end;">
                 <div class="erp-group" style="flex:1;"><div class="erp-label">Улица</div><input class="erp-input" id="erp-address" placeholder="..."></div>
-                <div class="erp-group" style="width:55px;"><div class="erp-label">Дом</div><input class="erp-input"></div>
-                <div class="erp-group" style="width:55px;"><div class="erp-label">Кв.</div><input class="erp-input"></div>
+                <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Дом</div><input class="erp-input"></div>
+                <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Кв.</div><input class="erp-input"></div>
               </div>
 
               <div style="display:flex; gap:5px; margin-top:6px; align-items: flex-end;">
