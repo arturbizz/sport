@@ -52,45 +52,67 @@
     .tr-back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--g-surface); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink-2); font-family: var(--g-font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
     .tr-back-btn:hover { color: var(--g-ink); border-color: var(--g-ink-3); background: var(--g-surface-2); }
 
-    /* ===== ИСПРАВЛЕННЫЙ ERP ===== */
-    .erp-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; overflow-y: auto; padding: 40px 20px; }
-    .erp-modal.open { display: block; }
-    .erp-window { width: 100%; max-width: 1200px; margin: 0 auto; background: #f0f2f5; border: 1px solid #a0a0a0; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #000; display: flex; flex-direction: column; }
+    /* ===== ERP SIMULATOR (Точная копия интерфейса) ===== */
+    .erp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 20px; overflow-y: auto; align-items: center; justify-content: center; }
+    .erp-modal.open { display: flex; }
     
-    .erp-task-banner { background: #fef08a; color: #854d0e; padding: 10px 15px; font-weight: bold; font-size: 13px; border-bottom: 1px solid #ca8a04; display: flex; align-items: center; gap: 8px; }
-    .erp-task-banner svg { width: 18px !important; height: 18px !important; max-width: 18px !important; flex-shrink: 0; }
-
-    .erp-title-bar { background: #dbe4f0; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #a0a0a0; font-weight: 600; font-size: 12px; color: #2c3e50; }
-    .erp-close-btn { background: transparent; border: none; font-size: 16px; cursor: pointer; color: #d9534f; font-weight: bold; }
-    .erp-body { display: flex; overflow: hidden; min-height: 500px; }
+    .erp-window { width: 100%; max-width: 1100px; background: #f0f0f0; border: 1px solid #707070; box-shadow: 0 4px 20px rgba(0,0,0,0.5); font-family: 'Tahoma', 'Segoe UI', sans-serif; font-size: 11px; color: #000; display: flex; flex-direction: column; height: 700px; max-height: 90vh; }
     
-    .erp-sidebar { width: 130px; background: #e6eaf0; border-right: 1px solid #a0a0a0; padding: 10px 0; flex-shrink: 0; }
-    .erp-menu-item { padding: 6px 12px; cursor: pointer; color: #333; font-size: 11px; border: 1px solid transparent; margin: 2px 4px; text-align: center; }
-    .erp-menu-item:hover { background: #d0d8e4; border-color: #b0b8c4; }
-    .erp-menu-item.highlight { color: #4a90e2; font-weight: bold; border-color: #4a90e2; }
+    /* Шапка окна */
+    .erp-title-bar { background: #fff; padding: 4px 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; font-size: 11px; font-weight: bold; }
+    .erp-title-bar-actions { display: flex; gap: 10px; }
     
-    .erp-content { flex: 1; padding: 15px; overflow-y: auto; background: #f4f6f9; display: flex; gap: 15px; }
-    .erp-col-left { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-    .erp-col-right { width: 300px; display: flex; flex-direction: column; gap: 10px; }
+    /* Инфо-строка */
+    .erp-info-bar { background: #e8e8e8; padding: 4px 8px; display: flex; gap: 15px; border-bottom: 1px solid #ccc; }
+    .erp-info-item { display: flex; align-items: center; gap: 5px; }
     
-    .erp-block { border: 1px solid #b0b8c4; border-radius: 2px; background: #fff; padding: 10px; position: relative; }
-    .erp-block.active { border-color: #4a90e2; box-shadow: 0 0 8px rgba(74,144,226,0.4); }
-    .erp-block-title { font-size: 10px; color: #555; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
+    /* Вкладки */
+    .erp-tabs { display: flex; background: #f0f0f0; border-bottom: 1px solid #ccc; padding-top: 5px; }
+    .erp-tab { padding: 4px 12px; border: 1px solid transparent; border-bottom: none; cursor: pointer; margin-bottom: -1px; }
+    .erp-tab.active { background: #fff; border-color: #ccc; font-weight: bold; }
     
-    .erp-input { width: 100%; padding: 4px 6px; border: 1px solid #a0a0a0; border-radius: 2px; font-size: 12px; font-family: inherit; }
-    .erp-input:focus { outline: none; border-color: #4a90e2; }
-    .erp-input.error { border-color: #d9534f; background: #fdf2f2; }
-    .erp-row { display: flex; gap: 10px; margin-bottom: 8px; }
+    /* Основной контент */
+    .erp-main { display: flex; flex: 1; overflow: hidden; background: #fff; }
     
-    .erp-action-btn { margin-top: 10px; padding: 8px 16px; background: #4a90e2; color: #fff; border: 1px solid #3a7bc8; border-radius: 2px; cursor: pointer; font-weight: bold; font-size: 12px; width: 100%; }
-    .erp-action-btn:hover { background: #3a7bc8; }
+    /* Левое меню (Команды) */
+    .erp-sidebar { width: 100px; background: #f0f0f0; border-right: 1px solid #ccc; padding: 5px 0; display: flex; flex-direction: column; gap: 2px; }
+    .erp-menu-item { padding: 4px 8px; cursor: pointer; margin: 0 4px; border: 1px solid transparent; }
+    .erp-menu-item:hover { background: #e0e0e0; border-color: #ccc; }
+    .erp-menu-item.active { background: #cce8ff; border-color: #99ccff; }
+    .erp-menu-header { font-weight: bold; padding: 4px 8px; background: #dcdcdc; border-bottom: 1px solid #ccc; margin-bottom: 4px; text-align: center; }
     
-    /* ===== LK ===== */
-    .lk-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1100; overflow-y: auto; padding: 40px 20px; }
-    .lk-modal.open { display: block; }
-    .lk-window { width: 100%; max-width: 800px; margin: 0 auto; background: #fff; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+    /* Форма */
+    .erp-content { flex: 1; padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    
+    .erp-row { display: flex; gap: 8px; align-items: flex-start; }
+    .erp-group { display: flex; flex-direction: column; gap: 2px; }
+    .erp-group.horizontal { flex-direction: row; align-items: center; gap: 4px; }
+    
+    .erp-label { font-size: 10px; color: #333; white-space: nowrap; }
+    
+    /* Поля ввода (стиль Windows) */
+    .erp-input { border: 1px solid #7a7a7a; padding: 2px 4px; font-family: inherit; font-size: 11px; background: #fff; height: 20px; }
+    .erp-input:focus { outline: 1px solid #0078d7; outline-offset: -1px; }
+    .erp-input.green { background: #c4f5c4; border-color: #5c9e5c; }
+    .erp-input.error { border-color: #ff0000; background: #ffeeee; }
+    
+    .erp-btn { border: 1px solid #7a7a7a; background: #e1e1e1; padding: 2px 8px; cursor: pointer; font-size: 11px; font-family: inherit; }
+    .erp-btn:hover { background: #d1d1d1; }
+    .erp-btn:active { background: #b1b1b1; }
+    .erp-btn-small { padding: 0 4px; height: 20px; font-weight: bold; }
+    
+    /* Блоки */
+    .erp-block-box { border: 1px solid #a0a0a0; padding: 6px; background: #fff; position: relative; }
+    .erp-block-box.active { border-color: #0078d7; box-shadow: 0 0 4px rgba(0,120,215,0.4); }
+    .erp-block-title { position: absolute; top: -7px; left: 6px; background: #fff; padding: 0 4px; font-size: 10px; color: #555; }
+    
+    .erp-textarea { border: 1px solid #7a7a7a; padding: 4px; font-family: inherit; font-size: 11px; resize: vertical; min-height: 40px; width: 100%; }
+    
+    .lk-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; padding: 20px; align-items: center; justify-content: center; }
+    .lk-modal.open { display: flex; }
+    .lk-window { width: 100%; max-width: 800px; background: #fff; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
     .lk-header { background: #2c3e50; color: #fff; padding: 12px 20px; font-weight: bold; display: flex; justify-content: space-between; }
-    .lk-body { padding: 20px; }
+    .lk-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
     .lk-section { margin-bottom: 15px; }
     .lk-section h4 { margin: 0 0 5px 0; color: #4a90e2; font-size: 14px; }
     .lk-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
@@ -98,9 +120,8 @@
     .lk-table th { background: #f9f9f9; }
     .lk-alert { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 10px; }
 
-    .floating-erp-btn { position: fixed; bottom: 30px; right: 30px; z-index: 100; display: none; padding: 12px 24px; background: #4a90e2; color: white; border: none; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; font-weight: bold; font-size: 14px; animation: gPulse 2s infinite; }
+    .floating-erp-btn { position: fixed; bottom: 30px; right: 30px; z-index: 100; display: none; padding: 12px 24px; background: #0078d7; color: white; border: none; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; font-weight: bold; font-size: 14px; animation: gPulse 2s infinite; }
     .floating-erp-btn.show { display: block; }
-    @keyframes gPulse { 0% { box-shadow: 0 0 0 0 rgba(74,144,226,0.7); } 70% { box-shadow: 0 0 0 10px rgba(74,144,226,0); } 100% { box-shadow: 0 0 0 0 rgba(74,144,226,0); } }
 
     /* ===== ОПРОС И САМОРАЗБОР ===== */
     .survey-modal { display: none; position: fixed; inset: 0; background: rgba(10, 6, 20, 0.95); z-index: 2000; padding: 20px; align-items: center; justify-content: center; }
@@ -125,6 +146,14 @@
     .review-client { color: var(--g-gold); font-weight: 600; margin-bottom: 8px; font-size: 13px; }
     .review-operator { color: var(--g-emerald); font-size: 14px; margin-bottom: 8px; }
     .review-erp { background: #f0f2f5; color: #000; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-top: 8px; }
+
+    /* ===== КАСТОМНЫЙ ALERT ===== */
+    .custom-alert-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 3000; align-items: center; justify-content: center; }
+    .custom-alert-backdrop.open { display: flex; }
+    .custom-alert { background: var(--g-bg-2); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: center; }
+    .custom-alert h3 { font-size: 20px; margin-bottom: 12px; font-weight: 700; color: var(--g-ink); }
+    .custom-alert p { color: var(--g-ink-2); font-size: 14px; margin-bottom: 24px; line-height: 1.5; white-space: pre-wrap; }
+    .custom-alert button { width: 100%; padding: 12px; font-size: 15px; }
   </style>
 </head>
 <body>
@@ -160,65 +189,141 @@
 
   <button class="floating-erp-btn" id="floating-erp-btn">Вернуться в ERP</button>
 
-  <!-- ERP MODAL -->
+  <!-- CUSTOM ALERT -->
+  <div class="custom-alert-backdrop" id="custom-alert">
+    <div class="custom-alert">
+      <h3 id="alert-title">Ошибка</h3>
+      <p id="alert-text">Текст ошибки</p>
+      <button class="game-btn game-btn-primary" id="alert-btn">Понятно</button>
+    </div>
+  </div>
+
+  <!-- ERP MODAL (Точная копия) -->
   <div class="erp-modal" id="erp-modal">
     <div class="erp-window">
-      <div class="erp-task-banner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-        <span id="erp-task-text">Внесите данные из диалога</span>
-      </div>
       <div class="erp-title-bar">
-        <span>ЧМИ/ПЦК! Обращение по выездному ремонту (Симулятор)</span>
-        <button class="erp-close-btn" id="erp-close">✕</button>
+        <span>ЧМИ/ПЦК! Обращение по выездному ремонту (На перезвон) № 1234567 от 01.01.2026</span>
+        <div class="erp-title-bar-actions"><span>_</span><span>□</span><span style="color:#d9534f; cursor:pointer;" id="erp-close">✕</span></div>
       </div>
-      <div class="erp-body">
+      <div class="erp-info-bar">
+        <div class="erp-info-item"><strong>На перезвон №</strong> 1234567</div>
+        <div class="erp-info-item"><strong>Тел. вызова</strong> 37081</div>
+        <div class="erp-info-item"><strong>Линия</strong> 33045</div>
+        <div class="erp-info-item" style="margin-left:auto;"><strong>Текущее время</strong> 12:39:48</div>
+      </div>
+      <div class="erp-tabs">
+        <div class="erp-tab active">Основная</div>
+        <div class="erp-tab">Стандарты работы</div>
+        <div class="erp-tab">История</div>
+        <div class="erp-tab">Неиспользуемые</div>
+        <div class="erp-tab">Поиск</div>
+      </div>
+      
+      <div class="erp-main">
+        <!-- Сайдбар -->
         <div class="erp-sidebar">
-          <div class="erp-menu-item highlight" id="btn-lk">Подсказка</div>
+          <div class="erp-menu-header">Команды</div>
+          <div class="erp-menu-item active" id="btn-lk">Подсказка</div>
           <div class="erp-menu-item">Перезвонить</div>
           <div class="erp-menu-item">Ждет обр. звонка</div>
+          <div class="erp-menu-item">Не могу принять заказ</div>
+          <div class="erp-menu-item">Перевести в другой КЦ</div>
+          <div class="erp-menu-item">Проверка</div>
+          <div class="erp-menu-item">Консультация</div>
+          <div class="erp-menu-item">Сотрудники</div>
+          <div class="erp-menu-item">Вакансии</div>
+          <div class="erp-menu-item">ПЦК</div>
+          <div class="erp-menu-item">Спам</div>
+          <div class="erp-menu-item">Создать дубль</div>
         </div>
+
+        <!-- Форма -->
         <div class="erp-content">
           
-          <div class="erp-col-left">
-            <div class="erp-block" id="block-name">
-              <div class="erp-block-title">Контрагент</div>
-              <div class="erp-row">
-                <div style="flex:1;">
-                  <div style="font-size:10px;color:#888;margin-bottom:2px;">Телефон</div>
-                  <input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;">
-                </div>
-                <div style="flex:1;">
-                  <div style="font-size:10px;color:#888;margin-bottom:2px;">Имя клиента</div>
-                  <input class="erp-input" id="erp-name" type="text" placeholder="Имя...">
-                </div>
+          <!-- Строка 1 -->
+          <div class="erp-row">
+            <div class="erp-group"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0; width:100px;"></div>
+            <div class="erp-group"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0; width:80px;"></div>
+            <div class="erp-group" style="flex:1;"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
+            <div class="erp-group" style="flex:2;">
+              <div class="erp-label">Тип оборуд.</div>
+              <div style="display:flex; gap:2px;">
+                <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="width:50px; text-align:center;">
+                <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название ТО..." style="flex:1;">
+                <button class="erp-btn erp-btn-small" style="background:#cce8ff; border-color:#99ccff;">Подсказка</button>
               </div>
-            </div>
-            <div class="erp-block" id="block-to">
-              <div class="erp-block-title">Тип оборудования (Введите код и нажмите Enter)</div>
-              <div class="erp-row">
-                <div style="width: 60px;">
-                  <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="text-align:center; font-weight:bold;">
-                </div>
-                <div style="flex:1;">
-                  <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название появится здесь...">
-                </div>
-              </div>
-            </div>
-            <div class="erp-block" id="block-address">
-              <div class="erp-block-title">Адрес КА</div>
-              <input class="erp-input" id="erp-address" type="text" placeholder="Улица, дом...">
-            </div>
-            <div class="erp-block" id="block-problem">
-              <div class="erp-block-title">Проблема со слов клиента</div>
-              <textarea class="erp-input" id="erp-problem" rows="3" placeholder="Описание..."></textarea>
             </div>
           </div>
-          <div class="erp-col-right">
-            <div class="erp-block">
-              <div class="erp-block-title">Причина продажи заказа</div>
-              <div style="font-size:12px; color:#555; margin-bottom:10px;">(В тренажёре не используется)</div>
+
+          <!-- Строка 2 -->
+          <div class="erp-row">
+            <div class="erp-group"><div class="erp-label">Осн. телефон КА</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0; width:100px;"></div>
+            <div class="erp-group"><div class="erp-label">Доп. телефон КА</div><input class="erp-input" type="text" style="width:100px;"></div>
+            <div class="erp-group"><div class="erp-label">Город клиента</div><select class="erp-input green" style="width:120px;"><option>Москва</option></select></div>
+            <div class="erp-group" style="flex:1;"><div class="erp-label">Бренд</div><input class="erp-input" type="text"></div>
+            <div class="erp-group" style="flex:1;"><div class="erp-label">Неисправность</div><input class="erp-input" type="text"></div>
+          </div>
+
+          <!-- Строка 3 -->
+          <div class="erp-row" style="align-items:center;">
+            <div class="erp-group"><div class="erp-label">Промоутер</div><input class="erp-input" type="text" style="width:100px;"></div>
+            <div style="display:flex; gap:10px; margin-left:10px; margin-top:10px;">
+              <label style="cursor:pointer; font-size:11px;"><input type="radio" name="erp-type"> Стационар</label>
+              <label style="cursor:pointer; font-size:11px;"><input type="radio" name="erp-type" checked> Выездной</label>
             </div>
-            <button class="erp-action-btn" id="erp-save-btn">Сохранить карточку</button>
+          </div>
+
+          <!-- Текстовые блоки -->
+          <div class="erp-row">
+            <div class="erp-block-box" id="block-problem" style="flex:1;">
+              <div class="erp-block-title">Проблема со слов клиента</div>
+              <textarea class="erp-textarea" id="erp-problem" rows="3"></textarea>
+            </div>
+            <div class="erp-block-box" style="flex:1;">
+              <div class="erp-block-title">Что озвучено по ценам</div>
+              <textarea class="erp-textarea" rows="3"></textarea>
+            </div>
+          </div>
+
+          <!-- Нижние блоки (О клиенте / Об оборудовании) -->
+          <div class="erp-row" style="flex:1;">
+            <div class="erp-block-box" style="flex:1; display:flex; flex-direction:column;">
+              <div class="erp-block-title">О клиенте/о заказе</div>
+              <div style="font-size:11px; color:#555; margin-top:5px; padding:5px;">Свойство: Юр. лицо<br>Возраст клиента<br>Настройки свойства стандартов Ч...</div>
+            </div>
+            <div class="erp-block-box" style="flex:1; display:flex; flex-direction:column;">
+              <div class="erp-block-title">Об оборудовании</div>
+              <div style="font-size:11px; color:#555; margin-top:5px; padding:5px;">Модель<br>Разрешение экрана<br>Изогнутый<br>Срочно</div>
+            </div>
+          </div>
+
+          <!-- Адрес -->
+          <div class="erp-block-box" id="block-address" style="height: 120px;">
+            <div class="erp-block-title">Адрес КА</div>
+            <div style="display:flex; gap:5px; margin-top:10px;">
+              <input class="erp-input" type="text" placeholder="Поиск по названию" style="flex:1;">
+              <button class="erp-btn">🔍</button>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:5px;">
+              <label style="font-size:11px;"><input type="checkbox" checked> Район</label>
+              <label style="font-size:11px;"><input type="checkbox" checked> Город</label>
+              <label style="font-size:11px;"><input type="checkbox"> Название улицы</label>
+            </div>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+              <div class="erp-group" style="flex:1;"><div class="erp-label">Регион</div><input class="erp-input" value="Москва г." readonly></div>
+              <div class="erp-group" style="flex:1;"><div class="erp-label">Район</div><input class="erp-input"></div>
+              <div class="erp-group" style="flex:1;"><div class="erp-label">Город</div><input class="erp-input"></div>
+            </div>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+              <div class="erp-group" style="flex:1;"><div class="erp-label">Улица</div><input class="erp-input" id="erp-address" placeholder="..."></div>
+              <div class="erp-group" style="width:60px;"><div class="erp-label">Дом</div><input class="erp-input"></div>
+              <div class="erp-group" style="width:60px;"><div class="erp-label">Кв.</div><input class="erp-input"></div>
+            </div>
+          </div>
+
+          <!-- Кнопка сохранить -->
+          <div class="erp-row" style="justify-content:flex-end; margin-top: 10px;">
+            <button class="erp-btn" style="padding: 6px 20px; font-weight: bold; background: #e1e1e1;" id="erp-save-btn">Сохранить</button>
           </div>
 
         </div>
@@ -316,6 +421,15 @@
     };
 
     const $ = (id) => document.getElementById(id);
+
+    // КАСТОМНЫЙ ALERT
+    function showAlert(title, message, isError = false) {
+      $('alert-title').textContent = title;
+      $('alert-title').style.color = isError ? 'var(--g-danger)' : 'var(--g-gold)';
+      $('alert-text').textContent = message;
+      $('custom-alert').classList.add('open');
+    }
+    $('alert-btn').addEventListener('click', () => $('custom-alert').classList.remove('open'));
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -465,37 +579,43 @@
       state.correctCount = 0; state.startTime = Date.now(); state.chat = [];
       state.totalSteps = countTotalSteps(state.scenario.steps, state.scenario.start_step);
       state.pendingAction = null; state.pendingNext = null;
+      
+      // Очистка ERP полей только при старте!
+      $('erp-name').value = '';
+      $('erp-address').value = '';
+      $('erp-problem').value = '';
+      $('erp-to-code').value = '';
+      $('erp-to-name').value = '';
+
       $('floating-erp-btn').classList.remove('show');
       $('list-screen').classList.add('game-hide');
       $('chat-screen').classList.remove('game-hide');
       renderStep();
     }
 
+    // ===== ERP MODAL LOGIC =====
     function openERP(action) {
       $('erp-modal').classList.add('open');
       $('floating-erp-btn').classList.remove('show');
       
-      document.querySelectorAll('.erp-block').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.erp-block-box').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.erp-input').forEach(el => el.classList.remove('error'));
-      
-      $('erp-name').value = ''; $('erp-address').value = ''; $('erp-problem').value = '';
-      $('erp-to-code').value = ''; $('erp-to-name').value = '';
 
       if (action === 'fill_name') {
-        $('erp-task-text').textContent = `Внесите имя клиента`;
-        $('block-name').classList.add('active'); $('erp-name').focus();
+        $('block-name').classList.add('active');
+        $('erp-name').focus();
       } 
       else if (action === 'fill_to') {
-        $('erp-task-text').textContent = `Введите код ТО (нажмите Enter)`;
-        $('block-to').classList.add('active'); $('erp-to-code').focus();
+        $('block-to').classList.add('active');
+        $('erp-to-code').focus();
       }
       else if (action === 'fill_address') {
-        $('erp-task-text').textContent = `Внесите адрес`;
-        $('block-address').classList.add('active'); $('erp-address').focus();
+        $('block-address').classList.add('active');
+        $('erp-address').focus();
       }
       else if (action === 'fill_problem') {
-        $('erp-task-text').textContent = `Опишите проблему`;
-        $('block-problem').classList.add('active'); $('erp-problem').focus();
+        $('block-problem').classList.add('active');
+        $('erp-problem').focus();
       }
     }
 
@@ -503,7 +623,7 @@
       if (e.key === 'Enter') {
         const code = e.target.value.trim();
         if (TO_DICTIONARY[code]) {
-          $('erp-to-name').value = `${code} ${TO_DICTIONARY[code]}`;
+          $('erp-to-name').value = `${TO_DICTIONARY[code]}`;
           $('erp-to-code').classList.remove('error');
         } else {
           $('erp-to-name').value = 'Код не найден!';
@@ -564,7 +684,6 @@
 
     // LK SIMULATOR
     $('btn-lk').addEventListener('click', () => {
-      const toCode = $('erp-to-code').value.trim();
       const toName = $('erp-to-name').value;
       $('lk-content').innerHTML = `
         <div class="lk-alert">Внимание! Это симулятор. В реальном ЛК данные обновляются автоматически.</div>
@@ -582,7 +701,7 @@
       if (state.isBoss) {
         $('survey-modal').classList.add('open');
       } else {
-        alert(`Тренажёр пройден! Верных шагов: ${state.correctCount}`);
+        showAlert('Тренажёр пройден!', `Верных шагов: ${state.correctCount}`);
         $('list-screen').classList.remove('game-hide');
       }
     }
@@ -608,15 +727,15 @@
     $('btn-finish-survey').addEventListener('click', () => {
       const q1 = document.querySelector('input[name="q1"]:checked');
       const q3 = document.querySelector('input[name="q3"]:checked');
-      if (!q1 || !q3) { alert('Пожалуйста, ответьте на 1 и 3 вопросы анкеты.'); return; }
+      if (!q1 || !q3) { showAlert('Внимание', 'Пожалуйста, ответьте на 1 и 3 вопросы анкеты.', true); return; }
 
       $('survey-modal').classList.remove('open');
       $('list-screen').classList.remove('game-hide');
 
       if (state.bossErrors.length === 0) {
-        alert("🎉 ПОЗДРАВЛЯЕМ! Босс повержен.\nВы не допустили ни одной ошибки. Вы полностью готовы к работе с реальными клиентами!");
+        showAlert("🎉 Поздравляем!", "Босс повержен.\nВы не допустили ни одной ошибки. Вы полностью готовы к работе с реальными клиентами!");
       } else {
-        alert(`❌ Вы допустили ошибки:\n\n${state.bossErrors.join('\n')}\n\nПожалуйста, повторите материал и попробуйте снова.`);
+        showAlert("❌ Ошибки", `Вы допустили ошибки:\n\n${state.bossErrors.join('\n')}\n\nПожалуйста, повторите материал и попробуйте снова.`, true);
       }
     });
 
