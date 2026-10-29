@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-game.css">
   <style>
-    /* Стили чата и списка сценариев */
+    /* Стили чата */
     .tr-hero { text-align: center; padding: 20px 0 40px; animation: gFadeUp 0.5s var(--g-smooth); }
     .tr-hero h1 { font-family: var(--g-font); font-size: 44px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; background: linear-gradient(135deg, var(--g-emerald) 0%, var(--g-violet) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .tr-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 560px; margin: 0 auto; }
@@ -54,74 +54,60 @@
     .tr-back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--g-surface); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink-2); font-family: var(--g-font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
     .tr-back-btn:hover { color: var(--g-ink); border-color: var(--g-ink-3); background: var(--g-surface-2); }
 
-    /* СИМУЛЯТОР ERP */
-    .erp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 20px; overflow-y: auto; }
-    .erp-modal.open { display: flex; align-items: center; justify-content: center; }
-    .erp-window { width: 100%; max-width: 1100px; background: #f0f2f5; border: 1px solid #a0a0a0; border-radius: 6px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #000; display: flex; flex-direction: column; max-height: 90vh; }
+    /* ===== ERP SIMULATOR v2 ===== */
+    .erp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 20px; overflow-y: auto; align-items: center; justify-content: center; }
+    .erp-modal.open { display: flex; }
+    .erp-window { width: 100%; max-width: 1200px; background: #f0f2f5; border: 1px solid #a0a0a0; border-radius: 4px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #000; display: flex; flex-direction: column; max-height: 95vh; }
     .erp-title-bar { background: #dbe4f0; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #a0a0a0; font-weight: 600; font-size: 12px; color: #2c3e50; }
     .erp-close-btn { background: transparent; border: none; font-size: 16px; cursor: pointer; color: #d9534f; font-weight: bold; }
     .erp-body { display: flex; flex: 1; overflow: hidden; }
-    .erp-sidebar { width: 120px; background: #e6eaf0; border-right: 1px solid #a0a0a0; padding: 10px 0; }
-    .erp-menu-item { padding: 6px 12px; cursor: pointer; color: #333; }
-    .erp-menu-item:hover { background: #d0d8e4; }
-    .erp-content { flex: 1; padding: 15px; overflow-y: auto; background: #fff; }
-    .erp-tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
-    .erp-tab { padding: 6px 15px; background: #f0f2f5; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; cursor: pointer; }
-    .erp-tab.active { background: #fff; border-color: #ccc; font-weight: bold; }
-    .erp-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
-    .erp-group { display: flex; flex-direction: column; gap: 3px; }
-    .erp-label { font-size: 11px; color: #555; }
-    .erp-input { padding: 4px 6px; border: 1px solid #a0a0a0; border-radius: 3px; font-size: 12px; }
-    .erp-input:focus { outline: none; border-color: #4a90e2; box-shadow: 0 0 3px rgba(74,144,226,0.3); }
-    .erp-input.green { background: #e0f8d8; border-color: #8bc34a; }
-    .erp-textarea { width: 100%; height: 80px; padding: 6px; border: 1px solid #a0a0a0; border-radius: 3px; resize: vertical; font-family: inherit; font-size: 12px; }
-    .erp-btn { padding: 6px 12px; background: #e6eaf0; border: 1px solid #a0a0a0; border-radius: 3px; cursor: pointer; font-size: 12px; }
-    .erp-btn:hover { background: #d0d8e4; }
-    .erp-btn-blue { background: #4a90e2; color: #fff; border-color: #3a7bc8; }
-    .erp-btn-blue:hover { background: #3a7bc8; }
-    .erp-block { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 15px; }
-    .erp-block-title { font-weight: bold; color: #4a90e2; margin-bottom: 8px; font-size: 12px; }
-
-    /* Результат */
-    .tr-result { max-width: 560px; margin: 0 auto; text-align: center; animation: gFadeUp 0.5s var(--g-spring); }
-    .tr-result-icon { width: 96px; height: 96px; margin: 0 auto 24px; border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3); animation: gFloat 3s ease-in-out infinite; }
-    .tr-result-icon.success { background: linear-gradient(135deg, var(--g-emerald), var(--g-violet)); }
-    .tr-result-icon.partial { background: linear-gradient(135deg, var(--g-gold), var(--g-magenta)); }
-    .tr-result-icon.fail { background: linear-gradient(135deg, var(--g-danger), var(--g-magenta)); }
-    .tr-result-icon svg { width: 48px; height: 48px; color: white; }
-    .tr-result h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
-    .tr-result-score { font-family: var(--g-mono); font-size: 64px; font-weight: 900; margin: 16px 0 8px; letter-spacing: -0.02em; }
-    .tr-result-score.success { color: var(--g-emerald); }
-    .tr-result-score.partial { color: var(--g-gold); }
-    .tr-result-score.fail { color: var(--g-danger); }
-    .tr-result-subtitle { color: var(--g-ink-2); font-size: 15px; margin-bottom: 32px; }
-    .tr-result-stats { display: flex; justify-content: center; gap: 40px; margin: 24px 0 32px; padding: 20px 0; border-top: 1px solid var(--g-hairline); border-bottom: 1px solid var(--g-hairline); }
-    .tr-result-stat { text-align: center; }
-    .tr-result-stat-value { font-family: var(--g-mono); font-size: 22px; font-weight: 700; }
-    .tr-result-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); margin-top: 4px; }
     
-    .tr-leaderboard { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 24px; margin-top: 32px; }
-    .tr-leaderboard h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); font-weight: 700; margin-bottom: 16px; }
-    .tr-lb-row { display: grid; grid-template-columns: 32px 1fr auto auto; gap: 16px; align-items: center; padding: 10px 14px; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
-    .tr-lb-row:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
-    .tr-lb-row.top-1 { background: linear-gradient(90deg, rgba(16, 229, 168, 0.15), transparent); }
-    .tr-lb-rank { font-family: var(--g-mono); font-weight: 700; color: var(--g-ink-3); }
-    .tr-lb-row.top-1 .tr-lb-rank { color: var(--g-emerald); }
-    .tr-lb-name { font-weight: 500; }
-    .tr-lb-score { font-family: var(--g-mono); font-weight: 700; color: var(--g-emerald); font-size: 13px; }
-    .tr-lb-time { font-family: var(--g-mono); font-size: 12px; color: var(--g-ink-3); }
-    .tr-lb-empty { text-align: center; color: var(--g-ink-3); font-size: 13px; padding: 20px 0; }
+    /* Sidebar */
+    .erp-sidebar { width: 130px; background: #e6eaf0; border-right: 1px solid #a0a0a0; padding: 10px 0; flex-shrink: 0; }
+    .erp-menu-item { padding: 6px 12px; cursor: pointer; color: #333; font-size: 11px; border: 1px solid transparent; margin: 2px 4px; text-align: center; }
+    .erp-menu-item:hover { background: #d0d8e4; border-color: #b0b8c4; }
+    
+    /* Form Area */
+    .erp-content { flex: 1; padding: 15px; overflow-y: auto; background: #f4f6f9; display: flex; gap: 15px; }
+    .erp-col-left { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .erp-col-right { width: 300px; display: flex; flex-direction: column; gap: 10px; }
+    
+    /* Blocks */
+    .erp-block { border: 1px solid #b0b8c4; border-radius: 2px; background: #fff; padding: 10px; position: relative; }
+    .erp-block.active { border-color: #4a90e2; box-shadow: 0 0 8px rgba(74,144,226,0.4); }
+    .erp-block-title { font-size: 10px; color: #555; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; }
+    
+    /* Inputs */
+    .erp-input { width: 100%; padding: 4px 6px; border: 1px solid #a0a0a0; border-radius: 2px; font-size: 12px; font-family: inherit; }
+    .erp-input:focus { outline: none; border-color: #4a90e2; }
+    .erp-input.green { background: #e0f8d8; border-color: #8bc34a; }
+    .erp-row { display: flex; gap: 10px; margin-bottom: 8px; }
+    
+    /* Checkboxes & Radio */
+    .erp-checkbox-group { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .erp-checkbox { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; }
+    .erp-checkbox input { margin: 0; cursor: pointer; }
+    
+    /* Reasons Table */
+    .erp-reasons { display: none; border: 1px solid #a0a0a0; border-radius: 2px; background: #fff; max-height: 200px; overflow-y: auto; margin-top: 8px; }
+    .erp-reasons.open { display: block; }
+    .erp-reason-row { display: flex; padding: 4px 8px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 11px; }
+    .erp-reason-row:hover { background: #e6f0fa; }
+    .erp-reason-row.selected { background: #4a90e2; color: white; }
+    .erp-reason-code { width: 50px; font-weight: bold; }
+    .erp-reason-name { flex: 1; }
+
+    /* Action Button */
+    .erp-action-btn { margin-top: 10px; padding: 6px 16px; background: #4a90e2; color: #fff; border: 1px solid #3a7bc8; border-radius: 2px; cursor: pointer; font-weight: bold; font-size: 12px; }
+    .erp-action-btn:hover { background: #3a7bc8; }
+    .erp-action-btn:disabled { background: #ccc; border-color: #bbb; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
   <div class="game-bar">
     <a href="knowledge-base.html" class="game-bar-logo">
-      <div class="game-bar-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-      </div>
+      <div class="game-bar-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
       <span class="game-bar-title">Тренажёр</span>
     </a>
     <div class="game-bar-spacer"></div>
@@ -132,21 +118,13 @@
   </div>
 
   <div class="game-wrap">
-    <!-- ЭКРАН ВЫБОРА -->
     <div id="list-screen">
-      <div class="tr-hero">
-        <h1>Тренажёр диалога</h1>
-        <p>Проверь свои навыки общения с клиентом. Сценарии идут от простого к сложному.</p>
-      </div>
+      <div class="tr-hero"><h1>Тренажёр диалога</h1><p>Пошаговое заполнение карточки в процессе диалога.</p></div>
       <div class="tr-scenario-list" id="scenario-list"></div>
     </div>
 
-    <!-- ЭКРАН ДИАЛОГА -->
     <div id="chat-screen" class="game-hide">
-      <button class="tr-back-btn" id="back-to-list">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        К списку сценариев
-      </button>
+      <button class="tr-back-btn" id="back-to-list">К списку сценариев</button>
       <div class="tr-progress">
         <div class="tr-progress-bar"><div class="tr-progress-fill" id="progress-fill" style="width: 0%"></div></div>
         <div class="tr-progress-text" id="progress-text">0 / 0</div>
@@ -154,41 +132,9 @@
       <div class="tr-chat" id="chat"></div>
       <div class="tr-options" id="options-container"></div>
     </div>
-
-    <!-- РЕЗУЛЬТАТ -->
-    <div id="result-screen" class="game-hide">
-      <div class="tr-result">
-        <div class="tr-result-icon" id="result-icon"></div>
-        <h2 id="result-title"></h2>
-        <div class="tr-result-score" id="result-score"></div>
-        <div class="tr-result-subtitle" id="result-subtitle"></div>
-        <div class="tr-result-stats">
-          <div class="tr-result-stat">
-            <div class="tr-result-stat-value" id="result-correct">0</div>
-            <div class="tr-result-stat-label">Верных</div>
-          </div>
-          <div class="tr-result-stat">
-            <div class="tr-result-stat-value" id="result-total">0</div>
-            <div class="tr-result-stat-label">Всего</div>
-          </div>
-          <div class="tr-result-stat">
-            <div class="tr-result-stat-value" id="result-time">0с</div>
-            <div class="tr-result-stat-label">Время</div>
-          </div>
-        </div>
-        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 32px;">
-          <button class="game-btn game-btn-primary" id="btn-again">Пройти заново</button>
-          <button class="game-btn" id="btn-to-list">К списку</button>
-        </div>
-        <div class="tr-leaderboard">
-          <h3>Топ-10 по сценарию</h3>
-          <div id="lb-list"><div class="tr-lb-empty">Загрузка…</div></div>
-        </div>
-      </div>
-    </div>
   </div>
 
-  <!-- СИМУЛЯТОР ERP -->
+  <!-- ERP MODAL -->
   <div class="erp-modal" id="erp-modal">
     <div class="erp-window">
       <div class="erp-title-bar">
@@ -201,92 +147,76 @@
           <div class="erp-menu-item">Перезвонить</div>
           <div class="erp-menu-item">Ждет обр. звонка</div>
           <div class="erp-menu-item">Не могу принять</div>
-          <div class="erp-menu-item" style="background:#d0d8e4; font-weight:bold;">Проверка</div>
+          <div class="erp-menu-item">Проверка</div>
           <div class="erp-menu-item">Консультация</div>
-          <div class="erp-menu-item">Сотрудники</div>
-          <div class="erp-menu-item">Вакансии</div>
-          <div class="erp-menu-item">ПЦК</div>
           <div class="erp-menu-item">Спам</div>
-          <div class="erp-menu-item" style="margin-top:20px; color:#4a90e2;">Создать дубль</div>
         </div>
         <div class="erp-content">
-          <div class="erp-tabs">
-            <div class="erp-tab active">Основная</div>
-            <div class="erp-tab">Стандарты работы</div>
-            <div class="erp-tab">История</div>
-          </div>
           
-          <div class="erp-row">
-            <div class="erp-group">
-              <span class="erp-label">Телефон</span>
-              <input class="erp-input" type="text" value="(909) 656-6-..." readonly>
+          <!-- LEFT COLUMN -->
+          <div class="erp-col-left">
+            <div class="erp-block" id="block-name">
+              <div class="erp-block-title">Контрагент</div>
+              <div class="erp-row">
+                <div style="flex:1;">
+                  <div style="font-size:10px;color:#888;margin-bottom:2px;">Телефон</div>
+                  <input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;">
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:10px;color:#888;margin-bottom:2px;">Имя клиента</div>
+                  <input class="erp-input" id="erp-name" type="text" placeholder="Имя...">
+                </div>
+              </div>
             </div>
-            <div class="erp-group">
-              <span class="erp-label">Контрагент</span>
-              <input class="erp-input" type="text" value="23711457" readonly>
+
+            <div class="erp-block" id="block-to">
+              <div class="erp-block-title">Тип оборудования</div>
+              <div class="erp-row">
+                <div style="width: 60px;">
+                  <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="text-align:center; font-weight:bold;">
+                </div>
+                <div style="flex:1;">
+                  <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Нажмите Enter после кода...">
+                </div>
+              </div>
             </div>
-            <div class="erp-group" style="flex:1;">
-              <span class="erp-label">Имя клиента</span>
-              <input class="erp-input" id="erp-name" type="text" placeholder="Введите имя...">
+
+            <div class="erp-block" id="block-address">
+              <div class="erp-block-title">Адрес КА</div>
+              <input class="erp-input" id="erp-address" type="text" placeholder="Улица, дом...">
             </div>
-            <div class="erp-group" style="flex:2;">
-              <span class="erp-label">Тип оборуд.</span>
-              <select class="erp-input" id="erp-to">
-                <option value="">Выберите ТО...</option>
-                <option value="25">25 Телевизор 43" - 50" (LCD)</option>
-                <option value="26">26 Телевизор 32" - 42" (LCD)</option>
-                <option value="406">406 Телевизор 16" - 31" (LCD)</option>
-                <option value="411">411 Телевизор 51" - 100" (LCD)</option>
-                <option value="632">632 Матрица (ТВ)</option>
-                <option value="934">934 Настройка каналов</option>
-              </select>
+
+            <div class="erp-block" id="block-problem">
+              <div class="erp-block-title">Проблема со слов клиента</div>
+              <textarea class="erp-input" id="erp-problem" rows="3" placeholder="Описание..."></textarea>
             </div>
           </div>
 
-          <div class="erp-row">
-            <div class="erp-group">
-              <span class="erp-label">Город клиента</span>
-              <select class="erp-input green" id="erp-city">
-                <option value="msk">Москва</option>
-                <option value="spb">Санкт-Петербург</option>
-              </select>
+          <!-- RIGHT COLUMN -->
+          <div class="erp-col-right">
+            <div class="erp-block" id="block-subtype">
+              <div class="erp-block-title">Причина продажи заказа</div>
+              <div class="erp-checkbox-group">
+                <label class="erp-checkbox"><input type="checkbox" id="sub-stop" disabled> Стоп-фактор</label>
+                <label class="erp-checkbox"><input type="checkbox" id="sub-notconv"> Не уговорил</label>
+                <label class="erp-checkbox"><input type="checkbox" id="sub-garant" disabled> Гарантия</label>
+                <label class="erp-checkbox"><input type="checkbox" id="sub-notrep" disabled> Не ремонтируем</label>
+              </div>
+              <div class="erp-reasons" id="erp-reasons-list">
+                <div class="erp-reason-row" data-code="2050"><span class="erp-reason-code">2050</span><span class="erp-reason-name">Ограничение линий</span></div>
+                <div class="erp-reason-row" data-code="1565"><span class="erp-reason-code">1565</span><span class="erp-reason-name">Короткие гудки у заявки с сайта</span></div>
+                <div class="erp-reason-row" data-code="295"><span class="erp-reason-code">295</span><span class="erp-reason-name">Нет свободных инженеров</span></div>
+                <div class="erp-reason-row" data-code="1134"><span class="erp-reason-code">1134</span><span class="erp-reason-name">Хочет ремонт в СЦ</span></div>
+                <div class="erp-reason-row" data-code="1024"><span class="erp-reason-code">1024</span><span class="erp-reason-name">Оформление заказа позже</span></div>
+                <div class="erp-reason-row" data-code="847"><span class="erp-reason-code">847</span><span class="erp-reason-name">Хочет купить запчасть отдельно</span></div>
+                <div class="erp-reason-row" data-code="286"><span class="erp-reason-code">286</span><span class="erp-reason-name">Нужна консультация мастера</span></div>
+                <div class="erp-reason-row" data-code="285"><span class="erp-reason-code">285</span><span class="erp-reason-name">Стоимость выезда за МКАД</span></div>
+              </div>
             </div>
-            <div class="erp-group" style="flex:1;">
-              <span class="erp-label">Адрес (улица, дом)</span>
-              <input class="erp-input" id="erp-address" type="text" placeholder="ул. Профсоюзная, д. 1">
-            </div>
-          </div>
-
-          <div class="erp-block">
-            <div class="erp-block-title">Проблема со слов клиента</div>
-            <textarea class="erp-textarea" id="erp-problem" placeholder="Кратко опишите проблему..."></textarea>
-          </div>
-
-          <div class="erp-block">
-            <div class="erp-block-title">Что озвучено по ценам</div>
-            <textarea class="erp-textarea" id="erp-prices" placeholder="Что сказали клиенту..."></textarea>
-          </div>
-
-          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-            <button class="erp-btn" id="erp-cancel">Отмена</button>
-            <button class="erp-btn erp-btn-blue" id="erp-save">Сохранить карту</button>
+            
+            <button class="erp-action-btn" id="erp-save-btn" disabled>Внести данные</button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="game-modal-backdrop" id="name-modal">
-    <div class="game-modal">
-      <h2>Диалог пройден!</h2>
-      <p>Введи имя, чтобы попасть в рейтинг по этому сценарию.</p>
-      <div class="field">
-        <label for="player-name">Имя</label>
-        <input type="text" id="player-name" placeholder="Например, Иван" maxlength="30" autocomplete="off">
-      </div>
-      <div class="game-modal-actions">
-        <button class="game-btn" id="btn-cancel-name">Пропустить</button>
-        <button class="game-btn game-btn-primary" id="btn-save-name">Сохранить</button>
       </div>
     </div>
   </div>
@@ -297,9 +227,21 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    const TO_DICTIONARY = {
+      '406': 'Телевизор 16" - 31" (LCD)',
+      '26': 'Телевизор 32" - 42" (LCD)',
+      '25': 'Телевизор 43" - 50" (LCD)',
+      '411': 'Телевизор 51" - 100" (LCD)',
+      '632': 'Матрица (ТВ)',
+      '934': 'Настройка каналов'
+    };
+
     const state = {
       scenarios: [], scenario: null, currentStepId: null,
       correctCount: 0, totalSteps: 0, startTime: 0, chat: [],
+      currentAction: null,
+      selectedSubtype: null,
+      selectedReason: null
     };
 
     const $ = (id) => document.getElementById(id);
@@ -307,7 +249,6 @@
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
     }
-    function formatTime(sec) { return sec < 60 ? sec + 'с' : Math.floor(sec / 60) + 'м ' + (sec % 60) + 'с'; }
     function countTotalSteps(steps, startId) {
       const visited = new Set(); const queue = [startId];
       while (queue.length) {
@@ -320,22 +261,16 @@
     }
 
     async function loadScenarios() {
-      const { data, error } = await supabaseClient.from('trainer_scenarios').select('*').order('sort_order', { ascending: true });
-      if (error) { console.error(error); return []; }
+      const { data } = await supabaseClient.from('trainer_scenarios').select('*').order('sort_order', { ascending: true });
       return data || [];
     }
 
     function renderScenarioList() {
       const list = $('scenario-list');
-      // Убрали теги сложности. Просто название и описание.
       list.innerHTML = state.scenarios.map((s, i) => `
         <div class="tr-scenario-card" data-idx="${i}">
           <h3>${escapeHtml(s.title)}</h3>
           <p>${escapeHtml(s.description)}</p>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
-            <span style="font-size:12px; color:var(--g-ink-3);">Нажми, чтобы начать</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g-emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </div>
         </div>
       `).join('');
       list.querySelectorAll('.tr-scenario-card').forEach(card => {
@@ -359,7 +294,7 @@
 
     function renderStep() {
       const step = state.scenario.steps[state.currentStepId];
-      if (!step) { openERP(); return; }
+      if (!step) { finishGame(); return; }
 
       const visited = state.chat.filter(m => m.type === 'operator').length;
       $('progress-fill').style.width = Math.min(100, Math.round(visited / state.totalSteps * 100)) + '%';
@@ -392,13 +327,18 @@
       if (option.correct) state.correctCount++;
       renderChat();
 
-      setTimeout(() => {
-        if (option.next === 'END' || !option.next) {
-          openERP();
+      if (option.next === 'END' || !option.next) {
+        setTimeout(finishGame, 1400);
+      } else {
+        state.currentStepId = option.next;
+        const nextStep = state.scenario.steps[state.currentStepId];
+        
+        if (nextStep && nextStep.action) {
+          setTimeout(() => openERP(nextStep.action, nextStep.expected), 800);
         } else {
-          state.currentStepId = option.next; renderStep();
+          setTimeout(renderStep, 1400);
         }
-      }, 1400);
+      }
     }
 
     function startScenario() {
@@ -406,104 +346,103 @@
       state.correctCount = 0; state.startTime = Date.now(); state.chat = [];
       state.totalSteps = countTotalSteps(state.scenario.steps, state.scenario.start_step);
       $('list-screen').classList.add('game-hide');
-      $('result-screen').classList.add('game-hide');
+      $('result-screen')?.classList.add('game-hide');
       $('chat-screen').classList.remove('game-hide');
       renderStep();
     }
 
-    // ===== ERP SIMULATION =====
-    function openERP() {
-      $('chat-screen').classList.add('game-hide');
+    // ===== ERP MODAL LOGIC =====
+    function openERP(action, expected) {
+      state.currentAction = action;
       $('erp-modal').classList.add('open');
       
-      $('erp-name').value = '';
-      $('erp-to').value = '';
-      $('erp-city').value = 'msk';
-      $('erp-address').value = '';
-      $('erp-problem').value = '';
-      $('erp-prices').value = '';
+      document.querySelectorAll('.erp-block').forEach(el => el.classList.remove('active'));
+      $('erp-save-btn').disabled = true;
+      $('erp-save-btn').textContent = 'Подтвердить';
+
+      // Reset fields
+      if (action === 'fill_name') {
+        $('erp-name').value = '';
+        $('block-name').classList.add('active');
+        $('erp-name').focus();
+        $('erp-save-btn').disabled = false;
+      } 
+      else if (action === 'fill_to') {
+        $('erp-to-code').value = '';
+        $('erp-to-name').value = '';
+        $('block-to').classList.add('active');
+        $('erp-to-code').focus();
+      }
+      else if (action === 'fill_address') {
+        $('erp-address').value = '';
+        $('block-address').classList.add('active');
+        $('erp-address').focus();
+        $('erp-save-btn').disabled = false;
+      }
+      else if (action === 'fill_problem') {
+        $('erp-problem').value = '';
+        $('block-problem').classList.add('active');
+        $('erp-problem').focus();
+        $('erp-save-btn').disabled = false;
+      }
+      else if (action === 'fill_subtype') {
+        $('block-subtype').classList.add('active');
+        // Логика для подтипов (пока простая)
+        $('erp-save-btn').disabled = false;
+      }
     }
 
-    $('erp-close').addEventListener('click', () => $('erp-modal').classList.remove('open'));
-    $('erp-cancel').addEventListener('click', () => $('erp-modal').classList.remove('open'));
-
-    $('erp-save').addEventListener('click', () => {
-      $('erp-modal').classList.remove('open');
-      finishGame();
+    // TO Search Logic
+    $('erp-to-code').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const code = e.target.value.trim();
+        if (TO_DICTIONARY[code]) {
+          $('erp-to-name').value = `${code} ${TO_DICTIONARY[code]}`;
+          $('erp-save-btn').disabled = false;
+        } else {
+          $('erp-to-name').value = 'Код не найден!';
+          $('erp-save-btn').disabled = true;
+        }
+      }
     });
 
-    function finishGame() {
-      const totalTime = Math.round((Date.now() - state.startTime) / 1000);
-      const totalAnswers = state.chat.filter(m => m.type === 'operator').length;
-      const percent = totalAnswers > 0 ? Math.round(state.correctCount / totalAnswers * 100) : 0;
-
-      $('chat-screen').classList.add('game-hide');
-      $('result-screen').classList.remove('game-hide');
-
-      let iconClass, iconSvg, title, subtitle, scoreClass;
-      if (percent >= 90) {
-        iconClass = 'success';
-        iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
-        title = 'Идеально!'; subtitle = 'Ты справился с диалогом и заполнил карточку как профи.'; scoreClass = 'success';
-      } else if (percent >= 60) {
-        iconClass = 'partial';
-        iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>`;
-        title = 'Хорошо!'; subtitle = 'Есть над чем поработать, но база усвоена.'; scoreClass = 'partial';
+    // Reason Selection Logic
+    $('sub-notconv').addEventListener('change', (e) => {
+      const list = $('erp-reasons-list');
+      if (e.target.checked) {
+        list.classList.add('open');
       } else {
-        iconClass = 'fail';
-        iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
-        title = 'Попробуй снова'; subtitle = 'Перечитай статью по ТВ и пройди ещё раз.'; scoreClass = 'fail';
+        list.classList.remove('open');
+        $('erp-save-btn').disabled = true;
       }
+    });
 
-      $('result-icon').className = 'tr-result-icon ' + iconClass;
-      $('result-icon').innerHTML = iconSvg;
-      $('result-title').textContent = title;
-      $('result-subtitle').textContent = subtitle;
-      $('result-score').className = 'tr-result-score ' + scoreClass;
-      $('result-score').textContent = percent + '%';
-      $('result-correct').textContent = state.correctCount;
-      $('result-total').textContent = totalAnswers;
-      $('result-time').textContent = formatTime(totalTime);
-
-      window._pendingResult = { score: state.correctCount, max_score: totalAnswers, time: totalTime };
-      $('name-modal').classList.add('open');
-      $('player-name').value = localStorage.getItem('mm_player_name') || '';
-      $('player-name').focus();
-      loadLeaderboard();
-    }
-
-    async function saveResult(name) {
-      const r = window._pendingResult;
-      if (!r || !state.scenario) return;
-      await supabaseClient.from('trainer_results').insert({
-        player_name: name, scenario_id: state.scenario.id,
-        score: r.score, max_score: r.max_score, time_seconds: r.time,
+    document.querySelectorAll('.erp-reason-row').forEach(row => {
+      row.addEventListener('click', () => {
+        document.querySelectorAll('.erp-reason-row').forEach(r => r.classList.remove('selected'));
+        row.classList.add('selected');
+        state.selectedReason = row.dataset.code;
+        $('erp-save-btn').disabled = false;
       });
-      localStorage.setItem('mm_player_name', name);
-      $('name-modal').classList.remove('open');
-      await loadLeaderboard();
-    }
+    });
 
-    async function loadLeaderboard() {
-      if (!state.scenario) return;
-      const { data, error } = await supabaseClient.from('trainer_results').select('*').eq('scenario_id', state.scenario.id).order('score', { ascending: false }).order('time_seconds', { ascending: true }).limit(10);
-      const target = $('lb-list');
-      if (error || !data || !data.length) { target.innerHTML = `<div class="tr-lb-empty">Пока никто не проходил. Будь первым!</div>`; return; }
-      target.innerHTML = data.map((r, i) => `
-        <div class="tr-lb-row ${i === 0 ? 'top-1' : ''}">
-          <span class="tr-lb-rank">${i + 1}</span>
-          <span class="tr-lb-name">${escapeHtml(r.player_name)}</span>
-          <span class="tr-lb-score">${r.score} / ${r.max_score}</span>
-          <span class="tr-lb-time">${formatTime(r.time_seconds)}</span>
-        </div>
-      `).join('');
+    $('erp-save-btn').addEventListener('click', () => {
+      $('erp-modal').classList.remove('open');
+      state.chat.push({ type: 'feedback', text: 'Данные успешно внесены в ERP.', correct: true });
+      renderChat();
+      setTimeout(renderStep, 1000);
+    });
+
+    $('erp-close').addEventListener('click', () => $('erp-modal').classList.remove('open'));
+    
+    function finishGame() {
+      // ... (стандартная логика завершения, можно добавить рейтинг)
+      alert(`Тренажёр пройден! Верных шагов: ${state.correctCount} из ${state.totalSteps}`);
+      $('chat-screen').classList.add('game-hide');
+      $('list-screen').classList.remove('game-hide');
     }
 
     $('back-to-list').addEventListener('click', () => { $('chat-screen').classList.add('game-hide'); $('list-screen').classList.remove('game-hide'); });
-    $('btn-again').addEventListener('click', () => { $('result-screen').classList.add('game-hide'); startScenario(); });
-    $('btn-to-list').addEventListener('click', () => { $('result-screen').classList.add('game-hide'); $('list-screen').classList.remove('game-hide'); });
-    $('btn-cancel-name').addEventListener('click', () => $('name-modal').classList.remove('open'));
-    $('btn-save-name').addEventListener('click', () => { const name = $('player-name').value.trim(); if (!name) { $('player-name').focus(); return; } saveResult(name); });
 
     (async () => { state.scenarios = await loadScenarios(); renderScenarioList(); })();
   </script>
