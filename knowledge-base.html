@@ -124,18 +124,13 @@
     const CALLOUT_TYPES = 'note|tip|warning|danger|success|important';
 
     function preprocessMarkdown(md) {
-      // Нормализуем переносы строк
       md = md.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      
-      // Универсальная регулярка для :::type ... :::
       const regex = new RegExp(`(^|\\n):::(${CALLOUT_TYPES})([\\s\\S]*?):::[ \\t]*(?=\\n|$)`, 'g');
-      
       md = md.replace(regex, (m, prefix, type, body) => {
         const title = CALLOUT_TITLES[type] || type;
         const inner = marked.parse(body.trim());
         return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
       });
-      
       md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
       return md;
     }
@@ -147,19 +142,13 @@
       const clean = DOMPurify.sanitize(rawHtml, PURIFY_CONFIG);
       const tmp = document.createElement('div');
       tmp.innerHTML = clean;
+      
+      // Убрали автоматическое создание подписей (figcaption)
       tmp.querySelectorAll('img').forEach(img => {
         img.setAttribute('loading', 'lazy');
         img.setAttribute('decoding', 'async');
-        const alt = img.getAttribute('alt') || '';
-        if (alt && alt.length > 2) {
-          const fig = document.createElement('figure');
-          img.replaceWith(fig);
-          fig.appendChild(img);
-          const cap = document.createElement('figcaption');
-          cap.textContent = alt;
-          fig.appendChild(cap);
-        }
       });
+      
       return tmp.innerHTML;
     }
 
@@ -355,18 +344,13 @@
         return `<div class="wizard-step-title">Шаг не найден</div>
           <button class="btn btn-ghost" data-wizard-reset>Начать сначала</button>`;
       }
-      
-      const tone = step.tone ? `wizard-step-tone-${step.tone}` : '';
       const contentHtml = step.content ? `<div class="wizard-step-content prose">${renderMarkdown(step.content)}</div>` : '';
-      
       let optionsHtml = '';
       if (step.kind === 'question' && step.options && step.options.length) {
-        optionsHtml = `<div class="wizard-options">${step.options.map(o => {
-          const optTone = o.tone ? ` opt-${o.tone}` : '';
-          return `<button class="wizard-option${optTone}" data-wizard-next="${o.next || ''}" ${!o.next ? 'disabled' : ''}>
+        optionsHtml = `<div class="wizard-options">${step.options.map(o =>
+          `<button class="wizard-option" data-wizard-next="${o.next || ''}" ${!o.next ? 'disabled' : ''}>
             ${escapeHtml(o.label || '(без названия)')}
-          </button>`;
-        }).join('')}</div>`;
+          </button>`).join('')}</div>`;
       } else if (step.kind === 'info' && step.next) {
         optionsHtml = `<div class="wizard-options">
           <button class="wizard-option" data-wizard-next="${step.next}">Далее</button>
@@ -381,15 +365,13 @@
       const canBack = st.history.length > 0;
       const progress = st.history.length + 1;
       return `
-        <div class="wizard-step ${tone}">
-          <div class="wizard-step-title">${escapeHtml(step.title || 'Шаг')}</div>
-          ${contentHtml}
-          ${optionsHtml}
-          <div class="wizard-nav">
-            ${canBack ? '<button class="btn btn-ghost btn-sm" data-wizard-back>← Назад</button>' : ''}
-            <button class="btn btn-ghost btn-sm" data-wizard-reset>Начать сначала</button>
-            <span class="wizard-progress">Шаг ${progress}</span>
-          </div>
+        <div class="wizard-step-title">${escapeHtml(step.title || 'Шаг')}</div>
+        ${contentHtml}
+        ${optionsHtml}
+        <div class="wizard-nav">
+          ${canBack ? '<button class="btn btn-ghost btn-sm" data-wizard-back>← Назад</button>' : ''}
+          <button class="btn btn-ghost btn-sm" data-wizard-reset>Начать сначала</button>
+          <span class="wizard-progress">Шаг ${progress}</span>
         </div>
       `;
     }
