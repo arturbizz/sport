@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Тренажёр диалога — База знаний</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kb-game.css">
+  <style>
+    /* ===== Trainer-specific ===== */
+    .tr-hero {
+      text-align: center;
+      padding: 20px 0 40px;
+      animation: gFadeUp 0.5s var(--g-smooth);
+    }
+    .tr-hero h1 {
+      font-family: var(--g-font);
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, var(--g-emerald) 0%, var(--g-violet) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .tr-hero p {
+      color: var(--g-ink-2);
+      font-size: 16px;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* Start */
+    .tr-start-card {
+      max-width: 600px;
+      margin: 0 auto;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid var(--g-hairline-2);
+      border-radius: 20px;
+      padding: 32px;
+    }
+    .tr-start-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .tr-scenario-desc {
+      color: var(--g-ink-2);
+      font-size: 14px;
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .tr-scenario-meta {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .tr-tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 700;
+      border: 1px solid var(--g-hairline-2);
+      color: var(--g-ink-2);
+    }
+    .tr-tag.medium { color: var(--g-gold); border-color: rgba(255, 201, 64, 0.4); background: rgba(255, 201, 64, 0.08); }
+    .tr-tag.easy { color: var(--g-emerald); border-color: rgba(16, 229, 168, 0.4); background: rgba(16, 229, 168, 0.08); }
+    .tr-tag.hard { color: var(--g-danger); border-color: rgba(255, 59, 92, 0.4); background: rgba(255, 59, 92, 0.08); }
+
+    /* Chat layout */
+    .tr-chat {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .tr-message {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      animation: gFadeUp 0.4s var(--g-smooth);
+    }
+    .tr-message.client { flex-direction: row; }
+    .tr-message.operator { flex-direction: row-reverse; }
+    .tr-avatar {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--g-font);
+      font-weight: 800;
+      font-size: 14px;
+      color: #0A0614;
+    }
+    .tr-message.client .tr-avatar {
+      background: linear-gradient(135deg, var(--g-gold), var(--g-magenta));
+    }
+    .tr-message.operator .tr-avatar {
+      background: linear-gradient(135deg, var(--g-emerald), var(--g-violet));
+    }
+    .tr-bubble {
+      max-width: 70%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+    .tr-message.client .tr-bubble {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--g-hairline-2);
+      border-top-left-radius: 4px;
+    }
+    .tr-message.operator .tr-bubble {
+      background: linear-gradient(135deg, rgba(16, 229, 168, 0.15), rgba(168, 85, 247, 0.12));
+      border: 1px solid rgba(16, 229, 168, 0.3);
+      border-top-right-radius: 4px;
+    }
+    .tr-message.feedback .tr-bubble {
+      background: rgba(255, 59, 92, 0.1);
+      border: 1px solid rgba(255, 59, 92, 0.3);
+      max-width: 100%;
+      font-size: 13px;
+    }
+    .tr-message.feedback .tr-avatar {
+      background: rgba(255, 59, 92, 0.2);
+      color: var(--g-danger);
+    }
+    .tr-message.feedback.correct .tr-bubble {
+      background: rgba(16, 229, 168, 0.1);
+      border: 1px solid rgba(16, 229, 168, 0.3);
+    }
+    .tr-message.feedback.correct .tr-avatar {
+      background: rgba(16, 229, 168, 0.2);
+      color: var(--g-emerald);
+    }
+
+    /* Options */
+    .tr-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+      animation: gFadeUp 0.4s var(--g-smooth) 0.2s both;
+    }
+    .tr-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--g-hairline-2);
+      border-radius: 12px;
+      color: var(--g-ink);
+      text-align: left;
+      font-family: var(--g-font);
+      font-size: 14px;
+      line-height: 1.5;
+      transition: all 0.2s var(--g-smooth);
+    }
+    .tr-option:hover:not(:disabled) {
+      border-color: var(--g-emerald);
+      background: rgba(16, 229, 168, 0.06);
+      transform: translateX(4px);
+    }
+    .tr-option:disabled { cursor: not-allowed; }
+    .tr-option.correct {
+      border-color: var(--g-emerald);
+      background: rgba(16, 229, 168, 0.15);
+    }
+    .tr-option.wrong {
+      border-color: var(--g-danger);
+      background: rgba(255, 59, 92, 0.1);
+      animation: gShake 0.4s ease;
+    }
+    .tr-option.dimmed { opacity: 0.35; }
+    .tr-option-bullet {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1px solid var(--g-hairline-2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--g-ink-3);
+      margin-top: 1px;
+    }
+    .tr-option:hover:not(:disabled) .tr-option-bullet {
+      border-color: var(--g-emerald);
+      color: var(--g-emerald);
+    }
+
+    /* Progress bar */
+    .tr-progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 800px;
+      margin: 0 auto 24px;
+    }
+    .tr-progress-bar {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .tr-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--g-emerald), var(--g-violet));
+      border-radius: 3px;
+      transition: width 0.4s var(--g-smooth);
+    }
+    .tr-progress-text {
+      font-family: var(--g-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--g-ink-2);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* Result */
+    .tr-result {
+      max-width: 560px;
+      margin: 0 auto;
+      text-align: center;
+      animation: gFadeUp 0.5s var(--g-spring);
+    }
+    .tr-result-icon {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 24px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      animation: gFloat 3s ease-in-out infinite;
+    }
+    .tr-result-icon.success {
+      background: linear-gradient(135deg, var(--g-emerald), var(--g-violet));
+    }
+    .tr-result-icon.partial {
+      background: linear-gradient(135deg, var(--g-gold), var(--g-magenta));
+    }
+    .tr-result-icon.fail {
+      background: linear-gradient(135deg, var(--g-danger), var(--g-magenta));
+    }
+    .tr-result-icon svg { width: 48px; height: 48px; color: white; }
+    .tr-result h2 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .tr-result-score {
+      font-family: var(--g-mono);
+      font-size: 64px;
+      font-weight: 900;
+      margin: 16px 0 8px;
+      letter-spacing: -0.02em;
+    }
+    .tr-result-score.success { color: var(--g-emerald); }
+    .tr-result-score.partial { color: var(--g-gold); }
+    .tr-result-score.fail { color: var(--g-danger); }
+    .tr-result-subtitle {
+      color: var(--g-ink-2);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+    .tr-result-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin: 24px 0 32px;
+      padding: 20px 0;
+      border-top: 1px solid var(--g-hairline);
+      border-bottom: 1px solid var(--g-hairline);
+    }
+    .tr-result-stat { text-align: center; }
+    .tr-result-stat-value {
+      font-family: var(--g-mono);
+      font-size: 22px;
+      font-weight: 700;
+    }
+    .tr-result-stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--g-ink-3);
+      margin-top: 4px;
+    }
+
+    /* Leaderboard */
+    .tr-leaderboard {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--g-hairline-2);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 32px;
+    }
+    .tr-leaderboard h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--g-ink-3);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+    .tr-lb-row {
+      display: grid;
+      grid-template-columns: 32px 1fr auto auto;
+      gap: 16px;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+    .tr-lb-row:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
+    .tr-lb-row.top-1 { background: linear-gradient(90deg, rgba(16, 229, 168, 0.15), transparent); }
+    .tr-lb-rank { font-family: var(--g-mono); font-weight: 700; color: var(--g-ink-3); }
+    .tr-lb-row.top-1 .tr-lb-rank { color: var(--g-emerald); }
+    .tr-lb-name { font-weight: 500; }
+    .tr-lb-score { font-family: var(--g-mono); font-weight: 700; color: var(--g-emerald); font-size: 13px; }
+    .tr-lb-time { font-family: var(--g-mono); font-size: 12px; color: var(--g-ink-3); }
+    .tr-lb-empty { text-align: center; color: var(--g-ink-3); font-size: 13px; padding: 20px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="game-bar">
+    <a href="knowledge-base.html" class="game-bar-logo">
+      <div class="game-bar-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <span class="game-bar-title">Тренажёр</span>
+    </a>
+    <div class="game-bar-spacer"></div>
+    <div class="game-bar-actions">
+      <a href="kb-millionaire.html" class="game-btn game-btn-sm">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Миллионер
+      </a>
+      <a href="knowledge-base.html" class="game-btn game-btn-sm">← В БЗ</a>
+    </div>
+  </div>
+
+  <div class="game-wrap">
+
+    <div class="tr-hero">
+      <h1>Тренажёр диалога</h1>
+      <p>Почувствуй себя оператором. Клиент звонит, ты выбираешь ответ. В конце — разбор ошибок и оценка.</p>
+    </div>
+
+    <!-- START -->
+    <div id="start-screen">
+      <div class="tr-start-card">
+        <h2 id="scenario-title">Загрузка…</h2>
+        <p class="tr-scenario-desc" id="scenario-desc"></p>
+        <div class="tr-scenario-meta" id="scenario-meta"></div>
+        <button class="game-btn game-btn-primary" id="btn-start" style="width: 100%; padding: 14px; font-size: 15px;">Начать диалог</button>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="chat-screen" class="game-hide">
+      <div class="tr-progress">
+        <div class="tr-progress-bar">
+          <div class="tr-progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="tr-progress-text" id="progress-text">0 / 0</div>
+      </div>
+      <div class="tr-chat" id="chat"></div>
+      <div class="tr-options" id="options-container"></div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="result-screen" class="game-hide">
+      <div class="tr-result">
+        <div class="tr-result-icon" id="result-icon"></div>
+        <h2 id="result-title"></h2>
+        <div class="tr-result-score" id="result-score"></div>
+        <div class="tr-result-subtitle" id="result-subtitle"></div>
+        <div class="tr-result-stats">
+          <div class="tr-result-stat">
+            <div class="tr-result-stat-value" id="result-correct">0</div>
+            <div class="tr-result-stat-label">Верных</div>
+          </div>
+          <div class="tr-result-stat">
+            <div class="tr-result-stat-value" id="result-total">0</div>
+            <div class="tr-result-stat-label">Всего</div>
+          </div>
+          <div class="tr-result-stat">
+            <div class="tr-result-stat-value" id="result-time">0с</div>
+            <div class="tr-result-stat-label">Время</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 32px;">
+          <button class="game-btn game-btn-primary" id="btn-again">Пройти заново</button>
+          <a href="knowledge-base.html" class="game-btn">← В БЗ</a>
+        </div>
+        <div class="tr-leaderboard">
+          <h3>Топ-10 по этому сценарию</h3>
+          <div id="lb-list"><div class="tr-lb-empty">Загрузка…</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NAME MODAL -->
+  <div class="game-modal-backdrop" id="name-modal">
+    <div class="game-modal">
+      <h2>Диалог пройден!</h2>
+      <p>Введи имя, чтобы попасть в рейтинг по этому сценарию.</p>
+      <div class="field">
+        <label for="player-name">Имя</label>
+        <input type="text" id="player-name" placeholder="Например, Иван" maxlength="30" autocomplete="off">
+      </div>
+      <div class="game-modal-actions">
+        <button class="game-btn" id="btn-cancel-name">Пропустить</button>
+        <button class="game-btn game-btn-primary" id="btn-save-name">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://ujsakbnirmpdwmmtju.supabase.co'.replace('kb', 'jsaku'); // fixed
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const supabaseClient = window.supabase.createClient('https://ujsakubqnirmpdwmmtju.supabase.co', SUPABASE_ANON_KEY);
+
+    const state = {
+      scenario: null,
+      currentStepId: null,
+      correctCount: 0,
+      totalSteps: 0,
+      startTime: 0,
+      chat: [],
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function formatTime(sec) {
+      if (sec < 60) return sec + 'с';
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${m}м ${s}с`;
+    }
+
+    function countTotalSteps(steps, startId) {
+      // Простой подсчёт: BFS по всем достижимым шагам
+      const visited = new Set();
+      const queue = [startId];
+      while (queue.length) {
+        const id = queue.shift();
+        if (visited.has(id) || !steps[id]) continue;
+        visited.add(id);
+        const step = steps[id];
+        (step.operator_options || []).forEach(opt => {
+          if (opt.next && opt.next !== 'END') queue.push(opt.next);
+        });
+      }
+      return visited.size;
+    }
+
+    async function loadScenario() {
+      const { data, error } = await supabaseClient
+        .from('trainer_scenarios')
+        .select('*')
+        .limit(1)
+        .single();
+      if (error) { console.error(error); return null; }
+      return data;
+    }
+
+    async function loadLeaderboard() {
+      if (!state.scenario) return;
+      const { data, error } = await supabaseClient
+        .from('trainer_results')
+        .select('*')
+        .eq('scenario_id', state.scenario.id)
+        .order('score', { ascending: false })
+        .order('time_seconds', { ascending: true })
+        .limit(10);
+
+      const target = $('lb-list');
+      if (error || !data || !data.length) {
+        target.innerHTML = `<div class="tr-lb-empty">Пока никто не проходил. Будь первым!</div>`;
+        return;
+      }
+
+      target.innerHTML = data.map((r, i) => `
+        <div class="tr-lb-row ${i === 0 ? 'top-1' : ''}">
+          <span class="tr-lb-rank">${i + 1}</span>
+          <span class="tr-lb-name">${escapeHtml(r.player_name)}</span>
+          <span class="tr-lb-score">${r.score} / ${r.max_score}</span>
+          <span class="tr-lb-time">${formatTime(r.time_seconds)}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderChat() {
+      const chat = $('chat');
+      chat.innerHTML = state.chat.map(m => {
+        if (m.type === 'client') {
+          return `
+            <div class="tr-message client">
+              <div class="tr-avatar">К</div>
+              <div class="tr-bubble">${escapeHtml(m.text)}</div>
+            </div>
+          `;
+        } else if (m.type === 'operator') {
+          return `
+            <div class="tr-message operator">
+              <div class="tr-avatar">О</div>
+              <div class="tr-bubble">${escapeHtml(m.text)}</div>
+            </div>
+          `;
+        } else if (m.type === 'feedback') {
+          return `
+            <div class="tr-message feedback ${m.correct ? 'correct' : ''}">
+              <div class="tr-avatar">${m.correct ? '✓' : '✕'}</div>
+              <div class="tr-bubble">${escapeHtml(m.text)}</div>
+            </div>
+          `;
+        }
+        return '';
+      }).join('');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function renderStep() {
+      const step = state.scenario.steps[state.currentStepId];
+      if (!step) {
+        finishGame();
+        return;
+      }
+
+      // Обновить прогресс
+      const visited = state.chat.filter(m => m.type === 'operator').length;
+      const progress = Math.min(100, Math.round(visited / state.totalSteps * 100));
+      $('progress-fill').style.width = progress + '%';
+      $('progress-text').textContent = `${visited} / ${state.totalSteps}`;
+
+      // Добавить реплику клиента (если ещё не добавлена для этого шага)
+      const lastClient = state.chat.filter(m => m.type === 'client').pop();
+      if (!lastClient || lastClient.text !== step.client) {
+        state.chat.push({ type: 'client', text: step.client });
+        renderChat();
+      }
+
+      // Отрисовать варианты
+      const options = $('options-container');
+      options.innerHTML = step.operator_options.map((o, i) => `
+        <button class="tr-option" data-index="${i}">
+          <span class="tr-option-bullet">${String.fromCharCode(65 + i)}</span>
+          <span>${escapeHtml(o.label)}</span>
+        </button>
+      `).join('');
+
+      options.querySelectorAll('.tr-option').forEach(btn => {
+        btn.addEventListener('click', () => selectOption(parseInt(btn.dataset.index)));
+      });
+    }
+
+    function selectOption(index) {
+      const step = state.scenario.steps[state.currentStepId];
+      const option = step.operator_options[index];
+      if (!option) return;
+
+      // Блокируем кнопки
+      $('options-container').querySelectorAll('.tr-option').forEach(btn => btn.disabled = true);
+
+      // Подсветить правильный/неправильный
+      const allBtns = $('options-container').querySelectorAll('.tr-option');
+      allBtns.forEach((btn, i) => {
+        if (i === index) {
+          btn.classList.add(option.correct ? 'correct' : 'wrong');
+        } else {
+          btn.classList.add('dimmed');
+        }
+      });
+
+      // Добавить реплику оператора
+      state.chat.push({ type: 'operator', text: option.label });
+
+      // Добавить фидбек (если есть)
+      if (option.feedback) {
+        state.chat.push({ type: 'feedback', text: option.feedback, correct: option.correct });
+      }
+
+      if (option.correct) state.correctCount++;
+
+      renderChat();
+
+      // Перейти к следующему шагу
+      setTimeout(() => {
+        if (option.next === 'END' || !option.next) {
+          finishGame();
+        } else {
+          state.currentStepId = option.next;
+          renderStep();
+        }
+      }, 1400);
+    }
+
+    function startGame() {
+      state.currentStepId = state.scenario.start_step;
+      state.correctCount = 0;
+      state.startTime = Date.now();
+      state.chat = [];
+      state.totalSteps = countTotalSteps(state.scenario.steps, state.scenario.start_step);
+
+      $('start-screen').classList.add('game-hide');
+      $('result-screen').classList.add('game-hide');
+      $('chat-screen').classList.remove('game-hide');
+
+      renderStep();
+    }
+
+    function finishGame() {
+      const totalTime = Math.round((Date.now() - state.startTime) / 1000);
+      const totalAnswers = state.chat.filter(m => m.type === 'operator').length;
+      const percent = totalAnswers > 0 ? Math.round(state.correctCount / totalAnswers * 100) : 0;
+
+      $('chat-screen').classList.add('game-hide');
+      $('result-screen').classList.remove('game-hide');
+
+      let iconClass, iconSvg, title, subtitle, scoreClass;
+
+      if (percent >= 90) {
+        iconClass = 'success';
+        iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
+        title = 'Идеально!';
+        subtitle = 'Ты справился с диалогом как настоящий профи.';
+        scoreClass = 'success';
+      } else if (percent >= 60) {
+        iconClass = 'partial';
+        iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>`;
+        title = 'Хорошо!';
+        subtitle = 'Есть над чем поработать, но база усвоена.';
+        scoreClass = 'partial';
+      } else {
+        iconClass = 'fail';
+        iconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+        title = 'Попробуй снова';
+        subtitle = 'Перечитай статью по принтерам и пройди ещё раз.';
+        scoreClass = 'fail';
+      }
+
+      $('result-icon').className = 'tr-result-icon ' + iconClass;
+      $('result-icon').innerHTML = iconSvg;
+      $('result-title').textContent = title;
+      $('result-subtitle').textContent = subtitle;
+      $('result-score').className = 'tr-result-score ' + scoreClass;
+      $('result-score').textContent = percent + '%';
+      $('result-correct').textContent = state.correctCount;
+      $('result-total').textContent = totalAnswers;
+      $('result-time').textContent = formatTime(totalTime);
+
+      window._pendingResult = {
+        score: state.correctCount,
+        max_score: totalAnswers,
+        time: totalTime,
+      };
+
+      // Показать модалку имени
+      $('name-modal').classList.add('open');
+      $('player-name').value = localStorage.getItem('mm_player_name') || '';
+      $('player-name').focus();
+
+      loadLeaderboard();
+    }
+
+    async function saveResult(name) {
+      const r = window._pendingResult;
+      if (!r || !state.scenario) return;
+
+      const { error } = await supabaseClient.from('trainer_results').insert({
+        player_name: name,
+        scenario_id: state.scenario.id,
+        score: r.score,
+        max_score: r.max_score,
+        time_seconds: r.time,
+      });
+      if (error) console.error(error);
+
+      localStorage.setItem('mm_player_name', name);
+      $('name-modal').classList.remove('open');
+      await loadLeaderboard();
+    }
+
+    async function init() {
+      const scenario = await loadScenario();
+      if (!scenario) {
+        $('scenario-title').textContent = 'Сценарий не найден';
+        $('scenario-desc').textContent = 'Запустите SQL для создания сценария.';
+        $('btn-start').disabled = true;
+        return;
+      }
+      state.scenario = scenario;
+      $('scenario-title').textContent = scenario.title;
+      $('scenario-desc').textContent = scenario.description;
+      $('scenario-meta').innerHTML = `
+        <span class="tr-tag ${scenario.difficulty || 'easy'}">${scenario.difficulty === 'medium' ? 'Средний' : scenario.difficulty === 'hard' ? 'Сложный' : 'Лёгкий'}</span>
+      `;
+    }
+
+    $('btn-start').addEventListener('click', startGame);
+    $('btn-again').addEventListener('click', () => {
+      $('result-screen').classList.add('game-hide');
+      $('start-screen').classList.remove('game-hide');
+    });
+    $('btn-cancel-name').addEventListener('click', () => {
+      $('name-modal').classList.remove('open');
+    });
+    $('btn-save-name').addEventListener('click', () => {
+      const name = $('player-name').value.trim();
+      if (!name) { $('player-name').focus(); return; }
+      saveResult(name);
+    });
+    $('player-name').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('btn-save-name').click();
+    });
+
+    init();
+  </script>
+</body>
+</html>
