@@ -25,65 +25,44 @@
       background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
       border: 1px solid var(--g-hairline-2); border-radius: 20px; padding: 36px 32px; text-align: center;
     }
-    .mm-start-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+    .mm-start-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
     .mm-rules { text-align: left; color: var(--g-ink-2); font-size: 14px; line-height: 1.8; margin-bottom: 28px; }
-    .mm-rules li { list-style: none; padding-left: 24px; position: relative; margin-bottom: 10px; }
+    .mm-rules li { list-style: none; padding-left: 24px; position: relative; margin-bottom: 8px; }
     .mm-rules li::before {
       content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px;
       border-radius: 2px; background: var(--g-gold); transform: rotate(45deg);
     }
     .mm-rules strong { color: var(--g-ink); font-weight: 600; }
     .mm-rules .rule-highlight {
-      background: linear-gradient(90deg, rgba(255, 201, 64, 0.1), rgba(255, 79, 163, 0.08));
+      margin-top: 16px;
+      padding: 14px 16px 14px 20px;
+      background: linear-gradient(90deg, rgba(255, 201, 64, 0.12), rgba(255, 79, 163, 0.06));
       border-left: 3px solid var(--g-gold);
-      padding: 10px 14px 10px 20px;
-      border-radius: 6px;
-      margin: 14px 0 8px;
+      border-radius: 8px;
       color: var(--g-ink);
       font-size: 13.5px;
+      line-height: 1.65;
     }
     .mm-rules .rule-highlight::before { display: none; }
-    .mm-rules .rule-highlight strong { color: var(--g-gold); }
 
     /* ========== GAME BUTTON SHIMMER ========== */
     .mm-btn-start {
-      position: relative;
-      width: 100%;
-      padding: 16px 24px;
-      font-size: 15px;
-      font-weight: 700;
-      border: none;
-      border-radius: 12px;
+      position: relative; width: 100%; padding: 16px 24px;
+      font-size: 15px; font-weight: 700; border: none; border-radius: 12px;
       background: linear-gradient(135deg, var(--g-gold) 0%, var(--g-magenta) 60%, var(--g-violet) 100%);
-      color: #0A0614;
-      cursor: pointer;
-      overflow: hidden;
+      color: #0A0614; cursor: pointer; overflow: hidden;
       box-shadow: 0 6px 24px rgba(255, 79, 163, 0.4);
       transition: transform 0.2s var(--g-smooth), box-shadow 0.2s var(--g-smooth), filter 0.2s;
     }
     .mm-btn-start::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
+      content: ''; position: absolute; top: 0; left: -100%;
       width: 60%; height: 100%;
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
       transform: skewX(-20deg);
       animation: shimmer 2.4s infinite;
-      pointer-events: none;
-      z-index: 1;
+      pointer-events: none; z-index: 1;
     }
-    @keyframes shimmer {
-      0% { left: -100%; }
-      60%, 100% { left: 200%; }
-    }
-    .mm-btn-start::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 12px;
-      background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.15), transparent 60%);
-      pointer-events: none;
-    }
+    @keyframes shimmer { 0% { left: -100%; } 60%, 100% { left: 200%; } }
     .mm-btn-start:hover {
       transform: translateY(-2px) scale(1.01);
       box-shadow: 0 10px 36px rgba(255, 79, 163, 0.6), 0 0 40px rgba(255, 201, 64, 0.3);
@@ -93,8 +72,8 @@
     .mm-btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
     .mm-btn-start span { position: relative; z-index: 2; }
 
-    /* ========== GAME LAYOUT ========== */
-    .mm-game { display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start; }
+    /* ========== LAYOUT ========== */
+    .mm-game { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
     @media (max-width: 900px) { .mm-game { grid-template-columns: 1fr; } .mm-ladder { order: -1; } }
 
     /* ========== TOP BAR ========== */
@@ -151,23 +130,20 @@
     .mm-option:disabled { cursor: not-allowed; }
     .mm-option.dimmed { opacity: 0.35; }
 
-    /* ========== HOLOGRAPHIC LADDER ========== */
+    /* ========== LADDER (tiered) ========== */
     .mm-ladder {
       position: sticky;
       top: 90px;
       max-height: calc(100vh - 110px);
       overflow-y: auto;
       border-radius: 16px;
-      padding: 20px 14px 14px;
+      padding: 20px 14px 16px;
       position: relative;
       background:
-        linear-gradient(180deg, rgba(168, 85, 247, 0.1) 0%, rgba(255, 79, 163, 0.06) 50%, rgba(16, 229, 168, 0.08) 100%),
-        rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      box-shadow: 
-        inset 0 1px 40px rgba(168, 85, 247, 0.1),
-        inset 0 -1px 30px rgba(16, 229, 168, 0.06),
-        0 8px 32px rgba(0, 0, 0, 0.3);
+        linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, rgba(255, 79, 163, 0.03) 50%, rgba(16, 229, 168, 0.04) 100%),
+        rgba(10, 6, 20, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     /* Holographic top strip */
@@ -175,7 +151,7 @@
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
-      height: 3px;
+      height: 2px;
       border-radius: 16px 16px 0 0;
       background: linear-gradient(90deg, var(--g-violet), var(--g-magenta), var(--g-gold), var(--g-emerald), var(--g-violet));
       background-size: 300% 100%;
@@ -186,86 +162,185 @@
       100% { background-position: 300% 50%; }
     }
 
-    /* Holographic shimmer sweep */
-    .mm-ladder::after {
+    .mm-ladder-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--g-ink-3);
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding: 0 6px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Tiers */
+    .mm-ladder-tier { margin-bottom: 14px; position: relative; z-index: 1; }
+    .mm-ladder-tier:last-child { margin-bottom: 0; }
+
+    .mm-ladder-tier-name {
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      margin-bottom: 8px;
+      padding: 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mm-ladder-tier-name::before {
+      content: '';
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .mm-ladder-tier[data-tier="tier-4"] .mm-ladder-tier-name { color: var(--g-violet); }
+    .mm-ladder-tier[data-tier="tier-3"] .mm-ladder-tier-name { color: var(--g-magenta); }
+    .mm-ladder-tier[data-tier="tier-2"] .mm-ladder-tier-name { color: var(--g-gold); }
+    .mm-ladder-tier[data-tier="tier-1"] .mm-ladder-tier-name { color: var(--g-emerald); }
+
+    .mm-ladder-tier-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    /* Ladder item */
+    .mm-ladder-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px 8px 16px;
+      border-radius: 9px;
+      font-size: 12px;
+      color: var(--g-ink-3);
+      position: relative;
+      border: 1px solid transparent;
+      transition: all 0.25s var(--g-smooth);
+    }
+    .mm-ladder-item::before {
       content: '';
       position: absolute;
-      top: 3px; left: 0; right: 0;
-      height: 100%;
-      background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02) 55%, transparent 100%);
-      background-size: 100% 200%;
-      animation: holoSweep 6s ease-in-out infinite;
-      pointer-events: none;
-      border-radius: 0 0 16px 16px;
-    }
-    @keyframes holoSweep {
-      0%, 100% { background-position: 0% 0%; }
-      50% { background-position: 0% 100%; }
+      left: 6px; top: 7px; bottom: 7px;
+      width: 3px;
+      border-radius: 2px;
+      transition: all 0.25s;
     }
 
-    .mm-ladder-title {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
-      color: var(--g-ink-3); font-weight: 700; margin-bottom: 12px; padding: 0 8px;
-      position: relative; z-index: 1;
+    /* Tier colors */
+    .mm-ladder-item.tier-1 {
+      background: linear-gradient(90deg, rgba(16, 229, 168, 0.05), rgba(255,255,255,0.01));
+      border-color: rgba(16, 229, 168, 0.12);
+    }
+    .mm-ladder-item.tier-1::before { background: var(--g-emerald); }
+
+    .mm-ladder-item.tier-2 {
+      background: linear-gradient(90deg, rgba(255, 201, 64, 0.06), rgba(255,255,255,0.01));
+      border-color: rgba(255, 201, 64, 0.18);
+    }
+    .mm-ladder-item.tier-2::before { background: var(--g-gold); }
+
+    .mm-ladder-item.tier-3 {
+      background: linear-gradient(90deg, rgba(255, 79, 163, 0.07), rgba(255,255,255,0.01));
+      border-color: rgba(255, 79, 163, 0.2);
+    }
+    .mm-ladder-item.tier-3::before { background: var(--g-magenta); }
+
+    .mm-ladder-item.tier-4 {
+      background: linear-gradient(90deg, rgba(168, 85, 247, 0.12), rgba(255, 201, 64, 0.04));
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+    .mm-ladder-item.tier-4::before {
+      background: linear-gradient(180deg, var(--g-violet), var(--g-gold));
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
     }
 
-    .mm-ladder-items { position: relative; z-index: 1; }
+    .mm-ladder-item.tier-1 .mm-ladder-amount { color: var(--g-emerald); opacity: 0.9; }
+    .mm-ladder-item.tier-2 .mm-ladder-amount { color: var(--g-gold); opacity: 0.9; }
+    .mm-ladder-item.tier-3 .mm-ladder-amount { color: var(--g-magenta); opacity: 0.9; }
+    .mm-ladder-item.tier-4 .mm-ladder-amount { color: var(--g-violet); }
 
-    .mm-ladder-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 7px 12px; border-radius: 8px; font-size: 12px;
-      color: var(--g-ink-3); transition: all 0.25s var(--g-smooth);
-      margin-bottom: 3px; border: 1px solid transparent;
-    }
-    .mm-ladder-item:hover { background: rgba(255, 255, 255, 0.03); }
+    .mm-ladder-item:hover { transform: translateX(-2px); }
+
+    /* Passed */
     .mm-ladder-item.passed {
-      color: var(--g-emerald);
-      background: rgba(16, 229, 168, 0.05);
-      border-color: rgba(16, 229, 168, 0.15);
+      background: rgba(16, 229, 168, 0.08);
+      border-color: rgba(16, 229, 168, 0.35);
     }
+    .mm-ladder-item.passed .mm-ladder-amount,
+    .mm-ladder-item.passed .mm-ladder-level { color: var(--g-emerald); opacity: 1; }
+    .mm-ladder-item.passed::before { background: var(--g-emerald); }
+
+    /* Current */
     .mm-ladder-item.current {
-      background: linear-gradient(135deg, rgba(255, 201, 64, 0.18), rgba(255, 79, 163, 0.12));
-      color: var(--g-gold);
+      background: linear-gradient(90deg, rgba(255, 201, 64, 0.28), rgba(255, 79, 163, 0.16));
+      border-color: rgba(255, 201, 64, 0.7);
+      color: var(--g-ink);
       font-weight: 700;
-      border-color: rgba(255, 201, 64, 0.5);
-      box-shadow: 0 0 20px rgba(255, 201, 64, 0.25), inset 0 0 20px rgba(255, 201, 64, 0.1);
+      box-shadow:
+        0 0 24px rgba(255, 201, 64, 0.35),
+        0 0 60px rgba(255, 79, 163, 0.15),
+        inset 0 0 24px rgba(255, 201, 64, 0.1);
+      transform: scale(1.03) translateX(-2px);
       animation: ladderPulse 2s ease-in-out infinite;
+      z-index: 2;
     }
     @keyframes ladderPulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(255, 201, 64, 0.25), inset 0 0 20px rgba(255, 201, 64, 0.1); }
-      50% { box-shadow: 0 0 32px rgba(255, 201, 64, 0.5), inset 0 0 30px rgba(255, 201, 64, 0.15); }
+      0%, 100% { box-shadow: 0 0 24px rgba(255, 201, 64, 0.35), 0 0 60px rgba(255, 79, 163, 0.15), inset 0 0 24px rgba(255, 201, 64, 0.1); }
+      50% { box-shadow: 0 0 36px rgba(255, 201, 64, 0.55), 0 0 80px rgba(255, 79, 163, 0.25), inset 0 0 30px rgba(255, 201, 64, 0.15); }
     }
-    .mm-ladder-item.safe { font-weight: 700; }
+    .mm-ladder-item.current::before {
+      background: linear-gradient(180deg, var(--g-gold), var(--g-magenta));
+      width: 4px; left: 5px;
+      box-shadow: 0 0 10px rgba(255, 201, 64, 0.8);
+    }
+    .mm-ladder-item.current .mm-ladder-amount {
+      color: var(--g-gold); font-size: 12.5px;
+      text-shadow: 0 0 12px rgba(255, 201, 64, 0.6);
+    }
+    .mm-ladder-item.current .mm-ladder-level {
+      color: var(--g-gold); opacity: 1; font-weight: 700;
+    }
+
+    /* Safe diamond */
     .mm-ladder-item.safe .mm-ladder-amount::after {
       content: ' ◆';
-      color: var(--g-emerald);
-      font-size: 10px;
+      font-size: 9px;
       margin-left: 2px;
+      color: var(--g-emerald);
     }
     .mm-ladder-item.current.safe .mm-ladder-amount::after {
       color: var(--g-gold);
     }
-    .mm-ladder-level { font-family: var(--g-mono); font-size: 10px; opacity: 0.6; }
-    .mm-ladder-amount { font-family: var(--g-mono); font-weight: 700; font-size: 11px; }
 
-    /* ========== BEAUTIFUL SCROLLBAR ========== */
-    .mm-ladder::-webkit-scrollbar { width: 8px; }
-    .mm-ladder::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 4px;
-      margin: 8px 0;
+    .mm-ladder-level {
+      font-family: var(--g-mono);
+      font-size: 10px;
+      opacity: 0.6;
+      font-weight: 600;
     }
+    .mm-ladder-amount {
+      font-family: var(--g-mono);
+      font-weight: 700;
+      font-size: 11.5px;
+    }
+
+    /* Scrollbar */
+    .mm-ladder::-webkit-scrollbar { width: 6px; }
+    .mm-ladder::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
     .mm-ladder::-webkit-scrollbar-thumb {
       background: linear-gradient(180deg, var(--g-violet), var(--g-magenta), var(--g-gold));
-      border-radius: 4px;
-      box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
     }
     .mm-ladder::-webkit-scrollbar-thumb:hover {
       background: linear-gradient(180deg, var(--g-gold), var(--g-magenta), var(--g-violet));
-      box-shadow: 0 0 12px rgba(255, 201, 64, 0.7);
+      box-shadow: 0 0 12px rgba(255, 201, 64, 0.8);
     }
-    .mm-ladder { scrollbar-width: thin; scrollbar-color: var(--g-violet) rgba(255, 255, 255, 0.02); }
+    .mm-ladder { scrollbar-width: thin; scrollbar-color: var(--g-violet) transparent; }
 
     /* ========== RESULT ========== */
     .mm-result { max-width: 600px; margin: 0 auto; text-align: center; animation: gFadeUp 0.5s var(--g-spring); }
@@ -335,23 +410,15 @@
 
     /* ========== MODAL ========== */
     .player-code-box {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--g-hairline-2);
-      border-radius: 10px;
-      margin-top: 12px;
-      font-size: 13px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--g-hairline-2); border-radius: 10px;
+      margin-top: 12px; font-size: 13px;
     }
     .player-code-label { color: var(--g-ink-3); font-size: 12px; }
     .player-code-value {
-      font-family: var(--g-mono);
-      font-weight: 700;
-      color: var(--g-gold);
-      font-size: 15px;
-      letter-spacing: 0.1em;
+      font-family: var(--g-mono); font-weight: 700; color: var(--g-gold);
+      font-size: 15px; letter-spacing: 0.1em;
     }
   </style>
 </head>
@@ -384,14 +451,11 @@
       <div class="mm-start-card">
         <h2>Готов к игре?</h2>
         <ul class="mm-rules">
-          <li><strong>20 вопросов</strong> с нарастающей сложностью</li>
-          <li>Вопросы <strong>выбираются случайно</strong> из базы 100 — каждый раз новое</li>
-          <li><strong>60 секунд</strong> на каждый вопрос</li>
-          <li>Несгораемые суммы на <strong>5</strong> и <strong>10</strong> вопросах</li>
-          <li>Ошибка — игра заканчивается, забираешь несгораемую сумму</li>
-          <li class="rule-highlight">
-            <strong>Важно:</strong> можешь пользоваться базой знаний и другими ресурсами. Цель — научиться <strong>быстро искать нужную информацию</strong> и правильно оперировать ей в диалоге.
-          </li>
+          <li>20 вопросов с нарастающей сложностью</li>
+          <li>60 секунд на каждый вопрос</li>
+          <li>Несгораемые суммы на 5 и 10 вопросах</li>
+          <li>Ошибка — игра заканчивается, забираешь несгораемую сумму.</li>
+          <li class="rule-highlight">Ты можешь пользоваться БЗ, и другими ресурсами. Важно научиться быстро искать нужную информацию и правильно ей оперировать в диалоге.</li>
         </ul>
         <button class="mm-btn-start" id="btn-start">
           <span>Начать игру</span>
@@ -425,23 +489,14 @@
         </div>
         <aside class="mm-ladder">
           <div class="mm-ladder-title">Лесенка</div>
-          <div class="mm-ladder-items" id="ladder-items"></div>
+          <div id="ladder-items"></div>
         </aside>
       </div>
     </div>
 
     <div id="result-screen" class="game-hide">
       <div class="mm-result">
-        <div class="mm-result-trophy" id="result-trophy">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/>
-            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/>
-            <path d="M4 22h16"/>
-            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
-            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
-            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
-          </svg>
-        </div>
+        <div class="mm-result-trophy" id="result-trophy"></div>
         <h2 id="result-title">Игра окончена!</h2>
         <div class="mm-result-subtitle" id="result-subtitle"></div>
         <div class="mm-result-amount" id="result-amount">0 ₽</div>
@@ -506,7 +561,6 @@
     const TOTAL_QUESTIONS = 20;
     const DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
 
-    // ===== PLAYER CODE (без перс. данных) =====
     function getOrCreatePlayerCode() {
       let code = localStorage.getItem('mm_player_code');
       if (!code) {
@@ -556,19 +610,32 @@
     }
 
     function renderLadder() {
-      const items = [];
-      for (let i = AMOUNTS.length - 1; i >= 0; i--) {
-        const isCurrent = i === state.currentIndex;
-        const isPassed = i < state.currentIndex;
-        const isSafe = SAFE_LEVELS.includes(i);
-        items.push(`
-          <div class="mm-ladder-item ${isCurrent ? 'current' : ''} ${isPassed ? 'passed' : ''} ${isSafe ? 'safe' : ''}">
-            <span class="mm-ladder-level">${i + 1}</span>
-            <span class="mm-ladder-amount">${formatMoney(AMOUNTS[i])}</span>
-          </div>
-        `);
+      const tiers = [
+        { name: 'Джекпот', from: 19, to: 15, key: 'tier-4' },
+        { name: 'Высокая ставка', from: 14, to: 10, key: 'tier-3' },
+        { name: 'Середина', from: 9, to: 5, key: 'tier-2' },
+        { name: 'База', from: 4, to: 0, key: 'tier-1' },
+      ];
+
+      let html = '';
+      for (const tier of tiers) {
+        html += `<div class="mm-ladder-tier" data-tier="${tier.key}">
+          <div class="mm-ladder-tier-name">${tier.name}</div>
+          <div class="mm-ladder-tier-items">`;
+        for (let i = tier.from; i >= tier.to; i--) {
+          const isCurrent = i === state.currentIndex;
+          const isPassed = i < state.currentIndex;
+          const isSafe = SAFE_LEVELS.includes(i);
+          html += `
+            <div class="mm-ladder-item ${tier.key} ${isCurrent ? 'current' : ''} ${isPassed ? 'passed' : ''} ${isSafe ? 'safe' : ''}">
+              <span class="mm-ladder-level">${i + 1}</span>
+              <span class="mm-ladder-amount">${formatMoney(AMOUNTS[i])}</span>
+            </div>
+          `;
+        }
+        html += `</div></div>`;
       }
-      $('ladder-items').innerHTML = items.join('');
+      $('ladder-items').innerHTML = html;
     }
 
     function renderQuestion() {
@@ -654,7 +721,6 @@
       $('start-screen').classList.add('game-hide');
       $('result-screen').classList.remove('game-hide');
 
-      // Трофей и цвет
       const trophy = $('result-trophy');
       trophy.className = 'mm-result-trophy ' + (won ? 'win' : timeout ? 'timeout' : 'fail');
       if (timeout) {
@@ -665,7 +731,6 @@
         trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
       }
 
-      // Заголовки
       $('result-title').textContent = won ? 'Поздравляем!' : timeout ? 'Время вышло!' : 'Ошибка...';
       $('result-subtitle').textContent = won
         ? 'Ты ответил на все 20 вопросов. Настоящий миллионер знаний!'
@@ -679,7 +744,6 @@
       $('result-level').textContent = state.currentIndex + 1;
       $('result-time').textContent = formatTime(totalTime);
 
-      // Модалка
       $('modal-title').textContent = won ? 'Ты миллионер!' : timeout ? 'Время вышло!' : 'Ошибка...';
       $('modal-subtitle').textContent = won
         ? 'Введи имя — и ты в зале славы.'
@@ -733,7 +797,6 @@
         return;
       }
 
-      // Группируем по player_code — берём ЛУЧШИЙ результат каждого игрока
       const best = new Map();
       for (const r of data) {
         const key = r.player_code || r.id;
