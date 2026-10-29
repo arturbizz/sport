@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-game.css">
   <style>
-    /* Стили чата и списка сценариев (оставляем как было) */
+    /* Стили чата и списка сценариев */
     .tr-hero { text-align: center; padding: 20px 0 40px; animation: gFadeUp 0.5s var(--g-smooth); }
     .tr-hero h1 { font-family: var(--g-font); font-size: 44px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; background: linear-gradient(135deg, var(--g-emerald) 0%, var(--g-violet) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .tr-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 560px; margin: 0 auto; }
@@ -18,12 +18,9 @@
     .tr-scenario-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--g-emerald), var(--g-violet)); opacity: 0; transition: opacity 0.25s; }
     .tr-scenario-card:hover { border-color: var(--g-emerald); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(16, 229, 168, 0.15); }
     .tr-scenario-card:hover::before { opacity: 1; }
-    .tr-scenario-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
-    .tr-scenario-card p { color: var(--g-ink-2); font-size: 13.5px; line-height: 1.6; margin-bottom: 16px; }
-    .tr-scenario-tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 5px; font-weight: 700; border: 1px solid var(--g-hairline-2); color: var(--g-ink-2); }
-    .tr-scenario-tag.easy { color: var(--g-emerald); border-color: rgba(16, 229, 168, 0.4); background: rgba(16, 229, 168, 0.08); }
-    .tr-scenario-tag.medium { color: var(--g-gold); border-color: rgba(255, 201, 64, 0.4); background: rgba(255, 201, 64, 0.08); }
-    .tr-scenario-tag.hard { color: var(--g-danger); border-color: rgba(255, 59, 92, 0.4); background: rgba(255, 59, 92, 0.08); }
+    .tr-scenario-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .tr-scenario-card p { color: var(--g-ink-2); font-size: 14px; line-height: 1.6; margin-bottom: 0; }
+    
     .tr-chat { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
     .tr-message { display: flex; gap: 12px; align-items: flex-start; animation: gFadeUp 0.4s var(--g-smooth); }
     .tr-message.client { flex-direction: row; }
@@ -38,6 +35,7 @@
     .tr-message.feedback .tr-avatar { background: rgba(255, 59, 92, 0.2); color: var(--g-danger); }
     .tr-message.feedback.correct .tr-bubble { background: rgba(16, 229, 168, 0.1); border: 1px solid rgba(16, 229, 168, 0.3); }
     .tr-message.feedback.correct .tr-avatar { background: rgba(16, 229, 168, 0.2); color: var(--g-emerald); }
+    
     .tr-options { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; animation: gFadeUp 0.4s var(--g-smooth) 0.2s both; }
     .tr-option { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-hairline-2); border-radius: 12px; color: var(--g-ink); text-align: left; font-family: var(--g-font); font-size: 14px; line-height: 1.5; transition: all 0.2s var(--g-smooth); }
     .tr-option:hover:not(:disabled) { border-color: var(--g-emerald); background: rgba(16, 229, 168, 0.06); transform: translateX(4px); }
@@ -47,53 +45,40 @@
     .tr-option.dimmed { opacity: 0.35; }
     .tr-option-bullet { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--g-hairline-2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--g-ink-3); margin-top: 1px; }
     .tr-option:hover:not(:disabled) .tr-option-bullet { border-color: var(--g-emerald); color: var(--g-emerald); }
+    
     .tr-progress { display: flex; align-items: center; gap: 12px; max-width: 800px; margin: 0 auto 24px; }
     .tr-progress-bar { flex: 1; height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; }
     .tr-progress-fill { height: 100%; background: linear-gradient(90deg, var(--g-emerald), var(--g-violet)); border-radius: 3px; transition: width 0.4s var(--g-smooth); }
     .tr-progress-text { font-family: var(--g-mono); font-size: 12px; font-weight: 700; color: var(--g-ink-2); min-width: 60px; text-align: right; }
+    
     .tr-back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--g-surface); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink-2); font-family: var(--g-font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
     .tr-back-btn:hover { color: var(--g-ink); border-color: var(--g-ink-3); background: var(--g-surface-2); }
 
-    /* ===== СИМУЛЯТОР ERP ===== */
+    /* СИМУЛЯТОР ERP */
     .erp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 20px; overflow-y: auto; }
     .erp-modal.open { display: flex; align-items: center; justify-content: center; }
-    .erp-window {
-      width: 100%; max-width: 1100px;
-      background: #f0f2f5; border: 1px solid #a0a0a0; border-radius: 6px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-      font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #000;
-      display: flex; flex-direction: column;
-      max-height: 90vh;
-    }
+    .erp-window { width: 100%; max-width: 1100px; background: #f0f2f5; border: 1px solid #a0a0a0; border-radius: 6px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 12px; color: #000; display: flex; flex-direction: column; max-height: 90vh; }
     .erp-title-bar { background: #dbe4f0; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #a0a0a0; font-weight: 600; font-size: 12px; color: #2c3e50; }
     .erp-close-btn { background: transparent; border: none; font-size: 16px; cursor: pointer; color: #d9534f; font-weight: bold; }
     .erp-body { display: flex; flex: 1; overflow: hidden; }
-    
-    /* Левое меню */
     .erp-sidebar { width: 120px; background: #e6eaf0; border-right: 1px solid #a0a0a0; padding: 10px 0; }
     .erp-menu-item { padding: 6px 12px; cursor: pointer; color: #333; }
     .erp-menu-item:hover { background: #d0d8e4; }
-    
-    /* Форма */
     .erp-content { flex: 1; padding: 15px; overflow-y: auto; background: #fff; }
     .erp-tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 15px; }
     .erp-tab { padding: 6px 15px; background: #f0f2f5; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; cursor: pointer; }
     .erp-tab.active { background: #fff; border-color: #ccc; font-weight: bold; }
-    
     .erp-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-start; }
     .erp-group { display: flex; flex-direction: column; gap: 3px; }
     .erp-label { font-size: 11px; color: #555; }
     .erp-input { padding: 4px 6px; border: 1px solid #a0a0a0; border-radius: 3px; font-size: 12px; }
     .erp-input:focus { outline: none; border-color: #4a90e2; box-shadow: 0 0 3px rgba(74,144,226,0.3); }
     .erp-input.green { background: #e0f8d8; border-color: #8bc34a; }
-    
     .erp-textarea { width: 100%; height: 80px; padding: 6px; border: 1px solid #a0a0a0; border-radius: 3px; resize: vertical; font-family: inherit; font-size: 12px; }
-    
     .erp-btn { padding: 6px 12px; background: #e6eaf0; border: 1px solid #a0a0a0; border-radius: 3px; cursor: pointer; font-size: 12px; }
     .erp-btn:hover { background: #d0d8e4; }
     .erp-btn-blue { background: #4a90e2; color: #fff; border-color: #3a7bc8; }
     .erp-btn-blue:hover { background: #3a7bc8; }
-
     .erp-block { border: 1px solid #ccc; border-radius: 4px; padding: 10px; margin-bottom: 15px; }
     .erp-block-title { font-weight: bold; color: #4a90e2; margin-bottom: 8px; font-size: 12px; }
 
@@ -114,6 +99,7 @@
     .tr-result-stat { text-align: center; }
     .tr-result-stat-value { font-family: var(--g-mono); font-size: 22px; font-weight: 700; }
     .tr-result-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); margin-top: 4px; }
+    
     .tr-leaderboard { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 24px; margin-top: 32px; }
     .tr-leaderboard h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); font-weight: 700; margin-bottom: 16px; }
     .tr-lb-row { display: grid; grid-template-columns: 32px 1fr auto auto; gap: 16px; align-items: center; padding: 10px 14px; border-radius: 8px; margin-bottom: 4px; font-size: 13px; }
@@ -150,7 +136,7 @@
     <div id="list-screen">
       <div class="tr-hero">
         <h1>Тренажёр диалога</h1>
-        <p>Почувствуй себя оператором. Клиент звонит, ты выбираешь ответ. В конце — заполни карточку ERP.</p>
+        <p>Проверь свои навыки общения с клиентом. Сценарии идут от простого к сложному.</p>
       </div>
       <div class="tr-scenario-list" id="scenario-list"></div>
     </div>
@@ -314,7 +300,6 @@
     const state = {
       scenarios: [], scenario: null, currentStepId: null,
       correctCount: 0, totalSteps: 0, startTime: 0, chat: [],
-      expectedData: null // Данные для проверки ERP
     };
 
     const $ = (id) => document.getElementById(id);
@@ -342,12 +327,15 @@
 
     function renderScenarioList() {
       const list = $('scenario-list');
-      const diffLabel = { easy: 'Лёгкий', medium: 'Средний', hard: 'Сложный' };
+      // Убрали теги сложности. Просто название и описание.
       list.innerHTML = state.scenarios.map((s, i) => `
         <div class="tr-scenario-card" data-idx="${i}">
-          <span class="tr-scenario-tag ${s.difficulty || 'easy'}">${diffLabel[s.difficulty] || 'Лёгкий'}</span>
-          <h3 style="margin-top:12px;">${escapeHtml(s.title)}</h3>
+          <h3>${escapeHtml(s.title)}</h3>
           <p>${escapeHtml(s.description)}</p>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+            <span style="font-size:12px; color:var(--g-ink-3);">Нажми, чтобы начать</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--g-emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
         </div>
       `).join('');
       list.querySelectorAll('.tr-scenario-card').forEach(card => {
@@ -371,7 +359,7 @@
 
     function renderStep() {
       const step = state.scenario.steps[state.currentStepId];
-      if (!step) { finishGame(); return; }
+      if (!step) { openERP(); return; }
 
       const visited = state.chat.filter(m => m.type === 'operator').length;
       $('progress-fill').style.width = Math.min(100, Math.round(visited / state.totalSteps * 100)) + '%';
@@ -406,7 +394,6 @@
 
       setTimeout(() => {
         if (option.next === 'END' || !option.next) {
-          // Переходим в ERP
           openERP();
         } else {
           state.currentStepId = option.next; renderStep();
@@ -429,23 +416,12 @@
       $('chat-screen').classList.add('game-hide');
       $('erp-modal').classList.add('open');
       
-      // Очищаем форму
       $('erp-name').value = '';
       $('erp-to').value = '';
       $('erp-city').value = 'msk';
       $('erp-address').value = '';
       $('erp-problem').value = '';
       $('erp-prices').value = '';
-      
-      // Определяем правильные ответы на основе сценария (по индексу)
-      const idx = state.scenarios.indexOf(state.scenario);
-      if (idx === 0 || idx === 1) state.expectedData = { name: 'Иван', to: '25', city: 'msk', address: 'Профсоюзная', problem: 'не включается', prices: '1100' };
-      else if (idx === 2) state.expectedData = { name: 'Иван', to: '25', city: 'msk', address: 'Химки', problem: 'нет изображения', prices: '1100' };
-      else if (idx === 3) state.expectedData = { name: 'Иван', to: '25', city: 'msk', address: 'Лобня', problem: 'не включается', prices: '1100' };
-      else if (idx === 4) state.expectedData = { name: 'Иван', to: '25', city: 'msk', address: 'Коломна', problem: 'не включается', prices: '1100' };
-      else if (idx === 5) state.expectedData = { name: 'Иван', to: '25', city: 'msk', address: 'Энергетиков', problem: 'не включается', prices: '1100' };
-      else if (idx === 6) state.expectedData = { name: 'Иван', to: '25', city: 'msk', address: 'Главная', problem: 'не включается', prices: '1100' };
-      else state.expectedData = null; // По умолчанию
     }
 
     $('erp-close').addEventListener('click', () => $('erp-modal').classList.remove('open'));
