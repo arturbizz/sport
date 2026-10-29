@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-game.css">
   <style>
+    /* ========== HERO ========== */
     .mm-hero { text-align: center; padding: 20px 0 40px; animation: gFadeUp 0.5s var(--g-smooth); }
     .mm-hero h1 {
       font-family: var(--g-font); font-size: 48px; font-weight: 900;
@@ -16,10 +17,11 @@
       background: linear-gradient(135deg, var(--g-gold) 0%, var(--g-magenta) 50%, var(--g-violet) 100%);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .mm-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 560px; margin: 0 auto 32px; line-height: 1.65; }
+    .mm-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 580px; margin: 0 auto 32px; line-height: 1.65; }
 
+    /* ========== START CARD ========== */
     .mm-start-card {
-      max-width: 560px; margin: 0 auto;
+      max-width: 580px; margin: 0 auto;
       background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
       border: 1px solid var(--g-hairline-2); border-radius: 20px; padding: 36px 32px; text-align: center;
     }
@@ -31,10 +33,71 @@
       border-radius: 2px; background: var(--g-gold); transform: rotate(45deg);
     }
     .mm-rules strong { color: var(--g-ink); font-weight: 600; }
+    .mm-rules .rule-highlight {
+      background: linear-gradient(90deg, rgba(255, 201, 64, 0.1), rgba(255, 79, 163, 0.08));
+      border-left: 3px solid var(--g-gold);
+      padding: 10px 14px 10px 20px;
+      border-radius: 6px;
+      margin: 14px 0 8px;
+      color: var(--g-ink);
+      font-size: 13.5px;
+    }
+    .mm-rules .rule-highlight::before { display: none; }
+    .mm-rules .rule-highlight strong { color: var(--g-gold); }
 
-    .mm-game { display: grid; grid-template-columns: 1fr 280px; gap: 32px; align-items: start; }
+    /* ========== GAME BUTTON SHIMMER ========== */
+    .mm-btn-start {
+      position: relative;
+      width: 100%;
+      padding: 16px 24px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--g-gold) 0%, var(--g-magenta) 60%, var(--g-violet) 100%);
+      color: #0A0614;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(255, 79, 163, 0.4);
+      transition: transform 0.2s var(--g-smooth), box-shadow 0.2s var(--g-smooth), filter 0.2s;
+    }
+    .mm-btn-start::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+      transform: skewX(-20deg);
+      animation: shimmer 2.4s infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+    @keyframes shimmer {
+      0% { left: -100%; }
+      60%, 100% { left: 200%; }
+    }
+    .mm-btn-start::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.15), transparent 60%);
+      pointer-events: none;
+    }
+    .mm-btn-start:hover {
+      transform: translateY(-2px) scale(1.01);
+      box-shadow: 0 10px 36px rgba(255, 79, 163, 0.6), 0 0 40px rgba(255, 201, 64, 0.3);
+      filter: brightness(1.12);
+    }
+    .mm-btn-start:active { transform: translateY(0) scale(1); }
+    .mm-btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
+    .mm-btn-start span { position: relative; z-index: 2; }
+
+    /* ========== GAME LAYOUT ========== */
+    .mm-game { display: grid; grid-template-columns: 1fr 300px; gap: 32px; align-items: start; }
     @media (max-width: 900px) { .mm-game { grid-template-columns: 1fr; } .mm-ladder { order: -1; } }
 
+    /* ========== TOP BAR ========== */
     .mm-top {
       display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
       padding: 14px 20px; background: rgba(255, 255, 255, 0.04);
@@ -45,6 +108,7 @@
     .mm-timer svg { width: 18px; height: 18px; }
     .mm-progress-info { margin-left: auto; font-size: 12px; color: var(--g-ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 
+    /* ========== QUESTION ========== */
     .mm-question-card {
       background: linear-gradient(180deg, rgba(168, 85, 247, 0.08), rgba(255, 255, 255, 0.02));
       border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; padding: 32px; margin-bottom: 20px;
@@ -58,6 +122,7 @@
     }
     .mm-question-text { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; color: var(--g-ink); }
 
+    /* ========== OPTIONS ========== */
     .mm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 640px) { .mm-options { grid-template-columns: 1fr; } }
     .mm-option {
@@ -67,7 +132,7 @@
       font-family: var(--g-font); font-size: 14px; line-height: 1.5;
       cursor: pointer; transition: all 0.2s var(--g-smooth);
     }
-    .mm-option:hover {
+    .mm-option:hover:not(:disabled) {
       border-color: var(--g-gold); background: rgba(255, 201, 64, 0.06);
       transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 201, 64, 0.15);
     }
@@ -78,7 +143,7 @@
       font-family: var(--g-mono); font-weight: 700; font-size: 13px;
       color: var(--g-gold); transition: all 0.2s;
     }
-    .mm-option:hover .mm-option-letter { background: var(--g-gold); color: #0A0614; border-color: var(--g-gold); }
+    .mm-option:hover:not(:disabled) .mm-option-letter { background: var(--g-gold); color: #0A0614; border-color: var(--g-gold); }
     .mm-option.correct { border-color: var(--g-emerald); background: rgba(16, 229, 168, 0.12); box-shadow: 0 0 30px rgba(16, 229, 168, 0.2); }
     .mm-option.correct .mm-option-letter { background: var(--g-emerald); color: #0A0614; border-color: var(--g-emerald); }
     .mm-option.wrong { border-color: var(--g-danger); background: rgba(255, 59, 92, 0.1); animation: gShake 0.4s ease; }
@@ -86,48 +151,148 @@
     .mm-option:disabled { cursor: not-allowed; }
     .mm-option.dimmed { opacity: 0.35; }
 
+    /* ========== HOLOGRAPHIC LADDER ========== */
     .mm-ladder {
-      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--g-hairline-2);
-      border-radius: 14px; padding: 16px; position: sticky; top: 90px;
-      max-height: calc(100vh - 110px); overflow-y: auto;
+      position: sticky;
+      top: 90px;
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+      border-radius: 16px;
+      padding: 20px 14px 14px;
+      position: relative;
+      background:
+        linear-gradient(180deg, rgba(168, 85, 247, 0.1) 0%, rgba(255, 79, 163, 0.06) 50%, rgba(16, 229, 168, 0.08) 100%),
+        rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      box-shadow: 
+        inset 0 1px 40px rgba(168, 85, 247, 0.1),
+        inset 0 -1px 30px rgba(16, 229, 168, 0.06),
+        0 8px 32px rgba(0, 0, 0, 0.3);
     }
+
+    /* Holographic top strip */
+    .mm-ladder::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 16px 16px 0 0;
+      background: linear-gradient(90deg, var(--g-violet), var(--g-magenta), var(--g-gold), var(--g-emerald), var(--g-violet));
+      background-size: 300% 100%;
+      animation: holoFlow 4s linear infinite;
+    }
+    @keyframes holoFlow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    /* Holographic shimmer sweep */
+    .mm-ladder::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 0; right: 0;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 0%, rgba(255, 255, 255, 0.02) 45%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02) 55%, transparent 100%);
+      background-size: 100% 200%;
+      animation: holoSweep 6s ease-in-out infinite;
+      pointer-events: none;
+      border-radius: 0 0 16px 16px;
+    }
+    @keyframes holoSweep {
+      0%, 100% { background-position: 0% 0%; }
+      50% { background-position: 0% 100%; }
+    }
+
     .mm-ladder-title {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
       color: var(--g-ink-3); font-weight: 700; margin-bottom: 12px; padding: 0 8px;
+      position: relative; z-index: 1;
     }
+
+    .mm-ladder-items { position: relative; z-index: 1; }
+
     .mm-ladder-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 12px; border-radius: 8px; font-size: 12px;
-      color: var(--g-ink-3); transition: all 0.2s; margin-bottom: 2px;
+      padding: 7px 12px; border-radius: 8px; font-size: 12px;
+      color: var(--g-ink-3); transition: all 0.25s var(--g-smooth);
+      margin-bottom: 3px; border: 1px solid transparent;
+    }
+    .mm-ladder-item:hover { background: rgba(255, 255, 255, 0.03); }
+    .mm-ladder-item.passed {
+      color: var(--g-emerald);
+      background: rgba(16, 229, 168, 0.05);
+      border-color: rgba(16, 229, 168, 0.15);
     }
     .mm-ladder-item.current {
-      background: linear-gradient(135deg, rgba(255, 201, 64, 0.15), rgba(255, 79, 163, 0.1));
-      color: var(--g-gold); font-weight: 700; border: 1px solid rgba(255, 201, 64, 0.4);
+      background: linear-gradient(135deg, rgba(255, 201, 64, 0.18), rgba(255, 79, 163, 0.12));
+      color: var(--g-gold);
+      font-weight: 700;
+      border-color: rgba(255, 201, 64, 0.5);
+      box-shadow: 0 0 20px rgba(255, 201, 64, 0.25), inset 0 0 20px rgba(255, 201, 64, 0.1);
+      animation: ladderPulse 2s ease-in-out infinite;
     }
-    .mm-ladder-item.passed { color: var(--g-emerald); }
+    @keyframes ladderPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 201, 64, 0.25), inset 0 0 20px rgba(255, 201, 64, 0.1); }
+      50% { box-shadow: 0 0 32px rgba(255, 201, 64, 0.5), inset 0 0 30px rgba(255, 201, 64, 0.15); }
+    }
     .mm-ladder-item.safe { font-weight: 700; }
-    .mm-ladder-level { font-family: var(--g-mono); font-size: 10px; opacity: 0.7; }
+    .mm-ladder-item.safe .mm-ladder-amount::after {
+      content: ' ◆';
+      color: var(--g-emerald);
+      font-size: 10px;
+      margin-left: 2px;
+    }
+    .mm-ladder-item.current.safe .mm-ladder-amount::after {
+      color: var(--g-gold);
+    }
+    .mm-ladder-level { font-family: var(--g-mono); font-size: 10px; opacity: 0.6; }
     .mm-ladder-amount { font-family: var(--g-mono); font-weight: 700; font-size: 11px; }
-    .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; color: var(--g-emerald); font-size: 9px; }
 
+    /* ========== BEAUTIFUL SCROLLBAR ========== */
+    .mm-ladder::-webkit-scrollbar { width: 8px; }
+    .mm-ladder::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+      margin: 8px 0;
+    }
+    .mm-ladder::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--g-violet), var(--g-magenta), var(--g-gold));
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .mm-ladder::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, var(--g-gold), var(--g-magenta), var(--g-violet));
+      box-shadow: 0 0 12px rgba(255, 201, 64, 0.7);
+    }
+    .mm-ladder { scrollbar-width: thin; scrollbar-color: var(--g-violet) rgba(255, 255, 255, 0.02); }
+
+    /* ========== RESULT ========== */
     .mm-result { max-width: 600px; margin: 0 auto; text-align: center; animation: gFadeUp 0.5s var(--g-spring); }
     .mm-result-trophy {
       width: 88px; height: 88px; margin: 0 auto 24px;
-      background: linear-gradient(135deg, var(--g-gold), var(--g-magenta));
       border-radius: 24px; display: flex; align-items: center; justify-content: center;
       box-shadow: 0 12px 40px rgba(255, 201, 64, 0.4);
       animation: gFloat 3s ease-in-out infinite;
     }
+    .mm-result-trophy.win { background: linear-gradient(135deg, var(--g-gold), var(--g-magenta)); }
+    .mm-result-trophy.timeout { background: linear-gradient(135deg, var(--g-violet), var(--g-gold)); box-shadow: 0 12px 40px rgba(168, 85, 247, 0.4); }
+    .mm-result-trophy.fail { background: linear-gradient(135deg, var(--g-danger), var(--g-magenta)); box-shadow: 0 12px 40px rgba(255, 59, 92, 0.4); }
     .mm-result-trophy svg { width: 44px; height: 44px; color: white; }
+
     .mm-result h2 {
       font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;
       background: linear-gradient(135deg, var(--g-gold), var(--g-magenta));
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
+    .mm-result-subtitle { color: var(--g-ink-2); font-size: 15px; margin-bottom: 8px; }
+
     .mm-result-amount {
       font-family: var(--g-mono); font-size: 56px; font-weight: 900;
       color: var(--g-gold); margin: 16px 0 8px; letter-spacing: -0.02em;
     }
+    .mm-result-amount.zero { color: var(--g-ink-3); }
+
     .mm-result-stats {
       display: flex; justify-content: center; gap: 32px; margin: 24px 0 32px;
       padding: 20px 0; border-top: 1px solid var(--g-hairline); border-bottom: 1px solid var(--g-hairline);
@@ -136,6 +301,7 @@
     .mm-result-stat-value { font-family: var(--g-mono); font-size: 22px; font-weight: 700; color: var(--g-ink); }
     .mm-result-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); margin-top: 4px; }
 
+    /* ========== LEADERBOARD ========== */
     .mm-leaderboard {
       background: rgba(255, 255, 255, 0.03); border: 1px solid var(--g-hairline-2);
       border-radius: 16px; padding: 24px; margin-top: 32px;
@@ -155,14 +321,38 @@
     .mm-lb-row.top-1 { background: linear-gradient(90deg, rgba(255, 201, 64, 0.15), transparent); border: 1px solid rgba(255, 201, 64, 0.3); }
     .mm-lb-row.top-2 { background: linear-gradient(90deg, rgba(184, 174, 216, 0.1), transparent); }
     .mm-lb-row.top-3 { background: linear-gradient(90deg, rgba(255, 79, 163, 0.1), transparent); }
+    .mm-lb-row.me { outline: 1px solid rgba(16, 229, 168, 0.4); outline-offset: -1px; }
     .mm-lb-rank { font-family: var(--g-mono); font-weight: 700; color: var(--g-ink-3); text-align: center; }
     .mm-lb-row.top-1 .mm-lb-rank { color: var(--g-gold); }
     .mm-lb-row.top-2 .mm-lb-rank { color: #C4C0D6; }
     .mm-lb-row.top-3 .mm-lb-rank { color: var(--g-magenta); }
-    .mm-lb-name { font-weight: 500; }
+    .mm-lb-name-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .mm-lb-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mm-lb-code { font-family: var(--g-mono); font-size: 10px; color: var(--g-ink-3); letter-spacing: 0.05em; }
     .mm-lb-score { font-family: var(--g-mono); font-weight: 700; color: var(--g-emerald); font-size: 13px; }
     .mm-lb-time { font-family: var(--g-mono); font-size: 12px; color: var(--g-ink-3); }
     .mm-lb-empty { text-align: center; color: var(--g-ink-3); font-size: 13px; padding: 20px 0; }
+
+    /* ========== MODAL ========== */
+    .player-code-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--g-hairline-2);
+      border-radius: 10px;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    .player-code-label { color: var(--g-ink-3); font-size: 12px; }
+    .player-code-value {
+      font-family: var(--g-mono);
+      font-weight: 700;
+      color: var(--g-gold);
+      font-size: 15px;
+      letter-spacing: 0.1em;
+    }
   </style>
 </head>
 <body>
@@ -199,14 +389,20 @@
           <li><strong>60 секунд</strong> на каждый вопрос</li>
           <li>Несгораемые суммы на <strong>5</strong> и <strong>10</strong> вопросах</li>
           <li>Ошибка — игра заканчивается, забираешь несгораемую сумму</li>
+          <li class="rule-highlight">
+            <strong>Важно:</strong> можешь пользоваться базой знаний и другими ресурсами. Цель — научиться <strong>быстро искать нужную информацию</strong> и правильно оперировать ей в диалоге.
+          </li>
         </ul>
-        <button class="game-btn game-btn-primary" id="btn-start" style="width: 100%; padding: 14px; font-size: 15px;">
-          Начать игру
+        <button class="mm-btn-start" id="btn-start">
+          <span>Начать игру</span>
         </button>
       </div>
 
       <div class="mm-leaderboard" id="leaderboard-home">
-        <h3>Топ-10 игроков</h3>
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Топ-10 игроков
+        </h3>
         <div id="lb-list-home"><div class="mm-lb-empty">Загрузка…</div></div>
       </div>
     </div>
@@ -229,14 +425,14 @@
         </div>
         <aside class="mm-ladder">
           <div class="mm-ladder-title">Лесенка</div>
-          <div id="ladder-items"></div>
+          <div class="mm-ladder-items" id="ladder-items"></div>
         </aside>
       </div>
     </div>
 
     <div id="result-screen" class="game-hide">
       <div class="mm-result">
-        <div class="mm-result-trophy">
+        <div class="mm-result-trophy" id="result-trophy">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/>
             <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/>
@@ -247,6 +443,7 @@
           </svg>
         </div>
         <h2 id="result-title">Игра окончена!</h2>
+        <div class="mm-result-subtitle" id="result-subtitle"></div>
         <div class="mm-result-amount" id="result-amount">0 ₽</div>
         <div class="mm-result-stats">
           <div class="mm-result-stat">
@@ -267,7 +464,10 @@
           <a href="knowledge-base.html" class="game-btn">← В БЗ</a>
         </div>
         <div class="mm-leaderboard">
-          <h3>Топ-10 игроков</h3>
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Топ-10 игроков
+          </h3>
           <div id="lb-list-result"><div class="mm-lb-empty">Загрузка…</div></div>
         </div>
       </div>
@@ -277,14 +477,18 @@
 
   <div class="game-modal-backdrop" id="name-modal">
     <div class="game-modal">
-      <h2>Отличный результат!</h2>
-      <p>Введи своё имя, чтобы попасть в рейтинг.</p>
+      <h2 id="modal-title">Отличный результат!</h2>
+      <p id="modal-subtitle">Введи своё имя, чтобы попасть в рейтинг.</p>
       <div class="field">
         <label for="player-name">Имя</label>
         <input type="text" id="player-name" placeholder="Например, Иван" maxlength="30" autocomplete="off">
       </div>
+      <div class="player-code-box">
+        <span class="player-code-label">Твой код:</span>
+        <span class="player-code-value" id="modal-code">———</span>
+      </div>
       <div class="game-modal-actions">
-        <button class="game-btn" id="btn-cancel-name">Отмена</button>
+        <button class="game-btn" id="btn-cancel-name">Пропустить</button>
         <button class="game-btn game-btn-primary" id="btn-save-name">Сохранить</button>
       </div>
     </div>
@@ -296,24 +500,29 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 20 уровней
     const AMOUNTS = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 750000, 1000000, 1500000, 2000000, 3000000, 5000000];
-    const SAFE_LEVELS = [4, 9]; // 5-й и 10-й вопрос
+    const SAFE_LEVELS = [4, 9];
     const TIME_PER_QUESTION = 60;
     const TOTAL_QUESTIONS = 20;
-    const DIFFICULTY_DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
+    const DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
+
+    // ===== PLAYER CODE (без перс. данных) =====
+    function getOrCreatePlayerCode() {
+      let code = localStorage.getItem('mm_player_code');
+      if (!code) {
+        const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        code = '';
+        for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+        localStorage.setItem('mm_player_code', code);
+      }
+      return code;
+    }
+    const PLAYER_CODE = getOrCreatePlayerCode();
 
     const state = {
-      questions: [],
-      currentIndex: 0,
-      score: 0,
-      correctCount: 0,
-      startTime: 0,
-      timerId: null,
-      timeLeft: TIME_PER_QUESTION,
-      answersLocked: false,
-      lastSafeAmount: 0,
-      finished: false,
+      questions: [], currentIndex: 0, score: 0, correctCount: 0,
+      startTime: 0, timerId: null, timeLeft: TIME_PER_QUESTION,
+      answersLocked: false, lastSafeAmount: 0, finished: false,
     };
 
     const $ = (id) => document.getElementById(id);
@@ -323,7 +532,10 @@
       if (sec < 60) return sec + 'с';
       return Math.floor(sec / 60) + 'м ' + (sec % 60) + 'с';
     }
-
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
     function shuffle(arr) {
       const a = [...arr];
       for (let i = a.length - 1; i > 0; i--) {
@@ -334,16 +546,12 @@
     }
 
     async function loadQuestions() {
-      const { data, error } = await supabaseClient
-        .from('millionaire_questions')
-        .select('*');
+      const { data, error } = await supabaseClient.from('millionaire_questions').select('*');
       if (error) { console.error(error); return []; }
       if (!data || !data.length) return [];
-
-      const easy = shuffle(data.filter(q => q.difficulty === 'easy')).slice(0, DIFFICULTY_DISTRIBUTION.easy);
-      const medium = shuffle(data.filter(q => q.difficulty === 'medium')).slice(0, DIFFICULTY_DISTRIBUTION.medium);
-      const hard = shuffle(data.filter(q => q.difficulty === 'hard')).slice(0, DIFFICULTY_DISTRIBUTION.hard);
-
+      const easy = shuffle(data.filter(q => q.difficulty === 'easy')).slice(0, DISTRIBUTION.easy);
+      const medium = shuffle(data.filter(q => q.difficulty === 'medium')).slice(0, DISTRIBUTION.medium);
+      const hard = shuffle(data.filter(q => q.difficulty === 'hard')).slice(0, DISTRIBUTION.hard);
       return [...easy, ...medium, ...hard];
     }
 
@@ -366,27 +574,19 @@
     function renderQuestion() {
       const q = state.questions[state.currentIndex];
       if (!q) return;
-
       $('level-badge').textContent = `Уровень ${state.currentIndex + 1} · ${formatMoney(AMOUNTS[state.currentIndex])}`;
       $('question-text').textContent = q.question;
       $('progress-info').textContent = `Вопрос ${state.currentIndex + 1} из ${state.questions.length}`;
-
-      const options = ['A', 'B', 'C', 'D'].map(letter => ({
-        letter,
-        text: q['option_' + letter.toLowerCase()],
-      }));
-
+      const options = ['A', 'B', 'C', 'D'].map(letter => ({ letter, text: q['option_' + letter.toLowerCase()] }));
       $('options').innerHTML = options.map(o => `
         <button class="mm-option" data-letter="${o.letter}">
           <span class="mm-option-letter">${o.letter}</span>
           <span>${escapeHtml(o.text)}</span>
         </button>
       `).join('');
-
       $('options').querySelectorAll('.mm-option').forEach(btn => {
         btn.addEventListener('click', () => selectAnswer(btn.dataset.letter));
       });
-
       renderLadder();
       startTimer();
     }
@@ -396,7 +596,6 @@
       state.timeLeft = TIME_PER_QUESTION;
       updateTimerDisplay();
       $('timer').classList.remove('warning');
-
       state.timerId = setInterval(() => {
         state.timeLeft--;
         updateTimerDisplay();
@@ -404,44 +603,28 @@
         if (state.timeLeft <= 0) { stopTimer(); timeOut(); }
       }, 1000);
     }
-
-    function stopTimer() {
-      if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
-    }
-
-    function updateTimerDisplay() {
-      $('timer-text').textContent = Math.max(0, state.timeLeft);
-    }
+    function stopTimer() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } }
+    function updateTimerDisplay() { $('timer-text').textContent = Math.max(0, state.timeLeft); }
 
     function selectAnswer(letter) {
       if (state.answersLocked) return;
       state.answersLocked = true;
       stopTimer();
-
       const q = state.questions[state.currentIndex];
       const isCorrect = letter === q.correct;
-
-      const buttons = $('options').querySelectorAll('.mm-option');
-      buttons.forEach(btn => {
+      $('options').querySelectorAll('.mm-option').forEach(btn => {
         btn.disabled = true;
         if (btn.dataset.letter === q.correct) btn.classList.add('correct');
         else if (btn.dataset.letter === letter && !isCorrect) btn.classList.add('wrong');
         else if (btn.dataset.letter !== q.correct) btn.classList.add('dimmed');
       });
-
       if (isCorrect) {
         state.correctCount++;
         state.score = AMOUNTS[state.currentIndex];
         if (SAFE_LEVELS.includes(state.currentIndex)) state.lastSafeAmount = state.score;
-
         setTimeout(() => {
-          if (state.currentIndex === state.questions.length - 1) {
-            finishGame(true);
-          } else {
-            state.currentIndex++;
-            state.answersLocked = false;
-            renderQuestion();
-          }
+          if (state.currentIndex === state.questions.length - 1) finishGame(true);
+          else { state.currentIndex++; state.answersLocked = false; renderQuestion(); }
         }, 1400);
       } else {
         setTimeout(() => finishGame(false), 1800);
@@ -452,8 +635,7 @@
       if (state.answersLocked) return;
       state.answersLocked = true;
       const q = state.questions[state.currentIndex];
-      const buttons = $('options').querySelectorAll('.mm-option');
-      buttons.forEach(btn => {
+      $('options').querySelectorAll('.mm-option').forEach(btn => {
         btn.disabled = true;
         if (btn.dataset.letter === q.correct) btn.classList.add('correct');
         else btn.classList.add('dimmed');
@@ -465,7 +647,6 @@
       if (state.finished) return;
       state.finished = true;
       stopTimer();
-
       const finalScore = won ? AMOUNTS[AMOUNTS.length - 1] : state.lastSafeAmount;
       const totalTime = Math.round((Date.now() - state.startTime) / 1000);
 
@@ -473,21 +654,46 @@
       $('start-screen').classList.add('game-hide');
       $('result-screen').classList.remove('game-hide');
 
-      $('result-title').textContent = won ? 'Ты миллионер!' : (timeout ? 'Время вышло!' : 'Ошибка...');
+      // Трофей и цвет
+      const trophy = $('result-trophy');
+      trophy.className = 'mm-result-trophy ' + (won ? 'win' : timeout ? 'timeout' : 'fail');
+      if (timeout) {
+        trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 2"/></svg>`;
+      } else if (!won) {
+        trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+      } else {
+        trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
+      }
+
+      // Заголовки
+      $('result-title').textContent = won ? 'Поздравляем!' : timeout ? 'Время вышло!' : 'Ошибка...';
+      $('result-subtitle').textContent = won
+        ? 'Ты ответил на все 20 вопросов. Настоящий миллионер знаний!'
+        : timeout
+          ? 'Не успел — это тоже опыт. В следующий раз точно получится.'
+          : `Ты дошёл до ${state.currentIndex + 1} вопроса. В следующий раз — дальше!`;
+
       $('result-amount').textContent = formatMoney(finalScore);
+      $('result-amount').className = 'mm-result-amount' + (finalScore === 0 ? ' zero' : '');
       $('result-correct').textContent = state.correctCount;
       $('result-level').textContent = state.currentIndex + 1;
       $('result-time').textContent = formatTime(totalTime);
 
-      $('name-modal').classList.add('open');
+      // Модалка
+      $('modal-title').textContent = won ? 'Ты миллионер!' : timeout ? 'Время вышло!' : 'Ошибка...';
+      $('modal-subtitle').textContent = won
+        ? 'Введи имя — и ты в зале славы.'
+        : timeout
+          ? 'Введи имя, чтобы запомнить попытку.'
+          : 'Ничего страшного. Введи имя, чтобы запомнить результат.';
+      $('modal-code').textContent = PLAYER_CODE;
       $('player-name').value = localStorage.getItem('mm_player_name') || '';
+      $('name-modal').classList.add('open');
       $('player-name').focus();
 
       window._pendingResult = {
-        score: finalScore,
-        time: totalTime,
-        correct: state.correctCount,
-        level: state.currentIndex + 1,
+        score: finalScore, time: totalTime,
+        correct: state.correctCount, level: state.currentIndex + 1,
       };
 
       loadLeaderboard('lb-list-result');
@@ -496,9 +702,9 @@
     async function saveResult(name) {
       const r = window._pendingResult;
       if (!r) return;
-
       const { error } = await supabaseClient.from('millionaire_results').insert({
         player_name: name,
+        player_code: PLAYER_CODE,
         score: r.score,
         time_seconds: r.time,
         correct_count: r.correct,
@@ -506,7 +712,6 @@
         reached_level: r.level,
       });
       if (error) console.error(error);
-
       localStorage.setItem('mm_player_name', name);
       $('name-modal').classList.remove('open');
       await loadLeaderboard('lb-list-result');
@@ -516,46 +721,58 @@
     async function loadLeaderboard(targetId) {
       const target = $(targetId);
       if (!target) return;
-
       const { data, error } = await supabaseClient
         .from('millionaire_results')
         .select('*')
         .order('score', { ascending: false })
         .order('time_seconds', { ascending: true })
-        .limit(10);
+        .limit(200);
 
       if (error || !data || !data.length) {
         target.innerHTML = `<div class="mm-lb-empty">Пока никто не играл. Будь первым!</div>`;
         return;
       }
 
-      target.innerHTML = data.map((r, i) => `
-        <div class="mm-lb-row ${i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : ''}">
-          <span class="mm-lb-rank">${i + 1}</span>
-          <span class="mm-lb-name">${escapeHtml(r.player_name)}</span>
-          <span class="mm-lb-score">${formatMoney(r.score)}</span>
-          <span class="mm-lb-time">${formatTime(r.time_seconds)}</span>
-        </div>
-      `).join('');
-    }
+      // Группируем по player_code — берём ЛУЧШИЙ результат каждого игрока
+      const best = new Map();
+      for (const r of data) {
+        const key = r.player_code || r.id;
+        const cur = best.get(key);
+        if (!cur || r.score > cur.score || (r.score === cur.score && r.time_seconds < cur.time_seconds)) {
+          best.set(key, r);
+        }
+      }
 
-    function escapeHtml(s) {
-      return String(s ?? '').replace(/[&<>"']/g, c =>
-        ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+      const top10 = [...best.values()]
+        .sort((a, b) => b.score - a.score || a.time_seconds - b.time_seconds)
+        .slice(0, 10);
+
+      target.innerHTML = top10.map((r, i) => {
+        const isMe = r.player_code === PLAYER_CODE;
+        return `
+          <div class="mm-lb-row ${i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : ''} ${isMe ? 'me' : ''}">
+            <span class="mm-lb-rank">${i + 1}</span>
+            <div class="mm-lb-name-block">
+              <span class="mm-lb-name">${escapeHtml(r.player_name)}</span>
+              ${r.player_code ? `<span class="mm-lb-code">#${escapeHtml(r.player_code)}${isMe ? ' · ты' : ''}</span>` : ''}
+            </div>
+            <span class="mm-lb-score">${formatMoney(r.score)}</span>
+            <span class="mm-lb-time">${formatTime(r.time_seconds)}</span>
+          </div>
+        `;
+      }).join('');
     }
 
     async function startGame() {
       $('btn-start').disabled = true;
-      $('btn-start').textContent = 'Загрузка вопросов…';
-
+      $('btn-start').querySelector('span').textContent = 'Загрузка…';
       const questions = await loadQuestions();
       if (questions.length < TOTAL_QUESTIONS) {
         alert('Недостаточно вопросов в базе. Запустите SQL.');
         $('btn-start').disabled = false;
-        $('btn-start').textContent = 'Начать игру';
+        $('btn-start').querySelector('span').textContent = 'Начать игру';
         return;
       }
-
       state.questions = questions;
       state.currentIndex = 0;
       state.correctCount = 0;
@@ -570,8 +787,7 @@
       $('game-screen').classList.remove('game-hide');
 
       $('btn-start').disabled = false;
-      $('btn-start').textContent = 'Начать игру';
-
+      $('btn-start').querySelector('span').textContent = 'Начать игру';
       renderQuestion();
     }
 
@@ -581,7 +797,6 @@
       $('start-screen').classList.remove('game-hide');
       loadLeaderboard('lb-list-home');
     });
-
     $('btn-cancel-name').addEventListener('click', () => $('name-modal').classList.remove('open'));
     $('btn-save-name').addEventListener('click', () => {
       const name = $('player-name').value.trim();
@@ -590,6 +805,11 @@
     });
     $('player-name').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') $('btn-save-name').click();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && $('name-modal').classList.contains('open')) {
+        $('name-modal').classList.remove('open');
+      }
     });
 
     loadLeaderboard('lb-list-home');
