@@ -9,347 +9,153 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-game.css">
   <style>
-    /* ===== Millionaire-specific ===== */
-    .mm-hero {
-      text-align: center;
-      padding: 20px 0 40px;
-      animation: gFadeUp 0.5s var(--g-smooth);
-    }
+    .mm-hero { text-align: center; padding: 20px 0 40px; animation: gFadeUp 0.5s var(--g-smooth); }
     .mm-hero h1 {
-      font-family: var(--g-font);
-      font-size: 48px;
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      line-height: 1.1;
-      margin-bottom: 14px;
+      font-family: var(--g-font); font-size: 48px; font-weight: 900;
+      letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px;
       background: linear-gradient(135deg, var(--g-gold) 0%, var(--g-magenta) 50%, var(--g-violet) 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .mm-hero p {
-      color: var(--g-ink-2);
-      font-size: 16px;
-      max-width: 560px;
-      margin: 0 auto 32px;
-      line-height: 1.65;
-    }
+    .mm-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 560px; margin: 0 auto 32px; line-height: 1.65; }
 
-    /* Start screen */
     .mm-start-card {
-      max-width: 560px;
-      margin: 0 auto;
+      max-width: 560px; margin: 0 auto;
       background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
-      border: 1px solid var(--g-hairline-2);
-      border-radius: 20px;
-      padding: 36px 32px;
-      text-align: center;
+      border: 1px solid var(--g-hairline-2); border-radius: 20px; padding: 36px 32px; text-align: center;
     }
-    .mm-start-card h2 {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 12px;
-    }
-    .mm-rules {
-      text-align: left;
-      color: var(--g-ink-2);
-      font-size: 14px;
-      line-height: 1.8;
-      margin-bottom: 28px;
-    }
-    .mm-rules li {
-      list-style: none;
-      padding-left: 24px;
-      position: relative;
-      margin-bottom: 10px;
-    }
+    .mm-start-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+    .mm-rules { text-align: left; color: var(--g-ink-2); font-size: 14px; line-height: 1.8; margin-bottom: 28px; }
+    .mm-rules li { list-style: none; padding-left: 24px; position: relative; margin-bottom: 10px; }
     .mm-rules li::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 8px;
-      width: 8px; height: 8px;
-      border-radius: 2px;
-      background: var(--g-gold);
-      transform: rotate(45deg);
+      content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px;
+      border-radius: 2px; background: var(--g-gold); transform: rotate(45deg);
     }
     .mm-rules strong { color: var(--g-ink); font-weight: 600; }
 
-    /* Game layout */
-    .mm-game {
-      display: grid;
-      grid-template-columns: 1fr 280px;
-      gap: 32px;
-      align-items: start;
-    }
-    @media (max-width: 900px) {
-      .mm-game { grid-template-columns: 1fr; }
-      .mm-ladder { order: -1; }
-    }
+    .mm-game { display: grid; grid-template-columns: 1fr 280px; gap: 32px; align-items: start; }
+    @media (max-width: 900px) { .mm-game { grid-template-columns: 1fr; } .mm-ladder { order: -1; } }
 
-    /* Timer + progress */
     .mm-top {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
-      padding: 14px 20px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--g-hairline-2);
-      border-radius: 12px;
+      display: flex; align-items: center; gap: 16px; margin-bottom: 24px;
+      padding: 14px 20px; background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--g-hairline-2); border-radius: 12px;
     }
-    .mm-timer {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--g-mono);
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--g-gold);
-    }
+    .mm-timer { display: flex; align-items: center; gap: 8px; font-family: var(--g-mono); font-size: 18px; font-weight: 700; color: var(--g-gold); }
     .mm-timer.warning { color: var(--g-danger); animation: gShake 0.4s ease; }
     .mm-timer svg { width: 18px; height: 18px; }
-    .mm-progress-info {
-      margin-left: auto;
-      font-size: 12px;
-      color: var(--g-ink-3);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 600;
-    }
+    .mm-progress-info { margin-left: auto; font-size: 12px; color: var(--g-ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 
-    /* Question */
     .mm-question-card {
       background: linear-gradient(180deg, rgba(168, 85, 247, 0.08), rgba(255, 255, 255, 0.02));
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 16px;
-      padding: 32px;
-      margin-bottom: 20px;
+      border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; padding: 32px; margin-bottom: 20px;
       animation: gFadeUp 0.4s var(--g-smooth);
     }
     .mm-level-badge {
-      display: inline-block;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--g-violet);
-      background: rgba(168, 85, 247, 0.15);
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-weight: 700;
-      margin-bottom: 16px;
+      display: inline-block; font-size: 11px; text-transform: uppercase;
+      letter-spacing: 0.12em; color: var(--g-violet);
+      background: rgba(168, 85, 247, 0.15); padding: 4px 10px;
+      border-radius: 6px; font-weight: 700; margin-bottom: 16px;
     }
-    .mm-question-text {
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      line-height: 1.4;
-      color: var(--g-ink);
-    }
+    .mm-question-text { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; color: var(--g-ink); }
 
-    /* Options */
-    .mm-options {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+    .mm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 640px) { .mm-options { grid-template-columns: 1fr; } }
     .mm-option {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 18px 20px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid var(--g-hairline-2);
-      border-radius: 12px;
-      color: var(--g-ink);
-      text-align: left;
-      font-family: var(--g-font);
-      font-size: 14.5px;
-      line-height: 1.5;
-      cursor: pointer;
-      transition: all 0.2s var(--g-smooth);
+      display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+      background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-hairline-2);
+      border-radius: 12px; color: var(--g-ink); text-align: left;
+      font-family: var(--g-font); font-size: 14px; line-height: 1.5;
+      cursor: pointer; transition: all 0.2s var(--g-smooth);
     }
     .mm-option:hover {
-      border-color: var(--g-gold);
-      background: rgba(255, 201, 64, 0.06);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(255, 201, 64, 0.15);
+      border-color: var(--g-gold); background: rgba(255, 201, 64, 0.06);
+      transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 201, 64, 0.15);
     }
     .mm-option-letter {
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid var(--g-hairline-2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--g-mono);
-      font-weight: 700;
-      font-size: 13px;
-      color: var(--g-gold);
-      transition: all 0.2s;
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--g-hairline-2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--g-mono); font-weight: 700; font-size: 13px;
+      color: var(--g-gold); transition: all 0.2s;
     }
     .mm-option:hover .mm-option-letter { background: var(--g-gold); color: #0A0614; border-color: var(--g-gold); }
-    .mm-option.correct {
-      border-color: var(--g-emerald);
-      background: rgba(16, 229, 168, 0.12);
-      box-shadow: 0 0 30px rgba(16, 229, 168, 0.2);
-    }
+    .mm-option.correct { border-color: var(--g-emerald); background: rgba(16, 229, 168, 0.12); box-shadow: 0 0 30px rgba(16, 229, 168, 0.2); }
     .mm-option.correct .mm-option-letter { background: var(--g-emerald); color: #0A0614; border-color: var(--g-emerald); }
-    .mm-option.wrong {
-      border-color: var(--g-danger);
-      background: rgba(255, 59, 92, 0.1);
-      animation: gShake 0.4s ease;
-    }
+    .mm-option.wrong { border-color: var(--g-danger); background: rgba(255, 59, 92, 0.1); animation: gShake 0.4s ease; }
     .mm-option.wrong .mm-option-letter { background: var(--g-danger); color: white; border-color: var(--g-danger); }
     .mm-option:disabled { cursor: not-allowed; }
     .mm-option.dimmed { opacity: 0.35; }
 
-    /* Ladder */
     .mm-ladder {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--g-hairline-2);
-      border-radius: 14px;
-      padding: 16px;
-      position: sticky;
-      top: 90px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--g-hairline-2);
+      border-radius: 14px; padding: 16px; position: sticky; top: 90px;
+      max-height: calc(100vh - 110px); overflow-y: auto;
     }
     .mm-ladder-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--g-ink-3);
-      font-weight: 700;
-      margin-bottom: 12px;
-      padding: 0 8px;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--g-ink-3); font-weight: 700; margin-bottom: 12px; padding: 0 8px;
     }
     .mm-ladder-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      color: var(--g-ink-3);
-      transition: all 0.2s;
-      margin-bottom: 2px;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 6px 12px; border-radius: 8px; font-size: 12px;
+      color: var(--g-ink-3); transition: all 0.2s; margin-bottom: 2px;
     }
     .mm-ladder-item.current {
       background: linear-gradient(135deg, rgba(255, 201, 64, 0.15), rgba(255, 79, 163, 0.1));
-      color: var(--g-gold);
-      font-weight: 700;
-      border: 1px solid rgba(255, 201, 64, 0.4);
+      color: var(--g-gold); font-weight: 700; border: 1px solid rgba(255, 201, 64, 0.4);
     }
     .mm-ladder-item.passed { color: var(--g-emerald); }
     .mm-ladder-item.safe { font-weight: 700; }
-    .mm-ladder-level { font-family: var(--g-mono); font-size: 11px; opacity: 0.7; }
-    .mm-ladder-amount { font-family: var(--g-mono); font-weight: 700; }
-    .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; color: var(--g-emerald); font-size: 10px; }
+    .mm-ladder-level { font-family: var(--g-mono); font-size: 10px; opacity: 0.7; }
+    .mm-ladder-amount { font-family: var(--g-mono); font-weight: 700; font-size: 11px; }
+    .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; color: var(--g-emerald); font-size: 9px; }
 
-    /* Result screen */
-    .mm-result {
-      max-width: 600px;
-      margin: 0 auto;
-      text-align: center;
-      animation: gFadeUp 0.5s var(--g-spring);
-    }
+    .mm-result { max-width: 600px; margin: 0 auto; text-align: center; animation: gFadeUp 0.5s var(--g-spring); }
     .mm-result-trophy {
-      width: 88px; height: 88px;
-      margin: 0 auto 24px;
+      width: 88px; height: 88px; margin: 0 auto 24px;
       background: linear-gradient(135deg, var(--g-gold), var(--g-magenta));
-      border-radius: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      border-radius: 24px; display: flex; align-items: center; justify-content: center;
       box-shadow: 0 12px 40px rgba(255, 201, 64, 0.4);
       animation: gFloat 3s ease-in-out infinite;
     }
     .mm-result-trophy svg { width: 44px; height: 44px; color: white; }
     .mm-result h2 {
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      margin-bottom: 8px;
+      font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px;
       background: linear-gradient(135deg, var(--g-gold), var(--g-magenta));
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
     .mm-result-amount {
-      font-family: var(--g-mono);
-      font-size: 56px;
-      font-weight: 900;
-      color: var(--g-gold);
-      margin: 16px 0 8px;
-      letter-spacing: -0.02em;
+      font-family: var(--g-mono); font-size: 56px; font-weight: 900;
+      color: var(--g-gold); margin: 16px 0 8px; letter-spacing: -0.02em;
     }
     .mm-result-stats {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      margin: 24px 0 32px;
-      padding: 20px 0;
-      border-top: 1px solid var(--g-hairline);
-      border-bottom: 1px solid var(--g-hairline);
+      display: flex; justify-content: center; gap: 32px; margin: 24px 0 32px;
+      padding: 20px 0; border-top: 1px solid var(--g-hairline); border-bottom: 1px solid var(--g-hairline);
     }
     .mm-result-stat { text-align: center; }
-    .mm-result-stat-value {
-      font-family: var(--g-mono);
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--g-ink);
-    }
-    .mm-result-stat-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--g-ink-3);
-      margin-top: 4px;
-    }
+    .mm-result-stat-value { font-family: var(--g-mono); font-size: 22px; font-weight: 700; color: var(--g-ink); }
+    .mm-result-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); margin-top: 4px; }
 
-    /* Leaderboard */
     .mm-leaderboard {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--g-hairline-2);
-      border-radius: 16px;
-      padding: 24px;
-      margin-top: 32px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid var(--g-hairline-2);
+      border-radius: 16px; padding: 24px; margin-top: 32px;
     }
     .mm-leaderboard h3 {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--g-ink-3);
-      font-weight: 700;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--g-ink-3); font-weight: 700; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
     }
     .mm-leaderboard h3 svg { width: 16px; height: 16px; color: var(--g-gold); }
     .mm-lb-row {
-      display: grid;
-      grid-template-columns: 32px 1fr auto auto;
-      gap: 16px;
-      align-items: center;
-      padding: 12px 16px;
-      border-radius: 10px;
-      margin-bottom: 4px;
-      font-size: 14px;
-      transition: background 0.2s;
+      display: grid; grid-template-columns: 32px 1fr auto auto;
+      gap: 16px; align-items: center; padding: 12px 16px;
+      border-radius: 10px; margin-bottom: 4px; font-size: 14px;
     }
     .mm-lb-row:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
     .mm-lb-row.top-1 { background: linear-gradient(90deg, rgba(255, 201, 64, 0.15), transparent); border: 1px solid rgba(255, 201, 64, 0.3); }
     .mm-lb-row.top-2 { background: linear-gradient(90deg, rgba(184, 174, 216, 0.1), transparent); }
     .mm-lb-row.top-3 { background: linear-gradient(90deg, rgba(255, 79, 163, 0.1), transparent); }
-    .mm-lb-rank {
-      font-family: var(--g-mono);
-      font-weight: 700;
-      color: var(--g-ink-3);
-      text-align: center;
-    }
+    .mm-lb-rank { font-family: var(--g-mono); font-weight: 700; color: var(--g-ink-3); text-align: center; }
     .mm-lb-row.top-1 .mm-lb-rank { color: var(--g-gold); }
     .mm-lb-row.top-2 .mm-lb-rank { color: #C4C0D6; }
     .mm-lb-row.top-3 .mm-lb-rank { color: var(--g-magenta); }
@@ -357,8 +163,6 @@
     .mm-lb-score { font-family: var(--g-mono); font-weight: 700; color: var(--g-emerald); font-size: 13px; }
     .mm-lb-time { font-family: var(--g-mono); font-size: 12px; color: var(--g-ink-3); }
     .mm-lb-empty { text-align: center; color: var(--g-ink-3); font-size: 13px; padding: 20px 0; }
-
-    .mm-empty-state { text-align: center; padding: 40px; color: var(--g-ink-3); }
   </style>
 </head>
 <body>
@@ -374,32 +178,27 @@
     </a>
     <div class="game-bar-spacer"></div>
     <div class="game-bar-actions">
-      <a href="kb-trainer.html" class="game-btn game-btn-sm">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Тренажёр
-      </a>
+      <a href="kb-trainer.html" class="game-btn game-btn-sm">Тренажёр</a>
       <a href="knowledge-base.html" class="game-btn game-btn-sm">← В БЗ</a>
     </div>
   </div>
 
   <div class="game-wrap">
 
-    <!-- HERO -->
     <div class="mm-hero">
       <h1>Кто хочет<br>стать миллионером?</h1>
-      <p>15 вопросов по базе знаний. Пройди все уровни, попади в рейтинг и докажи, что ты знаешь регламент лучше всех.</p>
+      <p>20 вопросов по ТВ — от простого к сложному. Каждая игра — новый набор. Попади в топ-10.</p>
     </div>
 
-    <!-- START SCREEN -->
     <div id="start-screen">
       <div class="mm-start-card">
         <h2>Готов к игре?</h2>
         <ul class="mm-rules">
-          <li><strong>15 вопросов</strong> с нарастающей сложностью</li>
+          <li><strong>20 вопросов</strong> с нарастающей сложностью</li>
+          <li>Вопросы <strong>выбираются случайно</strong> из базы 100 — каждый раз новое</li>
           <li><strong>60 секунд</strong> на каждый вопрос</li>
           <li>Несгораемые суммы на <strong>5</strong> и <strong>10</strong> вопросах</li>
           <li>Ошибка — игра заканчивается, забираешь несгораемую сумму</li>
-          <li>Результат сохраняется в <strong>общий рейтинг</strong></li>
         </ul>
         <button class="game-btn game-btn-primary" id="btn-start" style="width: 100%; padding: 14px; font-size: 15px;">
           Начать игру
@@ -407,15 +206,11 @@
       </div>
 
       <div class="mm-leaderboard" id="leaderboard-home">
-        <h3>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          Топ-10 игроков
-        </h3>
+        <h3>Топ-10 игроков</h3>
         <div id="lb-list-home"><div class="mm-lb-empty">Загрузка…</div></div>
       </div>
     </div>
 
-    <!-- GAME SCREEN -->
     <div id="game-screen" class="game-hide">
       <div class="mm-game">
         <div class="mm-main">
@@ -424,17 +219,14 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
               <span id="timer-text">60</span>
             </div>
-            <div class="mm-progress-info" id="progress-info">Вопрос 1 из 15</div>
+            <div class="mm-progress-info" id="progress-info">Вопрос 1 из 20</div>
           </div>
-
           <div class="mm-question-card" id="question-card">
             <div class="mm-level-badge" id="level-badge">Уровень 1</div>
             <div class="mm-question-text" id="question-text">Загрузка вопроса…</div>
           </div>
-
           <div class="mm-options" id="options"></div>
         </div>
-
         <aside class="mm-ladder">
           <div class="mm-ladder-title">Лесенка</div>
           <div id="ladder-items"></div>
@@ -442,7 +234,6 @@
       </div>
     </div>
 
-    <!-- RESULT SCREEN -->
     <div id="result-screen" class="game-hide">
       <div class="mm-result">
         <div class="mm-result-trophy">
@@ -475,12 +266,8 @@
           <button class="game-btn game-btn-primary" id="btn-play-again">Играть снова</button>
           <a href="knowledge-base.html" class="game-btn">← В БЗ</a>
         </div>
-
-        <div class="mm-leaderboard" id="leaderboard-result">
-          <h3>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Топ-10 игроков
-          </h3>
+        <div class="mm-leaderboard">
+          <h3>Топ-10 игроков</h3>
           <div id="lb-list-result"><div class="mm-lb-empty">Загрузка…</div></div>
         </div>
       </div>
@@ -488,7 +275,6 @@
 
   </div>
 
-  <!-- NAME MODAL -->
   <div class="game-modal-backdrop" id="name-modal">
     <div class="game-modal">
       <h2>Отличный результат!</h2>
@@ -510,9 +296,12 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const AMOUNTS = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
-    const SAFE_LEVELS = [4, 9]; // 0-indexed → 5-й и 10-й вопрос
+    // 20 уровней
+    const AMOUNTS = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 750000, 1000000, 1500000, 2000000, 3000000, 5000000];
+    const SAFE_LEVELS = [4, 9]; // 5-й и 10-й вопрос
     const TIME_PER_QUESTION = 60;
+    const TOTAL_QUESTIONS = 20;
+    const DIFFICULTY_DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
 
     const state = {
       questions: [],
@@ -529,28 +318,36 @@
 
     const $ = (id) => document.getElementById(id);
 
-    function formatMoney(n) {
-      return n.toLocaleString('ru-RU') + ' ₽';
-    }
-
+    function formatMoney(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
     function formatTime(sec) {
       if (sec < 60) return sec + 'с';
-      const m = Math.floor(sec / 60);
-      const s = sec % 60;
-      return `${m}м ${s}с`;
+      return Math.floor(sec / 60) + 'м ' + (sec % 60) + 'с';
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
 
     async function loadQuestions() {
       const { data, error } = await supabaseClient
         .from('millionaire_questions')
-        .select('*')
-        .order('level', { ascending: true });
+        .select('*');
       if (error) { console.error(error); return []; }
-      return data || [];
+      if (!data || !data.length) return [];
+
+      const easy = shuffle(data.filter(q => q.difficulty === 'easy')).slice(0, DIFFICULTY_DISTRIBUTION.easy);
+      const medium = shuffle(data.filter(q => q.difficulty === 'medium')).slice(0, DIFFICULTY_DISTRIBUTION.medium);
+      const hard = shuffle(data.filter(q => q.difficulty === 'hard')).slice(0, DIFFICULTY_DISTRIBUTION.hard);
+
+      return [...easy, ...medium, ...hard];
     }
 
     function renderLadder() {
-      const ladder = $('ladder-items');
       const items = [];
       for (let i = AMOUNTS.length - 1; i >= 0; i--) {
         const isCurrent = i === state.currentIndex;
@@ -563,7 +360,7 @@
           </div>
         `);
       }
-      ladder.innerHTML = items.join('');
+      $('ladder-items').innerHTML = items.join('');
     }
 
     function renderQuestion() {
@@ -604,10 +401,7 @@
         state.timeLeft--;
         updateTimerDisplay();
         if (state.timeLeft <= 10) $('timer').classList.add('warning');
-        if (state.timeLeft <= 0) {
-          stopTimer();
-          timeOut();
-        }
+        if (state.timeLeft <= 0) { stopTimer(); timeOut(); }
       }, 1000);
     }
 
@@ -679,20 +473,16 @@
       $('start-screen').classList.add('game-hide');
       $('result-screen').classList.remove('game-hide');
 
-      $('result-title').textContent = won
-        ? 'Ты миллионер!'
-        : (timeout ? 'Время вышло!' : 'Ошибка...');
+      $('result-title').textContent = won ? 'Ты миллионер!' : (timeout ? 'Время вышло!' : 'Ошибка...');
       $('result-amount').textContent = formatMoney(finalScore);
       $('result-correct').textContent = state.correctCount;
       $('result-level').textContent = state.currentIndex + 1;
       $('result-time').textContent = formatTime(totalTime);
 
-      // Показать модалку с именем
       $('name-modal').classList.add('open');
       $('player-name').value = localStorage.getItem('mm_player_name') || '';
       $('player-name').focus();
 
-      // Сохранить временные данные для отправки
       window._pendingResult = {
         score: finalScore,
         time: totalTime,
@@ -700,7 +490,6 @@
         level: state.currentIndex + 1,
       };
 
-      // Обновить рейтинг (показать даже если имя не введено)
       loadLeaderboard('lb-list-result');
     }
 
@@ -756,9 +545,14 @@
     }
 
     async function startGame() {
+      $('btn-start').disabled = true;
+      $('btn-start').textContent = 'Загрузка вопросов…';
+
       const questions = await loadQuestions();
-      if (!questions.length) {
-        alert('Вопросы не загружены. Запустите SQL.');
+      if (questions.length < TOTAL_QUESTIONS) {
+        alert('Недостаточно вопросов в базе. Запустите SQL.');
+        $('btn-start').disabled = false;
+        $('btn-start').textContent = 'Начать игру';
         return;
       }
 
@@ -775,10 +569,12 @@
       $('result-screen').classList.add('game-hide');
       $('game-screen').classList.remove('game-hide');
 
+      $('btn-start').disabled = false;
+      $('btn-start').textContent = 'Начать игру';
+
       renderQuestion();
     }
 
-    // Event listeners
     $('btn-start').addEventListener('click', startGame);
     $('btn-play-again').addEventListener('click', () => {
       $('result-screen').classList.add('game-hide');
@@ -786,21 +582,16 @@
       loadLeaderboard('lb-list-home');
     });
 
-    $('btn-cancel-name').addEventListener('click', () => {
-      $('name-modal').classList.remove('open');
-    });
-
+    $('btn-cancel-name').addEventListener('click', () => $('name-modal').classList.remove('open'));
     $('btn-save-name').addEventListener('click', () => {
       const name = $('player-name').value.trim();
       if (!name) { $('player-name').focus(); return; }
       saveResult(name);
     });
-
     $('player-name').addEventListener('keydown', (e) => {
       if (e.key === 'Enter') $('btn-save-name').click();
     });
 
-    // Init
     loadLeaderboard('lb-list-home');
   </script>
 </body>
