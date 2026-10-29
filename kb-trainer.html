@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-game.css">
   <style>
-    /* ===== БАЗОВЫЕ СТИЛИ ЧАТА ===== */
+    /* ===== ЧАТ ===== */
     .tr-hero { text-align: center; padding: 20px 0 40px; animation: gFadeUp 0.5s var(--g-smooth); }
     .tr-hero h1 { font-family: var(--g-font); font-size: 44px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; background: linear-gradient(135deg, var(--g-emerald) 0%, var(--g-violet) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .tr-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 560px; margin: 0 auto; }
@@ -52,7 +52,7 @@
     .tr-back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--g-surface); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink-2); font-family: var(--g-font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
     .tr-back-btn:hover { color: var(--g-ink); border-color: var(--g-ink-3); background: var(--g-surface-2); }
 
-    /* ===== БРОНЕБОЙНЫЙ ERP SIMULATOR ===== */
+    /* ===== ЖЕСТКИЙ ERP SIMULATOR (CSS GRID) ===== */
     .erp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 20px; overflow: hidden; align-items: center; justify-content: center; }
     .erp-modal.open { display: flex; }
     
@@ -72,7 +72,7 @@
       border-radius: 4px;
     }
     
-    /* Жесткий сброс стилей внутри ERP, чтобы глобальные CSS не ломали верстку */
+    /* Глобальный сброс стилей внутри ERP */
     .erp-window *, .erp-window *::before, .erp-window *::after { box-sizing: border-box; margin: 0; padding: 0; }
     .erp-window button { width: auto; height: 22px; min-height: 22px; border-radius: 0; margin: 0; text-transform: none; font-weight: normal; letter-spacing: normal; background: #e1e1e1; border: 1px solid #7a7a7a; color: #000; cursor: pointer; font-size: 11px; padding: 0 8px; }
     .erp-window button:hover { background: #d1d1d1; transform: none; box-shadow: none; filter: none; }
@@ -81,6 +81,8 @@
     .erp-window input:focus, .erp-window textarea:focus { outline: 1px solid #0078d7; outline-offset: -1px; border-color: #0078d7; box-shadow: none; }
     .erp-window input.error { border-color: #ff0000; background: #ffeeee; }
     .erp-window input.green { background: #c4f5c4; border-color: #5c9e5c; }
+    .erp-window label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 11px; margin: 0; }
+    .erp-window input[type="radio"], .erp-window input[type="checkbox"] { width: auto; height: auto; margin: 0; cursor: pointer; }
     
     .erp-title-bar { background: #fff; padding: 4px 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; font-size: 11px; font-weight: bold; flex-shrink: 0; }
     .erp-title-bar-actions { display: flex; gap: 10px; cursor: pointer; }
@@ -98,20 +100,33 @@
     .erp-menu-item.active { background: #cce8ff; border-color: #99ccff; }
     .erp-menu-header { font-weight: bold; padding: 4px 8px; background: #dcdcdc; border-bottom: 1px solid #ccc; margin-bottom: 4px; text-align: center; }
     
-    .erp-content { flex: 1; padding: 8px; overflow-y: auto; display: flex; gap: 15px; }
-    .erp-col-left { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-    .erp-col-right { width: 380px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+    /* Сетка для контента (Левая и Правая колонки + Низ) */
+    .erp-content { 
+      flex: 1; 
+      padding: 8px; 
+      overflow-y: auto; 
+      display: grid; 
+      grid-template-columns: minmax(0, 1fr) 380px; 
+      grid-template-rows: 1fr auto; /* 1fr для колонок, auto для кнопки */
+      gap: 12px; 
+      height: 100%;
+    }
+    
+    .erp-col-left { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .erp-col-right { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 
     .erp-row { display: flex; gap: 8px; align-items: flex-start; min-width: 0; }
     .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .erp-group.horizontal { flex-direction: row; align-items: center; gap: 4px; }
     .erp-label { font-size: 10px; color: #333; white-space: nowrap; }
     
-    .erp-btn-small { padding: 0 4px !important; height: 22px !important; font-weight: bold !important; }
+    .erp-btn-small { padding: 0 4px !important; height: 22px !important; font-weight: bold !important; flex-shrink: 0; }
     
-    .erp-block-box { border: 1px solid #a0a0a0; padding: 8px; background: #fff; position: relative; margin-top: 4px; }
+    .erp-block-box { border: 1px solid #a0a0a0; padding: 8px; background: #fff; position: relative; margin-top: 4px; display: flex; flex-direction: column; }
     .erp-block-box.active { border-color: #0078d7; box-shadow: 0 0 4px rgba(0,120,215,0.4); }
     .erp-block-title { position: absolute; top: -7px; left: 6px; background: #fff; padding: 0 4px; font-size: 10px; color: #555; }
+    
+    /* Нижняя панель для кнопки */
+    .erp-bottom-bar { grid-column: 1 / -1; display: flex; justify-content: flex-end; padding-top: 8px; border-top: 1px solid #ccc; margin-top: 4px; }
     
     /* LK и ALERTS */
     .lk-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; padding: 20px; align-items: center; justify-content: center; }
@@ -245,6 +260,7 @@
           <div class="erp-menu-item">Создать дубль</div>
         </div>
 
+        <!-- Сетка контента (2 колонки + низ) -->
         <div class="erp-content">
           
           <!-- ЛЕВАЯ КОЛОНКА -->
@@ -272,13 +288,13 @@
                 <div style="display:flex; gap:2px; width: 100%;">
                   <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="width:50px; text-align:center; flex-shrink: 0;">
                   <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название ТО..." style="flex:1;">
-                  <button class="erp-btn erp-btn-small" style="background:#cce8ff; border-color:#99ccff; flex-shrink: 0;">Подсказка</button>
+                  <button class="erp-btn erp-btn-small" style="background:#cce8ff; border-color:#99ccff;">Подсказка</button>
                 </div>
               </div>
               <div class="erp-group" style="width: 100px;"><div class="erp-label">Промоутер</div><input class="erp-input" type="text"></div>
               <div class="erp-group" style="margin-left:10px; margin-top:12px; display:flex; gap:10px;">
-                <label style="cursor:pointer; font-size:11px;"><input type="radio" name="erp-type" style="width:auto; height:auto;"> Стационар</label>
-                <label style="cursor:pointer; font-size:11px;"><input type="radio" name="erp-type" checked style="width:auto; height:auto;"> Выездной</label>
+                <label><input type="radio" name="erp-type"> Стационар</label>
+                <label><input type="radio" name="erp-type" checked> Выездной</label>
               </div>
             </div>
 
@@ -293,11 +309,11 @@
             </div>
 
             <div class="erp-row" style="flex:1;">
-              <div class="erp-block-box" style="flex:1; display:flex; flex-direction:column;">
+              <div class="erp-block-box" style="flex:1;">
                 <div class="erp-block-title">О клиенте/о заказе</div>
                 <div style="font-size:11px; color:#555; margin-top:5px; padding:5px;">Свойство: Юр. лицо<br>Возраст клиента<br>Настройки свойства стандартов Ч...</div>
               </div>
-              <div class="erp-block-box" style="flex:1; display:flex; flex-direction:column;">
+              <div class="erp-block-box" style="flex:1;">
                 <div class="erp-block-title">Об оборудовании</div>
                 <div style="font-size:11px; color:#555; margin-top:5px; padding:5px;">Модель<br>Разрешение экрана<br>Изогнутый<br>Срочно</div>
               </div>
@@ -306,7 +322,7 @@
 
           <!-- ПРАВАЯ КОЛОНКА (АДРЕС) -->
           <div class="erp-col-right">
-            <div class="erp-block-box" id="block-address" style="height: 100%; display: flex; flex-direction: column;">
+            <div class="erp-block-box" id="block-address" style="height: 100%;">
               <div class="erp-block-title">Адрес КА</div>
               
               <div style="display:flex; gap:5px; margin-top:15px;">
@@ -315,10 +331,10 @@
               </div>
               
               <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-                <label style="font-size:11px; display:flex; align-items:center; gap:4px;"><input type="checkbox" checked style="width:auto; height:auto; margin:0;"> Район</label>
-                <label style="font-size:11px; display:flex; align-items:center; gap:4px;"><input type="checkbox" checked style="width:auto; height:auto; margin:0;"> Город</label>
-                <label style="font-size:11px; display:flex; align-items:center; gap:4px;"><input type="checkbox" checked style="width:auto; height:auto; margin:0;"> Нас. пункт</label>
-                <label style="font-size:11px; display:flex; align-items:center; gap:4px;"><input type="checkbox" style="width:auto; height:auto; margin:0;"> Улица</label>
+                <label><input type="checkbox" checked> Район</label>
+                <label><input type="checkbox" checked> Город</label>
+                <label><input type="checkbox" checked> Нас. пункт</label>
+                <label><input type="checkbox"> Улица</label>
               </div>
               
               <div style="display:flex; gap:5px; margin-top:10px;">
@@ -342,23 +358,24 @@
                 <button class="erp-btn" style="margin-top:12px; width: 24px; padding: 0;">✕</button>
               </div>
 
-              <div class="erp-group" style="margin-top:8px; flex:1; display:flex; flex-direction:column;">
+              <div class="erp-group" style="margin-top:8px; flex:1;">
                 <div class="erp-label">Как добраться</div>
-                <textarea class="erp-input" style="flex:1; min-height: 60px;"></textarea>
+                <textarea class="erp-input" style="height: 100%; min-height: 60px;"></textarea>
               </div>
 
               <div class="erp-group" style="margin-top:8px;">
                 <div class="erp-label">Дата выезда</div>
                 <div style="display:flex; gap:5px;">
-                  <input class="erp-input" type="date" style="flex:1;">
+                  <input class="erp-input" type="date">
                   <button class="erp-btn">Граф. инженеров</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="erp-row" style="justify-content:flex-end; margin-top: 10px; width: 100%;">
-            <button class="erp-btn" style="padding: 6px 20px; font-weight: bold; background: #e1e1e1;" id="erp-save-btn">Сохранить карточку</button>
+          <!-- НИЖНЯЯ ПАНЕЛЬ С КНОПКОЙ -->
+          <div class="erp-bottom-bar">
+            <button class="erp-btn" style="padding: 6px 20px; font-weight: bold; background: #e1e1e1; height: 28px;" id="erp-save-btn">Сохранить карточку</button>
           </div>
 
         </div>
