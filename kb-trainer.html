@@ -52,12 +52,12 @@
     .tr-back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--g-surface); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink-2); font-family: var(--g-font); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; margin-bottom: 24px; }
     .tr-back-btn:hover { color: var(--g-ink); border-color: var(--g-ink-3); background: var(--g-surface-2); }
 
-    /* ===== ЖЕСТКИЙ ERP SIMULATOR (ТОЧНАЯ КОПИЯ) ===== */
+    /* ===== ЖЕСТКИЙ ERP SIMULATOR ===== */
     .erp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 10px; overflow: hidden; align-items: center; justify-content: center; }
     .erp-modal.open { display: flex; }
     
     .erp-window { 
-      width: 100%; max-width: 1500px; /* Сделали максимально широким */
+      width: 100%; max-width: 1500px;
       background: #f0f0f0; 
       border: 1px solid #707070; 
       box-shadow: 0 10px 40px rgba(0,0,0,0.7); 
@@ -72,7 +72,7 @@
       border-radius: 4px;
     }
     
-    /* Глобальный сброс стилей внутри ERP, чтобы внешние стили не ломали верстку */
+    /* Жесткий сброс стилей внутри ERP */
     .erp-window *, .erp-window *::before, .erp-window *::after { box-sizing: border-box; margin: 0; padding: 0; }
     .erp-window button { width: auto; height: 22px; min-height: 22px; border-radius: 0; margin: 0; text-transform: none; font-weight: normal; letter-spacing: normal; background: #e1e1e1; border: 1px solid #7a7a7a; color: #000; cursor: pointer; font-size: 11px; padding: 0 8px; }
     .erp-window button:hover { background: #d1d1d1; transform: none; box-shadow: none; filter: none; }
@@ -81,76 +81,47 @@
     .erp-window input:focus, .erp-window textarea:focus { outline: 1px solid #0078d7; outline-offset: -1px; border-color: #0078d7; box-shadow: none; }
     .erp-window input.error { border-color: #ff0000; background: #ffeeee; }
     .erp-window input.green { background: #c4f5c4; border-color: #5c9e5c; }
-    .erp-window input.purple { background: #ccbdf2; } /* Цветной фон как на скрине */
+    .erp-window input.purple { background: #ccbdf2; }
     .erp-window label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 11px; margin: 0; }
     .erp-window input[type="radio"], .erp-window input[type="checkbox"] { width: auto; height: auto; margin: 0; cursor: pointer; }
     
-    /* Шапки */
     .erp-top-bar { background: #fff; padding: 4px 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; flex-shrink: 0; }
     .erp-top-bar-left { display: flex; gap: 20px; align-items: center; }
     .erp-top-bar-right { display: flex; gap: 20px; align-items: center; color: #d9534f; font-weight: bold; }
     .erp-sub-bar { background: #dbe4f0; padding: 4px 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #a0a0a0; font-weight: bold; color: #2c3e50; flex-shrink: 0; }
-    
-    /* Вкладки */
     .erp-tabs { display: flex; background: #f0f0f0; border-bottom: 1px solid #ccc; padding-top: 5px; flex-shrink: 0; padding-left: 10px; }
     .erp-tab { padding: 4px 12px; border: 1px solid transparent; border-bottom: none; cursor: pointer; margin-bottom: -1px; color: #555; }
     .erp-tab.active { background: #fff; border-color: #ccc; font-weight: bold; color: #000; }
     
-    /* Основная сетка */
     .erp-main { display: flex; flex: 1; overflow: hidden; background: #fff; }
-    
-    /* Сайдбар */
     .erp-sidebar { width: 110px; background: #e6eaf0; border-right: 1px solid #a0a0a0; padding: 5px 0; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; overflow-y: auto; }
     .erp-menu-header { font-weight: bold; padding: 4px 8px; background: #dcdcdc; border-bottom: 1px solid #ccc; margin-bottom: 4px; text-align: center; color: #333; }
     .erp-menu-item { padding: 4px 8px; cursor: pointer; margin: 0 4px; border: 1px solid transparent; text-align: left; color: #333; }
     .erp-menu-item:hover { background: #f0f0f0; border-color: #ccc; }
     .erp-menu-item.active { background: #cce8ff; border-color: #99ccff; font-weight: bold; }
     
-    /* Сетка контента (Левая часть 1fr, Правая 450px) */
-    .erp-content { 
-      flex: 1; 
-      padding: 10px; 
-      overflow-y: auto; 
-      display: grid; 
-      grid-template-columns: minmax(0, 1fr) 460px; 
-      gap: 15px; 
-      height: 100%;
-    }
-    
+    .erp-content { flex: 1; padding: 10px; overflow-y: auto; display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 15px; height: 100%; }
     .erp-left-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
     .erp-right-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 
-    /* Ряды и группы */
     .erp-row { display: flex; gap: 10px; align-items: flex-end; min-width: 0; }
     .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
     .erp-label { font-size: 11px; color: #000; white-space: nowrap; margin-bottom: 2px; }
     
-    /* Специфичные ширины */
     .w-100 { width: 100px; flex-shrink: 0; }
     .w-80 { width: 80px; flex-shrink: 0; }
     .w-150 { width: 150px; flex-shrink: 0; }
     .w-200 { width: 200px; flex-shrink: 0; }
-    .w-full { flex: 1; }
     
-    /* Блоки */
     .erp-block-box { border: 1px solid #a0a0a0; padding: 8px; background: #fff; position: relative; margin-top: 8px; display: flex; flex-direction: column; }
     .erp-block-title { position: absolute; top: -7px; left: 6px; background: #fff; padding: 0 4px; font-size: 11px; color: #333; }
-    
     .erp-btn-small { padding: 0 4px !important; height: 22px !important; font-weight: bold !important; flex-shrink: 0; background: #dbe4f0 !important; }
     
-    /* Красная подсказка */
-    .red-hint { color: #d9534f; font-size: 13px; display: flex; align-items: center; gap: 10px; margin-bottom: 5px; margin-left: 350px; }
-    .red-arrow { font-size: 20px; line-height: 1; }
-
-    /* Таблицы */
     .erp-table { width: 100%; border-collapse: collapse; font-size: 11px; }
     .erp-table th, .erp-table td { border: 1px solid #ccc; padding: 2px 4px; text-align: left; }
     .erp-table th { background: #dbe4f0; font-weight: normal; }
     
-    /* Низ */
     .erp-bottom-row { display: grid; grid-template-columns: 200px 1fr; gap: 10px; margin-top: 8px; flex: 1; }
-
-    /* Кнопка Сохранить */
     .erp-action-row { display: flex; justify-content: flex-end; margin-top: 10px; grid-column: 1 / -1; }
     .erp-action-btn { padding: 6px 30px !important; font-weight: bold !important; height: 30px !important; }
 
@@ -175,7 +146,6 @@
     .custom-alert { background: var(--g-bg-2); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: center; animation: gFadeUp 0.3s var(--g-spring); }
     .custom-alert h3 { font-size: 20px; margin-bottom: 12px; font-weight: 700; color: var(--g-ink); }
     .custom-alert p { color: var(--g-ink-2); font-size: 14px; margin-bottom: 24px; line-height: 1.5; white-space: pre-wrap; }
-    
     .alert-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; border: none; border-radius: 10px; background: linear-gradient(135deg, var(--g-gold), var(--g-magenta)); color: #0A0614; cursor: pointer; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(255, 79, 163, 0.3); transition: transform 0.2s var(--g-smooth), box-shadow 0.2s var(--g-smooth), filter 0.2s; }
     .alert-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent); transform: skewX(-20deg); animation: shimmer 2.5s infinite; z-index: 1; }
     .alert-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255, 79, 163, 0.6); filter: brightness(1.1); }
@@ -248,7 +218,7 @@
     </div>
   </div>
 
-  <!-- ERP MODAL (Точная копия) -->
+  <!-- ERP MODAL -->
   <div class="erp-modal" id="erp-modal">
     <div class="erp-window">
       
@@ -295,7 +265,7 @@
           <div class="erp-menu-item">Создать дубль</div>
         </div>
 
-        <!-- Основная сетка -->
+        <!-- Сетка контента -->
         <div class="erp-content">
           
           <!-- ЛЕВАЯ КОЛОНКА -->
@@ -306,12 +276,6 @@
               <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
               <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
               <div class="erp-group w-200"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
-            </div>
-            
-            <!-- Красная подсказка -->
-            <div class="red-hint">
-              <span class="red-arrow">↘</span>
-              Вводим номер ТО сюда и нажимаем Enter или кнопку подсказка
             </div>
 
             <!-- Ряд 2 (Тип оборудования) -->
