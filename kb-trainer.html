@@ -516,12 +516,20 @@
     const $ = (id) => document.getElementById(id);
 
     function showAlert(title, message, isError = false) {
-      $('alert-title').textContent = title;
-      $('alert-title').style.color = isError ? 'var(--g-danger)' : 'var(--g-gold)';
-      $('alert-text').textContent = message;
-      $('custom-alert').classList.add('open');
+      if ($('alert-title')) $('alert-title').textContent = title;
+      if ($('alert-title')) $('alert-title').style.color = isError ? 'var(--g-danger)' : 'var(--g-gold)';
+      if ($('alert-text')) $('alert-text').textContent = message;
+      if ($('custom-alert')) $('custom-alert').classList.add('open');
     }
-    $('alert-btn').addEventListener('click', () => $('custom-alert').classList.remove('open'));
+    
+    // Безопасное добавление слушателей
+    function addSafeListener(id, event, callback) {
+      const el = $(id);
+      if (el) el.addEventListener(event, callback);
+      else console.warn(`Element with id "${id}" not found in DOM.`);
+    }
+
+    addSafeListener('alert-btn', 'click', () => { if ($('custom-alert')) $('custom-alert').classList.remove('open'); });
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -544,6 +552,7 @@
 
     function renderScenarioList() {
       const list = $('scenario-list');
+      if (!list) return;
       list.innerHTML = state.scenarios.map((s, i) => `
         <div class="tr-scenario-card ${s.is_boss ? 'boss' : ''}" data-idx="${i}">
           <h3>${escapeHtml(s.title)} ${s.is_boss ? '👑' : ''}</h3>
@@ -560,6 +569,7 @@
 
     function renderChat() {
       const chat = $('chat');
+      if (!chat) return;
       chat.innerHTML = state.chat.map(m => {
         if (m.type === 'client') return `<div class="tr-message client"><div class="tr-avatar">Клиент</div><div class="tr-bubble">${escapeHtml(m.text)}</div></div>`;
         if (m.type === 'operator') return `<div class="tr-message operator"><div class="tr-avatar">Специалист</div><div class="tr-bubble">${escapeHtml(m.text)}</div></div>`;
@@ -576,8 +586,8 @@
       state.currentErrors = 0;
 
       const visited = state.chat.filter(m => m.type === 'operator').length;
-      $('progress-fill').style.width = Math.min(100, Math.round(visited / state.totalSteps * 100)) + '%';
-      $('progress-text').textContent = `${visited} / ${state.totalSteps}`;
+      if ($('progress-fill')) $('progress-fill').style.width = Math.min(100, Math.round(visited / state.totalSteps * 100)) + '%';
+      if ($('progress-text')) $('progress-text').textContent = `${visited} / ${state.totalSteps}`;
 
       const lastClient = state.chat.filter(m => m.type === 'client').pop();
       if (!lastClient || lastClient.text !== step.client) {
@@ -587,11 +597,14 @@
       const opts = [...step.operator_options].sort(() => Math.random() - 0.5);
       state.currentOptions = opts;
 
-      $('options-container').innerHTML = opts.map((o, i) => `
+      const container = $('options-container');
+      if (!container) return;
+
+      container.innerHTML = opts.map((o, i) => `
         <button class="tr-option" data-idx="${i}"><span class="tr-option-bullet">${String.fromCharCode(65 + i)}</span><span>${escapeHtml(o.label)}</span></button>
       `).join('');
       
-      $('options-container').querySelectorAll('.tr-option').forEach(btn => 
+      container.querySelectorAll('.tr-option').forEach(btn => 
         btn.addEventListener('click', () => selectOption(parseInt(btn.dataset.idx)))
       );
     }
@@ -672,57 +685,57 @@
       state.totalSteps = countTotalSteps(state.scenario.steps, state.scenario.start_step);
       state.pendingAction = null; state.pendingNext = null;
       
-      $('erp-name').value = '';
-      $('erp-address').value = '';
-      $('erp-problem').value = '';
-      $('erp-to-code').value = '';
-      $('erp-to-name').value = '';
+      if ($('erp-name')) $('erp-name').value = '';
+      if ($('erp-address')) $('erp-address').value = '';
+      if ($('erp-problem')) $('erp-problem').value = '';
+      if ($('erp-to-code')) $('erp-to-code').value = '';
+      if ($('erp-to-name')) $('erp-to-name').value = '';
 
-      $('floating-erp-btn').classList.remove('show');
-      $('list-screen').classList.add('game-hide');
-      $('chat-screen').classList.remove('game-hide');
+      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
+      if ($('list-screen')) $('list-screen').classList.add('game-hide');
+      if ($('chat-screen')) $('chat-screen').classList.remove('game-hide');
       renderStep();
     }
 
     function openERP(action) {
-      $('erp-modal').classList.add('open');
-      $('floating-erp-btn').classList.remove('show');
+      if ($('erp-modal')) $('erp-modal').classList.add('open');
+      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
       
       document.querySelectorAll('.erp-block-box').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.erp-input').forEach(el => el.classList.remove('error'));
 
       if (action === 'fill_name') {
-        $('block-name').classList.add('active');
-        $('erp-name').focus();
+        if ($('block-name')) $('block-name').classList.add('active');
+        if ($('erp-name')) $('erp-name').focus();
       } 
       else if (action === 'fill_to') {
-        $('block-to').classList.add('active');
-        $('erp-to-code').focus();
+        if ($('block-to')) $('block-to').classList.add('active');
+        if ($('erp-to-code')) $('erp-to-code').focus();
       }
       else if (action === 'fill_address') {
-        $('block-address').classList.add('active');
-        $('erp-address').focus();
+        if ($('block-address')) $('block-address').classList.add('active');
+        if ($('erp-address')) $('erp-address').focus();
       }
       else if (action === 'fill_problem') {
-        $('block-problem').classList.add('active');
-        $('erp-problem').focus();
+        if ($('block-problem')) $('block-problem').classList.add('active');
+        if ($('erp-problem')) $('erp-problem').focus();
       }
     }
 
-    $('erp-to-code').addEventListener('keydown', (e) => {
+    addSafeListener('erp-to-code', 'keydown', (e) => {
       if (e.key === 'Enter') {
         const code = e.target.value.trim();
         if (TO_DICTIONARY[code]) {
-          $('erp-to-name').value = `${TO_DICTIONARY[code]}`;
+          if ($('erp-to-name')) $('erp-to-name').value = `${TO_DICTIONARY[code]}`;
           $('erp-to-code').classList.remove('error');
         } else {
-          $('erp-to-name').value = 'Код не найден!';
+          if ($('erp-to-name')) $('erp-to-name').value = 'Код не найден!';
           $('erp-to-code').classList.add('error');
         }
       }
     });
 
-    $('erp-save-btn').addEventListener('click', () => {
+    addSafeListener('erp-save-btn', 'click', () => {
       let isValid = true;
       const exp = state.expectedValue.toLowerCase();
       let enteredValue = '';
@@ -751,7 +764,7 @@
 
       state.history.push({ type: 'erp', field: state.pendingAction, value: enteredValue });
 
-      $('erp-modal').classList.remove('open');
+      if ($('erp-modal')) $('erp-modal').classList.remove('open');
       if (!state.isBoss) {
         state.chat.push({ type: 'feedback', text: 'Данные успешно внесены в ERP.', correct: true });
         renderChat();
@@ -762,41 +775,45 @@
       setTimeout(renderStep, 1000);
     });
 
-    $('erp-close').addEventListener('click', () => {
-      $('erp-modal').classList.remove('open');
-      if (state.pendingAction) $('floating-erp-btn').classList.add('show');
+    addSafeListener('erp-close', 'click', () => {
+      if ($('erp-modal')) $('erp-modal').classList.remove('open');
+      if (state.pendingAction && $('floating-erp-btn')) $('floating-erp-btn').classList.add('show');
     });
 
-    $('floating-erp-btn').addEventListener('click', () => {
-      $('floating-erp-btn').classList.remove('show');
+    addSafeListener('floating-erp-btn', 'click', () => {
+      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
       openERP(state.pendingAction);
     });
 
-    $('btn-lk').addEventListener('click', () => {
-      const toName = $('erp-to-name').value;
-      $('lk-content').innerHTML = `
-        <div class="lk-alert">Внимание! Это симулятор. В реальном ЛК данные обновляются автоматически.</div>
-        <div class="lk-section"><h4>Тип оборудования: ${toName || 'Не выбрано'}</h4><p style="font-size:12px; color:#666;">Город: Москва (в пределах МКАД)</p></div>
-        <div class="lk-section"><h4>Стоп-факторы</h4><table class="lk-table"><tr><th>Фактор</th><th>Действие</th></tr><tr><td>Матрица</td><td>Оформляем в Мск (до 70%)</td></tr><tr><td>Кинескоп</td><td>Стоп-фактор</td></tr></table></div>
-      `;
-      $('lk-modal').classList.add('open');
+    addSafeListener('btn-lk', 'click', () => {
+      const toName = $('erp-to-name') ? $('erp-to-name').value : '';
+      if ($('lk-content')) {
+        $('lk-content').innerHTML = `
+          <div class="lk-alert">Внимание! Это симулятор. В реальном ЛК данные обновляются автоматически.</div>
+          <div class="lk-section"><h4>Тип оборудования: ${toName || 'Не выбрано'}</h4><p style="font-size:12px; color:#666;">Город: Москва (в пределах МКАД)</p></div>
+          <div class="lk-section"><h4>Стоп-факторы</h4><table class="lk-table"><tr><th>Фактор</th><th>Действие</th></tr><tr><td>Матрица</td><td>Оформляем в Мск (до 70%)</td></tr><tr><td>Кинескоп</td><td>Стоп-фактор</td></tr></table></div>
+        `;
+      }
+      if ($('lk-modal')) $('lk-modal').classList.add('open');
     });
-    $('lk-close').addEventListener('click', () => $('lk-modal').classList.remove('open'));
+
+    addSafeListener('lk-close', 'click', () => { if ($('lk-modal')) $('lk-modal').classList.remove('open'); });
 
     function finishGame() {
-      $('chat-screen').classList.add('game-hide');
-      $('floating-erp-btn').classList.remove('show');
+      if ($('chat-screen')) $('chat-screen').classList.add('game-hide');
+      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
 
       if (state.isBoss) {
-        $('survey-modal').classList.add('open');
+        if ($('survey-modal')) $('survey-modal').classList.add('open');
       } else {
         showAlert('Тренажёр пройден!', `Верных шагов: ${state.correctCount}`);
-        $('list-screen').classList.remove('game-hide');
+        if ($('list-screen')) $('list-screen').classList.remove('game-hide');
       }
     }
 
-    $('btn-show-review').addEventListener('click', () => {
+    addSafeListener('btn-show-review', 'click', () => {
       const list = $('review-list');
+      if (!list) return;
       let html = '';
       let stepIndex = 0;
       state.history.forEach(item => {
@@ -808,18 +825,18 @@
         }
       });
       list.innerHTML = html;
-      $('review-modal').classList.add('open');
+      if ($('review-modal')) $('review-modal').classList.add('open');
     });
 
-    $('btn-close-review').addEventListener('click', () => $('review-modal').classList.remove('open'));
+    addSafeListener('btn-close-review', 'click', () => { if ($('review-modal')) $('review-modal').classList.remove('open'); });
 
-    $('btn-finish-survey').addEventListener('click', () => {
+    addSafeListener('btn-finish-survey', 'click', () => {
       const q1 = document.querySelector('input[name="q1"]:checked');
       const q3 = document.querySelector('input[name="q3"]:checked');
       if (!q1 || !q3) { showAlert('Внимание', 'Пожалуйста, ответьте на 1 и 3 вопросы анкеты.', true); return; }
 
-      $('survey-modal').classList.remove('open');
-      $('list-screen').classList.remove('game-hide');
+      if ($('survey-modal')) $('survey-modal').classList.remove('open');
+      if ($('list-screen')) $('list-screen').classList.remove('game-hide');
 
       if (state.bossErrors.length === 0) {
         showAlert("🎉 Поздравляем!", "Босс повержен.\nВы не допустили ни одной ошибки. Вы полностью готовы к работе с реальными клиентами!");
@@ -828,15 +845,18 @@
       }
     });
 
-    $('back-to-list').addEventListener('click', () => { 
-      $('chat-screen').classList.add('game-hide'); 
-      $('list-screen').classList.remove('game-hide'); 
-      $('floating-erp-btn').classList.remove('show');
-      $('survey-modal').classList.remove('open');
-      $('review-modal').classList.remove('open');
+    addSafeListener('back-to-list', 'click', () => { 
+      if ($('chat-screen')) $('chat-screen').classList.add('game-hide'); 
+      if ($('list-screen')) $('list-screen').classList.remove('game-hide'); 
+      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
+      if ($('survey-modal')) $('survey-modal').classList.remove('open');
+      if ($('review-modal')) $('review-modal').classList.remove('open');
     });
 
-    (async () => { state.scenarios = await loadScenarios(); renderScenarioList(); })();
+    (async () => { 
+      state.scenarios = await loadScenarios(); 
+      renderScenarioList(); 
+    })();
   </script>
 </body>
 </html>
