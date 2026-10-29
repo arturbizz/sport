@@ -148,7 +148,6 @@
         <div class="erp-content">
           
           <div class="erp-col-left">
-            <!-- Name Block -->
             <div class="erp-block" id="block-name">
               <div class="erp-block-title">Контрагент</div>
               <div class="erp-row">
@@ -163,7 +162,6 @@
               </div>
             </div>
 
-            <!-- TO Block -->
             <div class="erp-block" id="block-to">
               <div class="erp-block-title">Тип оборудования (Введите код и нажмите Enter)</div>
               <div class="erp-row">
@@ -176,13 +174,11 @@
               </div>
             </div>
 
-            <!-- Address Block -->
             <div class="erp-block" id="block-address">
               <div class="erp-block-title">Адрес КА</div>
               <input class="erp-input" id="erp-address" type="text" placeholder="Улица, дом...">
             </div>
 
-            <!-- Problem Block -->
             <div class="erp-block" id="block-problem">
               <div class="erp-block-title">Проблема со слов клиента</div>
               <textarea class="erp-input" id="erp-problem" rows="3" placeholder="Описание..."></textarea>
@@ -303,7 +299,6 @@
       const option = step.operator_options[index];
       if (!option) return;
 
-      // Блокируем кнопки
       $('options-container').querySelectorAll('.tr-option').forEach((btn, i) => {
         btn.disabled = true;
         if (i === index) btn.classList.add(option.correct ? 'correct' : 'wrong');
@@ -314,14 +309,13 @@
       if (option.correct) state.correctCount++;
       renderChat();
 
-      // Если это действие с ERP
-      if (option.action) {
-        state.pendingAction = option.action;
+      // ИСПРАВЛЕНИЕ ЗДЕСЬ: проверяем step.action (команда лежит в шаге, а не в варианте ответа)
+      if (step.action) {
+        state.pendingAction = step.action;
         state.pendingNext = option.next;
-        state.expectedValue = option.expected;
-        setTimeout(() => openERP(option.action, option.expected), 500);
+        state.expectedValue = step.expected;
+        setTimeout(() => openERP(step.action, step.expected), 500);
       } else {
-        // Обычный переход
         if (option.next === 'END' || !option.next) {
           setTimeout(finishGame, 1400);
         } else {
@@ -416,17 +410,13 @@
         if (!val.toLowerCase().includes(exp)) { $('erp-problem').classList.add('error'); isValid = false; }
       }
 
-      if (!isValid) {
-        // Если невалидно, показываем визуальную ошибку (красная рамка)
-        return;
-      }
+      if (!isValid) return;
 
       // Если всё ок
       $('erp-modal').classList.remove('open');
       state.chat.push({ type: 'feedback', text: 'Данные успешно внесены в ERP.', correct: true });
       renderChat();
       
-      // Переходим к следующему шагу
       state.currentStepId = state.pendingNext;
       state.pendingAction = null;
       state.pendingNext = null;
