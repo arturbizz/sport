@@ -100,19 +100,20 @@
     .erp-menu-item:hover { background: #f0f0f0; border-color: #ccc; }
     .erp-menu-item.active { background: #cce8ff; border-color: #99ccff; font-weight: bold; }
     
-    /* НОВАЯ СЕТКА КОНТЕНТА (Строгий Grid) */
+    /* НОВАЯ СЕТКА КОНТЕНТА (3 колонки) */
     .erp-content { 
       flex: 1; padding: 10px 12px; overflow-y: auto; 
       display: grid; 
-      grid-template-columns: minmax(0, 1fr) 460px; /* Левая часть резиновая, правая фикс 460px */
+      grid-template-columns: minmax(0, 1fr) 320px 420px; 
       grid-template-rows: auto auto auto auto auto auto auto; 
       gap: 8px 12px; 
       height: 100%; 
       align-items: start;
     }
     
-    .erp-left-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 1; grid-row: 1 / span 6; }
-    .erp-right-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 2; grid-row: 1 / span 6; }
+    .erp-col-left { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 1; grid-row: 1 / span 6; }
+    .erp-col-mid { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 2; grid-row: 1 / span 6; }
+    .erp-col-right { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 3; grid-row: 1 / span 6; }
 
     .erp-row { display: flex; gap: 6px; align-items: flex-end; min-width: 0; width: 100%; }
     .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -122,7 +123,7 @@
     .w-80 { width: 80px; flex-shrink: 0; }
     .w-100 { width: 100px; flex-shrink: 0; }
     .w-150 { width: 150px; flex-shrink: 0; }
-    .w-250 { width: 250px; flex-shrink: 0; }
+    .w-200 { width: 200px; flex-shrink: 0; }
 
     .erp-block-box { border: 1px solid #a0a0a0; padding: 8px; background: #fff; position: relative; display: flex; flex-direction: column; }
     .erp-block-title { position: absolute; top: -7px; left: 6px; background: #fff; padding: 0 4px; font-size: 11px; color: #333; }
@@ -280,16 +281,16 @@
           <div class="erp-menu-item">Создать дубль</div>
         </div>
 
-        <!-- Сетка контента -->
+        <!-- Сетка контента (3 колонки) -->
         <div class="erp-content">
           
-          <!-- ЛЕВАЯ КОЛОНКА (Данные клиента, таблицы) -->
-          <div class="erp-left-col">
+          <!-- ЛЕВАЯ КОЛОНКА (Данные клиента, Проблема, Таблицы) -->
+          <div class="erp-col-left">
             <!-- Ряд 1 -->
             <div class="erp-row">
               <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
               <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group w-250"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
+              <div class="erp-group w-200"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
             </div>
 
             <!-- Ряд 2 -->
@@ -359,8 +360,8 @@
             </div>
           </div>
 
-          <!-- ПРАВАЯ КОЛОНКА (Тип оборуд., Бренд, Неисправность, Адрес) -->
-          <div class="erp-right-col">
+          <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА (Тип оборуд., Бренд, Неисправность, Промоутер) -->
+          <div class="erp-col-mid">
             <!-- Тип оборуд. -->
             <div class="erp-group" style="width: 100%;">
               <div class="erp-label">Тип оборуд.</div>
@@ -399,9 +400,11 @@
                 <button class="erp-btn" style="width:22px; padding:0;">✎</button>
               </div>
             </div>
+          </div>
 
-            <!-- Блок Адреса -->
-            <div class="erp-block-box" id="block-address" style="margin-top: 4px; flex: 1;">
+          <!-- ПРАВАЯ КОЛОНКА (Адрес) -->
+          <div class="erp-col-right">
+            <div class="erp-block-box" id="block-address" style="margin-top: 6px;">
               <div class="erp-block-title">Адрес КА</div>
               
               <div style="display:flex; gap:5px; margin-top:10px;">
