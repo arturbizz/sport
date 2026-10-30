@@ -100,27 +100,19 @@
     .erp-menu-item:hover { background: #f0f0f0; border-color: #ccc; }
     .erp-menu-item.active { background: #cce8ff; border-color: #99ccff; font-weight: bold; }
     
-    /* НОВАЯ СЕТКА КОНТЕНТА (Три зоны) */
+    /* НОВАЯ СЕТКА КОНТЕНТА (Строгий Grid) */
     .erp-content { 
       flex: 1; padding: 10px 12px; overflow-y: auto; 
-      display: flex; gap: 12px; 
-      height: 100%; align-items: flex-start;
+      display: grid; 
+      grid-template-columns: minmax(0, 1fr) 460px; /* Левая часть резиновая, правая фикс 460px */
+      grid-template-rows: auto auto auto auto auto auto auto; 
+      gap: 8px 12px; 
+      height: 100%; 
+      align-items: start;
     }
     
-    /* Левая часть (включает верхний блок и нижние таблицы) */
-    .erp-left-wrapper { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-    
-    /* Верхний блок (Левая часть + Центр) */
-    .erp-top-row { display: flex; gap: 12px; align-items: flex-start; width: 100%; }
-    
-    /* Левая колонка (Данные клиента) */
-    .erp-col-left { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-    
-    /* Центральная колонка (ТО, Бренд, Неисправность) */
-    .erp-col-mid { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
-
-    /* Правая колонка (Адрес) */
-    .erp-col-right { width: 420px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+    .erp-left-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 1; grid-row: 1 / span 6; }
+    .erp-right-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 2; grid-row: 1 / span 6; }
 
     .erp-row { display: flex; gap: 6px; align-items: flex-end; min-width: 0; width: 100%; }
     .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
@@ -130,7 +122,7 @@
     .w-80 { width: 80px; flex-shrink: 0; }
     .w-100 { width: 100px; flex-shrink: 0; }
     .w-150 { width: 150px; flex-shrink: 0; }
-    .w-250 { width: 250px; flex-shrink: 0; } /* Имя клиента больше не тянется */
+    .w-250 { width: 250px; flex-shrink: 0; }
 
     .erp-block-box { border: 1px solid #a0a0a0; padding: 8px; background: #fff; position: relative; display: flex; flex-direction: column; }
     .erp-block-title { position: absolute; top: -7px; left: 6px; background: #fff; padding: 0 4px; font-size: 11px; color: #333; }
@@ -145,7 +137,7 @@
     
     .erp-bottom-row { display: grid; grid-template-columns: 200px 1fr; gap: 8px; }
     
-    .erp-action-row { display: flex; justify-content: flex-end; margin-top: auto; padding-top: 10px; grid-column: 1 / -1; width: 100%; }
+    .erp-action-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: auto; padding-top: 10px; }
     .erp-action-btn { padding: 6px 40px !important; font-weight: bold !important; height: 28px !important; }
 
     /* LK и ALERTS */
@@ -291,77 +283,35 @@
         <!-- Сетка контента -->
         <div class="erp-content">
           
-          <!-- ЛЕВАЯ ЧАСТЬ (Верхний ряд + Нижние таблицы) -->
-          <div class="erp-left-wrapper">
-            
-            <!-- ВЕРХНЯЯ ЧАСТЬ (Две колонки) -->
-            <div class="erp-top-row">
-              
-              <!-- Колонка 1: Данные клиента -->
-              <div class="erp-col-left">
-                <div class="erp-row">
-                  <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
-                  <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
-                  <div class="erp-group w-250"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
-                </div>
+          <!-- ЛЕВАЯ КОЛОНКА (Данные клиента, таблицы) -->
+          <div class="erp-left-col">
+            <!-- Ряд 1 -->
+            <div class="erp-row">
+              <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
+              <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
+              <div class="erp-group w-250"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
+            </div>
 
-                <div class="erp-row">
-                  <div class="erp-group w-100"><div class="erp-label">Осн. телефон КА</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
-                  <div class="erp-group w-100"><div class="erp-label">Доп. телефон КА</div><input class="erp-input" type="text"></div>
-                </div>
+            <!-- Ряд 2 -->
+            <div class="erp-row">
+              <div class="erp-group w-100"><div class="erp-label">Осн. телефон КА</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
+              <div class="erp-group w-100"><div class="erp-label">Доп. телефон КА</div><input class="erp-input" type="text"></div>
+            </div>
 
-                <div class="erp-row">
-                  <div class="erp-group w-150"><div class="erp-label">Город клиента</div><select class="erp-input green"><option>Москва</option></select></div>
-                </div>
+            <!-- Ряд 3 -->
+            <div class="erp-row">
+              <div class="erp-group w-150"><div class="erp-label">Город клиента</div><select class="erp-input green"><option>Москва</option></select></div>
+            </div>
 
-                <div class="erp-row" style="margin-top: 4px;">
-                  <div style="display:flex; gap:10px; align-items: center; height: 22px;">
-                    <label><input type="radio" name="erp-type"> Стационар</label>
-                    <label><input type="radio" name="erp-type" checked> Выездной</label>
-                  </div>
-                </div>
+            <!-- Ряд 4 -->
+            <div class="erp-row" style="margin-top: 4px;">
+              <div style="display:flex; gap:10px; align-items: center; height: 22px;">
+                <label><input type="radio" name="erp-type"> Стационар</label>
+                <label><input type="radio" name="erp-type" checked> Выездной</label>
               </div>
+            </div>
 
-              <!-- Колонка 2: Тип оборудования и детали -->
-              <div class="erp-col-mid">
-                <div class="erp-group" style="width: 100%;">
-                  <div class="erp-label">Тип оборуд.</div>
-                  <div style="display:flex; gap:2px; width: 100%;">
-                    <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="width:50px; text-align:center; flex-shrink: 0;">
-                    <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название ТО..." style="flex:1;">
-                    <button class="erp-btn erp-btn-small">Подсказка</button>
-                  </div>
-                </div>
-
-                <div class="erp-group" style="width: 100%;">
-                  <div class="erp-label">Бренд</div>
-                  <div style="display:flex; gap:2px; width: 100%;">
-                    <input class="erp-input" type="text">
-                    <button class="erp-btn" style="width:22px; padding:0;">✕</button>
-                    <button class="erp-btn" style="width:22px; padding:0;">✎</button>
-                  </div>
-                </div>
-
-                <div class="erp-group" style="width: 100%;">
-                  <div class="erp-label">Неисправность</div>
-                  <select class="erp-input">
-                    <option></option>
-                  </select>
-                </div>
-
-                <div class="erp-group" style="width: 100%;">
-                  <div class="erp-label">Промоутер</div>
-                  <div style="display:flex; gap:2px; width: 100%;">
-                    <input class="erp-input" type="text">
-                    <button class="erp-btn" style="width:22px; padding:0;">...</button>
-                    <button class="erp-btn" style="width:22px; padding:0;">✕</button>
-                    <button class="erp-btn" style="width:22px; padding:0;">✎</button>
-                  </div>
-                </div>
-              </div>
-            </div> <!-- Конец верхнего ряда -->
-
-            <!-- НИЖНЯЯ ЧАСТЬ (Таблицы и текст) -->
+            <!-- Текстовые блоки -->
             <div class="erp-row" style="margin-top: 8px;">
               <div class="erp-block-box" style="flex: 1;">
                 <div class="erp-block-title">Проблема со слов клиента</div>
@@ -373,6 +323,7 @@
               </div>
             </div>
 
+            <!-- Таблицы -->
             <div class="erp-row" style="margin-top: 4px;">
               <div class="erp-block-box" style="flex: 1;">
                 <div class="erp-block-title">О клиенте\заказе</div>
@@ -395,6 +346,7 @@
               </div>
             </div>
 
+            <!-- Низ (Контакты, Обращение) -->
             <div class="erp-bottom-row">
               <div class="erp-block-box">
                 <div class="erp-block-title">Контакты</div>
@@ -405,12 +357,51 @@
                 <textarea class="erp-input" style="height: 80px;"></textarea>
               </div>
             </div>
+          </div>
 
-          </div> <!-- Конец левой части -->
+          <!-- ПРАВАЯ КОЛОНКА (Тип оборуд., Бренд, Неисправность, Адрес) -->
+          <div class="erp-right-col">
+            <!-- Тип оборуд. -->
+            <div class="erp-group" style="width: 100%;">
+              <div class="erp-label">Тип оборуд.</div>
+              <div style="display:flex; gap:2px; width: 100%;">
+                <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="width:50px; text-align:center; flex-shrink: 0;">
+                <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название ТО..." style="flex:1;">
+                <button class="erp-btn erp-btn-small">Подсказка</button>
+              </div>
+            </div>
 
-          <!-- ПРАВАЯ КОЛОНКА (Адрес) -->
-          <div class="erp-col-right">
-            <div class="erp-block-box" id="block-address" style="margin-top: 6px;">
+            <!-- Бренд -->
+            <div class="erp-group" style="width: 100%;">
+              <div class="erp-label">Бренд</div>
+              <div style="display:flex; gap:2px; width: 100%;">
+                <input class="erp-input" type="text">
+                <button class="erp-btn" style="width:22px; padding:0;">✕</button>
+                <button class="erp-btn" style="width:22px; padding:0;">✎</button>
+              </div>
+            </div>
+
+            <!-- Неисправность -->
+            <div class="erp-group" style="width: 100%;">
+              <div class="erp-label">Неисправность</div>
+              <select class="erp-input">
+                <option></option>
+              </select>
+            </div>
+
+            <!-- Промоутер -->
+            <div class="erp-group" style="width: 100%;">
+              <div class="erp-label">Промоутер</div>
+              <div style="display:flex; gap:2px; width: 100%;">
+                <input class="erp-input" type="text">
+                <button class="erp-btn" style="width:22px; padding:0;">...</button>
+                <button class="erp-btn" style="width:22px; padding:0;">✕</button>
+                <button class="erp-btn" style="width:22px; padding:0;">✎</button>
+              </div>
+            </div>
+
+            <!-- Блок Адреса -->
+            <div class="erp-block-box" id="block-address" style="margin-top: 4px; flex: 1;">
               <div class="erp-block-title">Адрес КА</div>
               
               <div style="display:flex; gap:5px; margin-top:10px;">
@@ -461,8 +452,8 @@
             </div>
           </div>
 
-          <!-- Кнопка Сохранить (в самом низу) -->
-          <div class="erp-action-row" style="width: 100%; display: flex; justify-content: flex-end;">
+          <!-- Кнопка Сохранить -->
+          <div class="erp-action-row">
             <button class="erp-btn erp-action-btn" id="erp-save-btn">Сохранить карточку</button>
           </div>
 
