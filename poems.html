@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Стихи · Личная студия</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0a09; --panel:#131110;
+    --line:rgba(217,172,98,.14); --line-soft:rgba(255,255,255,.055);
+    --gold:#d9ac62; --gold-bright:#f0c987;
+    --text:#efe7db; --muted:#8a8073;
+    --teal:#5eead4; --danger:#f08a7a;
+    --serif:'Cormorant Garamond',Georgia,serif;
+    --body:'Lora',Georgia,serif;
+    --ui:'Inter',system-ui,-apple-system,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    font-family:var(--ui); color:var(--text); overflow:hidden;
+    background:
+      radial-gradient(900px 600px at 88% -12%, rgba(217,172,98,.10), transparent 62%),
+      radial-gradient(760px 520px at -12% 112%, rgba(94,234,212,.055), transparent 62%),
+      var(--bg);
+    -webkit-font-smoothing:antialiased;
+  }
+  body::after{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.03;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::selection{background:rgba(217,172,98,.28); color:#fff}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:rgba(217,172,98,.14); border-radius:8px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(217,172,98,.26)}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  .app{display:grid; grid-template-columns:340px 1fr; height:100vh; position:relative; z-index:2; transition:grid-template-columns .35s cubic-bezier(.4,0,.2,1)}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    display:flex; flex-direction:column; min-height:0;
+    border-right:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(19,17,16,.94), rgba(11,10,9,.92));
+    backdrop-filter:blur(22px);
+  }
+  .brand{display:flex; align-items:center; gap:14px; padding:26px 24px 20px}
+  .brand-mark{flex:none; filter:drop-shadow(0 0 14px rgba(217,172,98,.25)); animation:spinSlow 24s linear infinite}
+  @keyframes spinSlow{to{transform:rotate(360deg)}}
+  .brand-text h1{font-family:var(--serif); font-size:1.6rem; font-weight:600; letter-spacing:.02em; line-height:1}
+  .brand-text span{display:block; font-size:.63rem; letter-spacing:.28em; text-transform:uppercase; color:var(--muted); margin-top:5px}
+
+  .btn-primary{
+    margin:0 20px 16px; padding:13px 18px; border-radius:14px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    font-family:var(--ui); font-size:.83rem; font-weight:600; letter-spacing:.02em;
+    color:#1a1410; border:none;
+    background:linear-gradient(135deg,#f0c987,#d9ac62 60%,#c1924c);
+    box-shadow:0 8px 24px rgba(217,172,98,.18), inset 0 1px 0 rgba(255,255,255,.35);
+    transition:.22s;
+  }
+  .btn-primary:hover{transform:translateY(-1px); box-shadow:0 12px 30px rgba(217,172,98,.28), inset 0 1px 0 rgba(255,255,255,.45)}
+  .btn-primary:active{transform:translateY(0)}
+
+  .search{margin:0 20px 14px; position:relative; display:flex; align-items:center}
+  .search svg{position:absolute; left:13px; color:var(--muted); pointer-events:none}
+  .search input{
+    width:100%; padding:10px 12px 10px 36px; border-radius:11px; outline:none;
+    background:rgba(255,255,255,.028); border:1px solid var(--line-soft);
+    color:var(--text); font-family:var(--ui); font-size:.8rem; transition:.2s;
+  }
+  .search input::placeholder{color:#635b50}
+  .search input:focus{border-color:rgba(217,172,98,.38); background:rgba(217,172,98,.05)}
+
+  .list{flex:1; overflow-y:auto; padding:0 14px 14px; min-height:0}
+  .poem-item{
+    display:block; width:100%; text-align:left; cursor:pointer; position:relative;
+    padding:13px 15px; margin-bottom:5px; border-radius:13px;
+    background:transparent; border:1px solid transparent; color:inherit;
+    font-family:var(--ui); transition:.2s;
+  }
+  .poem-item:hover{background:rgba(217,172,98,.055)}
+  .poem-item.active{
+    background:linear-gradient(135deg, rgba(217,172,98,.13), rgba(217,172,98,.035));
+    border-color:rgba(217,172,98,.26);
+  }
+  .poem-item.active::before{
+    content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+    width:3px; height:24px; border-radius:0 3px 3px 0; background:var(--gold);
+    box-shadow:0 0 12px rgba(217,172,98,.6);
+  }
+  .pi-top{display:flex; align-items:center; justify-content:space-between; gap:8px}
+  .pi-title{font-family:var(--serif); font-size:1.12rem; font-weight:600; letter-spacing:.01em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .pi-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);flex:none}
+  .pi-preview{font-size:.74rem; color:var(--muted); margin-top:4px; line-height:1.45;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+  .pi-date{font-size:.63rem; color:#5c554c; margin-top:6px; letter-spacing:.09em; text-transform:uppercase}
+  .list-empty{padding:34px 18px; text-align:center; font-size:.78rem; color:#5c554c; line-height:1.6}
+
+  .side-foot{
+    border-top:1px solid var(--line-soft); padding:14px 22px;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    font-size:.68rem; color:#5c554c;
+  }
+  .side-foot span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .foot-link{color:var(--muted); text-decoration:none; transition:.2s; white-space:nowrap}
+  .foot-link:hover{color:var(--gold-bright)}
+
+  /* ---------- MAIN ---------- */
+  .main{display:flex; flex-direction:column; min-height:0; padding:26px 44px 24px}
+  .editor{display:flex; flex-direction:column; height:100%; min-height:0}
+  .editor.hidden{display:none}
+
+  .main-top{display:flex; align-items:center; gap:12px}
+  .title-input{
+    flex:1; min-width:0; background:transparent; border:none; outline:none;
+    font-family:var(--serif); font-size:2.15rem; font-weight:600; letter-spacing:.01em;
+    color:var(--text); padding:4px 0;
+  }
+  .title-input::placeholder{color:rgba(138,128,115,.42); font-style:italic}
+
+  .actions{display:flex; gap:8px; flex:none}
+  .icon-btn{
+    width:42px; height:42px; border-radius:12px; display:grid; place-items:center;
+    background:rgba(255,255,255,.028); border:1px solid var(--line-soft);
+    color:var(--muted); cursor:pointer; transition:.2s;
+  }
+  .icon-btn:hover{
+    color:var(--gold-bright); border-color:rgba(217,172,98,.4);
+    background:rgba(217,172,98,.08); transform:translateY(-1px);
+  }
+  .icon-btn.danger:hover{color:var(--danger); border-color:rgba(240,138,122,.45); background:rgba(240,138,122,.08)}
+  .icon-btn.armed{color:var(--danger); border-color:rgba(240,138,122,.6); background:rgba(240,138,122,.14);
+    box-shadow:0 0 20px rgba(240,138,122,.2)}
+  .icon-btn.active{color:var(--gold-bright); border-color:rgba(217,172,98,.45); background:rgba(217,172,98,.1)}
+  .menu-btn{display:none}
+
+  .staff{
+    height:26px; margin:6px 0 2px;
+    background-image:repeating-linear-gradient(to bottom, transparent 0 5px, rgba(217,172,98,.11) 5px 6px);
+    -webkit-mask-image:linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-image:linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  .meta{display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:2px 0 4px}
+  .status-pill{
+    font-family:var(--ui); font-size:.66rem; font-weight:600; letter-spacing:.16em; text-transform:uppercase;
+    padding:6px 15px; border-radius:999px; cursor:pointer; transition:.22s;
+    border:1px solid rgba(217,172,98,.26); background:rgba(217,172,98,.07); color:var(--gold);
+  }
+  .status-pill:hover{background:rgba(217,172,98,.14)}
+  .status-pill[data-status="ready"]{
+    border-color:rgba(94,234,212,.32); background:rgba(94,234,212,.09); color:var(--teal);
+    box-shadow:0 0 22px rgba(94,234,212,.1);
+  }
+  .stats{font-size:.71rem; color:#635b50; letter-spacing:.03em}
+  .save-state{
+    font-size:.66rem; letter-spacing:.14em; text-transform:uppercase; color:var(--teal);
+    opacity:0; transform:translateY(4px); transition:.3s; margin-left:auto;
+  }
+  .save-state.show{opacity:.85; transform:translateY(0)}
+
+  .body-input{
+    flex:1; min-height:0; width:100%; resize:none; outline:none; border:none;
+    background:transparent; color:var(--text); overflow-y:auto;
+    font-family:var(--body); font-size:18.5px; line-height:1.95; letter-spacing:.005em;
+    padding:18px 8px 40px 0;
+  }
+  .body-input::placeholder{color:rgba(138,128,115,.35); font-style:italic}
+
+  /* ---------- EMPTY ---------- */
+  .empty{display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center}
+  .empty.show{display:flex}
+  .empty svg line{transform-box:fill-box; transform-origin:center; animation:breathe 3.4s ease-in-out infinite}
+  .empty svg line:nth-child(1){animation-delay:0s}
+  .empty svg line:nth-child(2){animation-delay:.18s}
+  .empty svg line:nth-child(3){animation-delay:.36s}
+  .empty svg line:nth-child(4){animation-delay:.54s}
+  .empty svg line:nth-child(5){animation-delay:.72s}
+  .empty svg line:nth-child(6){animation-delay:.9s}
+  .empty svg line:nth-child(7){animation-delay:.36s}
+  .empty svg line:nth-child(8){animation-delay:.18s}
+  .empty svg line:nth-child(9){animation-delay:0s}
+  @keyframes breathe{0%,100%{transform:scaleY(.55); opacity:.45} 50%{transform:scaleY(1); opacity:.95}}
+  .empty h2{font-family:var(--serif); font-size:2rem; font-weight:600; color:rgba(239,231,219,.75); margin-top:14px}
+  .empty p{font-size:.83rem; color:#5c554c}
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed; left:50%; bottom:34px; transform:translate(-50%,18px); z-index:100;
+    background:rgba(25,22,20,.97); border:1px solid rgba(217,172,98,.32);
+    color:var(--text); padding:12px 24px; border-radius:14px;
+    font-size:.82rem; letter-spacing:.01em; pointer-events:none; opacity:0;
+    transition:.32s cubic-bezier(.4,0,.2,1); box-shadow:0 16px 46px rgba(0,0,0,.6);
+  }
+  .toast.show{opacity:1; transform:translate(-50%,0)}
+
+  /* ---------- FOCUS MODE ---------- */
+  .app.focus{grid-template-columns:0px 1fr}
+  .app.focus .sidebar{opacity:0; pointer-events:none; border:none}
+  .app.focus .main{padding-left:14vw; padding-right:14vw}
+
+  /* ---------- MOBILE ---------- */
+  .backdrop{display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); backdrop-filter:blur(3px); z-index:30}
+  .backdrop.show{display:block}
+  @media(max-width:920px){
+    .app{grid-template-columns:1fr}
+    .sidebar{position:fixed; inset:0 auto 0 0; width:308px; z-index:40; transform:translateX(-102%); transition:transform .32s cubic-bezier(.4,0,.2,1)}
+    .sidebar.open{transform:translateX(0)}
+    .menu-btn{display:grid}
+    .main{padding:18px 18px 14px}
+    .title-input{font-size:1.55rem}
+    .body-input{font-size:17px; line-height:1.85}
+    .app.focus{grid-template-columns:1fr}
+    .app.focus .main{padding-left:18px; padding-right:18px}
+  }
+</style>
+</head>
+<body>
+
+<div class="backdrop" id="backdrop"></div>
+
+<div class="app" id="app">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <svg class="brand-mark" width="40" height="40" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="21" stroke="#d9ac62" stroke-width="1" opacity=".45"/>
+        <circle cx="24" cy="24" r="14.5" stroke="#d9ac62" stroke-width=".8" opacity=".28"/>
+        <circle cx="24" cy="24" r="8" stroke="#d9ac62" stroke-width=".8" opacity=".2"/>
+        <circle cx="24" cy="24" r="3" fill="#f0c987"/>
+        <path d="M24 3a21 21 0 0 1 21 21" stroke="#f0c987" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <div class="brand-text">
+        <h1>Стихи</h1>
+        <span>личная студия</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="newBtn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Новый стих
+    </button>
+
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="text" placeholder="Поиск по строкам…" autocomplete="off">
+    </div>
+
+    <div class="list" id="poemList"></div>
+
+    <div class="side-foot">
+      <span id="userFoot"></span>
+      <a href="index.html" class="foot-link">← На главную</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="editor" id="editor">
+      <div class="main-top">
+        <button class="icon-btn menu-btn" id="menuBtn" title="Список">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <input id="titleInput" class="title-input" placeholder="Без названия" autocomplete="off" spellcheck="false">
+        <div class="actions">
+          <button class="icon-btn" id="focusBtn" title="Режим фокуса">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </button>
+          <button class="icon-btn" id="copyBtn" title="Скопировать текст">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"/></svg>
+          </button>
+          <button class="icon-btn danger" id="deleteBtn" title="Удалить">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4.8A1.8 1.8 0 0 1 10.8 3h2.4A1.8 1.8 0 0 1 15 4.8V7"/><path d="M6.5 7l.8 12.2A2 2 0 0 0 9.3 21h5.4a2 2 0 0 0 2-1.8L17.5 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="staff"></div>
+
+      <div class="meta">
+        <button class="status-pill" id="statusPill" data-status="draft">черновик</button>
+        <span class="stats" id="stats"></span>
+        <span class="save-state" id="saveState">сохранено</span>
+      </div>
+
+      <textarea id="bodyInput" class="body-input" placeholder="Здесь рождаются строки…" spellcheck="false"></textarea>
+    </div>
+
+    <div class="empty" id="emptyState">
+      <svg width="150" height="64" viewBox="0 0 150 64" fill="none" stroke="#d9ac62" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="26" x2="12" y2="38"/>
+        <line x1="27" y1="18" x2="27" y2="46"/>
+        <line x1="42" y1="10" x2="42" y2="54"/>
+        <line x1="57" y1="22" x2="57" y2="42"/>
+        <line x1="72" y1="14" x2="72" y2="50"/>
+        <line x1="87" y1="24" x2="87" y2="40"/>
+        <line x1="102" y1="8" x2="102" y2="56"/>
+        <line x1="117" y1="20" x2="117" y2="44"/>
+        <line x1="132" y1="26" x2="132" y2="38"/>
+      </svg>
+      <h2>Тишина</h2>
+      <p>Выберите стих слева или начните новый</p>
+    </div>
+  </main>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const $ = (id) => document.getElementById(id);
+  const titleInput = $('titleInput'), bodyInput = $('bodyInput'), listEl = $('poemList'),
+        searchInput = $('searchInput'), statsEl = $('stats'), saveStateEl = $('saveState'),
+        statusPill = $('statusPill'), editorEl = $('editor'), emptyEl = $('emptyState'),
+        appEl = $('app'), sidebarEl = $('sidebar'), backdropEl = $('backdrop');
+
+  let poems = [];
+  let currentId = null;
+  let currentStatus = 'draft';
+  let dirty = false;
+  let saveTimer = null, savedTimer = null, armTimer = null, deleteArmed = false;
+
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._tm);
+    t._tm = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function flashSaved() {
+    saveStateEl.classList.add('show');
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => saveStateEl.classList.remove('show'), 1600);
+  }
+
+  function showEditor() { editorEl.classList.remove('hidden'); emptyEl.classList.remove('show'); }
+  function showEmpty() { editorEl.classList.add('hidden'); emptyEl.classList.add('show'); }
+
+  function displayTitle(p) { return (p.title && p.title.trim()) ? p.title : 'Без названия'; }
+
+  function renderList() {
+    const q = searchInput.value.trim().toLowerCase();
+    const items = poems.filter(p => {
+      if (!q) return true;
+      return (p.title || '').toLowerCase().includes(q) || (p.body || '').toLowerCase().includes(q);
+    });
+    listEl.innerHTML = '';
+    if (!items.length) {
+      const d = document.createElement('div');
+      d.className = 'list-empty';
+      d.textContent = q ? 'Ничего не найдено' : 'Пока пусто — начните первый стих';
+      listEl.appendChild(d);
+      return;
+    }
+    items.forEach(p => {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'poem-item' + (p.id === currentId ? ' active' : '');
+      const preview = (p.body || '').trim().replace(/\s+/g, ' ').slice(0, 70) || 'Пустой стих';
+      const date = new Date(p.updated_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+      el.innerHTML =
+        '<div class="pi-top"><span class="pi-title">' + esc(displayTitle(p)) + '</span>' +
+        (p.status === 'ready' ? '<span class="pi-dot"></span>' : '') + '</div>' +
+        '<div class="pi-preview">' + esc(preview) + '</div>' +
+        '<div class="pi-date">' + date + '</div>';
+      el.onclick = () => { selectPoem(p.id); closeSidebar(); };
+      listEl.appendChild(el);
+    });
+  }
+
+  function updateStats() {
+    const t = bodyInput.value;
+    const lines = t.split('\n').filter(l => l.trim()).length;
+    const words = t.trim() ? t.trim().split(/\s+/).length : 0;
+    const syll = (t.toLowerCase().match(/[аеёиоуыэюя]/g) || []).length;
+    statsEl.textContent = 'строк: ' + lines + ' · слов: ' + words + ' · слогов: ' + syll + ' · знаков: ' + t.length;
+  }
+
+  function setStatus(s) {
+    currentStatus = s;
+    statusPill.dataset.status = s;
+    statusPill.textContent = s === 'ready' ? 'готово' : 'черновик';
+  }
+
+  async function loadPoems() {
+    const { data, error } = await sb.from('poems').select('*').order('updated_at', { ascending: false });
+    if (error) { console.error(error); toast('Не удалось загрузить стихи'); poems = []; return; }
+    poems = data || [];
+    renderList();
+  }
+
+  async function selectPoem(id) {
+    if (id === currentId) return;
+    await flushSave();
+    const p = poems.find(x => x.id === id);
+    if (!p) return;
+    currentId = id;
+    titleInput.value = (p.title === 'Без названия') ? '' : (p.title || '');
+    bodyInput.value = p.body || '';
+    setStatus(p.status || 'draft');
+    dirty = false;
+    updateStats();
+    renderList();
+    showEditor();
+  }
+
+  function newPoem() {
+    flushSave().then(() => {
+      currentId = null;
+      titleInput.value = '';
+      bodyInput.value = '';
+      setStatus('draft');
+      dirty = false;
+      updateStats();
+      renderList();
+      showEditor();
+      closeSidebar();
+      titleInput.focus();
+    });
+  }
+
+  function scheduleSave() {
+    dirty = true;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveNow, 1100);
+  }
+
+  async function saveNow() {
+    clearTimeout(saveTimer);
+    const title = titleInput.value.trim();
+    const body = bodyInput.value;
+    if (!currentId && !title && !body.trim()) { dirty = false; return; }
+    const payload = {
+      title: title || 'Без названия',
+      body: body,
+      status: currentStatus,
+      updated_at: new Date().toISOString()
+    };
+    if (currentId) {
+      const { error } = await sb.from('poems').update(payload).eq('id', currentId);
+      if (error) { console.error(error); toast('Ошибка сохранения'); return; }
+      const p = poems.find(x => x.id === currentId);
+      if (p) Object.assign(p, payload);
+    } else {
+      const { data, error } = await sb.from('poems').insert(payload).select().single();
+      if (error) { console.error(error); toast('Ошибка сохранения'); return; }
+      poems.unshift(data);
+      currentId = data.id;
+    }
+    dirty = false;
+    poems.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    renderList();
+    flashSaved();
+  }
+
+  async function flushSave() {
+    if (!dirty) return;
+    await saveNow();
+  }
+
+  async function doDelete() {
+    if (!currentId) { showEmpty(); return; }
+    const { error } = await sb.from('poems').delete().eq('id', currentId);
+    if (error) { console.error(error); toast('Не удалось удалить'); return; }
+    poems = poems.filter(p => p.id !== currentId);
+    currentId = null;
+    dirty = false;
+    toast('Стих удалён');
+    if (poems.length) { await selectPoem(poems[0].id); }
+    else { titleInput.value = ''; bodyInput.value = ''; showEmpty(); renderList(); }
+  }
+
+  async function copyPoem() {
+    const text = bodyInput.value;
+    if (!text.trim()) { toast('Пока пусто'); return; }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast('Текст скопирован');
+    } catch (e) {
+      bodyInput.select(); document.execCommand('copy'); bodyInput.setSelectionRange(0, 0);
+      toast('Текст скопирован');
+    }
+  }
+
+  function openSidebar() { sidebarEl.classList.add('open'); backdropEl.classList.add('show'); }
+  function closeSidebar() { sidebarEl.classList.remove('open'); backdropEl.classList.remove('show'); }
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'login.html'; return; }
+    $('userFoot').textContent = session.user.email;
+
+    await loadPoems();
+    if (poems.length) await selectPoem(poems[0].id);
+    else showEmpty();
+
+    $('newBtn').onclick = newPoem;
+    searchInput.oninput = renderList;
+    $('copyBtn').onclick = copyPoem;
+
+    $('deleteBtn').onclick = () => {
+      if (!currentId) { toast('Нечего удалять'); return; }
+      if (!deleteArmed) {
+        deleteArmed = true;
+        $('deleteBtn').classList.add('armed');
+        toast('Нажмите ещё раз, чтобы удалить');
+        clearTimeout(armTimer);
+        armTimer = setTimeout(() => { deleteArmed = false; $('deleteBtn').classList.remove('armed'); }, 3000);
+        return;
+      }
+      clearTimeout(armTimer);
+      deleteArmed = false;
+      $('deleteBtn').classList.remove('armed');
+      doDelete();
+    };
+
+    $('focusBtn').onclick = () => {
+      appEl.classList.toggle('focus');
+      $('focusBtn').classList.toggle('active');
+    };
+
+    $('menuBtn').onclick = openSidebar;
+    backdropEl.onclick = closeSidebar;
+
+    statusPill.onclick = () => {
+      setStatus(currentStatus === 'ready' ? 'draft' : 'ready');
+      scheduleSave();
+    };
+
+    titleInput.addEventListener('input', scheduleSave);
+    bodyInput.addEventListener('input', () => { updateStats(); scheduleSave(); });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); saveNow(); }
+      if (e.key === 'Escape') { closeSidebar(); appEl.classList.remove('focus'); $('focusBtn').classList.remove('active'); }
+    });
+
+    window.addEventListener('beforeunload', (e) => {
+      if (dirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
