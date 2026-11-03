@@ -8,55 +8,92 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
+  <style>
+    /* Экран блокировки */
+    #pin-lock-screen {
+      position: fixed; inset: 0; background: var(--bg); z-index: 9999;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+    }
+    .pin-lock-card {
+      background: var(--bg-elevated); padding: 40px; border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl); text-align: center; max-width: 400px; width: 100%;
+      border: 1px solid var(--hairline);
+      animation: fadeUp 0.4s var(--spring);
+    }
+    .pin-lock-card h2 { margin-bottom: 8px; font-family: var(--font-display); font-size: 24px; }
+    .pin-lock-card p { color: var(--ink-2); margin-bottom: 24px; font-size: 14px; }
+    .pin-input {
+      width: 100%; padding: 16px; border: 1px solid var(--hairline-2); border-radius: var(--radius-md);
+      font-size: 20px; text-align: center; letter-spacing: 4px; font-family: var(--font-mono);
+      text-transform: uppercase; margin-bottom: 16px; outline: none; transition: all 0.2s;
+    }
+    .pin-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .pin-error { color: var(--error); font-size: 13px; margin-top: 12px; display: none; }
+  </style>
 </head>
 <body>
 
-  <button class="sidebar-open-fab" id="sidebar-open-fab" title="Открыть меню">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <line x1="3" y1="12" x2="21" y2="12"/>
-      <line x1="3" y1="18" x2="21" y2="18"/>
-    </svg>
-  </button>
+  <!-- ЭКРАН БЛОКИРОВКИ (Показывается, если нет доступа) -->
+  <div id="pin-lock-screen" style="display: none;">
+    <div class="pin-lock-card">
+      <div class="brand-mark" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
+      <h2>Доступ к Базе Знаний</h2>
+      <p>Введите PIN-код, который выдал ваш руководитель, чтобы продолжить.</p>
+      <input type="text" id="pin-input" class="pin-input" placeholder="KB-XXXX" maxlength="7" autocomplete="off">
+      <button id="pin-submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Войти</button>
+      <div id="pin-error" class="pin-error">Неверный PIN-код. Попробуйте еще раз.</div>
+    </div>
+  </div>
 
-  <div class="layout" id="kb-layout">
-    <aside class="sidebar">
-      <div class="brand" style="cursor:default;">
-        <span class="brand-mark"></span>
-        <span class="brand-name">База знаний</span>
-        <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Свернуть меню">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 18l-6-6 6-6"/>
+  <!-- ОСНОВНОЙ ИНТЕРФЕЙС (Скрыт по умолчанию) -->
+  <div id="main-content" style="display: none;">
+    <button class="sidebar-open-fab" id="sidebar-open-fab" title="Открыть меню">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+
+    <div class="layout" id="kb-layout">
+      <aside class="sidebar">
+        <div class="brand" style="cursor:default;">
+          <span class="brand-mark"></span>
+          <span class="brand-name">База знаний</span>
+          <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Свернуть меню">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="must-know-wrap" id="must-know-wrap" style="display:none;">
+          <button class="must-know-btn" id="must-know-btn">
+            <svg class="must-know-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span>Важное</span>
+            <span class="count" id="must-know-count">0</span>
+          </button>
+        </div>
+
+        <div class="section-label">Разделы</div>
+        <nav class="categories" id="categories"></nav>
+        <div class="sidebar-footer">База знаний колл-центра</div>
+      </aside>
+
+      <main class="main">
+        <div class="search-wrap">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="8" cy="8" r="5"/>
+            <path d="M12 12l4 4"/>
           </svg>
-        </button>
-      </div>
-
-      <div class="must-know-wrap" id="must-know-wrap" style="display:none;">
-        <button class="must-know-btn" id="must-know-btn">
-          <svg class="must-know-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-          </svg>
-          <span>Важное</span>
-          <span class="count" id="must-know-count">0</span>
-        </button>
-      </div>
-
-      <div class="section-label">Разделы</div>
-      <nav class="categories" id="categories"></nav>
-      <div class="sidebar-footer">База знаний колл-центра</div>
-    </aside>
-
-    <main class="main">
-      <div class="search-wrap">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-          <circle cx="8" cy="8" r="5"/>
-          <path d="M12 12l4 4"/>
-        </svg>
-        <input type="search" class="search-input" id="search-input"
-               placeholder="Найти процедуру, скрипт или проблему" autocomplete="off">
-      </div>
-      <div class="results" id="results"><div class="loading-text">Загрузка…</div></div>
-    </main>
+          <input type="search" class="search-input" id="search-input"
+                 placeholder="Найти процедуру, скрипт или проблему" autocomplete="off">
+        </div>
+        <div class="results" id="results"><div class="loading-text">Загрузка…</div></div>
+      </main>
+    </div>
   </div>
 
   <div class="lightbox" id="lightbox">
@@ -71,6 +108,63 @@
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // === ЛОГИКА PIN-КОДА ===
+    async function checkAccess() {
+      const isUnlocked = localStorage.getItem('kb_access_unlocked');
+      const lockScreen = document.getElementById('pin-lock-screen');
+      const mainContent = document.getElementById('main-content');
+      
+      if (isUnlocked === 'true') {
+        lockScreen.style.display = 'none';
+        mainContent.style.display = 'block';
+        return true; 
+      } else {
+        lockScreen.style.display = 'flex';
+        mainContent.style.display = 'none';
+        return false;
+      }
+    }
+
+    document.getElementById('pin-submit').addEventListener('click', async () => {
+      const pin = document.getElementById('pin-input').value.trim();
+      const errorEl = document.getElementById('pin-error');
+      if (!pin) return;
+
+      const btn = document.getElementById('pin-submit');
+      btn.textContent = 'Проверка...';
+      btn.disabled = true;
+
+      // Вызываем нашу RPC функцию в Supabase
+      const { data: isValid, error } = await supabaseClient.rpc('verify_kb_pin', { input_pin: pin });
+      
+      btn.textContent = 'Войти';
+      btn.disabled = false;
+
+      if (error) {
+        console.error(error);
+        errorEl.textContent = 'Ошибка сервера. Попробуйте позже.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      if (isValid) {
+        localStorage.setItem('kb_access_unlocked', 'true');
+        document.getElementById('pin-lock-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        loadArticles(); // Загружаем статьи после успешного входа
+      } else {
+        errorEl.style.display = 'block';
+        document.getElementById('pin-input').value = '';
+      }
+    });
+
+    // Запускаем проверку при загрузке
+    if (checkAccess()) {
+      // Если доступ уже был, инициализируем переменные и грузим статьи
+      setTimeout(() => { initUI(); }, 0); 
+    }
+    // =========================
 
     let allArticles = [];
     let activeCategory = '';
@@ -97,29 +191,29 @@
       els.layout.classList.toggle('sidebar-hidden', hidden);
       els.openFab.classList.toggle('show', hidden);
     }
-    els.collapseBtn.addEventListener('click', () => {
-      localStorage.setItem(SIDEBAR_KEY, '1');
-      updateSidebarState();
-    });
-    els.openFab.addEventListener('click', () => {
-      localStorage.setItem(SIDEBAR_KEY, '0');
-      updateSidebarState();
-    });
+    if(els.collapseBtn) {
+      els.collapseBtn.addEventListener('click', () => {
+        localStorage.setItem(SIDEBAR_KEY, '1');
+        updateSidebarState();
+      });
+    }
+    if(els.openFab) {
+      els.openFab.addEventListener('click', () => {
+        localStorage.setItem(SIDEBAR_KEY, '0');
+        updateSidebarState();
+      });
+    }
     updateSidebarState();
 
     const PURIFY_CONFIG = {
-      ADD_TAGS: ['figure', 'figcaption', 'img', 'mark', 'u', 'del', 'div', 'span'],
+      ADD_TAGS: ['figure', 'figcaption', 'img', 'mark', 'u', 'del', 'div', 'span', 'details', 'summary'],
       ADD_ATTR: ['src', 'alt', 'title', 'width', 'height', 'loading', 'target', 'rel', 'class'],
       ALLOW_DATA_ATTR: false,
     };
 
     const CALLOUT_TITLES = {
-      note: 'Заметка',
-      tip: 'Совет',
-      warning: 'Внимание',
-      danger: 'Запрещено',
-      success: 'Готово',
-      important: 'Важно'
+      note: 'Заметка', tip: 'Совет', warning: 'Внимание',
+      danger: 'Запрещено', success: 'Готово', important: 'Важно'
     };
     const CALLOUT_TYPES = 'note|tip|warning|danger|success|important';
 
@@ -143,7 +237,6 @@
       const tmp = document.createElement('div');
       tmp.innerHTML = clean;
       
-      // Убрали автоматическое создание подписей (figcaption)
       tmp.querySelectorAll('img').forEach(img => {
         img.setAttribute('loading', 'lazy');
         img.setAttribute('decoding', 'async');
@@ -191,6 +284,7 @@
     }
 
     async function loadArticles() {
+      // RLS автоматически отфильтрует скрытые статьи (is_published = false) для неавторизованных
       const { data, error } = await supabaseClient
         .from('knowledge_articles').select('*')
         .order('category', { ascending: true }).order('title', { ascending: true });
@@ -461,7 +555,11 @@
       renderList(filterArticles());
     });
 
-    loadArticles();
+    // Функция для инициализации после ввода пина
+    function initUI() {
+      updateSidebarState();
+      loadArticles();
+    }
   </script>
 </body>
 </html>
