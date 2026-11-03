@@ -117,6 +117,9 @@
     .pin-item:last-child { border-bottom: none; }
     .pin-code { font-family: var(--font-mono); font-size: 16px; font-weight: 600; letter-spacing: 1px; }
     .pin-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: rgba(16, 185, 129, 0.1); color: #059669; }
+    .pin-status.expired { background: rgba(239, 68, 68, 0.1); color: #DC2626; }
+    .btn-clear-pins { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: 500; transition: all 0.2s; margin-bottom: 10px; }
+    .btn-clear-pins:hover { background: var(--error); color: white; }
   </style>
 </head>
 <body>
@@ -128,7 +131,7 @@
   <div class="pin-modal" id="pin-modal">
     <div class="pin-window">
       <h3>Управление PIN-кодами</h3>
-      <p style="font-size:13px; color:var(--ink-3); margin-bottom:16px;">Выдавайте эти коды сотрудникам для доступа к Базе Знаний.</p>
+      <p style="font-size:13px; color:var(--ink-3); margin-bottom:16px;">Выдавайте эти коды сотрудникам. Они действуют ровно 24 часа.</p>
       
       <div style="display:flex; gap:10px; margin-bottom:16px;">
         <button class="btn btn-primary" id="btn-generate-pin" style="flex:1;">Сгенерировать новый PIN</button>
@@ -138,6 +141,7 @@
         <!-- Сюда будут загружаться пины -->
       </div>
 
+      <button class="btn-clear-pins" id="btn-clear-all-pins">Удалить все PIN-коды (завершить день)</button>
       <button class="btn btn-ghost" id="pin-modal-close" style="width:100%;">Закрыть</button>
     </div>
   </div>
@@ -391,18 +395,24 @@
         return;
       }
       
-      list.innerHTML = data.map(p => `
+      const now = new Date();
+      list.innerHTML = data.map(p => {
+        const expDate = new Date(p.expires_at);
+        const isExpired = expDate < now;
+        const expString = expDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        
+        return `
         <div class="pin-item">
           <div>
             <span class="pin-code">${p.pin_code}</span>
-            <div style="font-size:11px;color:#666;margin-top:4px;">Создан: ${new Date(p.created_at).toLocaleDateString()}</div>
+            <div style="font-size:11px;color:#666;margin-top:4px;">Действует до: ${expString}</div>
           </div>
           <div>
-            ${p.is_active ? '<span class="pin-status">Активен</span>' : '<span style="font-size:11px;color:red;">Отключен</span>'}
+            ${isExpired ? '<span class="pin-status expired">Истек</span>' : '<span class="pin-status">Активен</span>'}
             <button class="btn btn-danger btn-sm" onclick="deletePin('${p.id}')" style="margin-left:8px;padding:4px 8px;">Удалить</button>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
     window.deletePin = async (id) => {
@@ -426,6 +436,13 @@
       const { error } = await supabaseClient.from('access_pins').insert({ pin_code: code });
       if (error) { alert('Ошибка: ' + error.message); return; }
       toast('Создан новый PIN: ' + code, 'success');
+      loadPins();
+    });
+    $('btn-clear-all-pins')?.addEventListener('click', async () => {
+      if(!confirm('Удалить ВСЕ PIN-коды? Все сотрудники потеряют доступ при следующем входе.')) return;
+      const { error } = await supabaseClient.from('access_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Удаляет всё
+      if (error) { alert('Ошибка: ' + error.message); return; }
+      toast('Все PIN-коды удалены', 'success');
       loadPins();
     });
 
