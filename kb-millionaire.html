@@ -17,6 +17,11 @@
     /* ========== START CARD ========== */
     .mm-start-card { max-width: 580px; margin: 0 auto; background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid var(--g-hairline-2); border-radius: 20px; padding: 36px 32px; text-align: center; }
     .mm-start-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+    
+    .mm-setup-inputs { display: flex; gap: 12px; margin-bottom: 24px; }
+    .mm-input { flex: 1; padding: 14px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink); font-family: var(--g-font); font-size: 15px; transition: all 0.2s; outline: none; text-align: center; }
+    .mm-input:focus { border-color: var(--g-gold); box-shadow: 0 0 0 3px rgba(255, 201, 64, 0.15); }
+    
     .mm-rules { text-align: left; color: var(--g-ink-2); font-size: 14px; line-height: 1.8; margin-bottom: 28px; }
     .mm-rules li { list-style: none; padding-left: 24px; position: relative; margin-bottom: 8px; }
     .mm-rules li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; border-radius: 2px; background: var(--g-gold); transform: rotate(45deg); }
@@ -43,7 +48,7 @@
 
     /* ========== LAYOUT ========== */
     .mm-game { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
-    @media (max-width: 900px) { .mm-game { grid-template-columns: 1fr; } .mm-ladder { order: -1; } }
+    @media (max-width: 900px) { .mm-game { grid-template-columns: 1fr; } .mm-ladder { order: -1; max-height: 200px; } }
 
     /* ========== TOP BAR ========== */
     .mm-top { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 14px 20px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-hairline-2); border-radius: 12px; }
@@ -51,8 +56,11 @@
     .mm-timer.warning { color: var(--g-danger); animation: gShake 0.4s ease; }
     .mm-timer svg { width: 18px; height: 18px; }
     
-    /* ========== LIFELINES ========== */
-    .mm-lifelines { display: flex; gap: 8px; margin-left: auto; }
+    /* ========== LIFELINES & VOLUME ========== */
+    .mm-controls { display: flex; gap: 16px; margin-left: auto; align-items: center; }
+    .mm-volume { display: flex; align-items: center; gap: 8px; }
+    .mm-volume input { width: 60px; accent-color: var(--g-gold); cursor: pointer; }
+    
     .mm-lifeline { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--g-hairline-2); display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: var(--g-mono); font-weight: 700; font-size: 13px; color: var(--g-ink); transition: all 0.2s; }
     .mm-lifeline:hover:not(:disabled) { border-color: var(--g-gold); color: var(--g-gold); background: rgba(255, 201, 64, 0.1); transform: scale(1.05); }
     .mm-lifeline:disabled { opacity: 0.3; cursor: not-allowed; position: relative; }
@@ -81,7 +89,7 @@
     .mm-option.hidden { visibility: hidden; }
 
     /* ========== LADDER ========== */
-    .mm-ladder { position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; border-radius: 16px; padding: 20px 14px 16px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, rgba(255, 79, 163, 0.03) 50%, rgba(16, 229, 168, 0.04) 100%), rgba(10, 6, 20, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+    .mm-ladder { position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; scroll-behavior: smooth; border-radius: 16px; padding: 20px 14px 16px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, rgba(255, 79, 163, 0.03) 50%, rgba(16, 229, 168, 0.04) 100%), rgba(10, 6, 20, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
     .mm-ladder::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 16px 16px 0 0; background: linear-gradient(90deg, var(--g-violet), var(--g-magenta), var(--g-gold), var(--g-emerald), var(--g-violet)); background-size: 300% 100%; animation: holoFlow 4s linear infinite; }
     @keyframes holoFlow { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
     .mm-ladder-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--g-ink-3); font-weight: 700; margin-bottom: 16px; padding: 0 6px; }
@@ -174,7 +182,6 @@
 </head>
 <body>
 
-  <!-- Надежные тестовые аудио-ссылки -->
   <audio id="bgm" loop>
     <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
   </audio>
@@ -191,10 +198,11 @@
   <div class="balloon-container" id="balloon-container"></div>
 
   <div class="game-bar">
-    <a href="knowledge-base.html" class="game-bar-logo">
+    <!-- Логотип теперь не кликабельный -->
+    <div class="game-bar-logo" style="cursor:default;">
       <div class="game-bar-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg></div>
       <span class="game-bar-title">Миллионер</span>
-    </a>
+    </div>
     <div class="game-bar-spacer"></div>
     <div class="game-bar-actions">
       <a href="kb-trainer.html" class="game-btn game-btn-sm">Тренажёр</a>
@@ -211,8 +219,14 @@
     <!-- ЭКРАН СТАРТА -->
     <div id="start-screen">
       <div class="mm-start-card">
-        <h2>Выбери направление</h2>
+        <h2>Регистрация</h2>
         
+        <div class="mm-setup-inputs">
+            <input type="text" class="mm-input" id="player-nick" placeholder="Твой ник" maxlength="20">
+            <input type="text" class="mm-input" id="player-pin" placeholder="PIN (от админа)" maxlength="10" style="text-transform: uppercase;">
+        </div>
+
+        <h2 style="margin-top: 24px;">Выбери направление</h2>
         <div class="mm-categories">
           <button class="mm-cat-btn active" data-category="Mix">
             <span>
@@ -242,7 +256,7 @@
           <li>60 секунд на каждый вопрос</li>
           <li>Несгораемые суммы на 5 и 10 вопросах</li>
           <li>1 подсказка «50 на 50» на игру</li>
-          <li class="rule-highlight">Ошибка — игра заканчивается, забираешь несгораемую сумму.</li>
+          <li class="rule-highlight">Внимание! Защита от сброса: если вы обновите страницу во время игры, вы продолжите с того же места. Сбросить прогресс нельзя.</li>
         </ul>
         <button class="mm-btn-start" id="btn-start"><span>Начать игру</span></button>
       </div>
@@ -260,8 +274,11 @@
           <div class="mm-top">
             <div class="mm-timer" id="timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="timer-text">60</span></div>
             
-            <div class="mm-lifelines">
-              <button class="mm-lifeline" id="btn-music" title="Вкл/Выкл музыку">🔊</button>
+            <div class="mm-controls">
+              <div class="mm-volume">
+                  <span style="cursor:pointer;" id="btn-music">🔊</span>
+                  <input type="range" id="bgm-volume" min="0" max="1" step="0.1" value="0.3">
+              </div>
               <button class="mm-lifeline" id="btn-5050" title="50 на 50">50:50</button>
             </div>
 
@@ -273,7 +290,7 @@
           </div>
           <div class="mm-options" id="options"></div>
         </div>
-        <aside class="mm-ladder">
+        <aside class="mm-ladder" id="ladder-container">
           <div class="mm-ladder-title">Лесенка</div>
           <div id="ladder-items"></div>
         </aside>
@@ -293,32 +310,12 @@
           <div class="mm-result-stat"><div class="mm-result-stat-value" id="result-time">0с</div><div class="mm-result-stat-label">Время</div></div>
         </div>
         <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 32px;">
-          <button class="game-btn game-btn-primary" id="btn-play-again">Играть снова</button>
           <a href="knowledge-base.html" class="game-btn">← В БЗ</a>
         </div>
         <div class="mm-leaderboard">
           <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Топ-10 игроков</h3>
           <div id="lb-list-result"><div class="mm-lb-empty">Загрузка…</div></div>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="game-modal-backdrop" id="name-modal">
-    <div class="game-modal">
-      <h2 id="modal-title">Отличный результат!</h2>
-      <p id="modal-subtitle">Введи своё имя, чтобы попасть в рейтинг.</p>
-      <div class="field">
-        <label for="player-name">Имя</label>
-        <input type="text" id="player-name" placeholder="Например, Иван" maxlength="30" autocomplete="off">
-      </div>
-      <div class="player-code-box">
-        <span class="player-code-label">Твой код:</span>
-        <span class="player-code-value" id="modal-code">———</span>
-      </div>
-      <div class="game-modal-actions">
-        <button class="game-btn" id="btn-cancel-name">Пропустить</button>
-        <button class="game-btn game-btn-primary" id="btn-save-name">Сохранить</button>
       </div>
     </div>
   </div>
@@ -344,6 +341,9 @@
     let isMusicMuted = false;
 
     bgm.volume = 0.3; 
+    document.getElementById('bgm-volume').addEventListener('input', (e) => {
+        bgm.volume = e.target.value;
+    });
 
     document.getElementById('btn-music').addEventListener('click', (e) => {
       isMusicMuted = !isMusicMuted;
@@ -351,32 +351,17 @@
         bgm.pause();
         e.target.textContent = '🔇';
       } else {
-        bgm.play().catch(err => {
-            console.error("Ошибка воспроизведения:", err);
-            alert("Браузер заблокировал звук. Убедитесь, что вы нажали на кнопку запуска игры.");
-        });
+        bgm.play().catch(err => console.log(err));
         e.target.textContent = '🔊';
       }
     });
-    // ====================
-
-    function getOrCreatePlayerCode() {
-      let code = localStorage.getItem('mm_player_code');
-      if (!code) {
-        const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-        code = '';
-        for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
-        localStorage.setItem('mm_player_code', code);
-      }
-      return code;
-    }
-    const PLAYER_CODE = getOrCreatePlayerCode();
 
     const state = {
       questions: [], currentIndex: 0, score: 0, correctCount: 0,
       startTime: 0, timerId: null, timeLeft: TIME_PER_QUESTION,
       answersLocked: false, lastSafeAmount: 0, finished: false,
-      category: 'Mix', lifelineUsed: false
+      category: 'Mix', lifelineUsed: false,
+      playerName: '', playerPin: ''
     };
 
     const $ = (id) => document.getElementById(id);
@@ -388,21 +373,14 @@
 
     // ===== ЭФФЕКТЫ =====
     function fireConfetti() {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#FFC940', '#FF4FA3', '#A855F7', '#10E5A8', '#FFFFFF']
-      });
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors: ['#FFC940', '#FF4FA3', '#A855F7', '#10E5A8', '#FFFFFF'] });
     }
 
     function fireBigConfetti() {
       let duration = 5 * 1000;
       let animationEnd = Date.now() + duration;
       let defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
       function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-
       let interval = setInterval(function() {
         let timeLeft = animationEnd - Date.now();
         if (timeLeft <= 0) { return clearInterval(interval); }
@@ -417,7 +395,6 @@
       container.classList.add('active');
       container.innerHTML = '';
       const colors = ['#FF4FA3', '#A855F7', '#10E5A8', '#FFC940', '#4F8EFF'];
-      
       for (let i = 0; i < 20; i++) {
         const b = document.createElement('div');
         b.className = 'balloon';
@@ -442,28 +419,22 @@
     // ===== ЛОГИКА 50 на 50 =====
     $('btn-5050').addEventListener('click', () => {
       if (state.lifelineUsed || state.answersLocked) return;
-      
       const wrongBtns = Array.from(document.querySelectorAll('.mm-option')).filter(btn => 
         btn.dataset.letter !== state.questions[state.currentIndex].correct && !btn.classList.contains('hidden')
       );
-      
       shuffle(wrongBtns).slice(0, 2).forEach(btn => {
         btn.classList.add('hidden');
         btn.disabled = true;
       });
-      
       state.lifelineUsed = true;
       $('btn-5050').disabled = true;
+      saveGameState();
     });
 
     // ===== ЗАГРУЗКА ВОПРОСОВ =====
-    async function loadQuestions() {
+    async function loadQuestions(category) {
       let query = supabaseClient.from('millionaire_questions').select('*');
-      
-      if (state.category !== 'Mix') {
-        query = query.eq('category', state.category);
-      }
-
+      if (category !== 'Mix') { query = query.eq('category', category); }
       const { data, error } = await query;
       if (error) { console.error(error); return []; }
       if (!data || !data.length) return [];
@@ -473,9 +444,7 @@
       const hard = shuffle(data.filter(q => q.difficulty === 'hard')).slice(0, DISTRIBUTION.hard);
       
       let result = [...easy, ...medium, ...hard];
-      if (result.length < TOTAL_QUESTIONS) {
-         result = shuffle(data).slice(0, TOTAL_QUESTIONS);
-      }
+      if (result.length < TOTAL_QUESTIONS) { result = shuffle(data).slice(0, TOTAL_QUESTIONS); }
       return result;
     }
 
@@ -498,6 +467,18 @@
         html += `</div></div>`;
       }
       $('ladder-items').innerHTML = html;
+
+      // АВТОСКРОЛЛ К ТЕКУЩЕМУ ВОПРОСУ
+      setTimeout(() => {
+        const currentEl = document.querySelector('.mm-ladder-item.current');
+        const container = document.getElementById('ladder-container');
+        if (currentEl && container) {
+            container.scrollTo({
+                top: currentEl.offsetTop - container.offsetHeight / 2 + currentEl.offsetHeight / 2,
+                behavior: 'smooth'
+            });
+        }
+      }, 100);
     }
 
     function renderQuestion() {
@@ -537,6 +518,18 @@
     function stopTimer() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } }
     function updateTimerDisplay() { $('timer-text').textContent = Math.max(0, state.timeLeft); }
 
+    // === СОХРАНЕНИЕ И ЗАГРУЗКА СОСТОЯНИЯ (Анти-сброс) ===
+    function saveGameState() {
+        const save = { ...state };
+        delete save.timerId; // Таймер не сохраняем
+        localStorage.setItem('mm_active_game', JSON.stringify(save));
+    }
+
+    function clearGameState() {
+        localStorage.removeItem('mm_active_game');
+    }
+    // ====================================================
+
     function selectAnswer(letter) {
       if (state.answersLocked) return;
       state.answersLocked = true;
@@ -555,14 +548,14 @@
         sfxCorrect.currentTime = 0;
         sfxCorrect.play().catch(()=>{});
         fireConfetti();
-        if (SAFE_LEVELS.includes(state.currentIndex)) {
-           setTimeout(fireConfetti, 300);
-        }
+        if (SAFE_LEVELS.includes(state.currentIndex)) { setTimeout(fireConfetti, 300); }
 
         state.correctCount++;
         state.score = AMOUNTS[state.currentIndex];
         if (SAFE_LEVELS.includes(state.currentIndex)) state.lastSafeAmount = state.score;
         
+        saveGameState(); // Сохраняем прогресс
+
         setTimeout(() => {
           if (state.currentIndex === state.questions.length - 1) finishGame(true);
           else { state.currentIndex++; state.answersLocked = false; renderQuestion(); }
@@ -588,13 +581,12 @@
       setTimeout(() => finishGame(false, true), 1600);
     }
 
-    function finishGame(won = false, timeout = false) {
+    async function finishGame(won = false, timeout = false) {
       if (state.finished) return;
       state.finished = true;
       stopTimer();
-      
-      // Останавливаем фоновую музыку
       bgm.pause();
+      clearGameState(); // Очищаем сохраненный прогресс, так как игра завершена
 
       const finalScore = won ? AMOUNTS[AMOUNTS.length - 1] : state.lastSafeAmount;
       const totalTime = Math.round((Date.now() - state.startTime) / 1000);
@@ -625,29 +617,19 @@
       $('result-level').textContent = state.currentIndex + 1;
       $('result-time').textContent = formatTime(totalTime);
 
-      $('modal-title').textContent = won ? 'Ты миллионер!' : timeout ? 'Время вышло!' : 'Ошибка...';
-      $('modal-subtitle').textContent = won ? 'Введи имя — и ты в зале славы.' : timeout ? 'Введи имя, чтобы запомнить попытку.' : 'Ничего страшного. Введи имя, чтобы запомнить результат.';
-      $('modal-code').textContent = PLAYER_CODE;
-      $('player-name').value = localStorage.getItem('mm_player_name') || '';
-      $('name-modal').classList.add('open');
-      $('player-name').focus();
-
-      window._pendingResult = { score: finalScore, time: totalTime, correct: state.correctCount, level: state.currentIndex + 1 };
-      loadLeaderboard('lb-list-result');
-    }
-
-    async function saveResult(name) {
-      const r = window._pendingResult;
-      if (!r) return;
+      // Сохраняем результат в БД
       await supabaseClient.from('millionaire_results').insert({
-        player_name: name, player_code: PLAYER_CODE, score: r.score,
-        time_seconds: r.time, correct_count: r.correct,
-        total_questions: state.questions.length, reached_level: r.level,
+        player_name: state.playerName, 
+        player_code: state.playerPin, // Используем PIN как код
+        player_pin: state.playerPin,
+        score: finalScore, 
+        time_seconds: totalTime, 
+        correct_count: state.correctCount,
+        total_questions: state.questions.length, 
+        reached_level: state.currentIndex + 1,
       });
-      localStorage.setItem('mm_player_name', name);
-      $('name-modal').classList.remove('open');
-      await loadLeaderboard('lb-list-result');
-      await loadLeaderboard('lb-list-home');
+
+      loadLeaderboard('lb-list-result');
     }
 
     async function loadLeaderboard(targetId) {
@@ -655,38 +637,64 @@
       if (!target) return;
       const { data, error } = await supabaseClient.from('millionaire_results').select('*').order('score', { ascending: false }).order('time_seconds', { ascending: true }).limit(200);
       if (error || !data || !data.length) { target.innerHTML = `<div class="mm-lb-empty">Пока никто не играл. Будь первым!</div>`; return; }
+      
       const best = new Map();
       for (const r of data) {
         const key = r.player_code || r.id;
         const cur = best.get(key);
         if (!cur || r.score > cur.score || (r.score === cur.score && r.time_seconds < cur.time_seconds)) best.set(key, r);
       }
+      
       const top10 = [...best.values()].sort((a, b) => b.score - a.score || a.time_seconds - b.time_seconds).slice(0, 10);
       target.innerHTML = top10.map((r, i) => {
-        const isMe = r.player_code === PLAYER_CODE;
-        return `<div class="mm-lb-row ${i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : ''} ${isMe ? 'me' : ''}"><span class="mm-lb-rank">${i + 1}</span><div class="mm-lb-name-block"><span class="mm-lb-name">${escapeHtml(r.player_name)}</span>${r.player_code ? `<span class="mm-lb-code">#${escapeHtml(r.player_code)}${isMe ? ' · ты' : ''}</span>` : ''}</div><span class="mm-lb-score">${formatMoney(r.score)}</span><span class="mm-lb-time">${formatTime(r.time_seconds)}</span></div>`;
+        // Скрываем код, чтобы не палить PIN
+        return `<div class="mm-lb-row ${i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : ''}"><span class="mm-lb-rank">${i + 1}</span><div class="mm-lb-name-block"><span class="mm-lb-name">${escapeHtml(r.player_name)}</span></div><span class="mm-lb-score">${formatMoney(r.score)}</span><span class="mm-lb-time">${formatTime(r.time_seconds)}</span></div>`;
       }).join('');
     }
 
     async function startGame() {
+      const nick = $('player-nick').value.trim();
+      const pin = $('player-pin').value.trim().toUpperCase();
+
+      if (!nick || !pin) {
+          alert('Пожалуйста, введите ваш ник и PIN-код от администратора.');
+          return;
+      }
+
       $('btn-start').disabled = true;
-      $('btn-start').querySelector('span').textContent = 'Загрузка…';
+      $('btn-start').querySelector('span').textContent = 'Проверка...';
+
+      // 1. Проверяем пин
+      const { data: isValid, error: pinError } = await supabaseClient.rpc('verify_mm_pin', { input_pin: pin });
+      if (!isValid) {
+          alert('Неверный или неактивный PIN-код.');
+          $('btn-start').disabled = false;
+          $('btn-start').querySelector('span').textContent = 'Начать игру';
+          return;
+      }
+
+      // 2. Проверяем, не играл ли он уже сегодня
+      const today = new Date().toISOString().split('T')[0];
+      const { data: existing } = await supabaseClient.from('millionaire_results')
+          .select('id').eq('player_pin', pin).gte('created_at', today + 'T00:00:00Z').limit(1);
       
-      const questions = await loadQuestions();
+      if (existing && existing.length > 0) {
+          alert('Вы уже играли сегодня по этому PIN-коду. Возвращайтесь завтра!');
+          $('btn-start').disabled = false;
+          $('btn-start').querySelector('span').textContent = 'Начать игру';
+          return;
+      }
+
+      // 3. Загрузка вопросов
+      const questions = await loadQuestions(state.category);
       if (questions.length < TOTAL_QUESTIONS) {
-        alert('Недостаточно вопросов в базе для этой категории. Выберите другую или запустите SQL.');
+        alert('Недостаточно вопросов в базе для этой категории. Выберите другую.');
         $('btn-start').disabled = false;
         $('btn-start').querySelector('span').textContent = 'Начать игру';
         return;
       }
       
-      // ЗАПУСК МУЗЫКИ
-      if (!isMusicMuted) {
-        bgm.play().catch(e => {
-            console.log('Автовоспроизведение заблокировано браузером', e);
-            // Опционально можно показать уведомление пользователю
-        });
-      }
+      if (!isMusicMuted) { bgm.play().catch(e => console.log(e)); }
 
       state.questions = questions;
       state.currentIndex = 0;
@@ -697,29 +705,44 @@
       state.answersLocked = false;
       state.finished = false;
       state.lifelineUsed = false;
+      state.playerName = nick;
+      state.playerPin = pin;
+
+      saveGameState(); // Сохраняем начало игры
 
       $('btn-5050').disabled = false;
-
       $('start-screen').classList.add('game-hide');
       $('result-screen').classList.add('game-hide');
       $('game-screen').classList.remove('game-hide');
       $('btn-start').disabled = false;
       $('btn-start').querySelector('span').textContent = 'Начать игру';
+      
       renderQuestion();
     }
 
     $('btn-start').addEventListener('click', startGame);
-    $('btn-play-again').addEventListener('click', () => { 
-      $('result-screen').classList.add('game-hide'); 
-      $('start-screen').classList.remove('game-hide'); 
-      loadLeaderboard('lb-list-home'); 
+    
+    // === ПРОВЕРКА ПРИ ЗАГРУЗКЕ СТРАНИЦЫ (Восстановление) ===
+    window.addEventListener('DOMContentLoaded', () => {
+        loadLeaderboard('lb-list-home');
+        
+        const saved = localStorage.getItem('mm_active_game');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                if (confirm(`У вас есть незавершенная игра (Ник: ${data.playerName}). Продолжить?`)) {
+                    Object.assign(state, data);
+                    $('start-screen').classList.add('game-hide');
+                    $('game-screen').classList.remove('game-hide');
+                    
+                    // Восстанавливаем таймер (даем заново 60 сек)
+                    renderQuestion(); 
+                } else {
+                    clearGameState();
+                }
+            } catch(e) { clearGameState(); }
+        }
     });
-    $('btn-cancel-name').addEventListener('click', () => $('name-modal').classList.remove('open'));
-    $('btn-save-name').addEventListener('click', () => { const name = $('player-name').value.trim(); if (!name) { $('player-name').focus(); return; } saveResult(name); });
-    $('player-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-save-name').click(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('name-modal').classList.contains('open')) $('name-modal').classList.remove('open'); });
-
-    loadLeaderboard('lb-list-home');
   </script>
 </body>
 </html>
