@@ -24,6 +24,14 @@
     .mm-rules .rule-highlight { margin-top: 16px; padding: 14px 16px 14px 20px; background: linear-gradient(90deg, rgba(255, 201, 64, 0.12), rgba(255, 79, 163, 0.06)); border-left: 3px solid var(--g-gold); border-radius: 8px; color: var(--g-ink); font-size: 13.5px; line-height: 1.65; }
     .mm-rules .rule-highlight::before { display: none; }
 
+    /* ========== CATEGORY SELECT ========== */
+    .mm-categories { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+    .mm-cat-btn { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: rgba(255,255,255,0.04); border: 2px solid var(--g-hairline-2); border-radius: 12px; color: var(--g-ink); cursor: pointer; transition: all 0.2s; font-family: var(--g-font); font-weight: 600; font-size: 15px; }
+    .mm-cat-btn:hover { border-color: var(--g-gold); background: rgba(255, 201, 64, 0.06); transform: translateY(-2px); }
+    .mm-cat-btn.active { border-color: var(--g-gold); background: linear-gradient(90deg, rgba(255, 201, 64, 0.15), rgba(255, 79, 163, 0.05)); }
+    .mm-cat-btn span { display: flex; align-items: center; gap: 10px; }
+    .mm-cat-btn svg { width: 24px; height: 24px; color: var(--g-gold); }
+
     /* ========== GAME BUTTON SHIMMER ========== */
     .mm-btn-start { position: relative; width: 100%; padding: 16px 24px; font-size: 15px; font-weight: 700; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--g-gold) 0%, var(--g-magenta) 60%, var(--g-violet) 100%); color: #0A0614; cursor: pointer; overflow: hidden; box-shadow: 0 6px 24px rgba(255, 79, 163, 0.4); transition: transform 0.2s var(--g-smooth), box-shadow 0.2s var(--g-smooth), filter 0.2s; }
     .mm-btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent); transform: skewX(-20deg); animation: shimmer 2.4s infinite; pointer-events: none; z-index: 1; }
@@ -42,7 +50,15 @@
     .mm-timer { display: flex; align-items: center; gap: 8px; font-family: var(--g-mono); font-size: 18px; font-weight: 700; color: var(--g-gold); }
     .mm-timer.warning { color: var(--g-danger); animation: gShake 0.4s ease; }
     .mm-timer svg { width: 18px; height: 18px; }
-    .mm-progress-info { margin-left: auto; font-size: 12px; color: var(--g-ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+    
+    /* ========== LIFELINES ========== */
+    .mm-lifelines { display: flex; gap: 8px; margin-left: auto; }
+    .mm-lifeline { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--g-hairline-2); display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: var(--g-mono); font-weight: 700; font-size: 13px; color: var(--g-ink); transition: all 0.2s; }
+    .mm-lifeline:hover:not(:disabled) { border-color: var(--g-gold); color: var(--g-gold); background: rgba(255, 201, 64, 0.1); transform: scale(1.05); }
+    .mm-lifeline:disabled { opacity: 0.3; cursor: not-allowed; position: relative; }
+    .mm-lifeline:disabled::after { content: ''; position: absolute; width: 100%; height: 2px; background: var(--g-danger); transform: rotate(-45deg); }
+
+    .mm-progress-info { font-size: 12px; color: var(--g-ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
 
     /* ========== QUESTION ========== */
     .mm-question-card { background: linear-gradient(180deg, rgba(168, 85, 247, 0.08), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; padding: 32px; margin-bottom: 20px; animation: gFadeUp 0.4s var(--g-smooth); }
@@ -62,6 +78,7 @@
     .mm-option.wrong .mm-option-letter { background: var(--g-danger); color: white; border-color: var(--g-danger); }
     .mm-option:disabled { cursor: not-allowed; }
     .mm-option.dimmed { opacity: 0.35; }
+    .mm-option.hidden { visibility: hidden; }
 
     /* ========== LADDER ========== */
     .mm-ladder { position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; border-radius: 16px; padding: 20px 14px 16px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, rgba(255, 79, 163, 0.03) 50%, rgba(16, 229, 168, 0.04) 100%), rgba(10, 6, 20, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
@@ -157,7 +174,6 @@
 </head>
 <body>
 
-  <!-- Контейнер для шариков -->
   <div class="balloon-container" id="balloon-container"></div>
 
   <div class="game-bar">
@@ -175,18 +191,44 @@
   <div class="game-wrap">
     <div class="mm-hero">
       <h1>Кто хочет<br>стать миллионером?</h1>
-      <p>20 вопросов по ТВ — от простого к сложному. Каждая игра — новый набор. Попади в топ-10.</p>
+      <p>Проверь свои знания по Базам Знаний. 20 вопросов — от простого к сложному.</p>
     </div>
 
+    <!-- ЭКРАН СТАРТА -->
     <div id="start-screen">
       <div class="mm-start-card">
-        <h2>Готов к игре?</h2>
+        <h2>Выбери направление</h2>
+        
+        <div class="mm-categories">
+          <button class="mm-cat-btn active" data-category="Mix">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              Все вопросы (Микс)
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="mm-cat-btn" data-category="TV">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
+              Телевизоры
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+          <button class="mm-cat-btn" data-category="Printer">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Принтеры и МФУ
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
         <ul class="mm-rules">
           <li>20 вопросов с нарастающей сложностью</li>
           <li>60 секунд на каждый вопрос</li>
           <li>Несгораемые суммы на 5 и 10 вопросах</li>
-          <li>Ошибка — игра заканчивается, забираешь несгораемую сумму.</li>
-          <li class="rule-highlight">Ты можешь пользоваться БЗ, и другими ресурсами. Важно научиться быстро искать нужную информацию и правильно ей оперировать в диалоге.</li>
+          <li>1 подсказка «50 на 50» на игру</li>
+          <li class="rule-highlight">Ошибка — игра заканчивается, забираешь несгораемую сумму.</li>
         </ul>
         <button class="mm-btn-start" id="btn-start"><span>Начать игру</span></button>
       </div>
@@ -197,11 +239,17 @@
       </div>
     </div>
 
+    <!-- ЭКРАН ИГРЫ -->
     <div id="game-screen" class="game-hide">
       <div class="mm-game">
         <div class="mm-main">
           <div class="mm-top">
             <div class="mm-timer" id="timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="timer-text">60</span></div>
+            
+            <div class="mm-lifelines">
+              <button class="mm-lifeline" id="btn-5050" title="50 на 50">50:50</button>
+            </div>
+
             <div class="mm-progress-info" id="progress-info">Вопрос 1 из 20</div>
           </div>
           <div class="mm-question-card" id="question-card">
@@ -217,6 +265,7 @@
       </div>
     </div>
 
+    <!-- ЭКРАН РЕЗУЛЬТАТА -->
     <div id="result-screen" class="game-hide">
       <div class="mm-result">
         <div class="mm-result-trophy" id="result-trophy"></div>
@@ -259,7 +308,6 @@
     </div>
   </div>
 
-  <!-- Подключаем библиотеку фейерверков -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
@@ -289,6 +337,7 @@
       questions: [], currentIndex: 0, score: 0, correctCount: 0,
       startTime: 0, timerId: null, timeLeft: TIME_PER_QUESTION,
       answersLocked: false, lastSafeAmount: 0, finished: false,
+      category: 'Mix', lifelineUsed: false
     };
 
     const $ = (id) => document.getElementById(id);
@@ -335,23 +384,66 @@
         b.className = 'balloon';
         b.style.left = Math.random() * 100 + 'vw';
         b.style.background = colors[Math.floor(Math.random() * colors.length)];
-        b.style.animationDuration = (Math.random() * 3 + 4) + 's'; // 4-7 секунд
+        b.style.animationDuration = (Math.random() * 3 + 4) + 's';
         b.style.animationDelay = (Math.random() * 2) + 's';
         container.appendChild(b);
       }
-
       setTimeout(() => { container.classList.remove('active'); }, 8000);
     }
-    // ====================
 
+    // ===== ВЫБОР КАТЕГОРИИ =====
+    document.querySelectorAll('.mm-cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mm-cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.category = btn.dataset.category;
+      });
+    });
+
+    // ===== ЛОГИКА 50 на 50 =====
+    $('btn-5050').addEventListener('click', () => {
+      if (state.lifelineUsed || state.answersLocked) return;
+      
+      // Находим 2 неправильных варианта, которые еще видны
+      const wrongBtns = Array.from(document.querySelectorAll('.mm-option')).filter(btn => 
+        btn.dataset.letter !== state.questions[state.currentIndex].correct && !btn.classList.contains('hidden')
+      );
+      
+      // Перемешиваем и скрываем 2 из них
+      shuffle(wrongBtns).slice(0, 2).forEach(btn => {
+        btn.classList.add('hidden');
+        btn.disabled = true;
+      });
+      
+      state.lifelineUsed = true;
+      $('btn-5050').disabled = true;
+    });
+
+    // ===== ЗАГРУЗКА ВОПРОСОВ =====
     async function loadQuestions() {
-      const { data, error } = await supabaseClient.from('millionaire_questions').select('*');
+      let query = supabaseClient.from('millionaire_questions').select('*');
+      
+      // Если выбрана конкретная категория, фильтруем
+      if (state.category !== 'Mix') {
+        query = query.eq('category', state.category);
+      }
+
+      const { data, error } = await query;
       if (error) { console.error(error); return []; }
       if (!data || !data.length) return [];
+
       const easy = shuffle(data.filter(q => q.difficulty === 'easy')).slice(0, DISTRIBUTION.easy);
       const medium = shuffle(data.filter(q => q.difficulty === 'medium')).slice(0, DISTRIBUTION.medium);
       const hard = shuffle(data.filter(q => q.difficulty === 'hard')).slice(0, DISTRIBUTION.hard);
-      return [...easy, ...medium, ...hard];
+      
+      // Если не хватило вопросов в категории (например, их всего 10), добираем из других
+      let result = [...easy, ...medium, ...hard];
+      if (result.length < TOTAL_QUESTIONS) {
+         // Fallback: просто берем все что есть и перемешиваем
+         result = shuffle(data).slice(0, TOTAL_QUESTIONS);
+      }
+      
+      return result;
     }
 
     function renderLadder() {
@@ -381,13 +473,19 @@
       $('level-badge').textContent = `Уровень ${state.currentIndex + 1} · ${formatMoney(AMOUNTS[state.currentIndex])}`;
       $('question-text').textContent = q.question;
       $('progress-info').textContent = `Вопрос ${state.currentIndex + 1} из ${state.questions.length}`;
+      
       const options = ['A', 'B', 'C', 'D'].map(letter => ({ letter, text: q['option_' + letter.toLowerCase()] }));
-      $('options').innerHTML = options.map(o => `
+      
+      // Перемешиваем варианты ответов местами для случайности
+      const shuffledOptions = shuffle(options);
+
+      $('options').innerHTML = shuffledOptions.map(o => `
         <button class="mm-option" data-letter="${o.letter}">
           <span class="mm-option-letter">${o.letter}</span>
           <span>${escapeHtml(o.text)}</span>
         </button>
       `).join('');
+      
       $('options').querySelectorAll('.mm-option').forEach(btn => btn.addEventListener('click', () => selectAnswer(btn.dataset.letter)));
       renderLadder();
       startTimer();
@@ -414,6 +512,7 @@
       stopTimer();
       const q = state.questions[state.currentIndex];
       const isCorrect = letter === q.correct;
+      
       $('options').querySelectorAll('.mm-option').forEach(btn => {
         btn.disabled = true;
         if (btn.dataset.letter === q.correct) btn.classList.add('correct');
@@ -422,14 +521,15 @@
       });
 
       if (isCorrect) {
-        fireConfetti(); // Маленький фейерверк
+        fireConfetti();
         if (SAFE_LEVELS.includes(state.currentIndex)) {
-           setTimeout(fireConfetti, 300); // Двойной на несгораемых
+           setTimeout(fireConfetti, 300);
         }
 
         state.correctCount++;
         state.score = AMOUNTS[state.currentIndex];
         if (SAFE_LEVELS.includes(state.currentIndex)) state.lastSafeAmount = state.score;
+        
         setTimeout(() => {
           if (state.currentIndex === state.questions.length - 1) finishGame(true);
           else { state.currentIndex++; state.answersLocked = false; renderQuestion(); }
@@ -470,8 +570,8 @@
         trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
       } else {
         trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
-        fireBigConfetti(); // Мега фейерверк при победе
-        startBalloons();   // Шарики
+        fireBigConfetti();
+        startBalloons();
       }
 
       $('result-title').textContent = won ? 'Поздравляем!' : timeout ? 'Время вышло!' : 'Ошибка...';
@@ -528,13 +628,15 @@
     async function startGame() {
       $('btn-start').disabled = true;
       $('btn-start').querySelector('span').textContent = 'Загрузка…';
+      
       const questions = await loadQuestions();
       if (questions.length < TOTAL_QUESTIONS) {
-        alert('Недостаточно вопросов в базе. Запустите SQL.');
+        alert('Недостаточно вопросов в базе для этой категории. Выберите другую или запустите SQL.');
         $('btn-start').disabled = false;
         $('btn-start').querySelector('span').textContent = 'Начать игру';
         return;
       }
+      
       state.questions = questions;
       state.currentIndex = 0;
       state.correctCount = 0;
@@ -543,6 +645,9 @@
       state.startTime = Date.now();
       state.answersLocked = false;
       state.finished = false;
+      state.lifelineUsed = false;
+
+      $('btn-5050').disabled = false;
 
       $('start-screen').classList.add('game-hide');
       $('result-screen').classList.add('game-hide');
