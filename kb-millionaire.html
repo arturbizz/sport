@@ -174,18 +174,18 @@
 </head>
 <body>
 
-  <!-- ТЕСТОВЫЕ АУДИО ССЫЛКИ -->
+  <!-- Надежные тестовые аудио-ссылки -->
   <audio id="bgm" loop>
-    <source src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" type="audio/mpeg">
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
   </audio>
   <audio id="sfx-correct">
-    <source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg">
+    <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
   </audio>
   <audio id="sfx-wrong">
-    <source src="https://assets.mixkit.co/active_storage/sfx/2004/2004-preview.mp3" type="audio/mpeg">
+    <source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg" type="audio/ogg">
   </audio>
   <audio id="sfx-win">
-    <source src="https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3" type="audio/mpeg">
+    <source src="https://actions.google.com/sounds/v1/crowds/cheering_crowd.ogg" type="audio/ogg">
   </audio>
 
   <div class="balloon-container" id="balloon-container"></div>
@@ -343,7 +343,6 @@
     const sfxWin = document.getElementById('sfx-win');
     let isMusicMuted = false;
 
-    // Устанавливаем громкость фона чуть меньше
     bgm.volume = 0.3; 
 
     document.getElementById('btn-music').addEventListener('click', (e) => {
@@ -352,7 +351,10 @@
         bgm.pause();
         e.target.textContent = '🔇';
       } else {
-        bgm.play().catch(()=>{});
+        bgm.play().catch(err => {
+            console.error("Ошибка воспроизведения:", err);
+            alert("Браузер заблокировал звук. Убедитесь, что вы нажали на кнопку запуска игры.");
+        });
         e.target.textContent = '🔊';
       }
     });
@@ -441,12 +443,10 @@
     $('btn-5050').addEventListener('click', () => {
       if (state.lifelineUsed || state.answersLocked) return;
       
-      // Находим 2 неправильных варианта, которые еще видны
       const wrongBtns = Array.from(document.querySelectorAll('.mm-option')).filter(btn => 
         btn.dataset.letter !== state.questions[state.currentIndex].correct && !btn.classList.contains('hidden')
       );
       
-      // Перемешиваем и скрываем 2 из них
       shuffle(wrongBtns).slice(0, 2).forEach(btn => {
         btn.classList.add('hidden');
         btn.disabled = true;
@@ -680,9 +680,12 @@
         return;
       }
       
-      // ЗАПУСК МУЗЫКИ (сработает только после клика пользователя)
+      // ЗАПУСК МУЗЫКИ
       if (!isMusicMuted) {
-        bgm.play().catch(e => console.log('Автовоспроизведение заблокировано браузером'));
+        bgm.play().catch(e => {
+            console.log('Автовоспроизведение заблокировано браузером', e);
+            // Опционально можно показать уведомление пользователю
+        });
       }
 
       state.questions = questions;
