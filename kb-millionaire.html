@@ -174,6 +174,20 @@
 </head>
 <body>
 
+  <!-- АУДИО ПЛЕЕР -->
+  <audio id="bgm" loop>
+    <source src="sounds/bgm.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sfx-correct">
+    <source src="sounds/correct.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sfx-wrong">
+    <source src="sounds/wrong.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="sfx-win">
+    <source src="sounds/win.mp3" type="audio/mpeg">
+  </audio>
+
   <div class="balloon-container" id="balloon-container"></div>
 
   <div class="game-bar">
@@ -247,6 +261,7 @@
             <div class="mm-timer" id="timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="timer-text">60</span></div>
             
             <div class="mm-lifelines">
+              <button class="mm-lifeline" id="btn-music" title="Вкл/Выкл музыку">🔊</button>
               <button class="mm-lifeline" id="btn-5050" title="50 на 50">50:50</button>
             </div>
 
@@ -320,6 +335,28 @@
     const TIME_PER_QUESTION = 60;
     const TOTAL_QUESTIONS = 20;
     const DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
+
+    // === АУДИО ЛОГИКА ===
+    const bgm = document.getElementById('bgm');
+    const sfxCorrect = document.getElementById('sfx-correct');
+    const sfxWrong = document.getElementById('sfx-wrong');
+    const sfxWin = document.getElementById('sfx-win');
+    let isMusicMuted = false;
+
+    // Устанавливаем громкость фона чуть меньше
+    bgm.volume = 0.3; 
+
+    document.getElementById('btn-music').addEventListener('click', (e) => {
+      isMusicMuted = !isMusicMuted;
+      if (isMusicMuted) {
+        bgm.pause();
+        e.target.textContent = '🔇';
+      } else {
+        bgm.play().catch(()=>{});
+        e.target.textContent = '🔊';
+      }
+    });
+    // ====================
 
     function getOrCreatePlayerCode() {
       let code = localStorage.getItem('mm_player_code');
@@ -423,7 +460,6 @@
     async function loadQuestions() {
       let query = supabaseClient.from('millionaire_questions').select('*');
       
-      // Если выбрана конкретная категория, фильтруем
       if (state.category !== 'Mix') {
         query = query.eq('category', state.category);
       }
@@ -436,13 +472,10 @@
       const medium = shuffle(data.filter(q => q.difficulty === 'medium')).slice(0, DISTRIBUTION.medium);
       const hard = shuffle(data.filter(q => q.difficulty === 'hard')).slice(0, DISTRIBUTION.hard);
       
-      // Если не хватило вопросов в категории (например, их всего 10), добираем из других
       let result = [...easy, ...medium, ...hard];
       if (result.length < TOTAL_QUESTIONS) {
-         // Fallback: просто берем все что есть и перемешиваем
          result = shuffle(data).slice(0, TOTAL_QUESTIONS);
       }
-      
       return result;
     }
 
@@ -475,8 +508,6 @@
       $('progress-info').textContent = `Вопрос ${state.currentIndex + 1} из ${state.questions.length}`;
       
       const options = ['A', 'B', 'C', 'D'].map(letter => ({ letter, text: q['option_' + letter.toLowerCase()] }));
-      
-      // Перемешиваем варианты ответов местами для случайности
       const shuffledOptions = shuffle(options);
 
       $('options').innerHTML = shuffledOptions.map(o => `
@@ -521,6 +552,8 @@
       });
 
       if (isCorrect) {
+        sfxCorrect.currentTime = 0;
+        sfxCorrect.play().catch(()=>{});
         fireConfetti();
         if (SAFE_LEVELS.includes(state.currentIndex)) {
            setTimeout(fireConfetti, 300);
@@ -535,6 +568,8 @@
           else { state.currentIndex++; state.answersLocked = false; renderQuestion(); }
         }, 1400);
       } else {
+        sfxWrong.currentTime = 0;
+        sfxWrong.play().catch(()=>{});
         setTimeout(() => finishGame(false), 1800);
       }
     }
@@ -548,6 +583,8 @@
         if (btn.dataset.letter === q.correct) btn.classList.add('correct');
         else btn.classList.add('dimmed');
       });
+      sfxWrong.currentTime = 0;
+      sfxWrong.play().catch(()=>{});
       setTimeout(() => finishGame(false, true), 1600);
     }
 
@@ -555,6 +592,10 @@
       if (state.finished) return;
       state.finished = true;
       stopTimer();
+      
+      // Останавливаем фоновую музыку
+      bgm.pause();
+
       const finalScore = won ? AMOUNTS[AMOUNTS.length - 1] : state.lastSafeAmount;
       const totalTime = Math.round((Date.now() - state.startTime) / 1000);
 
@@ -564,12 +605,14 @@
 
       const trophy = $('result-trophy');
       trophy.className = 'mm-result-trophy ' + (won ? 'win' : timeout ? 'timeout' : 'fail');
+      
       if (timeout) {
         trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 2"/></svg>`;
       } else if (!won) {
         trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
       } else {
         trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
+        sfxWin.play().catch(()=>{});
         fireBigConfetti();
         startBalloons();
       }
@@ -637,6 +680,11 @@
         return;
       }
       
+      // ЗАПУСК МУЗЫКИ (сработает только после клика пользователя)
+      if (!isMusicMuted) {
+        bgm.play().catch(e => console.log('Автовоспроизведение заблокировано браузером'));
+      }
+
       state.questions = questions;
       state.currentIndex = 0;
       state.correctCount = 0;
@@ -658,7 +706,11 @@
     }
 
     $('btn-start').addEventListener('click', startGame);
-    $('btn-play-again').addEventListener('click', () => { $('result-screen').classList.add('game-hide'); $('start-screen').classList.remove('game-hide'); loadLeaderboard('lb-list-home'); });
+    $('btn-play-again').addEventListener('click', () => { 
+      $('result-screen').classList.add('game-hide'); 
+      $('start-screen').classList.remove('game-hide'); 
+      loadLeaderboard('lb-list-home'); 
+    });
     $('btn-cancel-name').addEventListener('click', () => $('name-modal').classList.remove('open'));
     $('btn-save-name').addEventListener('click', () => { const name = $('player-name').value.trim(); if (!name) { $('player-name').focus(); return; } saveResult(name); });
     $('player-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btn-save-name').click(); });
