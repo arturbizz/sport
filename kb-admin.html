@@ -17,6 +17,21 @@
     .admin-layout.fullscreen .content-textarea { min-height: calc(100vh - 340px); }
     .admin-layout.fullscreen .preview-pane { min-height: calc(100vh - 340px); }
 
+    /* Стили для вкладок Активные / Архив */
+    .admin-list-tabs {
+      display: flex; gap: 4px; margin: 0 16px 12px; background: var(--bg-subtle); padding: 4px; border-radius: var(--radius-md);
+    }
+    .admin-list-tab {
+      flex: 1; padding: 6px 8px; text-align: center; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; 
+      color: var(--ink-3); cursor: pointer; transition: all 0.2s; border: none; background: transparent; font-family: var(--font-body);
+    }
+    .admin-list-tab:hover { color: var(--ink); }
+    .admin-list-tab.active { background: var(--bg-elevated); color: var(--accent); box-shadow: var(--shadow-sm); }
+    .admin-list-tab .badge {
+      display: inline-block; background: var(--accent-soft); color: var(--accent); font-size: 10px; padding: 1px 5px; border-radius: 10px; margin-left: 4px;
+    }
+    .admin-list-tab.active .badge { background: var(--accent); color: white; }
+
     .fab-upload {
       position: fixed; bottom: 28px; right: 28px; z-index: 100;
       padding: 13px 22px; background: linear-gradient(135deg, var(--accent), var(--violet));
@@ -180,13 +195,13 @@
 
   <div class="admin-layout" id="admin-view" style="display:none;">
     <aside class="admin-sidebar" id="admin-sidebar">
-      <div class="brand" style="cursor:default;">
+      <div class="brand" style="cursor:default; margin-bottom: 16px;">
         <span class="brand-mark"></span>
         <span class="brand-name">База знаний</span>
         <span class="brand-badge">Admin</span>
       </div>
 
-      <div class="admin-sidebar-top">
+      <div class="admin-sidebar-top" style="margin-bottom: 12px;">
         <button class="btn btn-primary btn-sm" id="new-article-btn">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M8 2v12M2 8h12"/>
@@ -194,6 +209,12 @@
           Новая
         </button>
         <button class="btn btn-ghost btn-sm" id="logout-btn">Выйти</button>
+      </div>
+
+      <!-- Вкладки Активные / Архив -->
+      <div class="admin-list-tabs">
+        <button class="admin-list-tab active" data-view="active">Активные</button>
+        <button class="admin-list-tab" data-view="archive">📦 Архив <span class="badge" id="archive-count">0</span></button>
       </div>
 
       <div class="admin-article-list" id="admin-article-list"></div>
@@ -379,9 +400,21 @@
     let pendingInsertPos = null;
     let savedSelection = { start: 0, end: 0 };
     let previewTimer = null;
+    let currentView = 'active'; // 'active' или 'archive'
+    
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
     const VIEW_KEY = 'kb_admin_view_mode';
+
+    // === ЛОГИКА ВКЛАДОК АРХИВА ===
+    document.querySelectorAll('.admin-list-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.admin-list-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentView = tab.dataset.view;
+        renderArticleList();
+      });
+    });
 
     // ЛОГИКА PIN-КОДОВ
     async function loadPins() {
@@ -440,7 +473,7 @@
     });
     $('btn-clear-all-pins')?.addEventListener('click', async () => {
       if(!confirm('Удалить ВСЕ PIN-коды? Все сотрудники потеряют доступ при следующем входе.')) return;
-      const { error } = await supabaseClient.from('access_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Удаляет всё
+      const { error } = await supabaseClient.from('access_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (error) { alert('Ошибка: ' + error.message); return; }
       toast('Все PIN-коды удалены', 'success');
       loadPins();
@@ -624,26 +657,52 @@
       articles = data || [];
       renderArticleList();
       renderCategoryDatalist();
-      if (articles.length && !currentId) openArticle(articles[0].id);
+      // Автоматически открываем первую активную статью, если ничего не открыто
+      if (articles.length && !currentId) {
+        const firstActive = articles.find(a => a.is_published !== false);
+        if (firstActive) openArticle(firstActive.id);
+        else openArticle(articles[0].id);
+      }
       else if (!articles.length) showWelcome();
     }
 
     function renderArticleList() {
       const list = $('admin-article-list');
-      if (!articles.length) {
-        list.innerHTML = `<div class="empty-state" style="padding:24px 0;font-size:13px;">Пока нет статей</div>`;
+      
+      // Обновляем счетчик в архиве
+      const archivedCount = articles.filter(a => a.is_published === false).length;
+      $('archive-count').textContent = archivedCount;
+
+      // Фильтруем статьи в зависимости от вкладки
+      const filteredArticles = articles.filter(a => {
+        if (currentView === 'active') return a.is_published !== false;
+        return a.is_published === false;
+      });
+
+      if (!filteredArticles.length) {
+        list.innerHTML = `<div class="empty-state" style="padding:24px 0;font-size:13px;">
+          ${currentView === 'active' ? 'Нет активных статей' : 'Архив пуст'}
+        </div>`;
         return;
       }
-      list.innerHTML = articles.map(a => {
-        const suffix = [a.category, a.steps ? 'сценарий' : null, a.pinned ? 'важное' : null, a.is_published === false ? 'СКРЫТО' : null]
+
+      list.innerHTML = filteredArticles.map(a => {
+        const suffix = [a.category, a.steps ? 'сценарий' : null, a.pinned ? 'важное' : null]
           .filter(Boolean).join(' · ');
+        
+        // В архиве добавляем иконку коробки
+        const prefixIcon = currentView === 'archive' 
+          ? '<span style="color:#f59e0b;margin-right:6px;">📦</span>' 
+          : (a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--violet);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px var(--violet-glow);"></span>' : '');
+
         return `
           <button class="admin-article-item ${currentId === a.id ? 'active' : ''}" data-id="${a.id}">
-            ${a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--violet);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px var(--violet-glow);"></span>' : ''}${escapeHtml(a.title)}
+            ${prefixIcon}${escapeHtml(a.title)}
             <span class="admin-article-item-cat">${escapeHtml(suffix)}</span>
           </button>
         `;
       }).join('');
+      
       list.querySelectorAll('.admin-article-item').forEach(el =>
         el.addEventListener('click', () => {
           if (isDirty && !confirm('Есть несохранённые изменения. Переключить статью?')) return;
@@ -680,7 +739,10 @@
       updatePinToggle();
       $('delete-btn').style.display = 'none';
       switchTab('text'); renderStepsEditor(); showEditor();
-      setStatus('saved', 'Новая статья'); renderArticleList(); $('f-title').focus();
+      setStatus('saved', 'Новая статья'); $('f-title').focus();
+      
+      // Переключаем вкладку на Активные при создании новой
+      document.querySelector('.admin-list-tab[data-view="active"]').click();
       refreshPreview();
       updateMarkupIndicator();
     }
@@ -1181,7 +1243,11 @@
       if (error) { toast('Не удалось удалить: ' + error.message, 'error', 8000); return; }
       currentId = null; isDirty = false; clearDraft();
       await loadArticles();
-      if (!articles.length) showWelcome(); else openArticle(articles[0].id);
+      if (!articles.length) showWelcome(); else {
+        const nextArticle = articles.find(x => currentView === 'active' ? x.is_published !== false : x.is_published === false);
+        if (nextArticle) openArticle(nextArticle.id);
+        else showWelcome();
+      }
       toast('Статья удалена', 'success', 2200);
     });
 
