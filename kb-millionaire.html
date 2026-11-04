@@ -198,7 +198,6 @@
   <div class="balloon-container" id="balloon-container"></div>
 
   <div class="game-bar">
-    <!-- Логотип теперь не кликабельный -->
     <div class="game-bar-logo" style="cursor:default;">
       <div class="game-bar-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg></div>
       <span class="game-bar-title">Миллионер</span>
@@ -468,17 +467,24 @@
       }
       $('ladder-items').innerHTML = html;
 
-      // АВТОСКРОЛЛ К ТЕКУЩЕМУ ВОПРОСУ
+      // АВТОСКРОЛЛ (ИСПРАВЛЕННЫЙ)
       setTimeout(() => {
         const currentEl = document.querySelector('.mm-ladder-item.current');
         const container = document.getElementById('ladder-container');
         if (currentEl && container) {
+            const containerRect = container.getBoundingClientRect();
+            const currentRect = currentEl.getBoundingClientRect();
+            
+            // Высчитываем идеальную позицию для скролла
+            const scrollOffset = currentRect.top - containerRect.top;
+            const targetScroll = container.scrollTop + scrollOffset - (container.clientHeight / 2) + (currentRect.height / 2);
+            
             container.scrollTo({
-                top: currentEl.offsetTop - container.offsetHeight / 2 + currentEl.offsetHeight / 2,
+                top: targetScroll,
                 behavior: 'smooth'
             });
         }
-      }, 100);
+      }, 150);
     }
 
     function renderQuestion() {
@@ -521,7 +527,7 @@
     // === СОХРАНЕНИЕ И ЗАГРУЗКА СОСТОЯНИЯ (Анти-сброс) ===
     function saveGameState() {
         const save = { ...state };
-        delete save.timerId; // Таймер не сохраняем
+        delete save.timerId;
         localStorage.setItem('mm_active_game', JSON.stringify(save));
     }
 
@@ -586,7 +592,7 @@
       state.finished = true;
       stopTimer();
       bgm.pause();
-      clearGameState(); // Очищаем сохраненный прогресс, так как игра завершена
+      clearGameState();
 
       const finalScore = won ? AMOUNTS[AMOUNTS.length - 1] : state.lastSafeAmount;
       const totalTime = Math.round((Date.now() - state.startTime) / 1000);
@@ -617,10 +623,9 @@
       $('result-level').textContent = state.currentIndex + 1;
       $('result-time').textContent = formatTime(totalTime);
 
-      // Сохраняем результат в БД
       await supabaseClient.from('millionaire_results').insert({
         player_name: state.playerName, 
-        player_code: state.playerPin, // Используем PIN как код
+        player_code: state.playerPin,
         player_pin: state.playerPin,
         score: finalScore, 
         time_seconds: totalTime, 
@@ -647,7 +652,6 @@
       
       const top10 = [...best.values()].sort((a, b) => b.score - a.score || a.time_seconds - b.time_seconds).slice(0, 10);
       target.innerHTML = top10.map((r, i) => {
-        // Скрываем код, чтобы не палить PIN
         return `<div class="mm-lb-row ${i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : ''}"><span class="mm-lb-rank">${i + 1}</span><div class="mm-lb-name-block"><span class="mm-lb-name">${escapeHtml(r.player_name)}</span></div><span class="mm-lb-score">${formatMoney(r.score)}</span><span class="mm-lb-time">${formatTime(r.time_seconds)}</span></div>`;
       }).join('');
     }
@@ -708,7 +712,7 @@
       state.playerName = nick;
       state.playerPin = pin;
 
-      saveGameState(); // Сохраняем начало игры
+      saveGameState();
 
       $('btn-5050').disabled = false;
       $('start-screen').classList.add('game-hide');
@@ -722,7 +726,7 @@
 
     $('btn-start').addEventListener('click', startGame);
     
-    // === ПРОВЕРКА ПРИ ЗАГРУЗКЕ СТРАНИЦЫ (Восстановление) ===
+    // === ПРОВЕРКА ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
     window.addEventListener('DOMContentLoaded', () => {
         loadLeaderboard('lb-list-home');
         
@@ -734,8 +738,6 @@
                     Object.assign(state, data);
                     $('start-screen').classList.add('game-hide');
                     $('game-screen').classList.remove('game-hide');
-                    
-                    // Восстанавливаем таймер (даем заново 60 сек)
                     renderQuestion(); 
                 } else {
                     clearGameState();
