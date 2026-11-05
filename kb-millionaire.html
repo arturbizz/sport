@@ -8,6 +8,19 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
+    /* СТРОГИЙ СБРОС КУРСОРОВ И КАРЕТОК */
+    * { 
+        cursor: default; 
+        caret-color: transparent; 
+    }
+    input, textarea, [contenteditable="true"] { 
+        cursor: text; 
+        caret-color: auto; 
+    }
+    button, a, select, .cursor-pointer, [role="button"], label, .mm-option, .mm-cat-btn, .lb-item { 
+        cursor: pointer; 
+    }
+
     /* ========== ПЕРЕМЕННЫЕ СВЕТЛОЙ ТЕМЫ ========== */
     :root {
       --bg: #f0f4f8;
@@ -28,9 +41,7 @@
       --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; cursor: default; }
-    input, textarea, select { cursor: text; }
-    button, a, .cursor-pointer { cursor: pointer; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     @keyframes bgBreathe {
       0% { background-position: 0% 50%; }
@@ -54,10 +65,7 @@
     body::before { width: 400px; height: 400px; background: #fbcfe8; top: -100px; left: -100px; }
     body::after { width: 500px; height: 500px; background: #bfdbfe; bottom: -150px; right: -100px; }
 
-    /* Вспышка при правильном ответе */
-    .flash-effect {
-      animation: flashScreen 0.4s ease-out;
-    }
+    .flash-effect { animation: flashScreen 0.4s ease-out; }
     @keyframes flashScreen {
       0% { background-color: rgba(255, 255, 255, 0.6); }
       100% { background-color: transparent; }
@@ -68,7 +76,7 @@
     .game-bar-logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; color: var(--ink); }
     .game-bar-mark { width: 36px; height: 36px; background: linear-gradient(135deg, var(--gold), var(--primary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow); }
     .game-bar-mark svg { width: 20px; height: 20px; color: white; }
-    .game-btn { padding: 10px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s var(--smooth); backdrop-filter: blur(10px); }
+    .game-btn { padding: 10px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s var(--smooth); backdrop-filter: blur(10px); display: flex; align-items: center; gap: 8px;}
     .game-btn:hover { background: var(--surface-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
 
     .game-wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
@@ -96,7 +104,7 @@
       width: 100%; padding: 18px; font-size: 18px; font-weight: 800; color: #fff;
       background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899, #6366f1);
       background-size: 300% 300%; animation: bgBreathe 4s ease infinite;
-      border: none; border-radius: 16px; cursor: pointer; box-shadow: 0 10px 30px var(--primary-glow);
+      border: none; border-radius: 16px; box-shadow: 0 10px 30px var(--primary-glow);
       transition: transform 0.3s var(--spring), box-shadow 0.3s;
     }
     .mm-btn-start:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 15px 40px rgba(168, 85, 247, 0.4); }
@@ -114,8 +122,8 @@
     .mm-volume { display: flex; align-items: center; gap: 8px; }
     .mm-volume input { width: 80px; accent-color: var(--primary); cursor: pointer; }
 
-    /* Кнопка звука (SVG) */
-    .sound-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); border: 1px solid var(--primary-glow); border-radius: 10px; color: var(--primary); cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 10px var(--primary-glow); }
+    /* Премиальная кнопка звука (SVG) */
+    .sound-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); border: 1px solid var(--primary-glow); border-radius: 10px; color: var(--primary); transition: all 0.2s; box-shadow: 0 2px 10px var(--primary-glow); }
     .sound-btn:hover { background: var(--primary); color: white; transform: scale(1.05); }
     .sound-btn svg { width: 18px; height: 18px; }
     
@@ -180,24 +188,25 @@
     .lb-name { font-weight: 800; font-size: 16px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lb-score { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 15px; color: var(--primary); }
     
-    /* Красивая объемная шкала */
+    /* ПРЕМИАЛЬНАЯ ШКАЛА ПРОГРЕССА */
     .lb-bar-wrap { 
       width: 100%; 
-      height: 12px; /* Чуть толще для красоты */
+      height: 14px; /* Увеличенная высота */
       background: #e2e8f0; 
       border-radius: 10px; 
       overflow: hidden; 
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); /* Более глубокая тень */
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.15); /* Внутренняя тень для объема */
       position: relative;
+      border: 1px solid rgba(0,0,0,0.05);
     }
     .lb-bar { 
       height: 100%; 
-      background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899); 
-      background-size: 200% 100%;
+      background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #6366f1); 
+      background-size: 300% 100%;
       border-radius: 10px; 
       width: 0%; 
-      transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
-      box-shadow: 0 0 12px rgba(168, 85, 247, 0.6); /* Свечение */
+      transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); /* Мощное свечение */
       position: relative;
       animation: shimmerBarBg 3s linear infinite;
     }
@@ -206,18 +215,17 @@
       content: '';
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
       transform: translateX(-100%);
-      animation: shimmerBar 2s infinite;
+      animation: shimmerBar 2.5s infinite;
+      border-radius: 10px;
     }
-    @keyframes shimmerBarBg { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+    @keyframes shimmerBarBg { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
     @keyframes shimmerBar { 100% { transform: translateX(100%); } }
 
-    .lb-item.rank-1 .lb-bar { background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d); box-shadow: 0 0 12px rgba(245, 158, 11, 0.8); }
-    .lb-item.rank-2 .lb-bar { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #94a3b8); box-shadow: 0 0 12px rgba(148, 163, 184, 0.8); }
-    .lb-item.rank-3 .lb-bar { background: linear-gradient(90deg, #ef4444, #fca5a5, #ef4444); box-shadow: 0 0 12px rgba(239, 68, 68, 0.8); }
-
-    .lb-time { font-size: 12px; color: var(--ink-3); text-align: right; font-weight: 600; }
+    .lb-item.rank-1 .lb-bar { background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d, #fbbf24); box-shadow: 0 0 15px rgba(245, 158, 11, 0.8); }
+    .lb-item.rank-2 .lb-bar { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #e2e8f0, #94a3b8); box-shadow: 0 0 15px rgba(148, 163, 184, 0.8); }
+    .lb-item.rank-3 .lb-bar { background: linear-gradient(90deg, #ef4444, #fca5a5, #fecaca, #ef4444); box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
 
     /* ========== КАСТОМНЫЕ УВЕДОМЛЕНИЯ ========== */
     .custom-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s; }
@@ -234,7 +242,7 @@
     
     .custom-alert h4 { font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
     .custom-alert p { font-size: 15px; color: var(--ink-2); line-height: 1.6; margin-bottom: 24px; }
-    .custom-alert button { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .custom-alert button { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; transition: all 0.2s; }
     .custom-alert button.btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px var(--primary-glow); }
     .custom-alert button.btn-primary:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 6px 20px var(--primary-glow); }
     .custom-alert button.btn-secondary { background: #f1f5f9; color: var(--ink-2); margin-top: 10px; }
@@ -270,7 +278,9 @@
     </div>
     <div style="display:flex; gap: 10px;">
       <a href="kb-trainer.html" class="game-btn">Тренажёр</a>
-      <a href="knowledge-base.html" class="game-btn">← В БЗ</a>
+      <a href="knowledge-base.html" class="game-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg> В БЗ
+      </a>
     </div>
   </div>
 
@@ -360,7 +370,7 @@
         <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Топ-10 игроков</h3>
         <div class="lb-grid" id="lb-list-result"></div>
         <div style="text-align: center; margin-top: 24px;">
-          <a href="knowledge-base.html" class="game-btn">Вернуться в Базу Знаний</a>
+          <a href="knowledge-base.html" class="game-btn" style="display:inline-flex;">Вернуться в Базу Знаний</a>
         </div>
       </div>
     </div>
@@ -391,7 +401,7 @@
     const sfxCorrect = document.getElementById('sfx-correct');
     const sfxWrong = document.getElementById('sfx-wrong');
     const sfxWin = document.getElementById('sfx-win');
-    let isSoundMuted = false; // Единый флаг для всех звуков
+    let isSoundMuted = false; // Единый флаг
 
     bgm.volume = 0.3; 
     document.getElementById('bgm-volume').addEventListener('input', (e) => { bgm.volume = e.target.value; });
@@ -406,7 +416,7 @@
         bgm.pause();
         btn.innerHTML = ICON_SOUND_OFF;
         btn.style.color = 'var(--ink-3)';
-        btn.style.borderColor = 'var(--hairline-2)';
+        btn.style.borderColor = 'var(--border)';
         btn.style.boxShadow = 'none';
       } else {
         bgm.play().catch(()=>{});
@@ -487,33 +497,30 @@
 
     // === КРАСИВЫЙ САЛЮТ ===
     function fireCorrectEffect() {
-      // Вспышка на фоне
       document.body.classList.add('flash-effect');
       setTimeout(() => document.body.classList.remove('flash-effect'), 400);
 
-      // Звездный взрыв
       const defaults = { origin: { y: 0.6 }, colors: ['#fbbf24', '#f59e0b', '#6366f1', '#a855f7', '#ec4899'] };
       
       confetti({
         ...defaults,
-        particleCount: 50,
-        spread: 100,
-        startVelocity: 40,
+        particleCount: 60,
+        spread: 120,
+        startVelocity: 45,
         ticks: 200,
         gravity: 0.8,
         scalar: 1.2,
-        shapes: ['circle', 'square'] // В стандартном canvas-confetti нет 'star', но 'circle'/'square' с красивой физикой смотрятся отлично
+        shapes: ['circle', 'square']
       });
       
-      // Дополнительный залп через 150мс
       setTimeout(() => {
         confetti({
           ...defaults,
-          particleCount: 30,
-          spread: 60,
-          startVelocity: 30,
+          particleCount: 40,
+          spread: 80,
+          startVelocity: 35,
           ticks: 150,
-          scalar: 0.8,
+          scalar: 0.9,
           shapes: ['circle']
         });
       }, 150);
@@ -650,11 +657,9 @@
 
       if (isCorrect) {
         if (!isSoundMuted) { sfxCorrect.currentTime = 0; sfxCorrect.play().catch(()=>{}); }
-        fireCorrectEffect(); // Вызов нового красивого эффекта
+        fireCorrectEffect();
         
-        if (SAFE_LEVELS.includes(state.currentIndex)) { 
-          setTimeout(fireCorrectEffect, 400); 
-        }
+        if (SAFE_LEVELS.includes(state.currentIndex)) { setTimeout(fireCorrectEffect, 400); }
 
         state.correctCount++;
         state.score = AMOUNTS[state.currentIndex];
