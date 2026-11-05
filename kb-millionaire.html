@@ -33,6 +33,22 @@
     }
 
     @keyframes bgBreathe { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    /* Новые анимации для прогресса */
+    @keyframes levelUpBounce {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.08); filter: brightness(1.5); box-shadow: 0 0 40px currentColor; }
+      60% { transform: scale(0.98); }
+      100% { transform: scale(1.02); filter: brightness(1); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), inset 0 0 10px rgba(99, 102, 241, 0.1); }
+      50% { box-shadow: 0 0 35px rgba(99, 102, 241, 0.7), inset 0 0 20px rgba(99, 102, 241, 0.3); }
+    }
+    @keyframes barShimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
 
     body {
       font-family: 'Inter', -apple-system, sans-serif;
@@ -118,7 +134,6 @@
     .mm-level-badge { display: inline-block; font-size: 12px; font-weight: 800; color: var(--primary); background: var(--primary-glow); padding: 6px 12px; border-radius: 8px; margin-bottom: 20px; text-transform: uppercase; }
     .mm-question-text { font-size: 22px; font-weight: 700; line-height: 1.4; }
 
-    /* Кнопка "Пожаловаться" */
     .report-btn { position: absolute; top: 20px; right: 20px; width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.6); border: 1px solid var(--border); color: var(--ink-3); display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
     .report-btn:hover { background: #fff; color: var(--danger); border-color: rgba(239, 68, 68, 0.3); transform: scale(1.05); }
     .report-btn svg { width: 16px; height: 16px; }
@@ -136,26 +151,60 @@
     .mm-option.dimmed { opacity: 0.3; }
     .mm-option.hidden { visibility: hidden; }
 
-    /* ========== ЛЕСЕНКА ========== */
+    /* ========== ЛЕСЕНКА (ОБНОВЛЕННАЯ) ========== */
     .mm-ladder { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; scroll-behavior: smooth; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; backdrop-filter: blur(20px); box-shadow: var(--shadow); }
     .mm-ladder::-webkit-scrollbar { width: 6px; }
     .mm-ladder::-webkit-scrollbar-thumb { background: var(--ink-3); border-radius: 10px; }
     .mm-ladder-title { font-size: 12px; font-weight: 800; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; text-align: center; }
     .mm-ladder-tier { margin-bottom: 16px; }
     .mm-ladder-tier-name { font-size: 11px; font-weight: 800; color: var(--ink-3); margin-bottom: 8px; padding-left: 8px; text-transform: uppercase; }
-    .mm-ladder-item { display: flex; justify-content: space-between; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; transition: all 0.3s; }
-    .mm-ladder-item.passed { color: var(--success); background: rgba(16, 185, 129, 0.05); }
-    .mm-ladder-item.current { background: linear-gradient(90deg, #fff, #f3e8ff); border: 2px solid var(--primary); color: var(--primary); transform: scale(1.02); box-shadow: 0 4px 15px var(--primary-glow); font-weight: 800; }
+    
+    .mm-ladder-item { 
+      display: flex; justify-content: space-between; padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; 
+      color: var(--ink-2); margin-bottom: 6px; transition: all 0.3s var(--spring); border: 1px solid transparent;
+    }
+    
+    /* Пройденные уровни */
+    .mm-ladder-item.passed { 
+      color: var(--ink-3); opacity: 0.7; background: rgba(0,0,0,0.02); 
+      text-decoration: line-through; text-decoration-color: rgba(0,0,0,0.2); 
+    }
+
+    /* Текущий уровень (Сочный и пульсирующий) */
+    .mm-ladder-item.current { 
+      background: linear-gradient(135deg, #fff, #f3e8ff); 
+      border-color: var(--primary); color: var(--primary); 
+      transform: scale(1.05) translateX(-4px); 
+      font-weight: 800; 
+      animation: levelUpBounce 0.6s var(--spring), glowPulse 2s infinite;
+      z-index: 2;
+    }
+    .mm-ladder-item.current .mm-ladder-amount { color: var(--primary); font-size: 15px; text-shadow: 0 0 10px var(--primary-glow); }
+    
+    /* Цветовые градиенты для блоков */
+    .tier-base .current { background: linear-gradient(135deg, #fff, #ecfdf5); border-color: var(--success); color: #065f46; animation: levelUpBounce 0.6s var(--spring), glowPulse 2s infinite; }
+    .tier-base .current .mm-ladder-amount { color: #059669; text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+    
+    .tier-mid .current { background: linear-gradient(135deg, #fff, #fffbeb); border-color: var(--gold); color: #b45309; animation: levelUpBounce 0.6s var(--spring), glowPulse 2s infinite; }
+    .tier-mid .current .mm-ladder-amount { color: #d97706; text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+    
+    .tier-high .current { background: linear-gradient(135deg, #fff, #fdf2f8); border-color: #ec4899; color: #be185d; animation: levelUpBounce 0.6s var(--spring), glowPulse 2s infinite; }
+    .tier-high .current .mm-ladder-amount { color: #db2777; text-shadow: 0 0 10px rgba(236, 72, 153, 0.4); }
+    
+    .tier-jackpot .current { background: linear-gradient(135deg, #fff, #f5f3ff); border-color: #8b5cf6; color: #6d28d9; animation: levelUpBounce 0.6s var(--spring), glowPulse 2s infinite; }
+    .tier-jackpot .current .mm-ladder-amount { color: #7c3aed; text-shadow: 0 0 10px rgba(139, 92, 246, 0.4); }
+
     .mm-ladder-level { font-family: 'JetBrains Mono', monospace; }
     .mm-ladder-amount { font-family: 'JetBrains Mono', monospace; font-weight: 800; }
     .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; color: var(--gold); }
 
-    /* ========== РЕЙТИНГ ========== */
+    /* ========== РЕЙТИНГ (ОБНОВЛЕННЫЙ) ========== */
     .mm-leaderboard { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px; backdrop-filter: blur(20px); box-shadow: var(--shadow); max-width: 800px; margin: 40px auto 0; }
     .mm-leaderboard h3 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
     .mm-leaderboard h3 svg { color: var(--gold); width: 24px; height: 24px; }
     .lb-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
     @media (max-width: 768px) { .lb-grid { grid-template-columns: 1fr; } }
+    
     .lb-item { display: flex; align-items: center; gap: 16px; padding: 20px; background: rgba(255,255,255,0.6); border-radius: 20px; border: 1px solid var(--border); transition: all 0.3s; position: relative; overflow: hidden; }
     .lb-item:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
     .lb-item.rank-1 { background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), #fff); border-color: rgba(251, 191, 36, 0.4); }
@@ -169,14 +218,33 @@
     .lb-header { display: flex; justify-content: space-between; align-items: baseline; }
     .lb-name { font-weight: 800; font-size: 16px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lb-score { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 15px; color: var(--primary); }
-    .lb-bar-wrap { width: 100%; height: 14px; background: #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15); position: relative; border: 1px solid rgba(0,0,0,0.05); }
-    .lb-bar { height: 100%; background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #6366f1); background-size: 300% 100%; border-radius: 10px; width: 0%; transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); position: relative; animation: shimmerBarBg 3s linear infinite; }
-    .lb-bar::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent); transform: translateX(-100%); animation: shimmerBar 2.5s infinite; border-radius: 10px; }
-    @keyframes shimmerBarBg { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+    
+    /* Супер-красивая полоска рейтинга */
+    .lb-bar-wrap { 
+      width: 100%; height: 16px; background: #e2e8f0; border-radius: 10px; overflow: hidden; 
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.15), 0 1px 2px rgba(255,255,255,0.8); 
+      position: relative; border: 1px solid rgba(0,0,0,0.05); 
+    }
+    .lb-bar { 
+      height: 100%; 
+      background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #f59e0b, #6366f1); 
+      background-size: 300% 100%; 
+      border-radius: 10px; width: 0%; 
+      transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.6); 
+      position: relative; 
+      animation: barShimmer 4s linear infinite; 
+    }
+    .lb-bar::after { 
+      content: ''; position: absolute; top: 0; left: 0; bottom: 0; right: 0; 
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent); 
+      transform: translateX(-100%); animation: shimmerBar 2.5s infinite; border-radius: 10px; 
+    }
     @keyframes shimmerBar { 100% { transform: translateX(100%); } }
-    .lb-item.rank-1 .lb-bar { background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d, #fbbf24); box-shadow: 0 0 15px rgba(245, 158, 11, 0.8); }
-    .lb-item.rank-2 .lb-bar { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #e2e8f0, #94a3b8); box-shadow: 0 0 15px rgba(148, 163, 184, 0.8); }
-    .lb-item.rank-3 .lb-bar { background: linear-gradient(90deg, #ef4444, #fca5a5, #fecaca, #ef4444); box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
+    
+    .lb-item.rank-1 .lb-bar { background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d, #fbbf24); box-shadow: 0 0 20px rgba(245, 158, 11, 0.8); }
+    .lb-item.rank-2 .lb-bar { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #e2e8f0, #94a3b8); box-shadow: 0 0 20px rgba(148, 163, 184, 0.8); }
+    .lb-item.rank-3 .lb-bar { background: linear-gradient(90deg, #ef4444, #fca5a5, #fecaca, #ef4444); box-shadow: 0 0 20px rgba(239, 68, 68, 0.8); }
 
     /* ========== МОДАЛКИ ========== */
     .custom-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s; }
@@ -196,7 +264,6 @@
     .custom-alert button.btn-secondary { background: #f1f5f9; color: var(--ink-2); margin-top: 10px; }
     .custom-alert button.btn-secondary:hover { background: #e2e8f0; color: var(--ink); }
 
-    /* Форма жалобы */
     .report-form { text-align: left; }
     .report-form label { display: block; font-size: 13px; font-weight: 700; color: var(--ink-2); margin-bottom: 8px; }
     .report-form select, .report-form textarea { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-subtle); font-size: 14px; font-family: inherit; margin-bottom: 16px; outline: none; transition: all 0.2s; }
@@ -213,7 +280,6 @@
   <audio id="sfx-wrong"><source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg" type="audio/ogg"></audio>
   <audio id="sfx-win"><source src="https://actions.google.com/sounds/v1/crowds/cheering_crowd.ogg" type="audio/ogg"></audio>
 
-  <!-- СТАНДАРТНОЕ ОКНО -->
   <div class="custom-overlay" id="customOverlay">
     <div class="custom-alert" id="customAlertBox">
       <div class="custom-alert-icon info" id="customIcon"></div>
@@ -223,7 +289,6 @@
     </div>
   </div>
 
-  <!-- ОКНО ЖАЛОБЫ -->
   <div class="custom-overlay" id="reportOverlay">
     <div class="custom-alert">
       <h4 style="margin-bottom: 20px;">Предложить исправление</h4>
@@ -524,12 +589,19 @@
     }
 
     function renderLadder() {
-      const tiers = [ { name: 'Джекпот', from: 19, to: 15 }, { name: 'Высокая ставка', from: 14, to: 10 }, { name: 'Середина', from: 9, to: 5 }, { name: 'База', from: 4, to: 0 } ];
+      const tiers = [
+        { name: 'Джекпот', from: 19, to: 15, class: 'tier-jackpot' },
+        { name: 'Высокая ставка', from: 14, to: 10, class: 'tier-high' },
+        { name: 'Середина', from: 9, to: 5, class: 'tier-mid' },
+        { name: 'База', from: 4, to: 0, class: 'tier-base' }
+      ];
       let html = '';
       for (const tier of tiers) {
-        html += `<div class="mm-ladder-tier"><div class="mm-ladder-tier-name">${tier.name}</div>`;
+        html += `<div class="mm-ladder-tier ${tier.class}"><div class="mm-ladder-tier-name">${tier.name}</div>`;
         for (let i = tier.from; i >= tier.to; i--) {
-          const isCurrent = i === state.currentIndex; const isPassed = i < state.currentIndex; const isSafe = SAFE_LEVELS.includes(i);
+          const isCurrent = i === state.currentIndex;
+          const isPassed = i < state.currentIndex;
+          const isSafe = SAFE_LEVELS.includes(i);
           html += `<div class="mm-ladder-item ${isCurrent ? 'current' : ''} ${isPassed ? 'passed' : ''} ${isSafe ? 'safe' : ''}"><span class="mm-ladder-level">${i + 1}</span><span class="mm-ladder-amount">${formatMoney(AMOUNTS[i])}</span></div>`;
         }
         html += `</div>`;
