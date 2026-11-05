@@ -7,177 +7,191 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="kb-game.css">
   <style>
-    /* ========== HERO ========== */
-    .mm-hero { text-align: center; padding: 20px 0 40px; animation: gFadeUp 0.5s var(--g-smooth); }
-    .mm-hero h1 { font-family: var(--g-font); font-size: 48px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; background: linear-gradient(135deg, var(--g-gold) 0%, var(--g-magenta) 50%, var(--g-violet) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    .mm-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 580px; margin: 0 auto 32px; line-height: 1.65; }
+    /* ========== ПЕРЕМЕННЫЕ СВЕТЛОЙ ТЕМЫ ========== */
+    :root {
+      --bg: #f0f4f8;
+      --surface: rgba(255, 255, 255, 0.7);
+      --surface-hover: rgba(255, 255, 255, 0.9);
+      --ink: #1e293b;
+      --ink-2: #475569;
+      --ink-3: #94a3b8;
+      --primary: #6366f1;
+      --primary-glow: rgba(99, 102, 241, 0.3);
+      --gold: #f59e0b;
+      --gold-glow: rgba(245, 158, 11, 0.3);
+      --success: #10b981;
+      --danger: #ef4444;
+      --border: rgba(255, 255, 255, 0.8);
+      --shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+      --smooth: cubic-bezier(0.4, 0, 0.2, 1);
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
 
-    /* ========== START CARD ========== */
-    .mm-start-card { max-width: 580px; margin: 0 auto; background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid var(--g-hairline-2); border-radius: 20px; padding: 36px 32px; text-align: center; }
-    .mm-start-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; cursor: default; }
+    input, textarea, select { cursor: text; }
+    button, a, .cursor-pointer { cursor: pointer; }
+
+    /* Дышащий фон */
+    @keyframes bgBreathe {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+      background-size: 200% 200%;
+      animation: bgBreathe 15s ease infinite;
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Праздничные пятна на фоне */
+    body::before, body::after {
+      content: ''; position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6;
+    }
+    body::before { width: 400px; height: 400px; background: #fbcfe8; top: -100px; left: -100px; }
+    body::after { width: 500px; height: 500px; background: #bfdbfe; bottom: -150px; right: -100px; }
+
+    /* ========== ОБЩИЕ СТИЛИ ========== */
+    .game-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; }
+    .game-bar-logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; color: var(--ink); }
+    .game-bar-mark { width: 36px; height: 36px; background: linear-gradient(135deg, var(--gold), var(--primary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow); }
+    .game-bar-mark svg { width: 20px; height: 20px; color: white; }
+    .game-btn { padding: 10px 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s var(--smooth); backdrop-filter: blur(10px); }
+    .game-btn:hover { background: var(--surface-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
+
+    .game-wrap { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+    /* ========== ЭКРАН СТАРТА ========== */
+    .mm-hero { text-align: center; margin-bottom: 40px; }
+    .mm-hero h1 { font-size: 48px; font-weight: 900; letter-spacing: -0.03em; background: linear-gradient(135deg, #1e293b 0%, #4f46e5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+    .mm-hero p { color: var(--ink-2); font-size: 18px; }
+
+    .mm-card { background: var(--surface); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 24px; padding: 40px; box-shadow: var(--shadow); max-width: 600px; margin: 0 auto; position: relative; overflow: hidden; }
+    .mm-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #fbcfe8, #bfdbfe, #fde68a, #a7f3d0); background-size: 300% 100%; animation: bgBreathe 3s linear infinite; }
     
     .mm-setup-inputs { display: flex; gap: 12px; margin-bottom: 24px; }
-    .mm-input { flex: 1; padding: 14px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink); font-family: var(--g-font); font-size: 15px; transition: all 0.2s; outline: none; text-align: center; }
-    .mm-input:focus { border-color: var(--g-gold); box-shadow: 0 0 0 3px rgba(255, 201, 64, 0.15); }
+    .mm-input { flex: 1; padding: 16px; background: rgba(255,255,255,0.6); border: 1px solid var(--border); border-radius: 12px; font-size: 16px; font-weight: 600; color: var(--ink); outline: none; transition: all 0.3s; text-align: center; }
+    .mm-input:focus { background: #fff; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); }
+
+    .mm-categories { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .mm-cat-btn { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: rgba(255,255,255,0.4); border: 1px solid var(--border); border-radius: 16px; font-size: 16px; font-weight: 600; color: var(--ink); transition: all 0.3s var(--spring); }
+    .mm-cat-btn:hover { background: #fff; transform: translateX(4px); box-shadow: var(--shadow); }
+    .mm-cat-btn.active { background: #fff; border-color: var(--primary); box-shadow: 0 4px 20px var(--primary-glow); transform: scale(1.02); }
+    .mm-cat-btn span { display: flex; align-items: center; gap: 12px; }
+    .mm-cat-btn svg { width: 24px; height: 24px; color: var(--primary); }
+
+    /* Голографическая кнопка */
+    .mm-btn-start {
+      width: 100%; padding: 18px; font-size: 18px; font-weight: 800; color: #fff;
+      background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899, #6366f1);
+      background-size: 300% 300%; animation: bgBreathe 4s ease infinite;
+      border: none; border-radius: 16px; cursor: pointer; box-shadow: 0 10px 30px var(--primary-glow);
+      transition: transform 0.3s var(--spring), box-shadow 0.3s;
+    }
+    .mm-btn-start:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 15px 40px rgba(168, 85, 247, 0.4); }
+    .mm-btn-start:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ========== ЭКРАН ИГРЫ ========== */
+    .mm-game { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
+    @media (max-width: 900px) { .mm-game { grid-template-columns: 1fr; } .mm-ladder { order: -1; max-height: 250px; } }
+
+    .mm-top { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; padding: 16px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; backdrop-filter: blur(20px); box-shadow: var(--shadow); }
+    .mm-timer { display: flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 800; color: var(--primary); }
+    .mm-timer.warning { color: var(--danger); animation: gShake 0.4s ease; }
     
-    .mm-rules { text-align: left; color: var(--g-ink-2); font-size: 14px; line-height: 1.8; margin-bottom: 28px; }
-    .mm-rules li { list-style: none; padding-left: 24px; position: relative; margin-bottom: 8px; }
-    .mm-rules li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; border-radius: 2px; background: var(--g-gold); transform: rotate(45deg); }
-    .mm-rules strong { color: var(--g-ink); font-weight: 600; }
-    .mm-rules .rule-highlight { margin-top: 16px; padding: 14px 16px 14px 20px; background: linear-gradient(90deg, rgba(255, 201, 64, 0.12), rgba(255, 79, 163, 0.06)); border-left: 3px solid var(--g-gold); border-radius: 8px; color: var(--g-ink); font-size: 13.5px; line-height: 1.65; }
-    .mm-rules .rule-highlight::before { display: none; }
-
-    /* ========== CATEGORY SELECT ========== */
-    .mm-categories { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-    .mm-cat-btn { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: rgba(255,255,255,0.04); border: 2px solid var(--g-hairline-2); border-radius: 12px; color: var(--g-ink); cursor: pointer; transition: all 0.2s; font-family: var(--g-font); font-weight: 600; font-size: 15px; }
-    .mm-cat-btn:hover { border-color: var(--g-gold); background: rgba(255, 201, 64, 0.06); transform: translateY(-2px); }
-    .mm-cat-btn.active { border-color: var(--g-gold); background: linear-gradient(90deg, rgba(255, 201, 64, 0.15), rgba(255, 79, 163, 0.05)); }
-    .mm-cat-btn span { display: flex; align-items: center; gap: 10px; }
-    .mm-cat-btn svg { width: 24px; height: 24px; color: var(--g-gold); }
-
-    /* ========== GAME BUTTON SHIMMER ========== */
-    .mm-btn-start { position: relative; width: 100%; padding: 16px 24px; font-size: 15px; font-weight: 700; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--g-gold) 0%, var(--g-magenta) 60%, var(--g-violet) 100%); color: #0A0614; cursor: pointer; overflow: hidden; box-shadow: 0 6px 24px rgba(255, 79, 163, 0.4); transition: transform 0.2s var(--g-smooth), box-shadow 0.2s var(--g-smooth), filter 0.2s; }
-    .mm-btn-start::before { content: ''; position: absolute; top: 0; left: -100%; width: 60%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent); transform: skewX(-20deg); animation: shimmer 2.4s infinite; pointer-events: none; z-index: 1; }
-    @keyframes shimmer { 0% { left: -100%; } 60%, 100% { left: 200%; } }
-    .mm-btn-start:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 10px 36px rgba(255, 79, 163, 0.6), 0 0 40px rgba(255, 201, 64, 0.3); filter: brightness(1.12); }
-    .mm-btn-start:active { transform: translateY(0) scale(1); }
-    .mm-btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
-    .mm-btn-start span { position: relative; z-index: 2; }
-
-    /* ========== LAYOUT ========== */
-    .mm-game { display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: start; }
-    @media (max-width: 900px) { .mm-game { grid-template-columns: 1fr; } .mm-ladder { order: -1; max-height: 200px; } }
-
-    /* ========== TOP BAR ========== */
-    .mm-top { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 14px 20px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-hairline-2); border-radius: 12px; }
-    .mm-timer { display: flex; align-items: center; gap: 8px; font-family: var(--g-mono); font-size: 18px; font-weight: 700; color: var(--g-gold); }
-    .mm-timer.warning { color: var(--g-danger); animation: gShake 0.4s ease; }
-    .mm-timer svg { width: 18px; height: 18px; }
-    
-    /* ========== LIFELINES & VOLUME ========== */
     .mm-controls { display: flex; gap: 16px; margin-left: auto; align-items: center; }
-    .mm-volume { display: flex; align-items: center; gap: 8px; }
-    .mm-volume input { width: 60px; accent-color: var(--g-gold); cursor: pointer; }
+    .mm-volume { display: flex; align-items: center; gap: 8px; font-size: 20px; }
+    .mm-volume input { width: 80px; accent-color: var(--primary); cursor: pointer; }
     
-    .mm-lifeline { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid var(--g-hairline-2); display: flex; align-items: center; justify-content: center; cursor: pointer; font-family: var(--g-mono); font-weight: 700; font-size: 13px; color: var(--g-ink); transition: all 0.2s; }
-    .mm-lifeline:hover:not(:disabled) { border-color: var(--g-gold); color: var(--g-gold); background: rgba(255, 201, 64, 0.1); transform: scale(1.05); }
-    .mm-lifeline:disabled { opacity: 0.3; cursor: not-allowed; position: relative; }
-    .mm-lifeline:disabled::after { content: ''; position: absolute; width: 100%; height: 2px; background: var(--g-danger); transform: rotate(-45deg); }
+    .mm-lifeline { padding: 8px 16px; background: rgba(255,255,255,0.8); border: 1px solid var(--primary-glow); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--primary); transition: all 0.2s; box-shadow: 0 2px 10px var(--primary-glow); }
+    .mm-lifeline:hover:not(:disabled) { background: var(--primary); color: white; transform: scale(1.05); }
+    .mm-lifeline:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
+    .mm-progress-info { font-size: 14px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
 
-    .mm-progress-info { font-size: 12px; color: var(--g-ink-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+    .mm-question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 24px; backdrop-filter: blur(20px); box-shadow: var(--shadow); }
+    .mm-level-badge { display: inline-block; font-size: 12px; font-weight: 800; color: var(--primary); background: var(--primary-glow); padding: 6px 12px; border-radius: 8px; margin-bottom: 20px; text-transform: uppercase; }
+    .mm-question-text { font-size: 22px; font-weight: 700; line-height: 1.4; }
 
-    /* ========== QUESTION ========== */
-    .mm-question-card { background: linear-gradient(180deg, rgba(168, 85, 247, 0.08), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 16px; padding: 32px; margin-bottom: 20px; animation: gFadeUp 0.4s var(--g-smooth); }
-    .mm-level-badge { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--g-violet); background: rgba(168, 85, 247, 0.15); padding: 4px 10px; border-radius: 6px; font-weight: 700; margin-bottom: 16px; }
-    .mm-question-text { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; color: var(--g-ink); }
-
-    /* ========== OPTIONS ========== */
-    .mm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .mm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 640px) { .mm-options { grid-template-columns: 1fr; } }
-    .mm-option { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-hairline-2); border-radius: 12px; color: var(--g-ink); text-align: left; font-family: var(--g-font); font-size: 14px; line-height: 1.5; cursor: pointer; transition: all 0.2s var(--g-smooth); }
-    .mm-option:hover:not(:disabled) { border-color: var(--g-gold); background: rgba(255, 201, 64, 0.06); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 201, 64, 0.15); }
-    .mm-option-letter { flex-shrink: 0; width: 28px; height: 28px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--g-hairline-2); display: flex; align-items: center; justify-content: center; font-family: var(--g-mono); font-weight: 700; font-size: 13px; color: var(--g-gold); transition: all 0.2s; }
-    .mm-option:hover:not(:disabled) .mm-option-letter { background: var(--g-gold); color: #0A0614; border-color: var(--g-gold); }
-    .mm-option.correct { border-color: var(--g-emerald); background: rgba(16, 229, 168, 0.12); box-shadow: 0 0 30px rgba(16, 229, 168, 0.2); }
-    .mm-option.correct .mm-option-letter { background: var(--g-emerald); color: #0A0614; border-color: var(--g-emerald); }
-    .mm-option.wrong { border-color: var(--g-danger); background: rgba(255, 59, 92, 0.1); animation: gShake 0.4s ease; }
-    .mm-option.wrong .mm-option-letter { background: var(--g-danger); color: white; border-color: var(--g-danger); }
-    .mm-option:disabled { cursor: not-allowed; }
-    .mm-option.dimmed { opacity: 0.35; }
+    .mm-option { display: flex; align-items: center; gap: 16px; padding: 20px; background: rgba(255,255,255,0.6); border: 2px solid transparent; border-radius: 16px; font-size: 16px; font-weight: 600; text-align: left; transition: all 0.3s var(--spring); box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+    .mm-option:hover:not(:disabled) { background: #fff; border-color: var(--primary-glow); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+    .mm-option-letter { width: 36px; height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--ink-2); transition: all 0.2s; }
+    .mm-option:hover:not(:disabled) .mm-option-letter { background: var(--primary); color: white; }
+    .mm-option.correct { background: #ecfdf5; border-color: var(--success); color: #065f46; }
+    .mm-option.correct .mm-option-letter { background: var(--success); color: white; }
+    .mm-option.wrong { background: #fef2f2; border-color: var(--danger); color: #991b1b; }
+    .mm-option.wrong .mm-option-letter { background: var(--danger); color: white; }
+    .mm-option.dimmed { opacity: 0.3; }
     .mm-option.hidden { visibility: hidden; }
 
-    /* ========== LADDER ========== */
-    .mm-ladder { position: sticky; top: 90px; max-height: calc(100vh - 110px); overflow-y: auto; scroll-behavior: smooth; border-radius: 16px; padding: 20px 14px 16px; background: linear-gradient(180deg, rgba(168, 85, 247, 0.05) 0%, rgba(255, 79, 163, 0.03) 50%, rgba(16, 229, 168, 0.04) 100%), rgba(10, 6, 20, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
-    .mm-ladder::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 16px 16px 0 0; background: linear-gradient(90deg, var(--g-violet), var(--g-magenta), var(--g-gold), var(--g-emerald), var(--g-violet)); background-size: 300% 100%; animation: holoFlow 4s linear infinite; }
-    @keyframes holoFlow { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
-    .mm-ladder-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: var(--g-ink-3); font-weight: 700; margin-bottom: 16px; padding: 0 6px; }
-    .mm-ladder-tier { margin-bottom: 14px; position: relative; z-index: 1; }
-    .mm-ladder-tier-name { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 700; margin-bottom: 8px; padding: 0 6px; display: flex; align-items: center; gap: 6px; }
-    .mm-ladder-tier-name::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
-    .mm-ladder-tier[data-tier="tier-4"] .mm-ladder-tier-name { color: var(--g-violet); }
-    .mm-ladder-tier[data-tier="tier-3"] .mm-ladder-tier-name { color: var(--g-magenta); }
-    .mm-ladder-tier[data-tier="tier-2"] .mm-ladder-tier-name { color: var(--g-gold); }
-    .mm-ladder-tier[data-tier="tier-1"] .mm-ladder-tier-name { color: var(--g-emerald); }
-    .mm-ladder-tier-items { display: flex; flex-direction: column; gap: 4px; }
-    .mm-ladder-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px 8px 16px; border-radius: 9px; font-size: 12px; color: var(--g-ink-3); position: relative; border: 1px solid transparent; transition: all 0.25s var(--g-smooth); }
-    .mm-ladder-item::before { content: ''; position: absolute; left: 6px; top: 7px; bottom: 7px; width: 3px; border-radius: 2px; transition: all 0.25s; }
-    .mm-ladder-item.tier-1 { background: linear-gradient(90deg, rgba(16, 229, 168, 0.05), rgba(255,255,255,0.01)); border-color: rgba(16, 229, 168, 0.12); }
-    .mm-ladder-item.tier-1::before { background: var(--g-emerald); }
-    .mm-ladder-item.tier-2 { background: linear-gradient(90deg, rgba(255, 201, 64, 0.06), rgba(255,255,255,0.01)); border-color: rgba(255, 201, 64, 0.18); }
-    .mm-ladder-item.tier-2::before { background: var(--g-gold); }
-    .mm-ladder-item.tier-3 { background: linear-gradient(90deg, rgba(255, 79, 163, 0.07), rgba(255,255,255,0.01)); border-color: rgba(255, 79, 163, 0.2); }
-    .mm-ladder-item.tier-3::before { background: var(--g-magenta); }
-    .mm-ladder-item.tier-4 { background: linear-gradient(90deg, rgba(168, 85, 247, 0.12), rgba(255, 201, 64, 0.04)); border-color: rgba(168, 85, 247, 0.3); }
-    .mm-ladder-item.tier-4::before { background: linear-gradient(180deg, var(--g-violet), var(--g-gold)); box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); }
-    .mm-ladder-item.tier-1 .mm-ladder-amount { color: var(--g-emerald); opacity: 0.9; }
-    .mm-ladder-item.tier-2 .mm-ladder-amount { color: var(--g-gold); opacity: 0.9; }
-    .mm-ladder-item.tier-3 .mm-ladder-amount { color: var(--g-magenta); opacity: 0.9; }
-    .mm-ladder-item.tier-4 .mm-ladder-amount { color: var(--g-violet); }
-    .mm-ladder-item:hover { transform: translateX(-2px); }
-    .mm-ladder-item.passed { background: rgba(16, 229, 168, 0.08); border-color: rgba(16, 229, 168, 0.35); }
-    .mm-ladder-item.passed .mm-ladder-amount, .mm-ladder-item.passed .mm-ladder-level { color: var(--g-emerald); opacity: 1; }
-    .mm-ladder-item.passed::before { background: var(--g-emerald); }
-    .mm-ladder-item.current { background: linear-gradient(90deg, rgba(255, 201, 64, 0.28), rgba(255, 79, 163, 0.16)); border-color: rgba(255, 201, 64, 0.7); color: var(--g-ink); font-weight: 700; box-shadow: 0 0 24px rgba(255, 201, 64, 0.35), 0 0 60px rgba(255, 79, 163, 0.15), inset 0 0 24px rgba(255, 201, 64, 0.1); transform: scale(1.03) translateX(-2px); animation: ladderPulse 2s ease-in-out infinite; z-index: 2; }
-    @keyframes ladderPulse { 0%, 100% { box-shadow: 0 0 24px rgba(255, 201, 64, 0.35), 0 0 60px rgba(255, 79, 163, 0.15), inset 0 0 24px rgba(255, 201, 64, 0.1); } 50% { box-shadow: 0 0 36px rgba(255, 201, 64, 0.55), 0 0 80px rgba(255, 79, 163, 0.25), inset 0 0 30px rgba(255, 201, 64, 0.15); } }
-    .mm-ladder-item.current::before { background: linear-gradient(180deg, var(--g-gold), var(--g-magenta)); width: 4px; left: 5px; box-shadow: 0 0 10px rgba(255, 201, 64, 0.8); }
-    .mm-ladder-item.current .mm-ladder-amount { color: var(--g-gold); font-size: 12.5px; text-shadow: 0 0 12px rgba(255, 201, 64, 0.6); }
-    .mm-ladder-item.current .mm-ladder-level { color: var(--g-gold); opacity: 1; font-weight: 700; }
-    .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; font-size: 9px; margin-left: 2px; color: var(--g-emerald); }
-    .mm-ladder-item.current.safe .mm-ladder-amount::after { color: var(--g-gold); }
-    .mm-ladder-level { font-family: var(--g-mono); font-size: 10px; opacity: 0.6; font-weight: 600; }
-    .mm-ladder-amount { font-family: var(--g-mono); font-weight: 700; font-size: 11.5px; }
+    /* ========== ЛЕСЕНКА ========== */
+    .mm-ladder { position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; scroll-behavior: smooth; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 24px; backdrop-filter: blur(20px); box-shadow: var(--shadow); }
     .mm-ladder::-webkit-scrollbar { width: 6px; }
-    .mm-ladder::-webkit-scrollbar-track { background: transparent; margin: 8px 0; }
-    .mm-ladder::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--g-violet), var(--g-magenta), var(--g-gold)); border-radius: 3px; box-shadow: 0 0 8px rgba(168, 85, 247, 0.6); }
-    .mm-ladder::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, var(--g-gold), var(--g-magenta), var(--g-violet)); box-shadow: 0 0 12px rgba(255, 201, 64, 0.8); }
+    .mm-ladder::-webkit-scrollbar-thumb { background: var(--ink-3); border-radius: 10px; }
+    .mm-ladder-title { font-size: 12px; font-weight: 800; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; text-align: center; }
+    .mm-ladder-tier { margin-bottom: 16px; }
+    .mm-ladder-tier-name { font-size: 11px; font-weight: 800; color: var(--ink-3); margin-bottom: 8px; padding-left: 8px; text-transform: uppercase; }
+    .mm-ladder-item { display: flex; justify-content: space-between; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; color: var(--ink-2); margin-bottom: 4px; transition: all 0.3s; }
+    .mm-ladder-item.passed { color: var(--success); background: rgba(16, 185, 129, 0.05); }
+    .mm-ladder-item.current { background: linear-gradient(90deg, #fff, #f3e8ff); border: 2px solid var(--primary); color: var(--primary); transform: scale(1.02); box-shadow: 0 4px 15px var(--primary-glow); font-weight: 800; }
+    .mm-ladder-level { font-family: 'JetBrains Mono', monospace; }
+    .mm-ladder-amount { font-family: 'JetBrains Mono', monospace; font-weight: 800; }
+    .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; color: var(--gold); }
 
-    /* ========== RESULT ========== */
-    .mm-result { max-width: 600px; margin: 0 auto; text-align: center; animation: gFadeUp 0.5s var(--g-spring); }
-    .mm-result-trophy { width: 88px; height: 88px; margin: 0 auto 24px; border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 40px rgba(255, 201, 64, 0.4); animation: gFloat 3s ease-in-out infinite; }
-    .mm-result-trophy.win { background: linear-gradient(135deg, var(--g-gold), var(--g-magenta)); }
-    .mm-result-trophy.timeout { background: linear-gradient(135deg, var(--g-violet), var(--g-gold)); box-shadow: 0 12px 40px rgba(168, 85, 247, 0.4); }
-    .mm-result-trophy.fail { background: linear-gradient(135deg, var(--g-danger), var(--g-magenta)); box-shadow: 0 12px 40px rgba(255, 59, 92, 0.4); }
-    .mm-result-trophy svg { width: 44px; height: 44px; color: white; }
-    .mm-result h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; background: linear-gradient(135deg, var(--g-gold), var(--g-magenta)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    .mm-result-subtitle { color: var(--g-ink-2); font-size: 15px; margin-bottom: 8px; }
-    .mm-result-amount { font-family: var(--g-mono); font-size: 56px; font-weight: 900; color: var(--g-gold); margin: 16px 0 8px; letter-spacing: -0.02em; }
-    .mm-result-amount.zero { color: var(--g-ink-3); }
-    .mm-result-stats { display: flex; justify-content: center; gap: 32px; margin: 24px 0 32px; padding: 20px 0; border-top: 1px solid var(--g-hairline); border-bottom: 1px solid var(--g-hairline); }
-    .mm-result-stat { text-align: center; }
-    .mm-result-stat-value { font-family: var(--g-mono); font-size: 22px; font-weight: 700; color: var(--g-ink); }
-    .mm-result-stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); margin-top: 4px; }
-    .mm-leaderboard { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 24px; margin-top: 32px; }
-    .mm-leaderboard h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--g-ink-3); font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-    .mm-leaderboard h3 svg { width: 16px; height: 16px; color: var(--g-gold); }
-    .mm-lb-row { display: grid; grid-template-columns: 32px 1fr auto auto; gap: 16px; align-items: center; padding: 12px 16px; border-radius: 10px; margin-bottom: 4px; font-size: 14px; }
-    .mm-lb-row:nth-child(odd) { background: rgba(255, 255, 255, 0.02); }
-    .mm-lb-row.top-1 { background: linear-gradient(90deg, rgba(255, 201, 64, 0.15), transparent); border: 1px solid rgba(255, 201, 64, 0.3); }
-    .mm-lb-row.top-2 { background: linear-gradient(90deg, rgba(184, 174, 216, 0.1), transparent); }
-    .mm-lb-row.top-3 { background: linear-gradient(90deg, rgba(255, 79, 163, 0.1), transparent); }
-    .mm-lb-row.me { outline: 1px solid rgba(16, 229, 168, 0.4); outline-offset: -1px; }
-    .mm-lb-rank { font-family: var(--g-mono); font-weight: 700; color: var(--g-ink-3); text-align: center; }
-    .mm-lb-row.top-1 .mm-lb-rank { color: var(--g-gold); }
-    .mm-lb-row.top-2 .mm-lb-rank { color: #C4C0D6; }
-    .mm-lb-row.top-3 .mm-lb-rank { color: var(--g-magenta); }
-    .mm-lb-name-block { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .mm-lb-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mm-lb-code { font-family: var(--g-mono); font-size: 10px; color: var(--g-ink-3); letter-spacing: 0.05em; }
-    .mm-lb-score { font-family: var(--g-mono); font-weight: 700; color: var(--g-emerald); font-size: 13px; }
-    .mm-lb-time { font-family: var(--g-mono); font-size: 12px; color: var(--g-ink-3); }
-    .mm-lb-empty { text-align: center; color: var(--g-ink-3); font-size: 13px; padding: 20px 0; }
-    .player-code-box { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-hairline-2); border-radius: 10px; margin-top: 12px; font-size: 13px; }
-    .player-code-label { color: var(--g-ink-3); font-size: 12px; }
-    .player-code-value { font-family: var(--g-mono); font-weight: 700; color: var(--g-gold); font-size: 15px; letter-spacing: 0.1em; }
+    /* ========== РЕЙТИНГ (КРАСИВЫЙ ГРАФИК) ========== */
+    .mm-leaderboard { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px; backdrop-filter: blur(20px); box-shadow: var(--shadow); max-width: 800px; margin: 40px auto 0; }
+    .mm-leaderboard h3 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
+    .mm-leaderboard h3 svg { color: var(--gold); width: 24px; height: 24px; }
+    
+    .lb-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    @media (max-width: 768px) { .lb-grid { grid-template-columns: 1fr; } }
 
-    /* ========== БАЛЛУНЫ ========== */
-    .balloon-container { position: fixed; inset: 0; pointer-events: none; z-index: 9999; overflow: hidden; display: none; }
-    .balloon-container.active { display: block; }
-    .balloon { position: absolute; bottom: -100px; width: 50px; height: 65px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; animation: floatUp linear forwards; box-shadow: inset -5px -5px 15px rgba(0,0,0,0.2); }
-    .balloon::after { content: ''; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 10px solid rgba(255, 255, 255, 0.4); }
-    .balloon::before { content: ''; position: absolute; bottom: -60px; left: 50%; width: 1px; height: 60px; background: rgba(255, 255, 255, 0.3); transform: translateX(-50%); }
-    @keyframes floatUp { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(-120vh) rotate(20deg); } }
+    .lb-item { display: flex; align-items: center; gap: 16px; padding: 16px; background: rgba(255,255,255,0.6); border-radius: 16px; border: 1px solid var(--border); transition: all 0.3s; }
+    .lb-item:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.05); }
+    
+    .lb-rank { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; background: #e2e8f0; color: var(--ink-2); flex-shrink: 0; }
+    .lb-item.rank-1 .lb-rank { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4); }
+    .lb-item.rank-2 .lb-rank { background: linear-gradient(135deg, #cbd5e1, #94a3b8); color: white; }
+    .lb-item.rank-3 .lb-rank { background: linear-gradient(135deg, #fca5a5, #ef4444); color: white; }
+    
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name { font-weight: 700; font-size: 15px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    
+    /* Визуальная полоска прогресса */
+    .lb-bar-wrap { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+    .lb-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #a855f7); border-radius: 3px; width: 0%; transition: width 1s var(--smooth); }
+    
+    .lb-score { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 14px; color: var(--primary); text-align: right; flex-shrink: 0; }
+    .lb-time { font-size: 11px; color: var(--ink-3); text-align: right; margin-top: 4px; }
+
+    /* ========== КАСТОМНЫЕ УВЕДОМЛЕНИЯ ========== */
+    .custom-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s; }
+    .custom-overlay.show { display: flex; opacity: 1; }
+    
+    .custom-alert { background: #fff; border-radius: 24px; padding: 32px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 24px 64px rgba(0,0,0,0.15); transform: scale(0.9); transition: transform 0.3s var(--spring); }
+    .custom-overlay.show .custom-alert { transform: scale(1); }
+    
+    .custom-alert-icon { width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+    .custom-alert-icon.error { background: #fef2f2; color: var(--danger); }
+    .custom-alert-icon.success { background: #ecfdf5; color: var(--success); }
+    .custom-alert-icon.info { background: #eff6ff; color: var(--primary); }
+    .custom-alert-icon svg { width: 32px; height: 32px; }
+    
+    .custom-alert h4 { font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
+    .custom-alert p { font-size: 15px; color: var(--ink-2); line-height: 1.6; margin-bottom: 24px; }
+    .custom-alert button { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .custom-alert button.btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px var(--primary-glow); }
+    .custom-alert button.btn-primary:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 6px 20px var(--primary-glow); }
+    .custom-alert button.btn-secondary { background: #f1f5f9; color: var(--ink-2); margin-top: 10px; }
+    .custom-alert button.btn-secondary:hover { background: #e2e8f0; color: var(--ink); }
+
+    .game-hide { display: none !important; }
   </style>
 </head>
 <body>
@@ -185,84 +199,63 @@
   <audio id="bgm" loop>
     <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
   </audio>
-  <audio id="sfx-correct">
-    <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
-  </audio>
-  <audio id="sfx-wrong">
-    <source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg" type="audio/ogg">
-  </audio>
-  <audio id="sfx-win">
-    <source src="https://actions.google.com/sounds/v1/crowds/cheering_crowd.ogg" type="audio/ogg">
-  </audio>
+  <audio id="sfx-correct"><source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg"></audio>
+  <audio id="sfx-wrong"><source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg" type="audio/ogg"></audio>
+  <audio id="sfx-win"><source src="https://actions.google.com/sounds/v1/crowds/cheering_crowd.ogg" type="audio/ogg"></audio>
 
-  <div class="balloon-container" id="balloon-container"></div>
+  <!-- КАСТОМНОЕ ОКНО -->
+  <div class="custom-overlay" id="customOverlay">
+    <div class="custom-alert" id="customAlertBox">
+      <div class="custom-alert-icon info" id="customIcon"></div>
+      <h4 id="customTitle">Заголовок</h4>
+      <p id="customText">Текст уведомления...</p>
+      <div id="customActions">
+        <button class="btn-primary" id="customOkBtn">Ок</button>
+      </div>
+    </div>
+  </div>
 
   <div class="game-bar">
-    <div class="game-bar-logo" style="cursor:default;">
+    <div class="game-bar-logo">
       <div class="game-bar-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg></div>
       <span class="game-bar-title">Миллионер</span>
     </div>
-    <div class="game-bar-spacer"></div>
-    <div class="game-bar-actions">
-      <a href="kb-trainer.html" class="game-btn game-btn-sm">Тренажёр</a>
-      <a href="knowledge-base.html" class="game-btn game-btn-sm">← В БЗ</a>
+    <div style="display:flex; gap: 10px;">
+      <a href="kb-trainer.html" class="game-btn">Тренажёр</a>
+      <a href="knowledge-base.html" class="game-btn">← В БЗ</a>
     </div>
   </div>
 
   <div class="game-wrap">
-    <div class="mm-hero">
-      <h1>Кто хочет<br>стать миллионером?</h1>
-      <p>Проверь свои знания по Базам Знаний. 20 вопросов — от простого к сложному.</p>
-    </div>
-
+    
     <!-- ЭКРАН СТАРТА -->
     <div id="start-screen">
-      <div class="mm-start-card">
-        <h2>Регистрация</h2>
-        
-        <div class="mm-setup-inputs">
-            <input type="text" class="mm-input" id="player-nick" placeholder="Твой ник" maxlength="20">
-            <input type="text" class="mm-input" id="player-pin" placeholder="PIN (от админа)" maxlength="10" style="text-transform: uppercase;">
-        </div>
-
-        <h2 style="margin-top: 24px;">Выбери направление</h2>
-        <div class="mm-categories">
-          <button class="mm-cat-btn active" data-category="Mix">
-            <span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-              Все вопросы (Микс)
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <button class="mm-cat-btn" data-category="TV">
-            <span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg>
-              Телевизоры
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <button class="mm-cat-btn" data-category="Printer">
-            <span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-              Принтеры и МФУ
-            </span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        </div>
-
-        <ul class="mm-rules">
-          <li>20 вопросов с нарастающей сложностью</li>
-          <li>60 секунд на каждый вопрос</li>
-          <li>Несгораемые суммы на 5 и 10 вопросах</li>
-          <li>1 подсказка «50 на 50» на игру</li>
-          <li class="rule-highlight">Внимание! Защита от сброса: если вы обновите страницу во время игры, вы продолжите с того же места. Сбросить прогресс нельзя.</li>
-        </ul>
-        <button class="mm-btn-start" id="btn-start"><span>Начать игру</span></button>
+      <div class="mm-hero">
+        <h1>Кто хочет стать миллионером?</h1>
+        <p>Проверь свои знания по Базам Знаний. 20 вопросов — от простого к сложному.</p>
       </div>
 
-      <div class="mm-leaderboard" id="leaderboard-home">
-        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Топ-10 игроков</h3>
-        <div id="lb-list-home"><div class="mm-lb-empty">Загрузка…</div></div>
+      <div class="mm-card">
+        <h2 style="font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 20px;">Вход в игру</h2>
+        <div class="mm-setup-inputs">
+            <input type="text" class="mm-input" id="player-nick" placeholder="Твой Ник" maxlength="20">
+            <input type="text" class="mm-input" id="player-pin" placeholder="PIN-код" maxlength="10" style="text-transform: uppercase;">
+        </div>
+
+        <h2 style="font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 20px;">Выбери направление</h2>
+        <div class="mm-categories">
+          <button class="mm-cat-btn active" data-category="Mix">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Все вопросы</span>
+          </button>
+          <button class="mm-cat-btn" data-category="TV">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"/><polyline points="17 2 12 7 7 2"/></svg> Телевизоры</span>
+          </button>
+          <button class="mm-cat-btn" data-category="Printer">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Принтеры</span>
+          </button>
+        </div>
+
+        <button class="mm-btn-start" id="btn-start">Начать игру</button>
       </div>
     </div>
 
@@ -271,24 +264,28 @@
       <div class="mm-game">
         <div class="mm-main">
           <div class="mm-top">
-            <div class="mm-timer" id="timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg><span id="timer-text">60</span></div>
+            <div class="mm-timer" id="timer">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M9 2h6"/></svg>
+              <span id="timer-text">60</span>
+            </div>
             
             <div class="mm-controls">
               <div class="mm-volume">
-                  <span style="cursor:pointer;" id="btn-music">🔊</span>
+                  <span id="btn-music">🔊</span>
                   <input type="range" id="bgm-volume" min="0" max="1" step="0.1" value="0.3">
               </div>
-              <button class="mm-lifeline" id="btn-5050" title="50 на 50">50:50</button>
+              <button class="mm-lifeline" id="btn-5050">50:50</button>
             </div>
-
             <div class="mm-progress-info" id="progress-info">Вопрос 1 из 20</div>
           </div>
-          <div class="mm-question-card" id="question-card">
+
+          <div class="mm-question-card">
             <div class="mm-level-badge" id="level-badge">Уровень 1</div>
             <div class="mm-question-text" id="question-text">Загрузка вопроса…</div>
           </div>
           <div class="mm-options" id="options"></div>
         </div>
+
         <aside class="mm-ladder" id="ladder-container">
           <div class="mm-ladder-title">Лесенка</div>
           <div id="ladder-items"></div>
@@ -298,25 +295,27 @@
 
     <!-- ЭКРАН РЕЗУЛЬТАТА -->
     <div id="result-screen" class="game-hide">
-      <div class="mm-result">
-        <div class="mm-result-trophy" id="result-trophy"></div>
-        <h2 id="result-title">Игра окончена!</h2>
-        <div class="mm-result-subtitle" id="result-subtitle"></div>
-        <div class="mm-result-amount" id="result-amount">0 ₽</div>
-        <div class="mm-result-stats">
-          <div class="mm-result-stat"><div class="mm-result-stat-value" id="result-correct">0</div><div class="mm-result-stat-label">Верных</div></div>
-          <div class="mm-result-stat"><div class="mm-result-stat-value" id="result-level">0</div><div class="mm-result-stat-label">Уровень</div></div>
-          <div class="mm-result-stat"><div class="mm-result-stat-value" id="result-time">0с</div><div class="mm-result-stat-label">Время</div></div>
-        </div>
-        <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 32px;">
-          <a href="knowledge-base.html" class="game-btn">← В БЗ</a>
-        </div>
-        <div class="mm-leaderboard">
-          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Топ-10 игроков</h3>
-          <div id="lb-list-result"><div class="mm-lb-empty">Загрузка…</div></div>
+      <div class="mm-hero">
+        <h1 id="result-title">Игра окончена!</h1>
+        <p id="result-subtitle"></p>
+        <div style="font-size: 56px; font-weight: 900; color: var(--primary); margin: 20px 0;" id="result-amount">0 ₽</div>
+      </div>
+      
+      <div class="mm-leaderboard" style="margin-top: 0;">
+        <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Топ-10 игроков</h3>
+        <div class="lb-grid" id="lb-list-result"></div>
+        <div style="text-align: center; margin-top: 24px;">
+          <a href="knowledge-base.html" class="game-btn">Вернуться в Базу Знаний</a>
         </div>
       </div>
     </div>
+
+    <!-- РЕЙТИНГ НА ГЛАВНОМ ЭКРАНЕ -->
+    <div class="mm-leaderboard" id="home-leaderboard">
+      <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Рейтинг игроков</h3>
+      <div class="lb-grid" id="lb-list-home"></div>
+    </div>
+
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -332,29 +331,77 @@
     const TOTAL_QUESTIONS = 20;
     const DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
 
-    // === АУДИО ЛОГИКА ===
+    // === АУДИО ===
     const bgm = document.getElementById('bgm');
     const sfxCorrect = document.getElementById('sfx-correct');
     const sfxWrong = document.getElementById('sfx-wrong');
     const sfxWin = document.getElementById('sfx-win');
     let isMusicMuted = false;
-
     bgm.volume = 0.3; 
-    document.getElementById('bgm-volume').addEventListener('input', (e) => {
-        bgm.volume = e.target.value;
-    });
-
+    
+    document.getElementById('bgm-volume').addEventListener('input', (e) => { bgm.volume = e.target.value; });
     document.getElementById('btn-music').addEventListener('click', (e) => {
       isMusicMuted = !isMusicMuted;
-      if (isMusicMuted) {
-        bgm.pause();
-        e.target.textContent = '🔇';
-      } else {
-        bgm.play().catch(err => console.log(err));
-        e.target.textContent = '🔊';
-      }
+      if (isMusicMuted) { bgm.pause(); e.target.textContent = '🔇'; }
+      else { bgm.play().catch(()=>{}); e.target.textContent = '🔊'; }
     });
 
+    // === КАСТОМНЫЕ УВЕДОМЛЕНИЯ ===
+    const overlay = document.getElementById('customOverlay');
+    const alertBox = document.getElementById('customAlertBox');
+    const iconBox = document.getElementById('customIcon');
+    const titleBox = document.getElementById('customTitle');
+    const textBox = document.getElementById('customText');
+    const actionsBox = document.getElementById('customActions');
+    const okBtn = document.getElementById('customOkBtn');
+
+    const ICONS = {
+      error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+      success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+      info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    };
+
+    function showCustomAlert(title, message, type = 'info', onClose = null) {
+      titleBox.textContent = title;
+      textBox.textContent = message;
+      iconBox.className = `custom-alert-icon ${type}`;
+      iconBox.innerHTML = ICONS[type] || ICONS.info;
+      
+      actionsBox.innerHTML = '';
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary';
+      btn.textContent = 'Понятно';
+      btn.onclick = () => { overlay.classList.remove('show'); if(onClose) onClose(); };
+      actionsBox.appendChild(btn);
+      
+      overlay.classList.add('show');
+    }
+
+    function showCustomConfirm(title, message, onConfirm, onCancel) {
+      titleBox.textContent = title;
+      textBox.textContent = message;
+      iconBox.className = `custom-alert-icon info`;
+      iconBox.innerHTML = ICONS.info;
+      
+      actionsBox.innerHTML = '';
+      
+      const btnYes = document.createElement('button');
+      btnYes.className = 'btn-primary';
+      btnYes.textContent = 'Да, продолжить';
+      btnYes.onclick = () => { overlay.classList.remove('show'); onConfirm(); };
+      
+      const btnNo = document.createElement('button');
+      btnNo.className = 'btn-secondary';
+      btnNo.textContent = 'Отмена';
+      btnNo.onclick = () => { overlay.classList.remove('show'); if(onCancel) onCancel(); };
+      
+      actionsBox.appendChild(btnYes);
+      actionsBox.appendChild(btnNo);
+      
+      overlay.classList.add('show');
+    }
+
+    // === СОСТОЯНИЕ ===
     const state = {
       questions: [], currentIndex: 0, score: 0, correctCount: 0,
       startTime: 0, timerId: null, timeLeft: TIME_PER_QUESTION,
@@ -364,15 +411,12 @@
     };
 
     const $ = (id) => document.getElementById(id);
-
     function formatMoney(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
-    function formatTime(sec) { return sec < 60 ? sec + 'с' : Math.floor(sec / 60) + 'м ' + (sec % 60) + 'с'; }
     function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
     function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-    // ===== ЭФФЕКТЫ =====
     function fireConfetti() {
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors: ['#FFC940', '#FF4FA3', '#A855F7', '#10E5A8', '#FFFFFF'] });
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors: ['#6366f1', '#a855f7', '#ec4899', '#f59e0b', '#10b981'] });
     }
 
     function fireBigConfetti() {
@@ -389,24 +433,6 @@
       }, 250);
     }
 
-    function startBalloons() {
-      const container = $('balloon-container');
-      container.classList.add('active');
-      container.innerHTML = '';
-      const colors = ['#FF4FA3', '#A855F7', '#10E5A8', '#FFC940', '#4F8EFF'];
-      for (let i = 0; i < 20; i++) {
-        const b = document.createElement('div');
-        b.className = 'balloon';
-        b.style.left = Math.random() * 100 + 'vw';
-        b.style.background = colors[Math.floor(Math.random() * colors.length)];
-        b.style.animationDuration = (Math.random() * 3 + 4) + 's';
-        b.style.animationDelay = (Math.random() * 2) + 's';
-        container.appendChild(b);
-      }
-      setTimeout(() => { container.classList.remove('active'); }, 8000);
-    }
-
-    // ===== ВЫБОР КАТЕГОРИИ =====
     document.querySelectorAll('.mm-cat-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.mm-cat-btn').forEach(b => b.classList.remove('active'));
@@ -415,7 +441,6 @@
       });
     });
 
-    // ===== ЛОГИКА 50 на 50 =====
     $('btn-5050').addEventListener('click', () => {
       if (state.lifelineUsed || state.answersLocked) return;
       const wrongBtns = Array.from(document.querySelectorAll('.mm-option')).filter(btn => 
@@ -430,12 +455,11 @@
       saveGameState();
     });
 
-    // ===== ЗАГРУЗКА ВОПРОСОВ =====
     async function loadQuestions(category) {
       let query = supabaseClient.from('millionaire_questions').select('*');
       if (category !== 'Mix') { query = query.eq('category', category); }
       const { data, error } = await query;
-      if (error) { console.error(error); return []; }
+      if (error) return [];
       if (!data || !data.length) return [];
 
       const easy = shuffle(data.filter(q => q.difficulty === 'easy')).slice(0, DISTRIBUTION.easy);
@@ -456,33 +480,26 @@
       ];
       let html = '';
       for (const tier of tiers) {
-        html += `<div class="mm-ladder-tier" data-tier="${tier.key}"><div class="mm-ladder-tier-name">${tier.name}</div><div class="mm-ladder-tier-items">`;
+        html += `<div class="mm-ladder-tier"><div class="mm-ladder-tier-name">${tier.name}</div>`;
         for (let i = tier.from; i >= tier.to; i--) {
           const isCurrent = i === state.currentIndex;
           const isPassed = i < state.currentIndex;
           const isSafe = SAFE_LEVELS.includes(i);
-          html += `<div class="mm-ladder-item ${tier.key} ${isCurrent ? 'current' : ''} ${isPassed ? 'passed' : ''} ${isSafe ? 'safe' : ''}"><span class="mm-ladder-level">${i + 1}</span><span class="mm-ladder-amount">${formatMoney(AMOUNTS[i])}</span></div>`;
+          html += `<div class="mm-ladder-item ${isCurrent ? 'current' : ''} ${isPassed ? 'passed' : ''} ${isSafe ? 'safe' : ''}"><span class="mm-ladder-level">${i + 1}</span><span class="mm-ladder-amount">${formatMoney(AMOUNTS[i])}</span></div>`;
         }
-        html += `</div></div>`;
+        html += `</div>`;
       }
       $('ladder-items').innerHTML = html;
 
-      // АВТОСКРОЛЛ (ИСПРАВЛЕННЫЙ)
       setTimeout(() => {
         const currentEl = document.querySelector('.mm-ladder-item.current');
         const container = document.getElementById('ladder-container');
         if (currentEl && container) {
             const containerRect = container.getBoundingClientRect();
             const currentRect = currentEl.getBoundingClientRect();
-            
-            // Высчитываем идеальную позицию для скролла
             const scrollOffset = currentRect.top - containerRect.top;
             const targetScroll = container.scrollTop + scrollOffset - (container.clientHeight / 2) + (currentRect.height / 2);
-            
-            container.scrollTo({
-                top: targetScroll,
-                behavior: 'smooth'
-            });
+            container.scrollTo({ top: targetScroll, behavior: 'smooth' });
         }
       }, 150);
     }
@@ -524,17 +541,12 @@
     function stopTimer() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } }
     function updateTimerDisplay() { $('timer-text').textContent = Math.max(0, state.timeLeft); }
 
-    // === СОХРАНЕНИЕ И ЗАГРУЗКА СОСТОЯНИЯ (Анти-сброс) ===
     function saveGameState() {
         const save = { ...state };
         delete save.timerId;
         localStorage.setItem('mm_active_game', JSON.stringify(save));
     }
-
-    function clearGameState() {
-        localStorage.removeItem('mm_active_game');
-    }
-    // ====================================================
+    function clearGameState() { localStorage.removeItem('mm_active_game'); }
 
     function selectAnswer(letter) {
       if (state.answersLocked) return;
@@ -551,24 +563,21 @@
       });
 
       if (isCorrect) {
-        sfxCorrect.currentTime = 0;
-        sfxCorrect.play().catch(()=>{});
+        sfxCorrect.currentTime = 0; sfxCorrect.play().catch(()=>{});
         fireConfetti();
         if (SAFE_LEVELS.includes(state.currentIndex)) { setTimeout(fireConfetti, 300); }
 
         state.correctCount++;
         state.score = AMOUNTS[state.currentIndex];
         if (SAFE_LEVELS.includes(state.currentIndex)) state.lastSafeAmount = state.score;
-        
-        saveGameState(); // Сохраняем прогресс
+        saveGameState();
 
         setTimeout(() => {
           if (state.currentIndex === state.questions.length - 1) finishGame(true);
           else { state.currentIndex++; state.answersLocked = false; renderQuestion(); }
         }, 1400);
       } else {
-        sfxWrong.currentTime = 0;
-        sfxWrong.play().catch(()=>{});
+        sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{});
         setTimeout(() => finishGame(false), 1800);
       }
     }
@@ -582,8 +591,7 @@
         if (btn.dataset.letter === q.correct) btn.classList.add('correct');
         else btn.classList.add('dimmed');
       });
-      sfxWrong.currentTime = 0;
-      sfxWrong.play().catch(()=>{});
+      sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{});
       setTimeout(() => finishGame(false, true), 1600);
     }
 
@@ -595,43 +603,25 @@
       clearGameState();
 
       const finalScore = won ? AMOUNTS[AMOUNTS.length - 1] : state.lastSafeAmount;
-      const totalTime = Math.round((Date.now() - state.startTime) / 1000);
-
+      
       $('game-screen').classList.add('game-hide');
       $('start-screen').classList.add('game-hide');
+      $('home-leaderboard').classList.add('game-hide');
       $('result-screen').classList.remove('game-hide');
 
-      const trophy = $('result-trophy');
-      trophy.className = 'mm-result-trophy ' + (won ? 'win' : timeout ? 'timeout' : 'fail');
-      
-      if (timeout) {
-        trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 2"/></svg>`;
-      } else if (!won) {
-        trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
-      } else {
-        trophy.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5C7 4 7.5 5.5 7.5 7.5a2.5 2.5 0 0 1 0 5H6Z"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5C18 4 17.5 5.5 17.5 7.5a2.5 2.5 0 0 0 0 5H18Z"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`;
+      $('result-title').textContent = won ? 'Поздравляем!' : timeout ? 'Время вышло!' : 'Ошибка...';
+      $('result-subtitle').textContent = won ? 'Ты ответил на все 20 вопросов. Настоящий миллионер знаний!' : timeout ? 'Не успел — это тоже опыт. В следующий раз точно получится.' : `Ты дошёл до ${state.currentIndex + 1} вопроса.`;
+      $('result-amount').textContent = formatMoney(finalScore);
+
+      if (won) {
         sfxWin.play().catch(()=>{});
         fireBigConfetti();
-        startBalloons();
       }
 
-      $('result-title').textContent = won ? 'Поздравляем!' : timeout ? 'Время вышло!' : 'Ошибка...';
-      $('result-subtitle').textContent = won ? 'Ты ответил на все 20 вопросов. Настоящий миллионер знаний!' : timeout ? 'Не успел — это тоже опыт. В следующий раз точно получится.' : `Ты дошёл до ${state.currentIndex + 1} вопроса. В следующий раз — дальше!`;
-      $('result-amount').textContent = formatMoney(finalScore);
-      $('result-amount').className = 'mm-result-amount' + (finalScore === 0 ? ' zero' : '');
-      $('result-correct').textContent = state.correctCount;
-      $('result-level').textContent = state.currentIndex + 1;
-      $('result-time').textContent = formatTime(totalTime);
-
       await supabaseClient.from('millionaire_results').insert({
-        player_name: state.playerName, 
-        player_code: state.playerPin,
-        player_pin: state.playerPin,
-        score: finalScore, 
-        time_seconds: totalTime, 
-        correct_count: state.correctCount,
-        total_questions: state.questions.length, 
-        reached_level: state.currentIndex + 1,
+        player_name: state.playerName, player_code: state.playerPin, player_pin: state.playerPin,
+        score: finalScore, time_seconds: Math.round((Date.now() - state.startTime) / 1000), 
+        correct_count: state.correctCount, total_questions: state.questions.length, reached_level: state.currentIndex + 1,
       });
 
       loadLeaderboard('lb-list-result');
@@ -641,7 +631,11 @@
       const target = $(targetId);
       if (!target) return;
       const { data, error } = await supabaseClient.from('millionaire_results').select('*').order('score', { ascending: false }).order('time_seconds', { ascending: true }).limit(200);
-      if (error || !data || !data.length) { target.innerHTML = `<div class="mm-lb-empty">Пока никто не играл. Будь первым!</div>`; return; }
+      
+      if (error || !data || !data.length) { 
+        target.innerHTML = `<div style="text-align:center; color:var(--ink-3); padding:20px; grid-column: 1/-1;">Пока никто не играл. Будь первым!</div>`; 
+        return; 
+      }
       
       const best = new Map();
       for (const r of data) {
@@ -651,8 +645,23 @@
       }
       
       const top10 = [...best.values()].sort((a, b) => b.score - a.score || a.time_seconds - b.time_seconds).slice(0, 10);
+      const maxScore = top10[0].score || 1;
+
       target.innerHTML = top10.map((r, i) => {
-        return `<div class="mm-lb-row ${i === 0 ? 'top-1' : i === 1 ? 'top-2' : i === 2 ? 'top-3' : ''}"><span class="mm-lb-rank">${i + 1}</span><div class="mm-lb-name-block"><span class="mm-lb-name">${escapeHtml(r.player_name)}</span></div><span class="mm-lb-score">${formatMoney(r.score)}</span><span class="mm-lb-time">${formatTime(r.time_seconds)}</span></div>`;
+        const percent = Math.max(5, (r.score / maxScore) * 100);
+        return `
+          <div class="lb-item rank-${i + 1}">
+            <div class="lb-rank">${i + 1}</div>
+            <div class="lb-info">
+              <div class="lb-name">${escapeHtml(r.player_name)}</div>
+              <div class="lb-bar-wrap"><div class="lb-bar" style="width: ${percent}%"></div></div>
+            </div>
+            <div>
+              <div class="lb-score">${formatMoney(r.score)}</div>
+              <div class="lb-time">${Math.floor(r.time_seconds / 60)}м ${r.time_seconds % 60}с</div>
+            </div>
+          </div>
+        `;
       }).join('');
     }
 
@@ -661,19 +670,26 @@
       const pin = $('player-pin').value.trim().toUpperCase();
 
       if (!nick || !pin) {
-          alert('Пожалуйста, введите ваш ник и PIN-код от администратора.');
+          showCustomAlert('Внимание', 'Пожалуйста, введите ваш ник и PIN-код от администратора.', 'error');
           return;
       }
 
       $('btn-start').disabled = true;
-      $('btn-start').querySelector('span').textContent = 'Проверка...';
+      $('btn-start').textContent = 'Проверка...';
 
       // 1. Проверяем пин
       const { data: isValid, error: pinError } = await supabaseClient.rpc('verify_mm_pin', { input_pin: pin });
+      
+      if (pinError) {
+          console.error("Ошибка RPC:", pinError);
+          showCustomAlert('Ошибка сервера', 'Не удалось связаться с базой данных. Попробуйте позже.', 'error');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
+          return;
+      }
+
       if (!isValid) {
-          alert('Неверный или неактивный PIN-код.');
-          $('btn-start').disabled = false;
-          $('btn-start').querySelector('span').textContent = 'Начать игру';
+          showCustomAlert('Доступ запрещен', 'Неверный или неактивный PIN-код. Проверьте правильность ввода или обратитесь к администратору.', 'error');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
           return;
       }
 
@@ -683,18 +699,16 @@
           .select('id').eq('player_pin', pin).gte('created_at', today + 'T00:00:00Z').limit(1);
       
       if (existing && existing.length > 0) {
-          alert('Вы уже играли сегодня по этому PIN-коду. Возвращайтесь завтра!');
-          $('btn-start').disabled = false;
-          $('btn-start').querySelector('span').textContent = 'Начать игру';
+          showCustomAlert('Лимит исчерпан', 'Вы уже играли сегодня по этому PIN-коду. Возвращайтесь завтра!', 'info');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
           return;
       }
 
       // 3. Загрузка вопросов
       const questions = await loadQuestions(state.category);
       if (questions.length < TOTAL_QUESTIONS) {
-        alert('Недостаточно вопросов в базе для этой категории. Выберите другую.');
-        $('btn-start').disabled = false;
-        $('btn-start').querySelector('span').textContent = 'Начать игру';
+        showCustomAlert('Мало вопросов', 'В базе недостаточно вопросов для этой категории. Выберите другую.', 'error');
+        $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
         return;
       }
       
@@ -717,16 +731,18 @@
       $('btn-5050').disabled = false;
       $('start-screen').classList.add('game-hide');
       $('result-screen').classList.add('game-hide');
+      $('home-leaderboard').classList.add('game-hide');
       $('game-screen').classList.remove('game-hide');
+      
       $('btn-start').disabled = false;
-      $('btn-start').querySelector('span').textContent = 'Начать игру';
+      $('btn-start').textContent = 'Начать игру';
       
       renderQuestion();
     }
 
     $('btn-start').addEventListener('click', startGame);
     
-    // === ПРОВЕРКА ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
+    // Проверка при загрузке страницы
     window.addEventListener('DOMContentLoaded', () => {
         loadLeaderboard('lb-list-home');
         
@@ -734,14 +750,18 @@
         if (saved) {
             try {
                 const data = JSON.parse(saved);
-                if (confirm(`У вас есть незавершенная игра (Ник: ${data.playerName}). Продолжить?`)) {
+                showCustomConfirm('Незавершенная игра', `У вас есть незавершенная игра (Ник: ${data.playerName}). Хотите продолжить с того же места?`, 
+                  () => {
                     Object.assign(state, data);
                     $('start-screen').classList.add('game-hide');
+                    $('home-leaderboard').classList.add('game-hide');
                     $('game-screen').classList.remove('game-hide');
                     renderQuestion(); 
-                } else {
+                  },
+                  () => {
                     clearGameState();
-                }
+                  }
+                );
             } catch(e) { clearGameState(); }
         }
     });
