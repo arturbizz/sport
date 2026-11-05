@@ -125,6 +125,7 @@
     .markup-indicator .warn { color: #DC2626; font-weight: 500; }
     .markup-indicator .neutral { color: var(--ink-4); }
 
+    /* Модалка для PIN-кодов */
     .pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
     .pin-modal.open { display: flex; }
     .pin-window { background: #fff; width: 100%; max-width: 700px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 90vh; }
@@ -141,6 +142,16 @@
     
     .btn-clear-pins { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px; border-radius: 6px; width: 100%; font-weight: 500; transition: all 0.2s; margin-top: auto; font-size: 13px; }
     .btn-clear-pins:hover { background: var(--error); color: white; }
+
+    /* Модалка Результатов */
+    .results-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+    .results-modal.open { display: flex; }
+    .results-window { background: #fff; width: 100%; max-width: 800px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column; }
+    .results-list { flex: 1; overflow-y: auto; border: 1px solid var(--hairline); border-radius: 6px; margin-bottom: 16px; }
+    .res-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--hairline); }
+    .res-item:last-child { border-bottom: none; }
+    .res-name { font-weight: 600; }
+    .res-pin { font-family: var(--font-mono); color: var(--ink-3); font-size: 12px; }
   </style>
 </head>
 <body>
@@ -148,6 +159,7 @@
   <div class="toast-container" id="toast-container"></div>
   <div class="upload-status" id="upload-status"></div>
 
+  <!-- Модалка PIN -->
   <div class="pin-modal" id="pin-modal">
     <div class="pin-window">
       <h3>Управление доступом (PIN-коды)</h3>
@@ -169,6 +181,19 @@
       </div>
 
       <button class="btn btn-ghost" id="pin-modal-close" style="width:100%; margin-top: 16px;">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- Модалка Результатов Игры -->
+  <div class="results-modal" id="results-modal">
+    <div class="results-window">
+      <h3>Результаты игры (Тестовые и реальные)</h3>
+      <p style="font-size: 13px; color: var(--ink-3); margin-bottom: 16px;">Здесь можно удалить дубли тестовых ников.</p>
+      <div class="results-list" id="results-list">
+        <!-- Сюда будут загружаться результаты -->
+      </div>
+      <button class="btn-clear-pins" id="btn-clear-results" style="margin-bottom: 12px;">Очистить ВСЕ результаты</button>
+      <button class="btn btn-ghost" id="results-modal-close" style="width:100%;">Закрыть</button>
     </div>
   </div>
 
@@ -250,6 +275,10 @@
         
         <button class="fullscreen-btn" id="btn-open-pins" title="Управление PIN-кодами" style="color:var(--accent);">
            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        </button>
+
+        <button class="fullscreen-btn" id="btn-open-results" title="Результаты игры" style="color:var(--gold);">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </button>
 
         <div class="editor-toolbar-status">
@@ -511,6 +540,58 @@
       loadPins();
     });
 
+    // ==================== ЛОГИКА РЕЗУЛЬТАТОВ ====================
+    async function loadResults() {
+      const list = $('results-list');
+      list.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
+      
+      const { data, error } = await supabaseClient.from('millionaire_results').select('*').order('created_at', { ascending: false }).limit(200);
+      
+      if (error) {
+        list.innerHTML = `<div style="padding:20px; color:red; text-align:center;">Ошибка: ${error.message}</div>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Нет результатов</div>';
+        return;
+      }
+
+      list.innerHTML = data.map(r => `
+        <div class="res-item">
+          <div>
+            <div class="res-name">${r.player_name} <span class="res-pin">(PIN: ${r.player_pin || '—'})</span></div>
+            <div style="font-size:12px; color:var(--ink-3);">${new Date(r.created_at).toLocaleString('ru-RU')}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div style="font-weight:600; color:var(--accent);">${r.score.toLocaleString('ru-RU')} ₽</div>
+            <button class="btn btn-danger btn-sm" onclick="deleteResult('${r.id}')" style="padding:4px 8px;">Удалить</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.deleteResult = async (id) => {
+      if(!confirm('Удалить этот результат? (Игрок сможет сыграть заново)')) return;
+      await supabaseClient.from('millionaire_results').delete().eq('id', id);
+      loadResults();
+    };
+
+    $('btn-open-results')?.addEventListener('click', () => {
+      $('results-modal').classList.add('open');
+      loadResults();
+    });
+    $('results-modal-close')?.addEventListener('click', () => {
+      $('results-modal').classList.remove('open');
+    });
+    $('btn-clear-results')?.addEventListener('click', async () => {
+      if(!confirm('Удалить ВСЕ результаты игры? Это обнулит рейтинг.')) return;
+      const { error } = await supabaseClient.from('millionaire_results').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) { alert('Ошибка: ' + error.message); return; }
+      loadResults();
+    });
+
+    // ==================== ОСТАЛЬНАЯ ЛОГИКА ====================
     function initSidebar() {
       const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
       adminLayout.classList.toggle('sidebar-collapsed', collapsed);
