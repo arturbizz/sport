@@ -125,15 +125,19 @@
     /* Модалка для PIN-кодов */
     .pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
     .pin-modal.open { display: flex; }
-    .pin-window { background: #fff; width: 100%; max-width: 500px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-    .pin-window h3 { margin-top: 0; margin-bottom: 16px; font-size: 20px; }
-    .pin-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; border: 1px solid var(--hairline); border-radius: 8px; }
-    .pin-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--hairline); }
+    .pin-window { background: #fff; width: 100%; max-width: 700px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 90vh; }
+    .pin-window h3 { margin-top: 0; margin-bottom: 16px; font-size: 20px; text-align: center; }
+    
+    .pin-columns { display: flex; gap: 20px; flex: 1; overflow: hidden; }
+    .pin-col { flex: 1; display: flex; flex-direction: column; background: var(--bg-subtle); border-radius: 8px; padding: 16px; border: 1px solid var(--hairline); }
+    .pin-col h4 { margin: 0 0 12px; font-size: 16px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+    
+    .pin-list { flex: 1; overflow-y: auto; margin-bottom: 16px; border: 1px solid var(--hairline); border-radius: 6px; background: #fff; }
+    .pin-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--hairline); }
     .pin-item:last-child { border-bottom: none; }
-    .pin-code { font-family: var(--font-mono); font-size: 16px; font-weight: 600; letter-spacing: 1px; }
-    .pin-status { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: rgba(16, 185, 129, 0.1); color: #059669; }
-    .pin-status.expired { background: rgba(239, 68, 68, 0.1); color: #DC2626; }
-    .btn-clear-pins { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: 500; transition: all 0.2s; margin-bottom: 10px; }
+    .pin-code { font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--ink); }
+    
+    .btn-clear-pins { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px; border-radius: 6px; width: 100%; cursor: pointer; font-weight: 500; transition: all 0.2s; margin-top: auto; font-size: 13px; }
     .btn-clear-pins:hover { background: var(--error); color: white; }
   </style>
 </head>
@@ -145,19 +149,27 @@
   <!-- Модалка PIN -->
   <div class="pin-modal" id="pin-modal">
     <div class="pin-window">
-      <h3>Управление PIN-кодами</h3>
-      <p style="font-size:13px; color:var(--ink-3); margin-bottom:16px;">Выдавайте эти коды сотрудникам. Они действуют ровно 24 часа.</p>
+      <h3>Управление доступом (PIN-коды)</h3>
       
-      <div style="display:flex; gap:10px; margin-bottom:16px;">
-        <button class="btn btn-primary" id="btn-generate-pin" style="flex:1;">Сгенерировать новый PIN</button>
+      <div class="pin-columns">
+        <!-- БЗ -->
+        <div class="pin-col">
+          <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> База Знаний</h4>
+          <button class="btn btn-primary" id="btn-gen-kb" style="margin-bottom: 12px; width: 100%;">Сгенерировать KB-код</button>
+          <div class="pin-list" id="pin-list-kb"></div>
+          <button class="btn-clear-pins" id="btn-clear-kb">Удалить все KB</button>
+        </div>
+
+        <!-- Игра -->
+        <div class="pin-col">
+          <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Игра Миллионер</h4>
+          <button class="btn btn-primary" id="btn-gen-mm" style="margin-bottom: 12px; width: 100%; background: linear-gradient(135deg, var(--gold), var(--magenta)); color: #0A0614;">Сгенерировать MM-код</button>
+          <div class="pin-list" id="pin-list-mm"></div>
+          <button class="btn-clear-pins" id="btn-clear-mm">Удалить все MM</button>
+        </div>
       </div>
 
-      <div class="pin-list" id="pin-list">
-        <!-- Сюда будут загружаться пины -->
-      </div>
-
-      <button class="btn-clear-pins" id="btn-clear-all-pins">Удалить все PIN-коды (завершить день)</button>
-      <button class="btn btn-ghost" id="pin-modal-close" style="width:100%;">Закрыть</button>
+      <button class="btn btn-ghost" id="pin-modal-close" style="width:100%; margin-top: 16px;">Закрыть</button>
     </div>
   </div>
 
@@ -400,7 +412,7 @@
     let pendingInsertPos = null;
     let savedSelection = { start: 0, end: 0 };
     let previewTimer = null;
-    let currentView = 'active'; // 'active' или 'archive'
+    let currentView = 'active';
     
     const DRAFT_KEY = 'kb_admin_draft';
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
@@ -416,41 +428,44 @@
       });
     });
 
-    // ЛОГИКА PIN-КОДОВ
+    // ==================== ЛОГИКА PIN-КОДОВ ====================
     async function loadPins() {
-      const list = $('pin-list');
-      list.innerHTML = '<div style="padding:10px;text-align:center;">Загрузка...</div>';
-      const { data, error } = await supabaseClient.from('access_pins').select('*').order('created_at', { ascending: false });
-      if (error) { list.innerHTML = '<div style="padding:10px;color:red;">Ошибка загрузки</div>'; return; }
+      // 1. Загрузка KB пинов
+      const listKB = $('pin-list-kb');
+      listKB.innerHTML = '<div style="padding:10px;text-align:center;">Загрузка...</div>';
+      const { data: dataKB, error: errKB } = await supabaseClient.from('access_pins').select('*').order('created_at', { ascending: false });
       
-      if (!data || data.length === 0) {
-        list.innerHTML = '<div style="padding:10px;text-align:center;color:#666;">Нет активных PIN-кодов</div>';
-        return;
-      }
-      
-      const now = new Date();
-      list.innerHTML = data.map(p => {
-        const expDate = new Date(p.expires_at);
-        const isExpired = expDate < now;
-        const expString = expDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        
-        return `
-        <div class="pin-item">
-          <div>
+      if (errKB) { listKB.innerHTML = '<div style="padding:10px;color:red;">Ошибка</div>'; }
+      else if (!dataKB || dataKB.length === 0) { listKB.innerHTML = '<div style="padding:10px;text-align:center;color:#666;">Нет кодов</div>'; }
+      else {
+        listKB.innerHTML = dataKB.map(p => `
+          <div class="pin-item">
             <span class="pin-code">${p.pin_code}</span>
-            <div style="font-size:11px;color:#666;margin-top:4px;">Действует до: ${expString}</div>
+            <button class="btn btn-danger btn-sm" onclick="deletePin('access_pins', '${p.id}')" style="padding:2px 6px;">✕</button>
           </div>
-          <div>
-            ${isExpired ? '<span class="pin-status expired">Истек</span>' : '<span class="pin-status">Активен</span>'}
-            <button class="btn btn-danger btn-sm" onclick="deletePin('${p.id}')" style="margin-left:8px;padding:4px 8px;">Удалить</button>
+        `).join('');
+      }
+
+      // 2. Загрузка MM пинов
+      const listMM = $('pin-list-mm');
+      listMM.innerHTML = '<div style="padding:10px;text-align:center;">Загрузка...</div>';
+      const { data: dataMM, error: errMM } = await supabaseClient.from('mm_pins').select('*').order('created_at', { ascending: false });
+      
+      if (errMM) { listMM.innerHTML = '<div style="padding:10px;color:red;">Ошибка</div>'; }
+      else if (!dataMM || dataMM.length === 0) { listMM.innerHTML = '<div style="padding:10px;text-align:center;color:#666;">Нет кодов</div>'; }
+      else {
+        listMM.innerHTML = dataMM.map(p => `
+          <div class="pin-item">
+            <span class="pin-code">${p.pin_code}</span>
+            <button class="btn btn-danger btn-sm" onclick="deletePin('mm_pins', '${p.id}')" style="padding:2px 6px;">✕</button>
           </div>
-        </div>
-      `}).join('');
+        `).join('');
+      }
     }
 
-    window.deletePin = async (id) => {
+    window.deletePin = async (table, id) => {
       if(!confirm('Удалить этот PIN-код?')) return;
-      await supabaseClient.from('access_pins').delete().eq('id', id);
+      await supabaseClient.from(table).delete().eq('id', id);
       loadPins();
     };
 
@@ -461,23 +476,49 @@
     $('pin-modal-close')?.addEventListener('click', () => {
       $('pin-modal').classList.remove('open');
     });
-    $('btn-generate-pin')?.addEventListener('click', async () => {
+
+    // Генерация KB
+    $('btn-gen-kb')?.addEventListener('click', async () => {
       const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
       let code = 'KB-';
       for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)];
       
       const { error } = await supabaseClient.from('access_pins').insert({ pin_code: code });
       if (error) { alert('Ошибка: ' + error.message); return; }
-      toast('Создан новый PIN: ' + code, 'success');
+      toast('Создан KB-код: ' + code, 'success');
       loadPins();
     });
-    $('btn-clear-all-pins')?.addEventListener('click', async () => {
-      if(!confirm('Удалить ВСЕ PIN-коды? Все сотрудники потеряют доступ при следующем входе.')) return;
+
+    // Генерация MM
+    $('btn-gen-mm')?.addEventListener('click', async () => {
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+      let code = 'MM-';
+      for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)];
+      
+      const { error } = await supabaseClient.from('mm_pins').insert({ pin_code: code });
+      if (error) { alert('Ошибка: ' + error.message); return; }
+      toast('Создан MM-код: ' + code, 'success');
+      loadPins();
+    });
+
+    // Очистка KB
+    $('btn-clear-kb')?.addEventListener('click', async () => {
+      if(!confirm('Удалить ВСЕ коды Базы Знаний?')) return;
       const { error } = await supabaseClient.from('access_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       if (error) { alert('Ошибка: ' + error.message); return; }
-      toast('Все PIN-коды удалены', 'success');
+      toast('Все KB-коды удалены', 'success');
       loadPins();
     });
+
+    // Очистка MM
+    $('btn-clear-mm')?.addEventListener('click', async () => {
+      if(!confirm('Удалить ВСЕ коды для Игры?')) return;
+      const { error } = await supabaseClient.from('mm_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      if (error) { alert('Ошибка: ' + error.message); return; }
+      toast('Все MM-коды удалены', 'success');
+      loadPins();
+    });
+    // =========================================================
 
     // ОСТАЛЬНАЯ ЛОГИКА АДМИНКИ
     function initSidebar() {
@@ -657,7 +698,6 @@
       articles = data || [];
       renderArticleList();
       renderCategoryDatalist();
-      // Автоматически открываем первую активную статью, если ничего не открыто
       if (articles.length && !currentId) {
         const firstActive = articles.find(a => a.is_published !== false);
         if (firstActive) openArticle(firstActive.id);
@@ -669,11 +709,9 @@
     function renderArticleList() {
       const list = $('admin-article-list');
       
-      // Обновляем счетчик в архиве
       const archivedCount = articles.filter(a => a.is_published === false).length;
       $('archive-count').textContent = archivedCount;
 
-      // Фильтруем статьи в зависимости от вкладки
       const filteredArticles = articles.filter(a => {
         if (currentView === 'active') return a.is_published !== false;
         return a.is_published === false;
@@ -690,7 +728,6 @@
         const suffix = [a.category, a.steps ? 'сценарий' : null, a.pinned ? 'важное' : null]
           .filter(Boolean).join(' · ');
         
-        // В архиве добавляем иконку коробки
         const prefixIcon = currentView === 'archive' 
           ? '<span style="color:#f59e0b;margin-right:6px;">📦</span>' 
           : (a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--violet);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px var(--violet-glow);"></span>' : '');
@@ -741,7 +778,6 @@
       switchTab('text'); renderStepsEditor(); showEditor();
       setStatus('saved', 'Новая статья'); $('f-title').focus();
       
-      // Переключаем вкладку на Активные при создании новой
       document.querySelector('.admin-list-tab[data-view="active"]').click();
       refreshPreview();
       updateMarkupIndicator();
