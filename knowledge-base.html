@@ -9,6 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
   <style>
+    /* ГЛОБАЛЬНЫЙ СБРОС КУРСОРОВ */
+    * { cursor: default; caret-color: transparent; box-sizing: border-box; }
+    input, textarea, select { cursor: text; caret-color: auto; }
+    button, a, select, .cursor-pointer, [role="button"], label, .category-btn, .article-head { cursor: pointer; }
+
     /* Экран блокировки */
     #pin-lock-screen {
       position: fixed; inset: 0; background: var(--bg); z-index: 9999;
@@ -33,7 +38,7 @@
 </head>
 <body>
 
-  <!-- ЭКРАН БЛОКИРОВКИ (Показывается, если нет доступа) -->
+  <!-- ЭКРАН БЛОКИРОВКИ -->
   <div id="pin-lock-screen" style="display: none;">
     <div class="pin-lock-card">
       <div class="brand-mark" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
@@ -45,7 +50,7 @@
     </div>
   </div>
 
-  <!-- ОСНОВНОЙ ИНТЕРФЕЙС (Скрыт по умолчанию) -->
+  <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
   <div id="main-content" style="display: none;">
     <button class="sidebar-open-fab" id="sidebar-open-fab" title="Открыть меню">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -97,7 +102,9 @@
   </div>
 
   <div class="lightbox" id="lightbox">
-    <button class="lightbox-close" id="lightbox-close" aria-label="Закрыть">×</button>
+    <button class="lightbox-close" id="lightbox-close" aria-label="Закрыть">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
     <img id="lightbox-img" alt="">
   </div>
 
@@ -109,17 +116,17 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // === ЛОГИКА PIN-КОДА ===
     async function checkAccess() {
-      const isUnlocked = localStorage.getItem('kb_access_unlocked');
+      const accessExpires = localStorage.getItem('kb_access_expires');
       const lockScreen = document.getElementById('pin-lock-screen');
       const mainContent = document.getElementById('main-content');
       
-      if (isUnlocked === 'true') {
+      if (accessExpires && Date.now() < parseInt(accessExpires)) {
         lockScreen.style.display = 'none';
         mainContent.style.display = 'block';
         return true; 
       } else {
+        localStorage.removeItem('kb_access_expires');
         lockScreen.style.display = 'flex';
         mainContent.style.display = 'none';
         return false;
@@ -135,7 +142,6 @@
       btn.textContent = 'Проверка...';
       btn.disabled = true;
 
-      // Вызываем нашу RPC функцию в Supabase
       const { data: isValid, error } = await supabaseClient.rpc('verify_kb_pin', { input_pin: pin });
       
       btn.textContent = 'Войти';
@@ -149,22 +155,21 @@
       }
 
       if (isValid) {
-        localStorage.setItem('kb_access_unlocked', 'true');
+        const expiresAt = Date.now() + (24 * 60 * 60 * 1000); 
+        localStorage.setItem('kb_access_expires', expiresAt.toString());
+        
         document.getElementById('pin-lock-screen').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
-        loadArticles(); // Загружаем статьи после успешного входа
+        loadArticles(); 
       } else {
         errorEl.style.display = 'block';
         document.getElementById('pin-input').value = '';
       }
     });
 
-    // Запускаем проверку при загрузке
     if (checkAccess()) {
-      // Если доступ уже был, инициализируем переменные и грузим статьи
       setTimeout(() => { initUI(); }, 0); 
     }
-    // =========================
 
     let allArticles = [];
     let activeCategory = '';
@@ -276,15 +281,12 @@
           const target = findArticleByKey(key);
           if (target) {
             openArticle(target.id);
-          } else {
-            console.warn('[KB] Статья не найдена по ключу:', key);
           }
         });
       });
     }
 
     async function loadArticles() {
-      // RLS автоматически отфильтрует скрытые статьи (is_published = false) для неавторизованных
       const { data, error } = await supabaseClient
         .from('knowledge_articles').select('*')
         .order('category', { ascending: true }).order('title', { ascending: true });
@@ -404,7 +406,10 @@
 
       els.results.innerHTML = `
         <div class="article-view">
-          <button class="article-back-btn" data-back>← Назад к списку</button>
+          <button class="article-back-btn" data-back>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg> 
+            Назад к списку
+          </button>
           <div class="article-view-meta">
             <span>${escapeHtml(article.category)}</span>
             <span class="dot"></span>
@@ -555,7 +560,6 @@
       renderList(filterArticles());
     });
 
-    // Функция для инициализации после ввода пина
     function initUI() {
       updateSidebarState();
       loadArticles();
