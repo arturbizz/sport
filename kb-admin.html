@@ -92,9 +92,6 @@
     .pin-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--hairline); }
     .pin-item:last-child { border-bottom: none; }
     .pin-code { font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--ink); }
-    .btn-clear-pins { background: rgba(239, 68, 68, 0.08); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; width: 100%; font-weight: 600; transition: all 0.2s; margin-top: auto; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
-    .btn-clear-pins:hover { background: var(--error); color: white; border-color: var(--error); }
-    .btn-clear-pins svg { width: 14px; height: 14px; }
 
     .results-list, .reports-list { flex: 1; overflow-y: auto; border: 1px solid var(--hairline); border-radius: 8px; margin-bottom: 16px; background: #fff; min-height: 200px; }
     .res-item, .rep-item { display: flex; align-items: flex-start; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--hairline); gap: 16px; }
@@ -107,6 +104,45 @@
     .rep-meta { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
     .rep-type { color: var(--error); font-weight: 600; background: rgba(239, 68, 68, 0.08); padding: 2px 8px; border-radius: 4px; }
     .rep-comment { font-size: 13px; color: var(--ink-2); background: var(--bg-subtle); padding: 10px 12px; border-radius: 6px; word-break: break-word; }
+
+    /* ===== ПРЕМИУМ КНОПКИ ДЕЙСТВИЙ (НЕ ЗАВИСЯТ ОТ ВНЕШНИХ СТИЛЕЙ) ===== */
+    .admin-action-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      border: 1px solid transparent; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap; font-family: var(--font-body); cursor: pointer;
+      text-decoration: none; line-height: 1.2;
+    }
+    .admin-action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    
+    /* Кнопка Редактировать */
+    .admin-action-btn.edit { background: rgba(79, 142, 255, 0.08); color: #3b82f6; border-color: rgba(79, 142, 255, 0.2); }
+    .admin-action-btn.edit:hover { background: #3b82f6; color: white; border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3); }
+    
+    /* Кнопка Удалить */
+    .admin-action-btn.delete { background: rgba(239, 68, 68, 0.08); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
+    .admin-action-btn.delete:hover { background: #ef4444; color: white; border-color: #ef4444; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3); }
+    
+    /* Кнопка Закрыть (зеленая) */
+    .admin-action-btn.close { background: rgba(16, 185, 129, 0.08); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
+    .admin-action-btn.close:hover { background: #10b981; color: white; border-color: #10b981; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
+
+    /* Кнопки-иконки */
+    .admin-action-btn.icon-only { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
+    .admin-action-btn.icon-only svg { width: 18px; height: 18px; }
+    
+    /* Кнопки в модалках */
+    .modal-footer-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; font-size: 14px; font-weight: 700; border-radius: 10px;
+      border: none; transition: all 0.2s; cursor: pointer; font-family: var(--font-body);
+    }
+    .modal-footer-btn.primary { background: linear-gradient(135deg, #4f8eff, #7c3aed); color: white; box-shadow: 0 4px 12px rgba(79, 142, 255, 0.3); }
+    .modal-footer-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79, 142, 255, 0.4); }
+    .modal-footer-btn.danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+    .modal-footer-btn.danger:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4); }
+    .modal-footer-btn.ghost { background: var(--bg-subtle); color: var(--ink-2); border: 1px solid var(--hairline); }
+    .modal-footer-btn.ghost:hover { background: var(--hairline); color: var(--ink); }
 
     /* === КАСТОМНЫЕ МОДАЛКИ ПОДТВЕРЖДЕНИЯ / УВЕДОМЛЕНИЯ === */
     .action-modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
@@ -127,12 +163,6 @@
     .action-modal p { font-size: 14px; color: var(--ink-2); line-height: 1.55; margin: 0 0 24px; word-break: break-word; }
     .action-modal-actions { display: flex; gap: 10px; }
     .action-modal-actions .btn { flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; }
-    .action-modal-actions .btn-danger { background: #ef4444; color: white; border: none; }
-    .action-modal-actions .btn-danger:hover { background: #dc2626; }
-    .action-modal-actions .btn-primary { background: var(--accent); color: white; border: none; }
-    .action-modal-actions .btn-primary:hover { background: var(--accent-hover, #3d7bf0); }
-    .action-modal-actions .btn-ghost { background: var(--bg-subtle); color: var(--ink-2); border: 1px solid var(--hairline); }
-    .action-modal-actions .btn-ghost:hover { background: var(--hairline); color: var(--ink); }
   </style>
 </head>
 <body>
@@ -147,8 +177,8 @@
       <h3 id="confirm-title">Подтверждение</h3>
       <p id="confirm-message">Вы уверены?</p>
       <div class="action-modal-actions">
-        <button class="btn btn-ghost" id="confirm-cancel">Отмена</button>
-        <button class="btn btn-danger" id="confirm-ok">Подтвердить</button>
+        <button class="modal-footer-btn ghost" id="confirm-cancel">Отмена</button>
+        <button class="modal-footer-btn danger" id="confirm-ok">Подтвердить</button>
       </div>
     </div>
   </div>
@@ -160,7 +190,7 @@
       <h3 id="alert-title">Уведомление</h3>
       <p id="alert-message"></p>
       <div class="action-modal-actions">
-        <button class="btn btn-primary" id="alert-ok">Понятно</button>
+        <button class="modal-footer-btn primary" id="alert-ok">Понятно</button>
       </div>
     </div>
   </div>
@@ -172,18 +202,18 @@
       <div class="pin-columns">
         <div class="pin-col">
           <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> База Знаний</h4>
-          <button class="btn btn-primary" id="btn-gen-kb" style="margin-bottom: 12px; width: 100%;">Сгенерировать KB-код</button>
+          <button class="admin-action-btn edit" id="btn-gen-kb" style="margin-bottom: 12px; width: 100%;">Сгенерировать KB-код</button>
           <div class="pin-list" id="pin-list-kb"></div>
-          <button class="btn-clear-pins" id="btn-clear-kb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg> Удалить все KB</button>
+          <button class="admin-action-btn delete" id="btn-clear-kb" style="width:100%;">${SVG.trash} Удалить все KB</button>
         </div>
         <div class="pin-col">
           <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Игра Миллионер</h4>
-          <button class="btn btn-primary" id="btn-gen-mm" style="margin-bottom: 12px; width: 100%;">Сгенерировать MM-код</button>
+          <button class="admin-action-btn edit" id="btn-gen-mm" style="margin-bottom: 12px; width: 100%;">Сгенерировать MM-код</button>
           <div class="pin-list" id="pin-list-mm"></div>
-          <button class="btn-clear-pins" id="btn-clear-mm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg> Удалить все MM</button>
+          <button class="admin-action-btn delete" id="btn-clear-mm" style="width:100%;">${SVG.trash} Удалить все MM</button>
         </div>
       </div>
-      <button class="btn btn-ghost" id="pin-modal-close" style="width:100%; margin-top: 16px;">Закрыть</button>
+      <button class="modal-footer-btn ghost" id="pin-modal-close" style="width:100%; margin-top: 16px;">Закрыть</button>
     </div>
   </div>
 
@@ -192,8 +222,8 @@
     <div class="results-window">
       <h3>Результаты игры</h3>
       <div class="results-list" id="results-list"></div>
-      <button class="btn-clear-pins" id="btn-clear-results" style="margin-bottom: 12px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg> Очистить ВСЕ результаты</button>
-      <button class="btn btn-ghost" id="results-modal-close" style="width:100%;">Закрыть</button>
+      <button class="admin-action-btn delete" id="btn-clear-results" style="margin-bottom: 12px; width: 100%;">${SVG.trash} Очистить ВСЕ результаты</button>
+      <button class="modal-footer-btn ghost" id="results-modal-close" style="width:100%;">Закрыть</button>
     </div>
   </div>
 
@@ -202,8 +232,8 @@
     <div class="reports-window">
       <h3>Жалобы на вопросы (Миллионер)</h3>
       <div class="reports-list" id="reports-list"></div>
-      <button class="btn-clear-pins" id="btn-clear-reports" style="margin-bottom: 12px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg> Очистить все жалобы</button>
-      <button class="btn btn-ghost" id="reports-modal-close" style="width:100%;">Закрыть</button>
+      <button class="admin-action-btn delete" id="btn-clear-reports" style="margin-bottom: 12px; width: 100%;">${SVG.trash} Очистить все жалобы</button>
+      <button class="modal-footer-btn ghost" id="reports-modal-close" style="width:100%;">Закрыть</button>
     </div>
   </div>
 
@@ -252,9 +282,9 @@
         </div>
       </div>
 
-      <div style="display:flex; gap:10px; margin-top:16px;">
-        <button class="btn btn-primary" id="btn-save-question" style="flex:1;">Сохранить</button>
-        <button class="btn btn-ghost" id="btn-close-question" style="flex:1;">Отмена</button>
+      <div style="display:flex; gap:12px; margin-top:16px;">
+        <button class="modal-footer-btn primary" id="btn-save-question" style="flex:1;">Сохранить</button>
+        <button class="modal-footer-btn ghost" id="btn-close-question" style="flex:1;">Отмена</button>
       </div>
     </div>
   </div>
@@ -265,7 +295,7 @@
       <h3>Все вопросы Миллионера</h3>
       <input id="q-search" class="field-input" placeholder="Поиск по тексту вопроса…" style="margin-bottom:12px;">
       <div id="all-questions-list" class="reports-list" style="min-height: 300px;"></div>
-      <button class="btn btn-ghost" id="all-questions-close" style="width:100%;">Закрыть</button>
+      <button class="modal-footer-btn ghost" id="all-questions-close" style="width:100%;">Закрыть</button>
     </div>
   </div>
 
@@ -487,7 +517,7 @@
         titleEl.textContent = title;
         msgEl.textContent = message;
         okBtn.textContent = confirmText;
-        okBtn.className = 'btn ' + (variant === 'danger' ? 'btn-danger' : 'btn-primary');
+        okBtn.className = 'modal-footer-btn ' + (variant === 'danger' ? 'danger' : 'primary');
         cancelBtn.textContent = cancelText;
         cancelBtn.style.display = cancelText ? '' : 'none';
 
@@ -552,7 +582,7 @@
       if (errKB) { listKB.innerHTML = '<div style="padding:10px;color:red;">Ошибка</div>'; }
       else if (!dataKB || dataKB.length === 0) { listKB.innerHTML = '<div style="padding:10px;text-align:center;color:#666;">Нет кодов</div>'; }
       else {
-        listKB.innerHTML = dataKB.map(p => `<div class="pin-item"><span class="pin-code">${p.pin_code}</span><button class="btn btn-danger btn-sm" onclick="deletePin('access_pins', '${p.id}')" style="padding:2px 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`).join('');
+        listKB.innerHTML = dataKB.map(p => `<div class="pin-item"><span class="pin-code">${p.pin_code}</span><button class="admin-action-btn delete icon-only" onclick="deletePin('access_pins', '${p.id}')">${SVG.trash}</button></div>`).join('');
       }
 
       const listMM = $('pin-list-mm');
@@ -561,7 +591,7 @@
       if (errMM) { listMM.innerHTML = '<div style="padding:10px;color:red;">Ошибка</div>'; }
       else if (!dataMM || dataMM.length === 0) { listMM.innerHTML = '<div style="padding:10px;text-align:center;color:#666;">Нет кодов</div>'; }
       else {
-        listMM.innerHTML = dataMM.map(p => `<div class="pin-item"><span class="pin-code">${p.pin_code}</span><button class="btn btn-danger btn-sm" onclick="deletePin('mm_pins', '${p.id}')" style="padding:2px 6px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`).join('');
+        listMM.innerHTML = dataMM.map(p => `<div class="pin-item"><span class="pin-code">${p.pin_code}</span><button class="admin-action-btn delete icon-only" onclick="deletePin('mm_pins', '${p.id}')">${SVG.trash}</button></div>`).join('');
       }
     }
 
@@ -620,7 +650,7 @@
           </div>
           <div style="display:flex; align-items:center; gap:16px;">
             <div style="font-weight:600; color:var(--accent);">${(r.score || 0).toLocaleString('ru-RU')} ₽</div>
-            <button class="btn btn-danger btn-sm" onclick="deleteResult('${r.id}')" style="padding:4px 10px; display:inline-flex; align-items:center; gap:4px;">${SVG.trash}</button>
+            <button class="admin-action-btn delete icon-only" onclick="deleteResult('${r.id}')">${SVG.trash}</button>
           </div>
         </div>
       `).join('');
@@ -689,10 +719,10 @@
             </div>
             ${r.comment ? `<div class="rep-comment">${escapeHtml(r.comment)}</div>` : ''}
           </div>
-          <div style="display:flex; flex-direction:column; gap:6px; white-space:nowrap;">
-            <button class="btn btn-primary btn-sm" onclick="openQuestionEditor('${r.question_id}', '${r.id}')" style="padding:6px 10px; display:inline-flex; align-items:center; gap:4px;">${SVG.edit} Изменить</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteQuestion('${r.question_id}')" style="padding:6px 10px; display:inline-flex; align-items:center; gap:4px;">${SVG.trash} Удалить</button>
-            <button class="btn btn-ghost btn-sm" onclick="deleteReport('${r.id}')" style="padding:6px 10px; display:inline-flex; align-items:center; gap:4px;">${SVG.check} Закрыть</button>
+          <div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+            <button class="admin-action-btn edit" onclick="openQuestionEditor('${r.question_id}', '${r.id}')">${SVG.edit} Изменить</button>
+            <button class="admin-action-btn delete" onclick="deleteQuestion('${r.question_id}')">${SVG.trash} Удалить</button>
+            <button class="admin-action-btn close" onclick="deleteReport('${r.id}')">${SVG.check} Закрыть</button>
           </div>
         </div>
       `).join('');
@@ -815,9 +845,9 @@
             <div class="res-name" style="font-weight:600;">${escapeHtml(q.question)}</div>
             <div class="res-pin" style="margin-top:4px;">${escapeHtml(q.category || 'Mix')} · ${q.difficulty || 'medium'} · ответ ${q.correct || '?'}</div>
           </div>
-          <div style="display:flex; gap:6px; flex-shrink:0;">
-            <button class="btn btn-primary btn-sm" onclick="openQuestionEditor('${q.id}')" style="padding:6px 10px;">${SVG.edit}</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteQuestion('${q.id}')" style="padding:6px 10px;">${SVG.trash}</button>
+          <div style="display:flex; gap:8px; flex-shrink:0;">
+            <button class="admin-action-btn edit icon-only" title="Редактировать" onclick="openQuestionEditor('${q.id}')">${SVG.edit}</button>
+            <button class="admin-action-btn delete icon-only" title="Удалить" onclick="deleteQuestion('${q.id}')">${SVG.trash}</button>
           </div>
         </div>
       `).join('');
