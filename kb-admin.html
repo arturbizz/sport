@@ -9,6 +9,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="kb-styles.css">
   <style>
+    /* ГЛОБАЛЬНЫЙ СБРОС КУРСОРОВ */
+    * { cursor: default; caret-color: transparent; box-sizing: border-box; }
+    input, textarea, select { cursor: text; caret-color: auto; }
+    button, a, select, .cursor-pointer, [role="button"], label, .admin-list-tab { cursor: pointer; }
+
     body { overflow: hidden; }
     .login-wrap .brand-mark { width: 24px; height: 24px; }
     .admin-layout.fullscreen { grid-template-columns: 1fr; }
@@ -17,13 +22,12 @@
     .admin-layout.fullscreen .content-textarea { min-height: calc(100vh - 340px); }
     .admin-layout.fullscreen .preview-pane { min-height: calc(100vh - 340px); }
 
-    /* Стили для вкладок Активные / Архив */
     .admin-list-tabs {
       display: flex; gap: 4px; margin: 0 16px 12px; background: var(--bg-subtle); padding: 4px; border-radius: var(--radius-md);
     }
     .admin-list-tab {
       flex: 1; padding: 6px 8px; text-align: center; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; 
-      color: var(--ink-3); cursor: pointer; transition: all 0.2s; border: none; background: transparent; font-family: var(--font-body);
+      color: var(--ink-3); transition: all 0.2s; border: none; background: transparent; font-family: var(--font-body);
     }
     .admin-list-tab:hover { color: var(--ink); }
     .admin-list-tab.active { background: var(--bg-elevated); color: var(--accent); box-shadow: var(--shadow-sm); }
@@ -36,7 +40,7 @@
       position: fixed; bottom: 28px; right: 28px; z-index: 100;
       padding: 13px 22px; background: linear-gradient(135deg, var(--accent), var(--violet));
       color: white; border: none; border-radius: 999px; font-size: 14px; font-weight: 500;
-      cursor: pointer; box-shadow: 0 10px 30px rgba(79, 142, 255, 0.4); transition: all 0.25s var(--spring);
+      box-shadow: 0 10px 30px rgba(79, 142, 255, 0.4); transition: all 0.25s var(--spring);
       display: none; align-items: center; gap: 8px; font-family: var(--font-body);
       animation: fabIn 0.35s var(--spring);
     }
@@ -92,7 +96,7 @@
     .fullscreen-btn {
       display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
       padding: 0; background: var(--bg-elevated); border: 1px solid var(--hairline-2); border-radius: var(--radius-md);
-      color: var(--ink-2); cursor: pointer; transition: all 0.15s; flex-shrink: 0; box-shadow: var(--shadow-sm);
+      color: var(--ink-2); transition: all 0.15s; flex-shrink: 0; box-shadow: var(--shadow-sm);
     }
     .fullscreen-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
     .fullscreen-btn svg { width: 16px; height: 16px; }
@@ -108,7 +112,6 @@
     .md-toolbar button[data-md="important"] svg { color: #7C5DF5; }
     .md-toolbar button[data-md="note"] svg { color: #4F8EFF; }
 
-    /* Split view / Markup indicator */
     .content-area { display: grid; grid-template-columns: 1fr; gap: 16px; }
     .content-area[data-view="preview"] .content-area-edit { display: none; }
     .content-area[data-view="edit"] .content-area-preview { display: none; }
@@ -122,7 +125,6 @@
     .markup-indicator .warn { color: #DC2626; font-weight: 500; }
     .markup-indicator .neutral { color: var(--ink-4); }
 
-    /* Модалка для PIN-кодов */
     .pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
     .pin-modal.open { display: flex; }
     .pin-window { background: #fff; width: 100%; max-width: 700px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 90vh; }
@@ -137,7 +139,7 @@
     .pin-item:last-child { border-bottom: none; }
     .pin-code { font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--ink); }
     
-    .btn-clear-pins { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px; border-radius: 6px; width: 100%; cursor: pointer; font-weight: 500; transition: all 0.2s; margin-top: auto; font-size: 13px; }
+    .btn-clear-pins { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px; border-radius: 6px; width: 100%; font-weight: 500; transition: all 0.2s; margin-top: auto; font-size: 13px; }
     .btn-clear-pins:hover { background: var(--error); color: white; }
   </style>
 </head>
@@ -146,13 +148,11 @@
   <div class="toast-container" id="toast-container"></div>
   <div class="upload-status" id="upload-status"></div>
 
-  <!-- Модалка PIN -->
   <div class="pin-modal" id="pin-modal">
     <div class="pin-window">
       <h3>Управление доступом (PIN-коды)</h3>
       
       <div class="pin-columns">
-        <!-- БЗ -->
         <div class="pin-col">
           <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> База Знаний</h4>
           <button class="btn btn-primary" id="btn-gen-kb" style="margin-bottom: 12px; width: 100%;">Сгенерировать KB-код</button>
@@ -160,7 +160,6 @@
           <button class="btn-clear-pins" id="btn-clear-kb">Удалить все KB</button>
         </div>
 
-        <!-- Игра -->
         <div class="pin-col">
           <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Игра Миллионер</h4>
           <button class="btn btn-primary" id="btn-gen-mm" style="margin-bottom: 12px; width: 100%; background: linear-gradient(135deg, var(--gold), var(--magenta)); color: #0A0614;">Сгенерировать MM-код</button>
@@ -207,7 +206,7 @@
 
   <div class="admin-layout" id="admin-view" style="display:none;">
     <aside class="admin-sidebar" id="admin-sidebar">
-      <div class="brand" style="cursor:default; margin-bottom: 16px;">
+      <div class="brand" style="margin-bottom: 16px;">
         <span class="brand-mark"></span>
         <span class="brand-name">База знаний</span>
         <span class="brand-badge">Admin</span>
@@ -223,10 +222,9 @@
         <button class="btn btn-ghost btn-sm" id="logout-btn">Выйти</button>
       </div>
 
-      <!-- Вкладки Активные / Архив -->
       <div class="admin-list-tabs">
         <button class="admin-list-tab active" data-view="active">Активные</button>
-        <button class="admin-list-tab" data-view="archive">📦 Архив <span class="badge" id="archive-count">0</span></button>
+        <button class="admin-list-tab" data-view="archive">Архив <span class="badge" id="archive-count">0</span></button>
       </div>
 
       <div class="admin-article-list" id="admin-article-list"></div>
@@ -250,7 +248,6 @@
           </svg>
         </button>
         
-        <!-- Кнопка вызова модалки PIN -->
         <button class="fullscreen-btn" id="btn-open-pins" title="Управление PIN-кодами" style="color:var(--accent);">
            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
         </button>
@@ -418,7 +415,6 @@
     const SIDEBAR_KEY = 'kb_admin_sidebar_collapsed';
     const VIEW_KEY = 'kb_admin_view_mode';
 
-    // === ЛОГИКА ВКЛАДОК АРХИВА ===
     document.querySelectorAll('.admin-list-tab').forEach(tab => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('.admin-list-tab').forEach(t => t.classList.remove('active'));
@@ -430,7 +426,6 @@
 
     // ==================== ЛОГИКА PIN-КОДОВ ====================
     async function loadPins() {
-      // 1. Загрузка KB пинов
       const listKB = $('pin-list-kb');
       listKB.innerHTML = '<div style="padding:10px;text-align:center;">Загрузка...</div>';
       const { data: dataKB, error: errKB } = await supabaseClient.from('access_pins').select('*').order('created_at', { ascending: false });
@@ -441,12 +436,13 @@
         listKB.innerHTML = dataKB.map(p => `
           <div class="pin-item">
             <span class="pin-code">${p.pin_code}</span>
-            <button class="btn btn-danger btn-sm" onclick="deletePin('access_pins', '${p.id}')" style="padding:2px 6px;">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePin('access_pins', '${p.id}')" style="padding:2px 6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
         `).join('');
       }
 
-      // 2. Загрузка MM пинов
       const listMM = $('pin-list-mm');
       listMM.innerHTML = '<div style="padding:10px;text-align:center;">Загрузка...</div>';
       const { data: dataMM, error: errMM } = await supabaseClient.from('mm_pins').select('*').order('created_at', { ascending: false });
@@ -457,7 +453,9 @@
         listMM.innerHTML = dataMM.map(p => `
           <div class="pin-item">
             <span class="pin-code">${p.pin_code}</span>
-            <button class="btn btn-danger btn-sm" onclick="deletePin('mm_pins', '${p.id}')" style="padding:2px 6px;">✕</button>
+            <button class="btn btn-danger btn-sm" onclick="deletePin('mm_pins', '${p.id}')" style="padding:2px 6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
         `).join('');
       }
@@ -477,31 +475,26 @@
       $('pin-modal').classList.remove('open');
     });
 
-    // Генерация KB
     $('btn-gen-kb')?.addEventListener('click', async () => {
       const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
       let code = 'KB-';
       for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)];
-      
       const { error } = await supabaseClient.from('access_pins').insert({ pin_code: code });
       if (error) { alert('Ошибка: ' + error.message); return; }
       toast('Создан KB-код: ' + code, 'success');
       loadPins();
     });
 
-    // Генерация MM
     $('btn-gen-mm')?.addEventListener('click', async () => {
       const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
       let code = 'MM-';
       for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)];
-      
       const { error } = await supabaseClient.from('mm_pins').insert({ pin_code: code });
       if (error) { alert('Ошибка: ' + error.message); return; }
       toast('Создан MM-код: ' + code, 'success');
       loadPins();
     });
 
-    // Очистка KB
     $('btn-clear-kb')?.addEventListener('click', async () => {
       if(!confirm('Удалить ВСЕ коды Базы Знаний?')) return;
       const { error } = await supabaseClient.from('access_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -510,7 +503,6 @@
       loadPins();
     });
 
-    // Очистка MM
     $('btn-clear-mm')?.addEventListener('click', async () => {
       if(!confirm('Удалить ВСЕ коды для Игры?')) return;
       const { error } = await supabaseClient.from('mm_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -518,9 +510,7 @@
       toast('Все MM-коды удалены', 'success');
       loadPins();
     });
-    // =========================================================
 
-    // ОСТАЛЬНАЯ ЛОГИКА АДМИНКИ
     function initSidebar() {
       const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
       adminLayout.classList.toggle('sidebar-collapsed', collapsed);
@@ -729,7 +719,7 @@
           .filter(Boolean).join(' · ');
         
         const prefixIcon = currentView === 'archive' 
-          ? '<span style="color:#f59e0b;margin-right:6px;">📦</span>' 
+          ? '<svg style="width:12px;height:12px;color:var(--ink-3);margin-right:6px;display:inline-block;vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>' 
           : (a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--violet);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px var(--violet-glow);"></span>' : '');
 
         return `
@@ -856,11 +846,11 @@
       const stats = analyzeMarkup($('f-content').value);
       const parts = [];
       if (stats.calloutOpen > 0 || stats.calloutClose > 0) {
-        if (stats.calloutOk) parts.push(`<span class="ok">✓ ${stats.calloutOpen} callout</span>`);
-        else parts.push(`<span class="warn">⚠ ${stats.calloutOpen} открыто · ${stats.calloutClose} закрыто</span>`);
+        if (stats.calloutOk) parts.push(`<span class="ok">OK ${stats.calloutOpen} callout</span>`);
+        else parts.push(`<span class="warn">ERR ${stats.calloutOpen} открыто · ${stats.calloutClose} закрыто</span>`);
       }
-      if (stats.articleLinks > 0) parts.push(`<span class="neutral">🔗 ${stats.articleLinks} ссыл.</span>`);
-      if (stats.images > 0) parts.push(`<span class="neutral">🖼 ${stats.images} фото</span>`);
+      if (stats.articleLinks > 0) parts.push(`<span class="neutral">${stats.articleLinks} ссыл.</span>`);
+      if (stats.images > 0) parts.push(`<span class="neutral">${stats.images} фото</span>`);
       $('markup-indicator').innerHTML = parts.length ? parts.join('') : '<span class="neutral">Разметка: чисто</span>';
     }
 
@@ -870,11 +860,11 @@
       if (stats.calloutOpen === 0 && stats.calloutClose === 0) {
         messages.push('Callout-блоков нет');
       } else if (stats.calloutOk) {
-        messages.push(`✓ ${stats.calloutOpen} callout — всё закрыто`);
+        messages.push(`${stats.calloutOpen} callout — всё закрыто`);
       } else {
-        messages.push(`⚠ Проблема: ${stats.calloutOpen} открыто, ${stats.calloutClose} закрыто. Проверь, что каждый :::type закрыт строкой :::`);
+        messages.push(`Проблема: ${stats.calloutOpen} открыто, ${stats.calloutClose} закрыто.`);
       }
-      if (stats.articleLinks > 0) messages.push(`Ссылок между статьями: ${stats.articleLinks}`);
+      if (stats.articleLinks > 0) messages.push(`Ссылок: ${stats.articleLinks}`);
       if (stats.images > 0) messages.push(`Фото: ${stats.images}`);
       const type = stats.calloutOk && stats.calloutOpen > 0 ? 'success' : (!stats.calloutOk ? 'error' : 'info');
       toast(messages.join(' · '), type, 6000);
@@ -1096,7 +1086,9 @@
                       `<option value="${x.id}" ${o.next === x.id ? 'selected' : ''}>${escapeHtml(x.title || x.id)}</option>`
                     ).join('')}
                   </select>
-                  <button type="button" data-del-opt="${s.id}:${oi}" title="Удалить">✕</button>
+                  <button type="button" data-del-opt="${s.id}:${oi}" title="Удалить">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
                 </div>
               `).join('')}
             </div>
