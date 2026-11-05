@@ -77,10 +77,10 @@
     .markup-indicator .warn { color: #DC2626; font-weight: 500; }
     .markup-indicator .neutral { color: var(--ink-4); }
 
-    .pin-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
-    .pin-modal.open { display: flex; }
-    .pin-window { background: #fff; width: 100%; max-width: 700px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 90vh; }
-    .pin-window h3 { margin-top: 0; margin-bottom: 16px; font-size: 20px; text-align: center; }
+    .pin-modal, .results-modal, .reports-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+    .pin-modal.open, .results-modal.open, .reports-modal.open { display: flex; }
+    .pin-window, .results-window, .reports-window { background: #fff; width: 100%; max-width: 800px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-height: 90vh; }
+    .pin-window h3, .results-window h3, .reports-window h3 { margin-top: 0; margin-bottom: 16px; font-size: 20px; text-align: center; }
     .pin-columns { display: flex; gap: 20px; flex: 1; overflow: hidden; }
     .pin-col { flex: 1; display: flex; flex-direction: column; background: var(--bg-subtle); border-radius: 8px; padding: 16px; border: 1px solid var(--hairline); }
     .pin-col h4 { margin: 0 0 12px; font-size: 16px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
@@ -91,14 +91,17 @@
     .btn-clear-pins { background: rgba(239, 68, 68, 0.1); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px; border-radius: 6px; width: 100%; font-weight: 500; transition: all 0.2s; margin-top: auto; font-size: 13px; }
     .btn-clear-pins:hover { background: var(--error); color: white; }
 
-    .results-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
-    .results-modal.open { display: flex; }
-    .results-window { background: #fff; width: 100%; max-width: 800px; border-radius: 12px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-height: 90vh; display: flex; flex-direction: column; }
-    .results-list { flex: 1; overflow-y: auto; border: 1px solid var(--hairline); border-radius: 6px; margin-bottom: 16px; }
-    .res-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--hairline); }
-    .res-item:last-child { border-bottom: none; }
+    .results-list, .reports-list { flex: 1; overflow-y: auto; border: 1px solid var(--hairline); border-radius: 6px; margin-bottom: 16px; background: #fff; }
+    .res-item, .rep-item { display: flex; align-items: flex-start; justify-content: space-between; padding: 16px; border-bottom: 1px solid var(--hairline); gap: 16px; }
+    .res-item:last-child, .rep-item:last-child { border-bottom: none; }
     .res-name { font-weight: 600; }
     .res-pin { font-family: var(--font-mono); color: var(--ink-3); font-size: 12px; }
+    
+    .rep-content { flex: 1; }
+    .rep-title { font-weight: 600; color: var(--ink); font-size: 15px; margin-bottom: 8px; }
+    .rep-meta { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; display: flex; gap: 12px; }
+    .rep-type { color: var(--error); font-weight: 600; background: rgba(239, 68, 68, 0.1); padding: 2px 8px; border-radius: 4px; }
+    .rep-comment { font-size: 13px; color: var(--ink-2); background: var(--bg-subtle); padding: 8px 12px; border-radius: 6px; }
   </style>
 </head>
 <body>
@@ -138,9 +141,18 @@
     </div>
   </div>
 
+  <!-- Модалка Жалоб на Вопросы -->
+  <div class="reports-modal" id="reports-modal">
+    <div class="reports-window">
+      <h3>Жалобы на вопросы (Миллионер)</h3>
+      <div class="reports-list" id="reports-list"></div>
+      <button class="btn-clear-pins" id="btn-clear-reports" style="margin-bottom: 12px; background: rgba(79, 142, 255, 0.1); color: var(--accent); border-color: rgba(79, 142, 255, 0.2);">Очистить все жалобы</button>
+      <button class="btn btn-ghost" id="reports-modal-close" style="width:100%;">Закрыть</button>
+    </div>
+  </div>
+
   <button class="fab-upload" id="fab-upload" title="Загрузить фото в позицию курсора">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-    Загрузить фото
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Загрузить фото
   </button>
 
   <div class="login-wrap" id="login-view" style="display:none;">
@@ -185,6 +197,9 @@
         <button class="fullscreen-btn" id="btn-open-results" title="Результаты игры" style="color:var(--gold);">
            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </button>
+        <button class="fullscreen-btn" id="btn-open-reports" title="Жалобы на вопросы" style="color:var(--danger);">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        </button>
         <div class="editor-toolbar-status">
           <span class="status-dot saved" id="status-dot"></span><span id="status-text">Готово</span>
         </div>
@@ -222,7 +237,7 @@
           <div class="field">
             <label class="field-label" for="f-article-type">Куда добавить статью?</label>
             <select class="field-input" id="f-article-type" style="padding: 11px 14px; background: var(--bg-elevated); border: 1px solid var(--hairline-2); border-radius: var(--radius-md); font-size: 14px; font-family: var(--font-body); color: var(--ink); outline: none; box-shadow: var(--shadow-sm);">
-              <option value="kb">В Рабочую шпаргалку (База знаний)</option>
+              <option value="kb">В Базу знаний (Шпаргалка)</option>
               <option value="training">В Обучение (Большие статьи)</option>
             </select>
           </div>
@@ -330,6 +345,7 @@
       });
     });
 
+    // === PIN-КОДЫ ===
     async function loadPins() {
       const listKB = $('pin-list-kb');
       listKB.innerHTML = '<div style="padding:10px;text-align:center;">Загрузка...</div>';
@@ -350,70 +366,64 @@
       }
     }
 
-    window.deletePin = async (table, id) => {
-      if(!confirm('Удалить этот PIN-код?')) return;
-      await supabaseClient.from(table).delete().eq('id', id);
-      loadPins();
-    };
-
+    window.deletePin = async (table, id) => { if(!confirm('Удалить этот PIN-код?')) return; await supabaseClient.from(table).delete().eq('id', id); loadPins(); };
     $('btn-open-pins')?.addEventListener('click', () => { $('pin-modal').classList.add('open'); loadPins(); });
     $('pin-modal-close')?.addEventListener('click', () => { $('pin-modal').classList.remove('open'); });
-    $('btn-gen-kb')?.addEventListener('click', async () => {
-      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let code = 'KB-';
-      for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)];
-      const { error } = await supabaseClient.from('access_pins').insert({ pin_code: code });
-      if (error) { alert('Ошибка: ' + error.message); return; }
-      toast('Создан KB-код: ' + code, 'success'); loadPins();
-    });
-    $('btn-gen-mm')?.addEventListener('click', async () => {
-      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let code = 'MM-';
-      for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)];
-      const { error } = await supabaseClient.from('mm_pins').insert({ pin_code: code });
-      if (error) { alert('Ошибка: ' + error.message); return; }
-      toast('Создан MM-код: ' + code, 'success'); loadPins();
-    });
-    $('btn-clear-kb')?.addEventListener('click', async () => {
-      if(!confirm('Удалить ВСЕ коды Базы Знаний?')) return;
-      await supabaseClient.from('access_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      toast('Все KB-коды удалены', 'success'); loadPins();
-    });
-    $('btn-clear-mm')?.addEventListener('click', async () => {
-      if(!confirm('Удалить ВСЕ коды для Игры?')) return;
-      await supabaseClient.from('mm_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      toast('Все MM-коды удалены', 'success'); loadPins();
-    });
+    $('btn-gen-kb')?.addEventListener('click', async () => { const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let code = 'KB-'; for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)]; const { error } = await supabaseClient.from('access_pins').insert({ pin_code: code }); if (error) { alert('Ошибка: ' + error.message); return; } toast('Создан KB-код: ' + code, 'success'); loadPins(); });
+    $('btn-gen-mm')?.addEventListener('click', async () => { const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let code = 'MM-'; for(let i=0; i<4; i++) code += chars[Math.floor(Math.random()*chars.length)]; const { error } = await supabaseClient.from('mm_pins').insert({ pin_code: code }); if (error) { alert('Ошибка: ' + error.message); return; } toast('Создан MM-код: ' + code, 'success'); loadPins(); });
+    $('btn-clear-kb')?.addEventListener('click', async () => { if(!confirm('Удалить ВСЕ коды Базы Знаний?')) return; await supabaseClient.from('access_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000'); toast('Все KB-коды удалены', 'success'); loadPins(); });
+    $('btn-clear-mm')?.addEventListener('click', async () => { if(!confirm('Удалить ВСЕ коды для Игры?')) return; await supabaseClient.from('mm_pins').delete().neq('id', '00000000-0000-0000-0000-000000000000'); toast('Все MM-коды удалены', 'success'); loadPins(); });
 
+    // === РЕЗУЛЬТАТЫ ИГРЫ ===
     async function loadResults() {
-      const list = $('results-list');
-      list.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
+      const list = $('results-list'); list.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
       const { data, error } = await supabaseClient.from('millionaire_results').select('*').order('created_at', { ascending: false }).limit(200);
       if (error) { list.innerHTML = `<div style="padding:20px; color:red; text-align:center;">Ошибка: ${error.message}</div>`; return; }
       if (!data || data.length === 0) { list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Нет результатов</div>'; return; }
+      list.innerHTML = data.map(r => `<div class="res-item"><div><div class="res-name">${r.player_name} <span class="res-pin">(PIN: ${r.player_pin || '—'})</span></div><div style="font-size:12px; color:var(--ink-3);">${new Date(r.created_at).toLocaleString('ru-RU')}</div></div><div style="display:flex; align-items:center; gap:16px;"><div style="font-weight:600; color:var(--accent);">${r.score.toLocaleString('ru-RU')} ₽</div><button class="btn btn-danger btn-sm" onclick="deleteResult('${r.id}')" style="padding:4px 8px;">Удалить</button></div></div>`).join('');
+    }
+    window.deleteResult = async (id) => { if(!confirm('Удалить этот результат? (Игрок сможет сыграть заново)')) return; await supabaseClient.from('millionaire_results').delete().eq('id', id); loadResults(); };
+    $('btn-open-results')?.addEventListener('click', () => { $('results-modal').classList.add('open'); loadResults(); });
+    $('results-modal-close')?.addEventListener('click', () => { $('results-modal').classList.remove('open'); });
+    $('btn-clear-results')?.addEventListener('click', async () => { if(!confirm('Удалить ВСЕ результаты игры? Это обнулит рейтинг.')) return; await supabaseClient.from('millionaire_results').delete().neq('id', '00000000-0000-0000-0000-000000000000'); loadResults(); });
+
+    // === ЖАЛОБЫ НА ВОПРОСЫ ===
+    async function loadReports() {
+      const list = $('reports-list'); list.innerHTML = '<div style="padding:20px; text-align:center;">Загрузка...</div>';
+      const { data, error } = await supabaseClient.from('millionaire_reports').select('*').order('created_at', { ascending: false }).limit(200);
+      if (error) { list.innerHTML = `<div style="padding:20px; color:red; text-align:center;">Ошибка: ${error.message}</div>`; return; }
+      if (!data || data.length === 0) { list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Нет новых жалоб</div>'; return; }
+
+      const TYPE_NAMES = {
+        incorrect_question: 'Неточная формулировка',
+        unclear_question: 'Вопрос непонятен',
+        incorrect_answer: 'Неверный правильный ответ',
+        unclear_options: 'Непонятные варианты',
+        other: 'Другое'
+      };
+
       list.innerHTML = data.map(r => `
-        <div class="res-item">
-          <div><div class="res-name">${r.player_name} <span class="res-pin">(PIN: ${r.player_pin || '—'})</span></div><div style="font-size:12px; color:var(--ink-3);">${new Date(r.created_at).toLocaleString('ru-RU')}</div></div>
-          <div style="display:flex; align-items:center; gap:16px;"><div style="font-weight:600; color:var(--accent);">${r.score.toLocaleString('ru-RU')} ₽</div><button class="btn btn-danger btn-sm" onclick="deleteResult('${r.id}')" style="padding:4px 8px;">Удалить</button></div>
+        <div class="rep-item">
+          <div class="rep-content">
+            <div class="rep-title">${r.question_text}</div>
+            <div class="rep-meta">
+              <span class="rep-type">${TYPE_NAMES[r.report_type] || r.report_type}</span>
+              <span>${new Date(r.created_at).toLocaleString('ru-RU')}</span>
+            </div>
+            ${r.comment ? `<div class="rep-comment">${r.comment}</div>` : ''}
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="deleteReport('${r.id}')" style="padding:6px 12px; white-space:nowrap;">Исправлено</button>
         </div>
       `).join('');
     }
+    window.deleteReport = async (id) => { await supabaseClient.from('millionaire_reports').delete().eq('id', id); loadReports(); toast('Жалоба удалена (отмечено как исправлено)', 'success'); };
+    $('btn-open-reports')?.addEventListener('click', () => { $('reports-modal').classList.add('open'); loadReports(); });
+    $('reports-modal-close')?.addEventListener('click', () => { $('reports-modal').classList.remove('open'); });
+    $('btn-clear-reports')?.addEventListener('click', async () => { if(!confirm('Очистить ВСЕ жалобы?')) return; await supabaseClient.from('millionaire_reports').delete().neq('id', '00000000-0000-0000-0000-000000000000'); loadReports(); });
 
-    window.deleteResult = async (id) => {
-      if(!confirm('Удалить этот результат? (Игрок сможет сыграть заново)')) return;
-      await supabaseClient.from('millionaire_results').delete().eq('id', id);
-      loadResults();
-    };
-
-    $('btn-open-results')?.addEventListener('click', () => { $('results-modal').classList.add('open'); loadResults(); });
-    $('results-modal-close')?.addEventListener('click', () => { $('results-modal').classList.remove('open'); });
-    $('btn-clear-results')?.addEventListener('click', async () => {
-      if(!confirm('Удалить ВСЕ результаты игры? Это обнулит рейтинг.')) return;
-      await supabaseClient.from('millionaire_results').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      loadResults();
-    });
-
+    // === ОСТАЛЬНОЕ ===
     function initSidebar() { adminLayout.classList.toggle('sidebar-collapsed', localStorage.getItem(SIDEBAR_KEY) === '1'); }
     $('sidebar-toggle').addEventListener('click', () => { adminLayout.classList.toggle('sidebar-collapsed'); localStorage.setItem(SIDEBAR_KEY, adminLayout.classList.contains('sidebar-collapsed') ? '1' : '0'); });
-
     const ICON_EXPAND = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
     const ICON_COLLAPSE = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
     function updateFullscreenIcon() { $('fullscreen-icon').innerHTML = adminLayout.classList.contains('fullscreen') ? ICON_COLLAPSE : ICON_EXPAND; }
@@ -422,22 +432,9 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && adminLayout.classList.contains('fullscreen')) { adminLayout.classList.remove('fullscreen'); updateFullscreenIcon(); } });
 
     function initViewMode() { setViewMode(localStorage.getItem(VIEW_KEY) || 'split', false); }
-    function setViewMode(mode, save = true) {
-      contentArea.dataset.view = mode;
-      document.querySelectorAll('#view-toggle button').forEach(btn => btn.classList.toggle('active', btn.dataset.view === mode));
-      if (save) localStorage.setItem(VIEW_KEY, mode);
-      if (mode === 'split' || mode === 'preview') refreshPreview();
-      updateFabVisibility();
-    }
+    function setViewMode(mode, save = true) { contentArea.dataset.view = mode; document.querySelectorAll('#view-toggle button').forEach(btn => btn.classList.toggle('active', btn.dataset.view === mode)); if (save) localStorage.setItem(VIEW_KEY, mode); if (mode === 'split' || mode === 'preview') refreshPreview(); updateFabVisibility(); }
     document.querySelectorAll('#view-toggle button').forEach(btn => btn.addEventListener('click', () => setViewMode(btn.dataset.view)));
-
-    function updateFabVisibility() {
-      const isEditorVisible = editorContent.style.display !== 'none';
-      const isTextTabActive = $('pane-text').style.display !== 'none';
-      const viewMode = contentArea.dataset.view || 'edit';
-      const isEditVisible = viewMode === 'edit' || viewMode === 'split';
-      fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditVisible);
-    }
+    function updateFabVisibility() { const isEditorVisible = editorContent.style.display !== 'none'; const isTextTabActive = $('pane-text').style.display !== 'none'; const viewMode = contentArea.dataset.view || 'edit'; const isEditVisible = viewMode === 'edit' || viewMode === 'split'; fabUpload.classList.toggle('show', isEditorVisible && isTextTabActive && isEditVisible); }
 
     const ICON_SUCCESS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>';
     const ICON_ERROR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
@@ -505,33 +502,22 @@
     }
 
     function renderArticleList() {
-      const list = $('admin-article-list');
-      $('archive-count').textContent = articles.filter(a => a.is_published === false).length;
+      const list = $('admin-article-list'); $('archive-count').textContent = articles.filter(a => a.is_published === false).length;
       const filtered = articles.filter(a => currentView === 'active' ? a.is_published !== false : a.is_published === false);
-      
       if (!filtered.length) { list.innerHTML = `<div class="empty-state" style="padding:24px 0;font-size:13px;">${currentView === 'active' ? 'Нет активных статей' : 'Архив пуст'}</div>`; return; }
-
       list.innerHTML = filtered.map(a => {
-        const suffix = [a.category, a.steps ? 'сценарий' : null, a.pinned ? 'важное' : null, a.article_type === 'training' ? 'ОБУЧЕНИЕ' : 'ШПАРГАЛКА'].filter(Boolean).join(' · ');
+        const suffix = [a.category, a.steps ? 'сценарий' : null, a.pinned ? 'важное' : null, a.article_type === 'training' ? 'ОБУЧЕНИЕ' : 'БАЗА ЗНАНИЙ'].filter(Boolean).join(' · ');
         const prefixIcon = currentView === 'archive' ? '<svg style="width:12px;height:12px;color:var(--ink-3);margin-right:6px;display:inline-block;vertical-align:middle;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>' : (a.pinned ? '<span style="display:inline-block;width:6px;height:6px;background:var(--violet);border-radius:50%;margin-right:8px;vertical-align:middle;box-shadow:0 0 6px var(--violet-glow);"></span>' : '');
         return `<button class="admin-article-item ${currentId === a.id ? 'active' : ''}" data-id="${a.id}">${prefixIcon}${escapeHtml(a.title)}<span class="admin-article-item-cat">${escapeHtml(suffix)}</span></button>`;
       }).join('');
-      
-      list.querySelectorAll('.admin-article-item').forEach(el => el.addEventListener('click', () => {
-        if (isDirty && !confirm('Есть несохранённые изменения. Переключить статью?')) return;
-        openArticle(el.dataset.id);
-      }));
+      list.querySelectorAll('.admin-article-item').forEach(el => el.addEventListener('click', () => { if (isDirty && !confirm('Есть несохранённые изменения. Переключить статью?')) return; openArticle(el.dataset.id); }));
     }
 
-    function renderCategoryDatalist() {
-      const cats = [...new Set(articles.map(a => a.category))].sort();
-      $('category-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
-    }
-
+    function renderCategoryDatalist() { const cats = [...new Set(articles.map(a => a.category))].sort(); $('category-list').innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join(''); }
     function showWelcome() { welcomeState.style.display = 'flex'; editorContent.style.display = 'none'; editorToolbar.style.display = 'none'; updateFabVisibility(); }
     function showEditor() { welcomeState.style.display = 'none'; editorContent.style.display = 'block'; editorToolbar.style.display = 'flex'; updateFabVisibility(); }
     function updatePinToggle() { $('pin-toggle-label').classList.toggle('checked', $('f-pinned').checked); $('published-toggle-label').classList.toggle('checked', $('f-published').checked); }
-    
+
     function clearForm() {
       if (isDirty && !confirm('Есть несохранённые изменения. Создать новую статью?')) return;
       currentId = null; currentSteps = null; isDirty = false;
@@ -572,282 +558,4 @@
       md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>'); return md;
     }
     function renderMarkdownForPreview(md) { return marked.parse(preprocessMarkdown(md || '')); }
-    function refreshPreview() { $('preview-pane').innerHTML = DOMPurify.sanitize(renderMarkdownForPreview($('f-content').value || '')); }
-
-    function analyzeMarkup(text) {
-      const openMatches = (text.match(new RegExp(`(^|\\n):::(${CALLOUT_TYPES})\\b`, 'g')) || []).length;
-      const allTripleColons = (text.match(/:::/g) || []).length;
-      const closeCount = allTripleColons - openMatches;
-      const articleLinks = (text.match(/\(#article:[^)]+\)/g) || []).length;
-      const images = (text.match(/!\[[^\]]*\]\([^)]+\)/g) || []).length;
-      return { calloutOpen: openMatches, calloutClose: closeCount, calloutOk: openMatches === closeCount, articleLinks, images };
-    }
-
-    function updateMarkupIndicator() {
-      const stats = analyzeMarkup($('f-content').value); const parts = [];
-      if (stats.calloutOpen > 0 || stats.calloutClose > 0) { if (stats.calloutOk) parts.push(`<span class="ok">✓ ${stats.calloutOpen} callout</span>`); else parts.push(`<span class="warn">⚠ ${stats.calloutOpen} открыто · ${stats.calloutClose} закрыто</span>`); }
-      if (stats.articleLinks > 0) parts.push(`<span class="neutral">🔗 ${stats.articleLinks} ссыл.</span>`);
-      if (stats.images > 0) parts.push(`<span class="neutral">🖼 ${stats.images} фото</span>`);
-      $('markup-indicator').innerHTML = parts.length ? parts.join('') : '<span class="neutral">Разметка: чисто</span>';
-    }
-
-    $('check-markup-btn').addEventListener('click', () => {
-      const stats = analyzeMarkup($('f-content').value); const messages = [];
-      if (stats.calloutOpen === 0 && stats.calloutClose === 0) messages.push('Callout-блоков нет');
-      else if (stats.calloutOk) messages.push(`✓ ${stats.calloutOpen} callout — всё закрыто`);
-      else messages.push(`⚠ Проблема: ${stats.calloutOpen} открыто, ${stats.calloutClose} закрыто.`);
-      if (stats.articleLinks > 0) messages.push(`Ссылок между статьями: ${stats.articleLinks}`);
-      if (stats.images > 0) messages.push(`Фото: ${stats.images}`);
-      toast(messages.join(' · '), (stats.calloutOk && stats.calloutOpen > 0) ? 'success' : (!stats.calloutOk ? 'error' : 'info'), 6000);
-    });
-
-    const contentEl = $('f-content');
-    function saveSelectionNow() { savedSelection.start = contentEl.selectionStart ?? 0; savedSelection.end = contentEl.selectionEnd ?? 0; }
-    contentEl.addEventListener('select', saveSelectionNow); contentEl.addEventListener('click', saveSelectionNow); contentEl.addEventListener('keyup', saveSelectionNow); contentEl.addEventListener('mouseup', saveSelectionNow);
-    $('md-toolbar').addEventListener('mousedown', (e) => { if (e.target.closest('button[data-md]')) { e.preventDefault(); saveSelectionNow(); } });
-
-    function wrapSelection(before, after, placeholder) {
-      const el = contentEl; let { start, end } = savedSelection;
-      if (typeof start !== 'number' || start < 0 || start > el.value.length) start = el.selectionStart ?? 0;
-      if (typeof end !== 'number' || end < start || end > el.value.length) end = el.selectionEnd ?? start;
-      const selected = el.value.slice(start, end);
-      if (selected.length >= (before.length + after.length) && selected.startsWith(before) && selected.endsWith(after)) {
-        const inner = selected.slice(before.length, selected.length - after.length);
-        el.value = el.value.slice(0, start) + inner + el.value.slice(end);
-        el.focus(); el.selectionStart = start; el.selectionEnd = start + inner.length;
-        savedSelection = { start, end: start + inner.length }; markDirty(); refreshPreview(); updateMarkupIndicator(); return;
-      }
-      let inner = selected || placeholder; const newText = before + inner + after;
-      el.value = el.value.slice(0, start) + newText + el.value.slice(end);
-      el.focus(); const innerStart = start + before.length; const innerEnd = innerStart + inner.length;
-      el.selectionStart = innerStart; el.selectionEnd = innerEnd; savedSelection = { start: innerStart, end: innerEnd };
-      markDirty(); refreshPreview(); updateMarkupIndicator();
-    }
-
-    function insertCallout(type) {
-      const el = contentEl; let { start, end } = savedSelection;
-      if (typeof start !== 'number' || start < 0 || start > el.value.length) start = el.selectionStart ?? 0;
-      if (typeof end !== 'number' || end < start || end > el.value.length) end = el.selectionEnd ?? start;
-      const selected = el.value.slice(start, end) || 'Текст внутри рамочки';
-      const block = `\n:::${type}\n${selected}\n:::\n`;
-      el.value = el.value.slice(0, start) + block + el.value.slice(end);
-      el.focus(); const cursorPos = start + block.length; el.selectionStart = el.selectionEnd = cursorPos;
-      savedSelection = { start: cursorPos, end: cursorPos }; markDirty(); refreshPreview(); updateMarkupIndicator();
-    }
-
-    $('md-toolbar').addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-md]'); if (!btn) return; const action = btn.dataset.md;
-      switch (action) {
-        case 'highlight': wrapSelection('==', '==', 'выделенный текст'); break;
-        case 'underline': wrapSelection('<u>', '</u>', 'подчёркнутый текст'); break;
-        case 'strike': wrapSelection('~~', '~~', 'зачёркнутый текст'); break;
-        case 'note': case 'tip': case 'warning': case 'danger': case 'important': insertCallout(action); break;
-      }
-    });
-
-    function showUploadStatus(text) { const el = $('upload-status'); if (!text) { el.classList.remove('show'); return; } el.textContent = text; el.classList.add('show'); }
-
-    async function compressImage(file, maxDim = 1600, quality = 0.85) {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          try {
-            let { width, height } = img;
-            if (width > maxDim || height > maxDim) { const ratio = Math.min(maxDim / width, maxDim / height); width = Math.round(width * ratio); height = Math.round(height * ratio); }
-            const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-            const ctx = canvas.getContext('2d'); ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0, 0, width, height); ctx.drawImage(img, 0, 0, width, height);
-            canvas.toBlob(blob => { URL.revokeObjectURL(img.src); if (blob) resolve(blob); else reject(new Error('Не удалось сжать')); }, 'image/webp', quality);
-          } catch (e) { reject(e); }
-        };
-        img.onerror = () => reject(new Error('Не удалось открыть файл')); img.src = URL.createObjectURL(file);
-      });
-    }
-
-    async function uploadFiles(files) {
-      const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
-      if (!imageFiles.length) { pendingInsertPos = null; return; }
-      fabUpload.disabled = true; let successCount = 0; let lastInsertLine = 0;
-      for (let i = 0; i < imageFiles.length; i++) {
-        const file = imageFiles[i]; const prefix = imageFiles.length > 1 ? `Загружаю ${i + 1} из ${imageFiles.length}: ` : 'Загружаю: ';
-        showUploadStatus(prefix + file.name);
-        try {
-          const blob = await compressImage(file); const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-          const { error } = await supabaseClient.storage.from('kb-images').upload(path, blob, { upsert: false, contentType: 'image/webp' });
-          if (error) throw error;
-          const { data } = supabaseClient.storage.from('kb-images').getPublicUrl(path);
-          const altText = file.name.replace(/\.[^.]+$/, ''); const markdown = `\n![${altText}](${data.publicUrl})\n`;
-          lastInsertLine = insertAtCursor(markdown); successCount++;
-        } catch (err) { toast('Не удалось загрузить фото: ' + err.message, 'error', 6000); }
-      }
-      showUploadStatus(''); if (successCount > 0) toast(`Фото вставлено в строку ${lastInsertLine}`, 'success', 3000);
-      fabUpload.disabled = false; pendingInsertPos = null; refreshPreview(); updateMarkupIndicator();
-    }
-
-    function insertAtCursor(text) {
-      const el = $('f-content'); const start = pendingInsertPos ? pendingInsertPos.start : (el.selectionStart ?? el.value.length);
-      const end = pendingInsertPos ? pendingInsertPos.end : (el.selectionEnd ?? el.value.length);
-      el.value = el.value.slice(0, start) + text + el.value.slice(end); const newPos = start + text.length;
-      el.selectionStart = el.selectionEnd = newPos; el.focus();
-      const lineNumber = el.value.substring(0, start).split('\n').length; el.scrollTop = Math.max(0, (lineNumber - 5) * (14 * 1.75));
-      el.classList.add('just-inserted'); setTimeout(() => el.classList.remove('just-inserted'), 700);
-      pendingInsertPos = { start: newPos, end: newPos }; markDirty(); return lineNumber;
-    }
-
-    function handleUploadClick() {
-      const el = $('f-content'); pendingInsertPos = { start: el.selectionStart ?? el.value.length, end: el.selectionEnd ?? el.value.length };
-      const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
-      input.onchange = (e) => uploadFiles(e.target.files); input.click();
-    }
-
-    fabUpload.addEventListener('click', handleUploadClick);
-
-    $('f-content').addEventListener('paste', async (e) => {
-      const items = e.clipboardData?.items; if (!items) return;
-      const imageItems = Array.from(items).filter(it => it.type.startsWith('image/')); if (!imageItems.length) return;
-      e.preventDefault(); const el = $('f-content'); pendingInsertPos = { start: el.selectionStart ?? el.value.length, end: el.selectionEnd ?? el.value.length };
-      const files = imageItems.map(it => it.getAsFile()).filter(Boolean); if (files.length) await uploadFiles(files);
-    });
-
-    const textarea = $('f-content');
-    ['dragenter', 'dragover'].forEach(evt => { textarea.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); textarea.classList.add('drop-active'); }); });
-    ['dragleave', 'drop'].forEach(evt => { textarea.addEventListener(evt, (e) => { e.preventDefault(); e.stopPropagation(); if (evt === 'dragleave' && textarea.contains(e.relatedTarget)) return; textarea.classList.remove('drop-active'); }); });
-    textarea.addEventListener('drop', (e) => {
-      const files = e.dataTransfer?.files;
-      if (files && files.length) { pendingInsertPos = { start: textarea.selectionStart ?? textarea.value.length, end: textarea.selectionEnd ?? textarea.value.length }; uploadFiles(files); }
-    });
-
-    $('add-step-btn').addEventListener('click', () => {
-      if (!currentSteps) currentSteps = { start: null, steps: [] };
-      const id = 'step-' + Date.now().toString(36);
-      currentSteps.steps.push({ id, kind: 'info', title: 'Новый шаг', content: '', next: null });
-      if (!currentSteps.start) currentSteps.start = id;
-      markDirty(); renderStepsEditor();
-    });
-
-    function renderStepsEditor() {
-      const container = $('steps-container'); const startSelect = $('start-step-select');
-      if (!currentSteps || !currentSteps.steps || !currentSteps.steps.length) {
-        container.innerHTML = `<div class="empty-steps">Пока нет шагов. Нажмите «Добавить шаг», чтобы собрать пошаговый сценарий.</div>`;
-        startSelect.innerHTML = ''; return;
-      }
-      startSelect.innerHTML = currentSteps.steps.map(s => `<option value="${s.id}" ${currentSteps.start === s.id ? 'selected' : ''}>${escapeHtml(s.title || s.id)}</option>`).join('');
-      startSelect.onchange = () => { currentSteps.start = startSelect.value; markDirty(); };
-
-      const stepOptions = (selected) => '<option value="">— конец —</option>' + currentSteps.steps.map(s => `<option value="${s.id}" ${selected === s.id ? 'selected' : ''}>${escapeHtml(s.title || s.id)}</option>`).join('');
-
-      container.innerHTML = currentSteps.steps.map((s, idx) => {
-        const isQuestion = s.kind === 'question'; const isEnd = s.kind === 'end';
-        const optionsHtml = isQuestion ? `
-          <div class="step-row">
-            <label>Варианты ответа</label>
-            <div>
-              ${(s.options || []).map((o, oi) => `
-                <div class="option-row">
-                  <input type="text" data-step="${s.id}" data-opt="${oi}" data-field="label" value="${escapeHtml(o.label || '')}" placeholder="Текст кнопки">
-                  <select data-step="${s.id}" data-opt="${oi}" data-field="next">
-                    <option value="">— конец —</option>
-                    ${currentSteps.steps.filter(x => x.id !== s.id).map(x => `<option value="${x.id}" ${o.next === x.id ? 'selected' : ''}>${escapeHtml(x.title || x.id)}</option>`).join('')}
-                  </select>
-                  <button type="button" data-del-opt="${s.id}:${oi}" title="Удалить"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-                </div>
-              `).join('')}
-            </div>
-            <button type="button" class="add-option-btn" data-add-opt="${s.id}" style="margin-top:8px;">+ Добавить вариант</button>
-          </div>
-        ` : '';
-        const nextHtml = (!isQuestion && !isEnd) ? `<div class="step-row"><label>Следующий шаг</label><select data-step="${s.id}" data-field="next">${stepOptions(s.next)}</select></div>` : '';
-        return `
-          <div class="step-card" data-step-id="${s.id}">
-            <div class="step-card-head"><span class="step-id">#${idx + 1}</span><span class="step-kind">${s.kind}</span><div class="step-card-actions"><button type="button" class="btn btn-ghost btn-sm" data-del-step="${s.id}">Удалить</button></div></div>
-            <div class="step-row"><label>Тип шага</label><select data-step="${s.id}" data-field="kind"><option value="question" ${s.kind === 'question' ? 'selected' : ''}>Вопрос (выбор варианта)</option><option value="info" ${s.kind === 'info' ? 'selected' : ''}>Информация (текст)</option><option value="end" ${s.kind === 'end' ? 'selected' : ''}>Конец сценария</option></select></div>
-            <div class="step-row"><label>Заголовок / текст вопроса</label><input type="text" data-step="${s.id}" data-field="title" value="${escapeHtml(s.title || '')}" placeholder="Струйный или лазерный принтер?"></div>
-            <div class="step-row"><label>Дополнительное описание (Markdown)</label><textarea data-step="${s.id}" data-field="content" placeholder="Уточните у клиента…">${escapeHtml(s.content || '')}</textarea></div>
-            ${optionsHtml}
-            ${nextHtml}
-          </div>
-        `;
-      }).join('');
-
-      container.querySelectorAll('input[data-step],select[data-step],textarea[data-step]').forEach(el => { el.addEventListener('input', onStepFieldChange); el.addEventListener('change', onStepFieldChange); });
-      container.querySelectorAll('[data-del-step]').forEach(el => el.addEventListener('click', () => deleteStep(el.dataset.delStep)));
-      container.querySelectorAll('[data-add-opt]').forEach(el => el.addEventListener('click', () => addOption(el.dataset.addOpt)));
-      container.querySelectorAll('[data-del-opt]').forEach(el => el.addEventListener('click', () => { const [sid, oi] = el.dataset.delOpt.split(':'); deleteOption(sid, parseInt(oi)); }));
-    }
-
-    function onStepFieldChange(e) {
-      const el = e.target; const sid = el.dataset.step; const step = currentSteps.steps.find(s => s.id === sid); if (!step) return;
-      if (el.dataset.opt !== undefined) {
-        const optIdx = parseInt(el.dataset.opt); const field = el.dataset.field;
-        if (!step.options) step.options = []; if (!step.options[optIdx]) step.options[optIdx] = { label: '', next: null };
-        step.options[optIdx][field] = field === 'next' ? (el.value || null) : el.value; markDirty(); return;
-      }
-      const field = el.dataset.field;
-      if (field === 'kind') { step.kind = el.value; if (step.kind === 'question' && !step.options) step.options = []; if (step.kind !== 'question') delete step.options; markDirty(); renderStepsEditor(); return; }
-      if (field === 'next') { step.next = el.value || null; markDirty(); return; }
-      step[field] = el.value; markDirty();
-      if (field === 'title') { const ss = $('start-step-select'); const opt = ss.querySelector(`option[value="${sid}"]`); if (opt) opt.textContent = el.value || sid; document.querySelectorAll(`select option[value="${sid}"]`).forEach(o => o.textContent = el.value || sid); }
-    }
-
-    function deleteStep(id) { if (!confirm('Удалить шаг?')) return; currentSteps.steps = currentSteps.steps.filter(s => s.id !== id); if (currentSteps.start === id) currentSteps.start = currentSteps.steps[0]?.id || null; markDirty(); renderStepsEditor(); }
-    function addOption(stepId) { const step = currentSteps.steps.find(s => s.id === stepId); if (!step) return; if (!step.options) step.options = []; step.options.push({ label: '', next: null }); markDirty(); renderStepsEditor(); }
-    function deleteOption(stepId, idx) { const step = currentSteps.steps.find(s => s.id === stepId); if (!step || !step.options) return; step.options.splice(idx, 1); markDirty(); renderStepsEditor(); }
-
-    async function saveArticle() {
-      const title = $('f-title').value.trim(); const category = $('f-category').value.trim(); const content = $('f-content').value;
-      const tags = $('f-tags').value.split(',').map(t => t.trim()).filter(Boolean); const pinned = $('f-pinned').checked; const is_published = $('f-published').checked;
-      const article_type = $('f-article-type') ? $('f-article-type').value : 'kb';
-      
-      if (!title) { toast('Введите заголовок', 'error'); $('f-title').focus(); return; }
-      if (!category) { toast('Введите категорию', 'error'); $('f-category').focus(); return; }
-
-      let stepsPayload = null;
-      if (currentSteps && currentSteps.steps && currentSteps.steps.length) {
-        if (!currentSteps.start) { toast('Выберите стартовый шаг сценария', 'error'); return; }
-        const ids = new Set(currentSteps.steps.map(s => s.id));
-        for (const s of currentSteps.steps) { if (s.next && !ids.has(s.next)) s.next = null; if (s.options) s.options.forEach(o => { if (o.next && !ids.has(o.next)) o.next = null; }); }
-        stepsPayload = currentSteps;
-      }
-
-      const btn = $('save-btn'); btn.disabled = true; btn.textContent = 'Сохранение…'; setStatus('unsaved', 'Сохранение…');
-      const payload = { title, category, content, tags, steps: stepsPayload, pinned, is_published, article_type, updated_at: new Date().toISOString() };
-
-      try {
-        let error, savedId = currentId;
-        if (currentId) {
-          const res = await supabaseClient.from('knowledge_articles').update(payload).eq('id', currentId).select().single();
-          error = res.error; if (!error && res.data) savedId = res.data.id;
-        } else {
-          const res = await supabaseClient.from('knowledge_articles').insert(payload).select().single();
-          error = res.error; if (!error && res.data) savedId = res.data.id;
-        }
-        if (error) { toast('Не удалось сохранить: ' + error.message, 'error', 10000); markError(error.message); btn.disabled = false; btn.textContent = 'Сохранить'; return; }
-        currentId = savedId; isDirty = false; markSaved(); toast('Статья сохранена', 'success', 2200); await loadArticles(); openArticle(currentId);
-      } catch (e) { toast('Неожиданная ошибка: ' + e.message, 'error', 8000); markError(e.message); } finally { btn.disabled = false; btn.textContent = 'Сохранить'; }
-    }
-
-    $('save-btn').addEventListener('click', saveArticle);
-    document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); if (editorContent.style.display !== 'none') saveArticle(); } });
-    window.addEventListener('beforeunload', (e) => { if (isDirty) { e.preventDefault(); e.returnValue = ''; } });
-
-    $('delete-btn').addEventListener('click', async () => {
-      if (!currentId) return; const a = articles.find(x => x.id === currentId);
-      if (!confirm(`Удалить статью «${a?.title || ''}»? Действие необратимо.`)) return;
-      const { error } = await supabaseClient.from('knowledge_articles').delete().eq('id', currentId);
-      if (error) { toast('Не удалось удалить: ' + error.message, 'error', 8000); return; }
-      currentId = null; isDirty = false; clearDraft(); await loadArticles();
-      if (!articles.length) showWelcome(); else { const next = articles.find(x => currentView === 'active' ? x.is_published !== false : x.is_published === false); if (next) openArticle(next.id); else showWelcome(); }
-      toast('Статья удалена', 'success', 2200);
-    });
-
-    $('new-article-btn').addEventListener('click', clearForm); $('welcome-new-btn').addEventListener('click', clearForm);
-    ['f-title','f-category','f-tags'].forEach(id => { $(id).addEventListener('input', markDirty); });
-    $('f-content').addEventListener('input', () => { markDirty(); updateMarkupIndicator(); clearTimeout(previewTimer); previewTimer = setTimeout(() => { const view = contentArea.dataset.view; if (view === 'split' || view === 'preview') refreshPreview(); }, 250); });
-    $('f-pinned').addEventListener('change', () => { updatePinToggle(); markDirty(); }); $('f-published').addEventListener('change', () => { updatePinToggle(); markDirty(); }); $('f-article-type').addEventListener('change', markDirty);
-    setInterval(() => { if (isDirty) saveDraft(); }, 3000);
-
-    function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-
-    checkAuth();
-  </script>
-</body>
-</html>
+    function refreshPreview() { $
