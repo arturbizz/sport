@@ -54,6 +54,15 @@
     body::before { width: 400px; height: 400px; background: #fbcfe8; top: -100px; left: -100px; }
     body::after { width: 500px; height: 500px; background: #bfdbfe; bottom: -150px; right: -100px; }
 
+    /* Вспышка при правильном ответе */
+    .flash-effect {
+      animation: flashScreen 0.4s ease-out;
+    }
+    @keyframes flashScreen {
+      0% { background-color: rgba(255, 255, 255, 0.6); }
+      100% { background-color: transparent; }
+    }
+
     /* ========== ОБЩИЕ СТИЛИ ========== */
     .game-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; }
     .game-bar-logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; color: var(--ink); }
@@ -102,10 +111,15 @@
     .mm-timer.warning { color: var(--danger); animation: gShake 0.4s ease; }
     
     .mm-controls { display: flex; gap: 16px; margin-left: auto; align-items: center; }
-    .mm-volume { display: flex; align-items: center; gap: 8px; font-size: 20px; }
+    .mm-volume { display: flex; align-items: center; gap: 8px; }
     .mm-volume input { width: 80px; accent-color: var(--primary); cursor: pointer; }
+
+    /* Кнопка звука (SVG) */
+    .sound-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); border: 1px solid var(--primary-glow); border-radius: 10px; color: var(--primary); cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 10px var(--primary-glow); }
+    .sound-btn:hover { background: var(--primary); color: white; transform: scale(1.05); }
+    .sound-btn svg { width: 18px; height: 18px; }
     
-    .mm-lifeline { padding: 8px 16px; background: rgba(255,255,255,0.8); border: 1px solid var(--primary-glow); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--primary); transition: all 0.2s; box-shadow: 0 2px 10px var(--primary-glow); }
+    .mm-lifeline { padding: 8px 16px; height: 40px; display: flex; align-items: center; background: rgba(255,255,255,0.8); border: 1px solid var(--primary-glow); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--primary); transition: all 0.2s; box-shadow: 0 2px 10px var(--primary-glow); }
     .mm-lifeline:hover:not(:disabled) { background: var(--primary); color: white; transform: scale(1.05); }
     .mm-lifeline:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
     .mm-progress-info { font-size: 14px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -141,7 +155,7 @@
     .mm-ladder-amount { font-family: 'JetBrains Mono', monospace; font-weight: 800; }
     .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; color: var(--gold); }
 
-    /* ========== РЕЙТИНГ (КРАСИВЫЙ ГРАФИК) ========== */
+    /* ========== РЕЙТИНГ ========== */
     .mm-leaderboard { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px; backdrop-filter: blur(20px); box-shadow: var(--shadow); max-width: 800px; margin: 40px auto 0; }
     .mm-leaderboard h3 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
     .mm-leaderboard h3 svg { color: var(--gold); width: 24px; height: 24px; }
@@ -152,7 +166,6 @@
     .lb-item { display: flex; align-items: center; gap: 16px; padding: 20px; background: rgba(255,255,255,0.6); border-radius: 20px; border: 1px solid var(--border); transition: all 0.3s; position: relative; overflow: hidden; }
     .lb-item:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
 
-    /* Топ-3 дизайн */
     .lb-item.rank-1 { background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), #fff); border-color: rgba(251, 191, 36, 0.4); }
     .lb-item.rank-2 { background: linear-gradient(135deg, rgba(203, 213, 225, 0.15), #fff); border-color: rgba(148, 163, 184, 0.3); }
     .lb-item.rank-3 { background: linear-gradient(135deg, rgba(252, 165, 165, 0.12), #fff); border-color: rgba(248, 113, 113, 0.3); }
@@ -170,11 +183,11 @@
     /* Красивая объемная шкала */
     .lb-bar-wrap { 
       width: 100%; 
-      height: 10px; 
+      height: 12px; /* Чуть толще для красоты */
       background: #e2e8f0; 
       border-radius: 10px; 
       overflow: hidden; 
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); 
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); /* Более глубокая тень */
       position: relative;
     }
     .lb-bar { 
@@ -184,7 +197,7 @@
       border-radius: 10px; 
       width: 0%; 
       transition: width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); 
-      box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+      box-shadow: 0 0 12px rgba(168, 85, 247, 0.6); /* Свечение */
       position: relative;
       animation: shimmerBarBg 3s linear infinite;
     }
@@ -193,16 +206,16 @@
       content: '';
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
       transform: translateX(-100%);
       animation: shimmerBar 2s infinite;
     }
     @keyframes shimmerBarBg { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
     @keyframes shimmerBar { 100% { transform: translateX(100%); } }
 
-    .lb-item.rank-1 .lb-bar { background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d); box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
-    .lb-item.rank-2 .lb-bar { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #94a3b8); box-shadow: 0 0 10px rgba(148, 163, 184, 0.6); }
-    .lb-item.rank-3 .lb-bar { background: linear-gradient(90deg, #ef4444, #fca5a5, #ef4444); box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); }
+    .lb-item.rank-1 .lb-bar { background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d); box-shadow: 0 0 12px rgba(245, 158, 11, 0.8); }
+    .lb-item.rank-2 .lb-bar { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #94a3b8); box-shadow: 0 0 12px rgba(148, 163, 184, 0.8); }
+    .lb-item.rank-3 .lb-bar { background: linear-gradient(90deg, #ef4444, #fca5a5, #ef4444); box-shadow: 0 0 12px rgba(239, 68, 68, 0.8); }
 
     .lb-time { font-size: 12px; color: var(--ink-3); text-align: right; font-weight: 600; }
 
@@ -306,7 +319,14 @@
             
             <div class="mm-controls">
               <div class="mm-volume">
-                  <span id="btn-music">🔊</span>
+                  <!-- Кнопка звука с SVG -->
+                  <button class="sound-btn" id="btn-music">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                    </svg>
+                  </button>
                   <input type="range" id="bgm-volume" min="0" max="1" step="0.1" value="0.3">
               </div>
               <button class="mm-lifeline" id="btn-5050">50:50</button>
@@ -366,19 +386,35 @@
     const TOTAL_QUESTIONS = 20;
     const DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
 
-    // === АУДИО ===
+    // === АУДИО ЛОГИКА ===
     const bgm = document.getElementById('bgm');
     const sfxCorrect = document.getElementById('sfx-correct');
     const sfxWrong = document.getElementById('sfx-wrong');
     const sfxWin = document.getElementById('sfx-win');
-    let isMusicMuted = false;
+    let isSoundMuted = false; // Единый флаг для всех звуков
+
     bgm.volume = 0.3; 
-    
     document.getElementById('bgm-volume').addEventListener('input', (e) => { bgm.volume = e.target.value; });
+
+    const ICON_SOUND_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+    const ICON_SOUND_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+
     document.getElementById('btn-music').addEventListener('click', (e) => {
-      isMusicMuted = !isMusicMuted;
-      if (isMusicMuted) { bgm.pause(); e.target.textContent = '🔇'; }
-      else { bgm.play().catch(()=>{}); e.target.textContent = '🔊'; }
+      isSoundMuted = !isSoundMuted;
+      const btn = e.currentTarget;
+      if (isSoundMuted) {
+        bgm.pause();
+        btn.innerHTML = ICON_SOUND_OFF;
+        btn.style.color = 'var(--ink-3)';
+        btn.style.borderColor = 'var(--hairline-2)';
+        btn.style.boxShadow = 'none';
+      } else {
+        bgm.play().catch(()=>{});
+        btn.innerHTML = ICON_SOUND_ON;
+        btn.style.color = 'var(--primary)';
+        btn.style.borderColor = 'var(--primary-glow)';
+        btn.style.boxShadow = '0 2px 10px var(--primary-glow)';
+      }
     });
 
     // === КАСТОМНЫЕ УВЕДОМЛЕНИЯ ===
@@ -449,22 +485,38 @@
     function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
     function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-    function fireConfetti() {
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 }, colors: ['#6366f1', '#a855f7', '#ec4899', '#f59e0b', '#10b981'] });
-    }
+    // === КРАСИВЫЙ САЛЮТ ===
+    function fireCorrectEffect() {
+      // Вспышка на фоне
+      document.body.classList.add('flash-effect');
+      setTimeout(() => document.body.classList.remove('flash-effect'), 400);
 
-    function fireBigConfetti() {
-      let duration = 5 * 1000;
-      let animationEnd = Date.now() + duration;
-      let defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-      function randomInRange(min, max) { return Math.random() * (max - min) + min; }
-      let interval = setInterval(function() {
-        let timeLeft = animationEnd - Date.now();
-        if (timeLeft <= 0) { return clearInterval(interval); }
-        let particleCount = 50 * (timeLeft / duration);
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
-      }, 250);
+      // Звездный взрыв
+      const defaults = { origin: { y: 0.6 }, colors: ['#fbbf24', '#f59e0b', '#6366f1', '#a855f7', '#ec4899'] };
+      
+      confetti({
+        ...defaults,
+        particleCount: 50,
+        spread: 100,
+        startVelocity: 40,
+        ticks: 200,
+        gravity: 0.8,
+        scalar: 1.2,
+        shapes: ['circle', 'square'] // В стандартном canvas-confetti нет 'star', но 'circle'/'square' с красивой физикой смотрятся отлично
+      });
+      
+      // Дополнительный залп через 150мс
+      setTimeout(() => {
+        confetti({
+          ...defaults,
+          particleCount: 30,
+          spread: 60,
+          startVelocity: 30,
+          ticks: 150,
+          scalar: 0.8,
+          shapes: ['circle']
+        });
+      }, 150);
     }
 
     document.querySelectorAll('.mm-cat-btn').forEach(btn => {
@@ -597,9 +649,12 @@
       });
 
       if (isCorrect) {
-        sfxCorrect.currentTime = 0; sfxCorrect.play().catch(()=>{});
-        fireConfetti();
-        if (SAFE_LEVELS.includes(state.currentIndex)) { setTimeout(fireConfetti, 300); }
+        if (!isSoundMuted) { sfxCorrect.currentTime = 0; sfxCorrect.play().catch(()=>{}); }
+        fireCorrectEffect(); // Вызов нового красивого эффекта
+        
+        if (SAFE_LEVELS.includes(state.currentIndex)) { 
+          setTimeout(fireCorrectEffect, 400); 
+        }
 
         state.correctCount++;
         state.score = AMOUNTS[state.currentIndex];
@@ -611,7 +666,7 @@
           else { state.currentIndex++; state.answersLocked = false; renderQuestion(); }
         }, 1400);
       } else {
-        sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{});
+        if (!isSoundMuted) { sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{}); }
         setTimeout(() => finishGame(false), 1800);
       }
     }
@@ -625,7 +680,7 @@
         if (btn.dataset.letter === q.correct) btn.classList.add('correct');
         else btn.classList.add('dimmed');
       });
-      sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{});
+      if (!isSoundMuted) { sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{}); }
       setTimeout(() => finishGame(false, true), 1600);
     }
 
@@ -648,7 +703,7 @@
       $('result-amount').textContent = formatMoney(finalScore);
 
       if (won) {
-        sfxWin.play().catch(()=>{});
+        if (!isSoundMuted) sfxWin.play().catch(()=>{});
         fireBigConfetti();
       }
 
@@ -742,7 +797,7 @@
         return;
       }
       
-      if (!isMusicMuted) { bgm.play().catch(e => console.log(e)); }
+      if (!isSoundMuted) { bgm.play().catch(e => console.log(e)); }
 
       state.questions = questions;
       state.currentIndex = 0;
