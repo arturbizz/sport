@@ -99,7 +99,7 @@
     
     .rep-content { flex: 1; }
     .rep-title { font-weight: 600; color: var(--ink); font-size: 15px; margin-bottom: 8px; }
-    .rep-meta { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; display: flex; gap: 12px; }
+    .rep-meta { font-size: 12px; color: var(--ink-3); margin-bottom: 8px; display: flex; gap: 12px; flex-wrap: wrap; }
     .rep-type { color: var(--error); font-weight: 600; background: rgba(239, 68, 68, 0.1); padding: 2px 8px; border-radius: 4px; }
     .rep-comment { font-size: 13px; color: var(--ink-2); background: var(--bg-subtle); padding: 8px 12px; border-radius: 6px; }
   </style>
@@ -151,6 +151,68 @@
     </div>
   </div>
 
+  <!-- Модалка Редактирования Вопроса -->
+  <div class="reports-modal" id="question-modal">
+    <div class="reports-window" style="max-width: 720px;">
+      <h3 id="question-modal-title">Редактирование вопроса</h3>
+
+      <div style="display:flex; flex-direction:column; gap:12px; overflow-y:auto; padding-right:8px; flex:1;">
+        <div class="field">
+          <label class="field-label">Текст вопроса</label>
+          <textarea id="q-text" class="content-textarea" style="min-height:80px; font-size:14px;"></textarea>
+        </div>
+
+        <div class="field-row">
+          <div class="field"><label class="field-label">Вариант A</label><input id="q-a" class="field-input"></div>
+          <div class="field"><label class="field-label">Вариант B</label><input id="q-b" class="field-input"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label class="field-label">Вариант C</label><input id="q-c" class="field-input"></div>
+          <div class="field"><label class="field-label">Вариант D</label><input id="q-d" class="field-input"></div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">Правильный ответ</label>
+            <select id="q-correct" class="field-input" style="padding: 11px 14px;">
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Сложность</label>
+            <select id="q-difficulty" class="field-input" style="padding: 11px 14px;">
+              <option value="easy">easy</option>
+              <option value="medium">medium</option>
+              <option value="hard">hard</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Категория</label>
+            <input id="q-category" class="field-input" placeholder="Mix / TV / Printer">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-primary" id="btn-save-question" style="flex:1;">Сохранить</button>
+        <button class="btn btn-ghost" id="btn-close-question" style="flex:1;">Отмена</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка Всех Вопросов -->
+  <div class="reports-modal" id="all-questions-modal">
+    <div class="reports-window" style="max-width: 900px;">
+      <h3>Все вопросы Миллионера</h3>
+      <input id="q-search" class="field-input" placeholder="Поиск по тексту вопроса…" style="margin-bottom:12px;">
+      <div id="all-questions-list" class="reports-list" style="min-height: 300px;"></div>
+      <button class="btn btn-ghost" id="all-questions-close" style="width:100%;">Закрыть</button>
+    </div>
+  </div>
+
   <button class="fab-upload" id="fab-upload" title="Загрузить фото в позицию курсора">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Загрузить фото
   </button>
@@ -199,6 +261,9 @@
         </button>
         <button class="fullscreen-btn" id="btn-open-reports" title="Жалобы на вопросы" style="color:var(--danger);">
            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        </button>
+        <button class="fullscreen-btn" id="btn-open-questions" title="Все вопросы Миллионера" style="color:var(--violet);">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </button>
         <div class="editor-toolbar-status">
           <span class="status-dot saved" id="status-dot"></span><span id="status-text">Готово</span>
@@ -409,17 +474,134 @@
             <div class="rep-meta">
               <span class="rep-type">${TYPE_NAMES[r.report_type] || r.report_type}</span>
               <span>${new Date(r.created_at).toLocaleString('ru-RU')}</span>
+              <span style="font-family:var(--font-mono); color:var(--ink-4);">ID: ${(r.question_id || '').slice(0,8)}</span>
             </div>
             ${r.comment ? `<div class="rep-comment">${r.comment}</div>` : ''}
           </div>
-          <button class="btn btn-primary btn-sm" onclick="deleteReport('${r.id}')" style="padding:6px 12px; white-space:nowrap;">Исправлено</button>
+          <div style="display:flex; flex-direction:column; gap:6px; white-space:nowrap;">
+            <button class="btn btn-primary btn-sm" onclick="openQuestionEditor('${r.question_id}', '${r.id}')" style="padding:6px 10px;">✏️ Редактировать</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteQuestion('${r.question_id}')" style="padding:6px 10px;">🗑 Удалить вопрос</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteReport('${r.id}')" style="padding:6px 10px;">✓ Закрыть жалобу</button>
+          </div>
         </div>
       `).join('');
     }
-    window.deleteReport = async (id) => { await supabaseClient.from('millionaire_reports').delete().eq('id', id); loadReports(); toast('Жалоба удалена (отмечено как исправлено)', 'success'); };
+    window.deleteReport = async (id) => { await supabaseClient.from('millionaire_reports').delete().eq('id', id); loadReports(); toast('Жалоба закрыта', 'success'); };
     $('btn-open-reports')?.addEventListener('click', () => { $('reports-modal').classList.add('open'); loadReports(); });
     $('reports-modal-close')?.addEventListener('click', () => { $('reports-modal').classList.remove('open'); });
     $('btn-clear-reports')?.addEventListener('click', async () => { if(!confirm('Очистить ВСЕ жалобы?')) return; await supabaseClient.from('millionaire_reports').delete().neq('id', '00000000-0000-0000-0000-000000000000'); loadReports(); });
+
+    // === РЕДАКТИРОВАНИЕ ВОПРОСОВ МИЛЛИОНЕРА ===
+    let currentEditQuestionId = null;
+    let currentEditReportId = null;
+
+    window.openQuestionEditor = async function(questionId, reportId = null) {
+      if (!questionId) { toast('У жалобы нет question_id', 'error'); return; }
+      currentEditQuestionId = questionId;
+      currentEditReportId = reportId;
+
+      const { data: q, error } = await supabaseClient.from('millionaire_questions').select('*').eq('id', questionId).single();
+      if (error || !q) { toast('Не удалось загрузить вопрос: ' + (error?.message || 'не найден'), 'error', 6000); return; }
+
+      $('question-modal-title').textContent = reportId ? 'Исправление вопроса (из жалобы)' : 'Редактирование вопроса';
+      $('q-text').value = q.question || '';
+      $('q-a').value = q.option_a || '';
+      $('q-b').value = q.option_b || '';
+      $('q-c').value = q.option_c || '';
+      $('q-d').value = q.option_d || '';
+      $('q-correct').value = q.correct || 'A';
+      $('q-difficulty').value = q.difficulty || 'medium';
+      $('q-category').value = q.category || 'Mix';
+
+      $('question-modal').classList.add('open');
+    };
+
+    $('btn-close-question')?.addEventListener('click', () => {
+      $('question-modal').classList.remove('open');
+      currentEditQuestionId = null;
+      currentEditReportId = null;
+    });
+
+    $('btn-save-question')?.addEventListener('click', async () => {
+      if (!currentEditQuestionId) return;
+      const payload = {
+        question: $('q-text').value.trim(),
+        option_a: $('q-a').value.trim(),
+        option_b: $('q-b').value.trim(),
+        option_c: $('q-c').value.trim(),
+        option_d: $('q-d').value.trim(),
+        correct: $('q-correct').value,
+        difficulty: $('q-difficulty').value,
+        category: $('q-category').value.trim() || 'Mix',
+      };
+
+      if (!payload.question || !payload.option_a || !payload.option_b || !payload.option_c || !payload.option_d) {
+        toast('Заполни текст вопроса и все 4 варианта', 'error'); return;
+      }
+
+      const btn = $('btn-save-question');
+      btn.disabled = true; btn.textContent = 'Сохранение…';
+
+      const reportToClose = currentEditReportId;
+      const { error } = await supabaseClient.from('millionaire_questions').update(payload).eq('id', currentEditQuestionId);
+
+      btn.disabled = false; btn.textContent = 'Сохранить';
+
+      if (error) { toast('Ошибка: ' + error.message, 'error', 8000); return; }
+
+      if (reportToClose) {
+        await supabaseClient.from('millionaire_reports').delete().eq('id', reportToClose);
+      }
+
+      $('question-modal').classList.remove('open');
+      currentEditQuestionId = null; currentEditReportId = null;
+      toast('Вопрос сохранён' + (reportToClose ? ', жалоба закрыта' : ''), 'success');
+      loadReports();
+      if ($('all-questions-modal')?.classList.contains('open')) loadAllQuestions($('q-search')?.value || '');
+    });
+
+    window.deleteQuestion = async function(questionId) {
+      if (!questionId) return;
+      if (!confirm('Удалить вопрос из игры? Действие необратимо. Все жалобы на него тоже удалятся.')) return;
+      await supabaseClient.from('millionaire_questions').delete().eq('id', questionId);
+      await supabaseClient.from('millionaire_reports').delete().eq('question_id', questionId);
+      toast('Вопрос удалён', 'success');
+      loadReports();
+      if ($('all-questions-modal')?.classList.contains('open')) loadAllQuestions($('q-search')?.value || '');
+    };
+
+    // === ВСЕ ВОПРОСЫ ===
+    async function loadAllQuestions(search = '') {
+      const list = $('all-questions-list');
+      list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Загрузка...</div>';
+      let query = supabaseClient.from('millionaire_questions').select('*').order('category').order('difficulty');
+      if (search) query = query.ilike('question', `%${search}%`);
+      const { data, error } = await query;
+      if (error) { list.innerHTML = `<div style="padding:20px; color:red; text-align:center;">Ошибка: ${error.message}</div>`; return; }
+      if (!data || !data.length) { list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">Ничего не найдено</div>'; return; }
+      list.innerHTML = data.map(q => `
+        <div class="res-item">
+          <div style="flex:1; min-width:0;">
+            <div class="res-name" style="font-weight:600;">${escapeHtml(q.question)}</div>
+            <div class="res-pin" style="margin-top:4px;">${escapeHtml(q.category || 'Mix')} · ${q.difficulty || 'medium'} · ответ ${q.correct || '?'}</div>
+          </div>
+          <div style="display:flex; gap:6px; flex-shrink:0;">
+            <button class="btn btn-primary btn-sm" onclick="openQuestionEditor('${q.id}')" style="padding:6px 10px;">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteQuestion('${q.id}')" style="padding:6px 10px;">🗑</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    $('btn-open-questions')?.addEventListener('click', () => {
+      $('all-questions-modal').classList.add('open');
+      loadAllQuestions($('q-search')?.value || '');
+    });
+    $('all-questions-close')?.addEventListener('click', () => $('all-questions-modal').classList.remove('open'));
+    $('q-search')?.addEventListener('input', (e) => {
+      clearTimeout(window.__qSearchTimer);
+      window.__qSearchTimer = setTimeout(() => loadAllQuestions(e.target.value.trim()), 300);
+    });
 
     // === ОСТАЛЬНОЕ ===
     function initSidebar() { adminLayout.classList.toggle('sidebar-collapsed', localStorage.getItem(SIDEBAR_KEY) === '1'); }
