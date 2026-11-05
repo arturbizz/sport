@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
-    /* ГЛОБАЛЬНЫЙ СБРОС КУРСОРОВ И КАРЕТОК */
+    /* ГЛОБАЛЬНЫЙ СБРОС КУРСОРОВ */
     * { cursor: default; caret-color: transparent; box-sizing: border-box; }
     input, textarea, select { cursor: text; caret-color: auto; }
     button, a, select, .cursor-pointer, [role="button"], label, .mm-option, .mm-cat-btn, .lb-item { cursor: pointer; }
@@ -32,33 +32,21 @@
       --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes bgBreathe {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    @keyframes bgBreathe { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
     body {
       font-family: 'Inter', -apple-system, sans-serif;
       background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
-      background-size: 200% 200%;
-      animation: bgBreathe 15s ease infinite;
-      color: var(--ink);
-      min-height: 100vh;
-      overflow-x: hidden;
+      background-size: 200% 200%; animation: bgBreathe 15s ease infinite;
+      color: var(--ink); min-height: 100vh; overflow-x: hidden;
     }
 
-    body::before, body::after {
-      content: ''; position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6;
-    }
+    body::before, body::after { content: ''; position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6; }
     body::before { width: 400px; height: 400px; background: #fbcfe8; top: -100px; left: -100px; }
     body::after { width: 500px; height: 500px; background: #bfdbfe; bottom: -150px; right: -100px; }
 
     .flash-effect { animation: flashScreen 0.4s ease-out; }
-    @keyframes flashScreen {
-      0% { background-color: rgba(255, 255, 255, 0.6); }
-      100% { background-color: transparent; }
-    }
+    @keyframes flashScreen { 0% { background-color: rgba(255, 255, 255, 0.6); } 100% { background-color: transparent; } }
 
     /* ========== ОБЩИЕ СТИЛИ ========== */
     .game-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; }
@@ -111,16 +99,10 @@
     .mm-volume { display: flex; align-items: center; gap: 8px; position: relative; }
     .mm-volume input { width: 80px; accent-color: var(--primary); cursor: pointer; }
 
-    /* Подсказка для звука */
-    .music-hint {
-      position: absolute; right: 100%; margin-right: 12px; 
-      background: var(--ink); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap;
-      animation: pulseHint 2s infinite; pointer-events: none;
-    }
+    .music-hint { position: absolute; right: 100%; margin-right: 12px; background: var(--ink); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; animation: pulseHint 2s infinite; pointer-events: none; }
     .music-hint::after { content: ''; position: absolute; top: 50%; right: -4px; transform: translateY(-50%); border-width: 4px 0 4px 4px; border-style: solid; border-color: transparent transparent transparent var(--ink); }
     @keyframes pulseHint { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 
-    /* Кнопка звука (SVG) */
     .sound-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.8); border: 1px solid var(--primary-glow); border-radius: 10px; color: var(--primary); transition: all 0.2s; box-shadow: 0 2px 10px var(--primary-glow); }
     .sound-btn:hover { background: var(--primary); color: white; transform: scale(1.05); }
     .sound-btn.muted { color: var(--ink-3); border-color: var(--border); box-shadow: none; background: rgba(255,255,255,0.4); }
@@ -131,9 +113,15 @@
     .mm-lifeline:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
     .mm-progress-info { font-size: 14px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
 
-    .mm-question-card { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 24px; backdrop-filter: blur(20px); box-shadow: var(--shadow); }
+    /* КАРТОЧКА ВОПРОСА */
+    .mm-question-card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 24px; backdrop-filter: blur(20px); box-shadow: var(--shadow); }
     .mm-level-badge { display: inline-block; font-size: 12px; font-weight: 800; color: var(--primary); background: var(--primary-glow); padding: 6px 12px; border-radius: 8px; margin-bottom: 20px; text-transform: uppercase; }
     .mm-question-text { font-size: 22px; font-weight: 700; line-height: 1.4; }
+
+    /* Кнопка "Пожаловаться" */
+    .report-btn { position: absolute; top: 20px; right: 20px; width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.6); border: 1px solid var(--border); color: var(--ink-3); display: flex; align-items: center; justify-content: center; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .report-btn:hover { background: #fff; color: var(--danger); border-color: rgba(239, 68, 68, 0.3); transform: scale(1.05); }
+    .report-btn svg { width: 16px; height: 16px; }
 
     .mm-options { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 640px) { .mm-options { grid-template-columns: 1fr; } }
@@ -166,50 +154,40 @@
     .mm-leaderboard { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px; backdrop-filter: blur(20px); box-shadow: var(--shadow); max-width: 800px; margin: 40px auto 0; }
     .mm-leaderboard h3 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
     .mm-leaderboard h3 svg { color: var(--gold); width: 24px; height: 24px; }
-    
     .lb-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
     @media (max-width: 768px) { .lb-grid { grid-template-columns: 1fr; } }
-
     .lb-item { display: flex; align-items: center; gap: 16px; padding: 20px; background: rgba(255,255,255,0.6); border-radius: 20px; border: 1px solid var(--border); transition: all 0.3s; position: relative; overflow: hidden; }
     .lb-item:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-
     .lb-item.rank-1 { background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), #fff); border-color: rgba(251, 191, 36, 0.4); }
     .lb-item.rank-2 { background: linear-gradient(135deg, rgba(203, 213, 225, 0.15), #fff); border-color: rgba(148, 163, 184, 0.3); }
     .lb-item.rank-3 { background: linear-gradient(135deg, rgba(252, 165, 165, 0.12), #fff); border-color: rgba(248, 113, 113, 0.3); }
-
     .lb-rank { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; background: #e2e8f0; color: var(--ink-2); flex-shrink: 0; }
     .lb-item.rank-1 .lb-rank { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.5); }
     .lb-item.rank-2 .lb-rank { background: linear-gradient(135deg, #cbd5e1, #94a3b8); color: white; }
     .lb-item.rank-3 .lb-rank { background: linear-gradient(135deg, #fca5a5, #ef4444); color: white; }
-    
     .lb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
     .lb-header { display: flex; justify-content: space-between; align-items: baseline; }
     .lb-name { font-weight: 800; font-size: 16px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .lb-score { font-family: 'JetBrains Mono', monospace; font-weight: 800; font-size: 15px; color: var(--primary); }
-    
     .lb-bar-wrap { width: 100%; height: 14px; background: #e2e8f0; border-radius: 10px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.15); position: relative; border: 1px solid rgba(0,0,0,0.05); }
     .lb-bar { height: 100%; background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #6366f1); background-size: 300% 100%; border-radius: 10px; width: 0%; transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); position: relative; animation: shimmerBarBg 3s linear infinite; }
     .lb-bar::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent); transform: translateX(-100%); animation: shimmerBar 2.5s infinite; border-radius: 10px; }
     @keyframes shimmerBarBg { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
     @keyframes shimmerBar { 100% { transform: translateX(100%); } }
-
     .lb-item.rank-1 .lb-bar { background: linear-gradient(90deg, #fbbf24, #f59e0b, #fcd34d, #fbbf24); box-shadow: 0 0 15px rgba(245, 158, 11, 0.8); }
     .lb-item.rank-2 .lb-bar { background: linear-gradient(90deg, #94a3b8, #cbd5e1, #e2e8f0, #94a3b8); box-shadow: 0 0 15px rgba(148, 163, 184, 0.8); }
     .lb-item.rank-3 .lb-bar { background: linear-gradient(90deg, #ef4444, #fca5a5, #fecaca, #ef4444); box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); }
 
-    /* ========== КАСТОМНЫЕ УВЕДОМЛЕНИЯ ========== */
+    /* ========== МОДАЛКИ ========== */
     .custom-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); z-index: 9999; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s; }
     .custom-overlay.show { display: flex; opacity: 1; }
-    
-    .custom-alert { background: #fff; border-radius: 24px; padding: 32px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 24px 64px rgba(0,0,0,0.15); transform: scale(0.9); transition: transform 0.3s var(--spring); }
+    .custom-alert { background: #fff; border-radius: 24px; padding: 32px; max-width: 480px; width: 100%; text-align: center; box-shadow: 0 24px 64px rgba(0,0,0,0.15); transform: scale(0.9); transition: transform 0.3s var(--spring); }
     .custom-overlay.show .custom-alert { transform: scale(1); }
-    
     .custom-alert-icon { width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 20px; display: flex; align-items: center; justify-content: center; }
     .custom-alert-icon.error { background: #fef2f2; color: var(--danger); }
     .custom-alert-icon.success { background: #ecfdf5; color: var(--success); }
     .custom-alert-icon.info { background: #eff6ff; color: var(--primary); }
     .custom-alert-icon svg { width: 32px; height: 32px; }
-    
     .custom-alert h4 { font-size: 22px; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
     .custom-alert p { font-size: 15px; color: var(--ink-2); line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap;}
     .custom-alert button { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; transition: all 0.2s; }
@@ -218,25 +196,52 @@
     .custom-alert button.btn-secondary { background: #f1f5f9; color: var(--ink-2); margin-top: 10px; }
     .custom-alert button.btn-secondary:hover { background: #e2e8f0; color: var(--ink); }
 
+    /* Форма жалобы */
+    .report-form { text-align: left; }
+    .report-form label { display: block; font-size: 13px; font-weight: 700; color: var(--ink-2); margin-bottom: 8px; }
+    .report-form select, .report-form textarea { width: 100%; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-subtle); font-size: 14px; font-family: inherit; margin-bottom: 16px; outline: none; transition: all 0.2s; }
+    .report-form select:focus, .report-form textarea:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px var(--primary-glow); }
+    .report-form textarea { resize: vertical; min-height: 100px; }
+
     .game-hide { display: none !important; }
   </style>
 </head>
 <body>
 
-  <audio id="bgm" loop>
-    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-  </audio>
+  <audio id="bgm" loop><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg"></audio>
   <audio id="sfx-correct"><source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg"></audio>
   <audio id="sfx-wrong"><source src="https://actions.google.com/sounds/v1/cartoon/concussive_hit_guitar_boing.ogg" type="audio/ogg"></audio>
   <audio id="sfx-win"><source src="https://actions.google.com/sounds/v1/crowds/cheering_crowd.ogg" type="audio/ogg"></audio>
 
+  <!-- СТАНДАРТНОЕ ОКНО -->
   <div class="custom-overlay" id="customOverlay">
     <div class="custom-alert" id="customAlertBox">
       <div class="custom-alert-icon info" id="customIcon"></div>
       <h4 id="customTitle">Заголовок</h4>
-      <p id="customText">Текст уведомления...</p>
-      <div id="customActions">
-        <button class="btn-primary" id="customOkBtn">Ок</button>
+      <p id="customText">Текст...</p>
+      <div id="customActions"><button class="btn-primary" id="customOkBtn">Ок</button></div>
+    </div>
+  </div>
+
+  <!-- ОКНО ЖАЛОБЫ -->
+  <div class="custom-overlay" id="reportOverlay">
+    <div class="custom-alert">
+      <h4 style="margin-bottom: 20px;">Предложить исправление</h4>
+      <div class="report-form">
+        <label>Что не так с вопросом?</label>
+        <select id="report-type">
+          <option value="incorrect_question">Неточная формулировка вопроса</option>
+          <option value="unclear_question">Вопрос непонятен</option>
+          <option value="incorrect_answer">Неверный правильный ответ</option>
+          <option value="unclear_options">Непонятные варианты ответа</option>
+          <option value="other">Другое</option>
+        </select>
+
+        <label>Комментарий (необязательно)</label>
+        <textarea id="report-comment" placeholder="Напишите, что именно нужно исправить..."></textarea>
+        
+        <button class="btn-primary" id="btn-submit-report" style="margin-bottom: 10px;">Отправить руководителю</button>
+        <button class="btn-secondary" id="btn-cancel-report">Отмена</button>
       </div>
     </div>
   </div>
@@ -248,9 +253,8 @@
     </div>
     <div style="display:flex; gap: 10px;">
       <a href="kb-trainer.html" class="game-btn">Тренажёр</a>
-      <a href="knowledge-base.html" class="game-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg> В БЗ
-      </a>
+      <a href="kb-training.html" class="game-btn">Обучение</a>
+      <a href="knowledge-base.html" class="game-btn">← База знаний</a>
     </div>
   </div>
 
@@ -301,11 +305,7 @@
               <div class="mm-volume">
                   <div class="music-hint" id="music-hint">Включить звук</div>
                   <button class="sound-btn muted" id="btn-music">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                      <line x1="23" y1="9" x2="17" y2="15"></line>
-                      <line x1="17" y1="9" x2="23" y2="15"></line>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
                   </button>
                   <input type="range" id="bgm-volume" min="0" max="1" step="0.1" value="0.3">
               </div>
@@ -315,6 +315,9 @@
           </div>
 
           <div class="mm-question-card">
+            <button class="report-btn" id="btn-report" title="Предложить исправление">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </button>
             <div class="mm-level-badge" id="level-badge">Уровень 1</div>
             <div class="mm-question-text" id="question-text">Загрузка вопроса…</div>
           </div>
@@ -338,7 +341,7 @@
       
       <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 32px;">
         <button class="game-btn game-btn-primary" id="btn-retry" style="background: var(--primary); color: white; border: none; padding: 12px 24px;">Попробовать снова</button>
-        <a href="knowledge-base.html" class="game-btn">Вернуться в Базу Знаний</a>
+        <a href="knowledge-base.html" class="game-btn">Вернуться в Базу знаний</a>
       </div>
 
       <div class="mm-leaderboard" style="margin-top: 0;">
@@ -368,12 +371,12 @@
     const TOTAL_QUESTIONS = 20;
     const DISTRIBUTION = { easy: 7, medium: 7, hard: 6 };
 
-    // === АУДИО ЛОГИКА (ВЫКЛЮЧЕНО ПО УМОЛЧАНИЮ) ===
+    // === АУДИО ===
     const bgm = document.getElementById('bgm');
     const sfxCorrect = document.getElementById('sfx-correct');
     const sfxWrong = document.getElementById('sfx-wrong');
     const sfxWin = document.getElementById('sfx-win');
-    let isSoundMuted = true; // <-- ВЫКЛЮЧЕНО ПО УМОЛЧАНИЮ
+    let isSoundMuted = true; 
 
     bgm.volume = 0.3; 
     document.getElementById('bgm-volume').addEventListener('input', (e) => { bgm.volume = e.target.value; });
@@ -385,23 +388,17 @@
       isSoundMuted = !isSoundMuted;
       const btn = e.currentTarget;
       const hint = document.getElementById('music-hint');
-      
       if (isSoundMuted) {
-        bgm.pause();
-        btn.innerHTML = ICON_SOUND_OFF;
-        btn.classList.add('muted');
+        bgm.pause(); btn.innerHTML = ICON_SOUND_OFF; btn.classList.add('muted');
         if (hint) hint.style.display = 'block';
       } else {
-        bgm.play().catch(()=>{});
-        btn.innerHTML = ICON_SOUND_ON;
-        btn.classList.remove('muted');
+        bgm.play().catch(()=>{}); btn.innerHTML = ICON_SOUND_ON; btn.classList.remove('muted');
         if (hint) hint.style.display = 'none';
       }
     });
 
-    // === КАСТОМНЫЕ УВЕДОМЛЕНИЯ ===
+    // === УВЕДОМЛЕНИЯ ===
     const overlay = document.getElementById('customOverlay');
-    const alertBox = document.getElementById('customAlertBox');
     const iconBox = document.getElementById('customIcon');
     const titleBox = document.getElementById('customTitle');
     const textBox = document.getElementById('customText');
@@ -414,44 +411,60 @@
     };
 
     function showCustomAlert(title, message, type = 'info', onClose = null) {
-      titleBox.textContent = title;
-      textBox.textContent = message;
-      iconBox.className = `custom-alert-icon ${type}`;
-      iconBox.innerHTML = ICONS[type] || ICONS.info;
-      
+      titleBox.textContent = title; textBox.textContent = message;
+      iconBox.className = `custom-alert-icon ${type}`; iconBox.innerHTML = ICONS[type] || ICONS.info;
       actionsBox.innerHTML = '';
-      const btn = document.createElement('button');
-      btn.className = 'btn-primary';
-      btn.textContent = 'Понятно';
+      const btn = document.createElement('button'); btn.className = 'btn-primary'; btn.textContent = 'Понятно';
       btn.onclick = () => { overlay.classList.remove('show'); if(onClose) onClose(); };
-      actionsBox.appendChild(btn);
-      
-      overlay.classList.add('show');
+      actionsBox.appendChild(btn); overlay.classList.add('show');
     }
 
     function showCustomConfirm(title, message, onConfirm, onCancel) {
-      titleBox.textContent = title;
-      textBox.textContent = message;
-      iconBox.className = `custom-alert-icon info`;
-      iconBox.innerHTML = ICONS.info;
-      
+      titleBox.textContent = title; textBox.textContent = message;
+      iconBox.className = `custom-alert-icon info`; iconBox.innerHTML = ICONS.info;
       actionsBox.innerHTML = '';
-      
-      const btnYes = document.createElement('button');
-      btnYes.className = 'btn-primary';
-      btnYes.textContent = 'Да, продолжить';
+      const btnYes = document.createElement('button'); btnYes.className = 'btn-primary'; btnYes.textContent = 'Да';
       btnYes.onclick = () => { overlay.classList.remove('show'); onConfirm(); };
-      
-      const btnNo = document.createElement('button');
-      btnNo.className = 'btn-secondary';
-      btnNo.textContent = 'Отмена';
+      const btnNo = document.createElement('button'); btnNo.className = 'btn-secondary'; btnNo.textContent = 'Отмена';
       btnNo.onclick = () => { overlay.classList.remove('show'); if(onCancel) onCancel(); };
-      
-      actionsBox.appendChild(btnYes);
-      actionsBox.appendChild(btnNo);
-      
-      overlay.classList.add('show');
+      actionsBox.appendChild(btnYes); actionsBox.appendChild(btnNo); overlay.classList.add('show');
     }
+
+    // === ЖАЛОБА ===
+    const reportOverlay = document.getElementById('reportOverlay');
+    document.getElementById('btn-report').addEventListener('click', () => {
+      if (!state.questions.length) return;
+      document.getElementById('report-comment').value = '';
+      document.getElementById('report-type').value = 'incorrect_question';
+      reportOverlay.classList.add('show');
+    });
+    document.getElementById('btn-cancel-report').addEventListener('click', () => {
+      reportOverlay.classList.remove('show');
+    });
+    document.getElementById('btn-submit-report').addEventListener('click', async () => {
+      const type = document.getElementById('report-type').value;
+      const comment = document.getElementById('report-comment').value.trim();
+      const q = state.questions[state.currentIndex];
+
+      const btn = document.getElementById('btn-submit-report');
+      btn.disabled = true; btn.textContent = 'Отправка...';
+
+      const { error } = await supabaseClient.from('millionaire_reports').insert({
+        question_id: q.id,
+        question_text: q.question,
+        report_type: type,
+        comment: comment
+      });
+
+      btn.disabled = false; btn.textContent = 'Отправить руководителю';
+      
+      if (error) {
+        showCustomAlert('Ошибка', 'Не удалось отправить: ' + error.message, 'error');
+      } else {
+        reportOverlay.classList.remove('show');
+        showCustomAlert('Спасибо!', 'Ваше предложение отправлено руководителю. Мы обязательно проверим этот вопрос.', 'success');
+      }
+    });
 
     // === СОСТОЯНИЕ ===
     const state = {
@@ -467,13 +480,10 @@
     function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
     function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-    // === КРАСИВЫЙ САЛЮТ ===
     function fireCorrectEffect() {
       document.body.classList.add('flash-effect');
       setTimeout(() => document.body.classList.remove('flash-effect'), 400);
-
       const defaults = { origin: { y: 0.6 }, colors: ['#fbbf24', '#f59e0b', '#6366f1', '#a855f7', '#ec4899'] };
-      
       confetti({ ...defaults, particleCount: 60, spread: 120, startVelocity: 45, ticks: 200, gravity: 0.8, scalar: 1.2, shapes: ['circle', 'square'] });
       setTimeout(() => { confetti({ ...defaults, particleCount: 40, spread: 80, startVelocity: 35, ticks: 150, scalar: 0.9, shapes: ['circle'] }); }, 150);
     }
@@ -492,12 +502,9 @@
         btn.dataset.letter !== state.questions[state.currentIndex].correct && !btn.classList.contains('hidden')
       );
       shuffle(wrongBtns).slice(0, 2).forEach(btn => {
-        btn.classList.add('hidden');
-        btn.disabled = true;
+        btn.classList.add('hidden'); btn.disabled = true;
       });
-      state.lifelineUsed = true;
-      $('btn-5050').disabled = true;
-      saveGameState();
+      state.lifelineUsed = true; $('btn-5050').disabled = true; saveGameState();
     });
 
     async function loadQuestions(category) {
@@ -517,25 +524,17 @@
     }
 
     function renderLadder() {
-      const tiers = [
-        { name: 'Джекпот', from: 19, to: 15 },
-        { name: 'Высокая ставка', from: 14, to: 10 },
-        { name: 'Середина', from: 9, to: 5 },
-        { name: 'База', from: 4, to: 0 },
-      ];
+      const tiers = [ { name: 'Джекпот', from: 19, to: 15 }, { name: 'Высокая ставка', from: 14, to: 10 }, { name: 'Середина', from: 9, to: 5 }, { name: 'База', from: 4, to: 0 } ];
       let html = '';
       for (const tier of tiers) {
         html += `<div class="mm-ladder-tier"><div class="mm-ladder-tier-name">${tier.name}</div>`;
         for (let i = tier.from; i >= tier.to; i--) {
-          const isCurrent = i === state.currentIndex;
-          const isPassed = i < state.currentIndex;
-          const isSafe = SAFE_LEVELS.includes(i);
+          const isCurrent = i === state.currentIndex; const isPassed = i < state.currentIndex; const isSafe = SAFE_LEVELS.includes(i);
           html += `<div class="mm-ladder-item ${isCurrent ? 'current' : ''} ${isPassed ? 'passed' : ''} ${isSafe ? 'safe' : ''}"><span class="mm-ladder-level">${i + 1}</span><span class="mm-ladder-amount">${formatMoney(AMOUNTS[i])}</span></div>`;
         }
         html += `</div>`;
       }
       $('ladder-items').innerHTML = html;
-
       setTimeout(() => {
         const currentEl = document.querySelector('.mm-ladder-item.current');
         const container = document.getElementById('ladder-container');
@@ -561,24 +560,19 @@
 
       $('options').innerHTML = shuffledOptions.map(o => `
         <button class="mm-option" data-letter="${o.letter}">
-          <span class="mm-option-letter">${o.letter}</span>
-          <span>${escapeHtml(o.text)}</span>
+          <span class="mm-option-letter">${o.letter}</span><span>${escapeHtml(o.text)}</span>
         </button>
       `).join('');
       
       $('options').querySelectorAll('.mm-option').forEach(btn => btn.addEventListener('click', () => selectAnswer(btn.dataset.letter)));
-      renderLadder();
-      startTimer();
+      renderLadder(); startTimer();
     }
 
     function startTimer() {
-      stopTimer();
-      state.timeLeft = TIME_PER_QUESTION;
-      updateTimerDisplay();
+      stopTimer(); state.timeLeft = TIME_PER_QUESTION; updateTimerDisplay();
       $('timer').classList.remove('warning');
       state.timerId = setInterval(() => {
-        state.timeLeft--;
-        updateTimerDisplay();
+        state.timeLeft--; updateTimerDisplay();
         if (state.timeLeft <= 10) $('timer').classList.add('warning');
         if (state.timeLeft <= 0) { stopTimer(); timeOut(); }
       }, 1000);
@@ -586,19 +580,12 @@
     function stopTimer() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } }
     function updateTimerDisplay() { $('timer-text').textContent = Math.max(0, state.timeLeft); }
 
-    function saveGameState() {
-        const save = { ...state };
-        delete save.timerId;
-        localStorage.setItem('mm_active_game', JSON.stringify(save));
-    }
+    function saveGameState() { const save = { ...state }; delete save.timerId; localStorage.setItem('mm_active_game', JSON.stringify(save)); }
     function clearGameState() { localStorage.removeItem('mm_active_game'); }
 
     function selectAnswer(letter) {
-      if (state.answersLocked) return;
-      state.answersLocked = true;
-      stopTimer();
-      const q = state.questions[state.currentIndex];
-      const isCorrect = letter === q.correct;
+      if (state.answersLocked) return; state.answersLocked = true; stopTimer();
+      const q = state.questions[state.currentIndex]; const isCorrect = letter === q.correct;
       
       $('options').querySelectorAll('.mm-option').forEach(btn => {
         btn.disabled = true;
@@ -612,8 +599,7 @@
         fireCorrectEffect();
         if (SAFE_LEVELS.includes(state.currentIndex)) { setTimeout(fireCorrectEffect, 400); }
 
-        state.correctCount++;
-        state.score = AMOUNTS[state.currentIndex];
+        state.correctCount++; state.score = AMOUNTS[state.currentIndex];
         if (SAFE_LEVELS.includes(state.currentIndex)) state.lastSafeAmount = state.score;
         saveGameState();
 
@@ -628,8 +614,7 @@
     }
 
     function timeOut() {
-      if (state.answersLocked) return;
-      state.answersLocked = true;
+      if (state.answersLocked) return; state.answersLocked = true;
       const q = state.questions[state.currentIndex];
       $('options').querySelectorAll('.mm-option').forEach(btn => {
         btn.disabled = true;
@@ -641,40 +626,28 @@
     }
 
     async function finishGame(won = false, timeout = false) {
-      if (state.finished) return;
-      state.finished = true;
-      stopTimer();
-      bgm.pause();
-      clearGameState();
-
+      if (state.finished) return; state.finished = true; stopTimer(); bgm.pause(); clearGameState();
       const finalScore = won ? AMOUNTS[AMOUNTS.length - 1] : state.lastSafeAmount;
       const totalTime = Math.round((Date.now() - state.startTime) / 1000);
 
-      // Сохраняем результат в БД
       await supabaseClient.from('millionaire_results').insert({
         player_name: state.playerName, player_code: state.playerPin, player_pin: state.playerPin,
         score: finalScore, time_seconds: totalTime, 
         correct_count: state.correctCount, total_questions: state.questions.length, reached_level: state.currentIndex + 1,
       });
 
-      // Проверяем, сколько попыток осталось
       const today = new Date().toISOString().split('T')[0];
-      const { data: existing } = await supabaseClient.from('millionaire_results')
-          .select('id').eq('player_pin', state.playerPin).eq('player_name', state.playerName).gte('created_at', today + 'T00:00:00Z');
-      
+      const { data: existing } = await supabaseClient.from('millionaire_results').select('id').eq('player_pin', state.playerPin).eq('player_name', state.playerName).gte('created_at', today + 'T00:00:00Z');
       state.attemptsLeft = 3 - (existing ? existing.length : 0);
 
-      $('game-screen').classList.add('game-hide');
-      $('start-screen').classList.add('game-hide');
-      $('home-leaderboard').classList.add('game-hide');
-      $('result-screen').classList.remove('game-hide');
+      $('game-screen').classList.add('game-hide'); $('start-screen').classList.add('game-hide'); $('home-leaderboard').classList.add('game-hide'); $('result-screen').classList.remove('game-hide');
 
       $('result-title').textContent = won ? 'Поздравляем!' : timeout ? 'Время вышло!' : 'Ошибка...';
       $('result-amount').textContent = formatMoney(finalScore);
 
       if (won) {
         $('result-subtitle').textContent = 'Ты ответил на все 20 вопросов. Настоящий миллионер знаний!';
-        $('btn-retry').style.display = 'none'; // Если выиграл, сбрасывать не нужно, но если хочет - можно оставить. Уберем для чистоты.
+        $('btn-retry').style.display = 'none';
         if (!isSoundMuted) sfxWin.play().catch(()=>{});
         fireBigConfetti();
       } else {
@@ -686,24 +659,17 @@
             $('btn-retry').style.display = 'none';
         }
       }
-
       loadLeaderboard('lb-list-result');
     }
 
     async function loadLeaderboard(targetId) {
-      const target = $(targetId);
-      if (!target) return;
+      const target = $(targetId); if (!target) return;
       const { data, error } = await supabaseClient.from('millionaire_results').select('*').order('score', { ascending: false }).order('time_seconds', { ascending: true }).limit(200);
-      
-      if (error || !data || !data.length) { 
-        target.innerHTML = `<div style="text-align:center; color:var(--ink-3); padding:20px; grid-column: 1/-1;">Пока никто не играл. Будь первым!</div>`; 
-        return; 
-      }
+      if (error || !data || !data.length) { target.innerHTML = `<div style="text-align:center; color:var(--ink-3); padding:20px; grid-column: 1/-1;">Пока никто не играл. Будь первым!</div>`; return; }
       
       const best = new Map();
       for (const r of data) {
-        const key = r.player_code || r.id;
-        const cur = best.get(key);
+        const key = r.player_code || r.id; const cur = best.get(key);
         if (!cur || r.score > cur.score || (r.score === cur.score && r.time_seconds < cur.time_seconds)) best.set(key, r);
       }
       
@@ -716,10 +682,7 @@
           <div class="lb-item rank-${i + 1}">
             <div class="lb-rank">${i + 1}</div>
             <div class="lb-info">
-              <div class="lb-header">
-                 <div class="lb-name">${escapeHtml(r.player_name)}</div>
-                 <div class="lb-score">${formatMoney(r.score)}</div>
-              </div>
+              <div class="lb-header"><div class="lb-name">${escapeHtml(r.player_name)}</div><div class="lb-score">${formatMoney(r.score)}</div></div>
               <div class="lb-bar-wrap"><div class="lb-bar" style="width: ${percent}%"></div></div>
             </div>
           </div>
@@ -727,110 +690,63 @@
       }).join('');
     }
 
-    // === ЗАПУСК ИГРЫ (ПРОВЕРКА ПОПЫТОК) ===
     async function checkAndStartGame() {
-      const nick = $('player-nick').value.trim();
-      const pin = $('player-pin').value.trim().toUpperCase();
+      const nick = $('player-nick').value.trim(); const pin = $('player-pin').value.trim().toUpperCase();
+      if (!nick || !pin) { showCustomAlert('Внимание', 'Пожалуйста, введите ваш ник и PIN-код.', 'error'); return; }
 
-      if (!nick || !pin) {
-          showCustomAlert('Внимание', 'Пожалуйста, введите ваш ник и PIN-код от администратора.', 'error');
-          return;
-      }
-
-      $('btn-start').disabled = true;
-      $('btn-start').textContent = 'Проверка...';
-
-      // 1. Проверяем пин
+      $('btn-start').disabled = true; $('btn-start').textContent = 'Проверка...';
       const { data: isValid, error: pinError } = await supabaseClient.rpc('verify_mm_pin', { input_pin: pin });
       
-      if (pinError) {
-          showCustomAlert('Ошибка сервера', 'Не удалось связаться с базой данных. Попробуйте позже.', 'error');
-          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
-          return;
+      if (pinError || !isValid) {
+          showCustomAlert('Доступ запрещен', 'Неверный или неактивный PIN-код.', 'error');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру'; return;
       }
 
-      if (!isValid) {
-          showCustomAlert('Доступ запрещен', 'Неверный или неактивный PIN-код. Проверьте правильность ввода.', 'error');
-          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
-          return;
-      }
-
-      // 2. Проверяем количество попыток
       const today = new Date().toISOString().split('T')[0];
-      const { data: existing } = await supabaseClient.from('millionaire_results')
-          .select('id').eq('player_pin', pin).eq('player_name', nick).gte('created_at', today + 'T00:00:00Z');
+      const { data: existing } = await supabaseClient.from('millionaire_results').select('id').eq('player_pin', pin).eq('player_name', nick).gte('created_at', today + 'T00:00:00Z');
       
-      const attemptsUsed = existing ? existing.length : 0;
-      
-      if (attemptsUsed >= 3) {
-          showCustomAlert('Лимит исчерпан', 'Вы использовали все 3 попытки на сегодня. Обратитесь к руководителю, чтобы получить новый PIN-код.', 'info');
-          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
-          return;
+      if (existing && existing.length >= 3) {
+          showCustomAlert('Лимит исчерпан', 'Вы использовали все 3 попытки на сегодня. Обратитесь к руководителю.', 'info');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру'; return;
       }
 
-      // 3. Загрузка вопросов и старт
       const questions = await loadQuestions(state.category);
       if (questions.length < TOTAL_QUESTIONS) {
-        showCustomAlert('Мало вопросов', 'В базе недостаточно вопросов для этой категории.', 'error');
-        $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
-        return;
+        showCustomAlert('Мало вопросов', 'В базе недостаточно вопросов.', 'error');
+        $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру'; return;
       }
       
       if (!isSoundMuted) { bgm.play().catch(e => console.log(e)); }
 
-      state.questions = questions;
-      state.currentIndex = 0;
-      state.correctCount = 0;
-      state.score = 0;
-      state.lastSafeAmount = 0;
-      state.startTime = Date.now();
-      state.answersLocked = false;
-      state.finished = false;
-      state.lifelineUsed = false;
-      state.playerName = nick;
-      state.playerPin = pin;
-      state.attemptsLeft = 3 - attemptsUsed;
-
+      state.questions = questions; state.currentIndex = 0; state.correctCount = 0; state.score = 0;
+      state.lastSafeAmount = 0; state.startTime = Date.now(); state.answersLocked = false; state.finished = false; state.lifelineUsed = false;
+      state.playerName = nick; state.playerPin = pin; state.attemptsLeft = 3 - (existing ? existing.length : 0);
       saveGameState();
 
       $('btn-5050').disabled = false;
-      $('start-screen').classList.add('game-hide');
-      $('result-screen').classList.add('game-hide');
-      $('home-leaderboard').classList.add('game-hide');
+      $('start-screen').classList.add('game-hide'); $('result-screen').classList.add('game-hide'); $('home-leaderboard').classList.add('game-hide');
       $('game-screen').classList.remove('game-hide');
-      
-      $('btn-start').disabled = false;
-      $('btn-start').textContent = 'Начать игру';
+      $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
       
       renderQuestion();
     }
 
     $('btn-start').addEventListener('click', checkAndStartGame);
-    
-    // Кнопка "Попробовать снова" на экране результатов
     $('btn-retry').addEventListener('click', () => {
-        $('player-nick').value = state.playerName;
-        $('player-pin').value = state.playerPin;
+        $('player-nick').value = state.playerName; $('player-pin').value = state.playerPin;
         checkAndStartGame();
     });
 
-    // Проверка при загрузке
     window.addEventListener('DOMContentLoaded', () => {
         loadLeaderboard('lb-list-home');
-        
         const saved = localStorage.getItem('mm_active_game');
         if (saved) {
             try {
                 const data = JSON.parse(saved);
-                showCustomConfirm('Незавершенная игра', `У вас есть незавершенная игра (Ник: ${data.playerName}). Хотите продолжить с того же места?`, 
+                showCustomConfirm('Незавершенная игра', `У вас есть незавершенная игра (Ник: ${data.playerName}). Продолжить?`, 
                   () => {
-                    Object.assign(state, data);
-                    $('start-screen').classList.add('game-hide');
-                    $('home-leaderboard').classList.add('game-hide');
-                    $('game-screen').classList.remove('game-hide');
-                    renderQuestion(); 
-                  },
-                  () => { clearGameState(); }
+                    Object.assign(state, data); $('start-screen').classList.add('game-hide'); $('home-leaderboard').classList.add('game-hide'); $('game-screen').classList.remove('game-hide'); renderQuestion(); 
+                  }, () => { clearGameState(); }
                 );
             } catch(e) { clearGameState(); }
         }
