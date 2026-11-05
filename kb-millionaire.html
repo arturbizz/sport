@@ -32,7 +32,6 @@
     input, textarea, select { cursor: text; }
     button, a, .cursor-pointer { cursor: pointer; }
 
-    /* Дышащий фон */
     @keyframes bgBreathe {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
@@ -49,7 +48,6 @@
       overflow-x: hidden;
     }
 
-    /* Праздничные пятна на фоне */
     body::before, body::after {
       content: ''; position: fixed; border-radius: 50%; filter: blur(80px); z-index: -1; opacity: 0.6;
     }
@@ -85,7 +83,6 @@
     .mm-cat-btn span { display: flex; align-items: center; gap: 12px; }
     .mm-cat-btn svg { width: 24px; height: 24px; color: var(--primary); }
 
-    /* Голографическая кнопка */
     .mm-btn-start {
       width: 100%; padding: 18px; font-size: 18px; font-weight: 800; color: #fff;
       background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899, #6366f1);
@@ -144,7 +141,7 @@
     .mm-ladder-amount { font-family: 'JetBrains Mono', monospace; font-weight: 800; }
     .mm-ladder-item.safe .mm-ladder-amount::after { content: ' ◆'; color: var(--gold); }
 
-    /* ========== РЕЙТИНГ (КРАСИВЫЙ ГРАФИК) ========== */
+    /* ========== РЕЙТИНГ ========== */
     .mm-leaderboard { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 32px; backdrop-filter: blur(20px); box-shadow: var(--shadow); max-width: 800px; margin: 40px auto 0; }
     .mm-leaderboard h3 { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
     .mm-leaderboard h3 svg { color: var(--gold); width: 24px; height: 24px; }
@@ -163,7 +160,6 @@
     .lb-info { flex: 1; min-width: 0; }
     .lb-name { font-weight: 700; font-size: 15px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
     
-    /* Визуальная полоска прогресса */
     .lb-bar-wrap { width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
     .lb-bar { height: 100%; background: linear-gradient(90deg, var(--primary), #a855f7); border-radius: 3px; width: 0%; transition: width 1s var(--smooth); }
     
@@ -353,7 +349,6 @@
     const titleBox = document.getElementById('customTitle');
     const textBox = document.getElementById('customText');
     const actionsBox = document.getElementById('customActions');
-    const okBtn = document.getElementById('customOkBtn');
 
     const ICONS = {
       error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
@@ -677,15 +672,20 @@
       $('btn-start').disabled = true;
       $('btn-start').textContent = 'Проверка...';
 
+      // DEBUG: Выводим в консоль, что отправляем
+      console.log("Отправляем на проверку PIN:", pin);
+
       // 1. Проверяем пин
       const { data: isValid, error: pinError } = await supabaseClient.rpc('verify_mm_pin', { input_pin: pin });
       
       if (pinError) {
-          console.error("Ошибка RPC:", pinError);
-          showCustomAlert('Ошибка сервера', 'Не удалось связаться с базой данных. Попробуйте позже.', 'error');
+          console.error("КРИТИЧЕСКАЯ ОШИБКА RPC:", pinError);
+          showCustomAlert('Ошибка сервера', 'Не удалось связаться с базой данных. Проверьте консоль (F12).', 'error');
           $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
           return;
       }
+
+      console.log("Ответ от базы (true = верный, false = неверный):", isValid);
 
       if (!isValid) {
           showCustomAlert('Доступ запрещен', 'Неверный или неактивный PIN-код. Проверьте правильность ввода или обратитесь к администратору.', 'error');
