@@ -370,4 +370,471 @@
 
     // === АУДИО ЛОГИКА (ВЫКЛЮЧЕНО ПО УМОЛЧАНИЮ) ===
     const bgm = document.getElementById('bgm');
-    const sfxCorrect = document.getElementById('
+    const sfxCorrect = document.getElementById('sfx-correct');
+    const sfxWrong = document.getElementById('sfx-wrong');
+    const sfxWin = document.getElementById('sfx-win');
+    let isSoundMuted = true; // <-- ВЫКЛЮЧЕНО ПО УМОЛЧАНИЮ
+
+    bgm.volume = 0.3; 
+    document.getElementById('bgm-volume').addEventListener('input', (e) => { bgm.volume = e.target.value; });
+
+    const ICON_SOUND_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+    const ICON_SOUND_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+
+    document.getElementById('btn-music').addEventListener('click', (e) => {
+      isSoundMuted = !isSoundMuted;
+      const btn = e.currentTarget;
+      const hint = document.getElementById('music-hint');
+      
+      if (isSoundMuted) {
+        bgm.pause();
+        btn.innerHTML = ICON_SOUND_OFF;
+        btn.classList.add('muted');
+        if (hint) hint.style.display = 'block';
+      } else {
+        bgm.play().catch(()=>{});
+        btn.innerHTML = ICON_SOUND_ON;
+        btn.classList.remove('muted');
+        if (hint) hint.style.display = 'none';
+      }
+    });
+
+    // === КАСТОМНЫЕ УВЕДОМЛЕНИЯ ===
+    const overlay = document.getElementById('customOverlay');
+    const alertBox = document.getElementById('customAlertBox');
+    const iconBox = document.getElementById('customIcon');
+    const titleBox = document.getElementById('customTitle');
+    const textBox = document.getElementById('customText');
+    const actionsBox = document.getElementById('customActions');
+
+    const ICONS = {
+      error: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+      success: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+      info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+    };
+
+    function showCustomAlert(title, message, type = 'info', onClose = null) {
+      titleBox.textContent = title;
+      textBox.textContent = message;
+      iconBox.className = `custom-alert-icon ${type}`;
+      iconBox.innerHTML = ICONS[type] || ICONS.info;
+      
+      actionsBox.innerHTML = '';
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary';
+      btn.textContent = 'Понятно';
+      btn.onclick = () => { overlay.classList.remove('show'); if(onClose) onClose(); };
+      actionsBox.appendChild(btn);
+      
+      overlay.classList.add('show');
+    }
+
+    function showCustomConfirm(title, message, onConfirm, onCancel) {
+      titleBox.textContent = title;
+      textBox.textContent = message;
+      iconBox.className = `custom-alert-icon info`;
+      iconBox.innerHTML = ICONS.info;
+      
+      actionsBox.innerHTML = '';
+      
+      const btnYes = document.createElement('button');
+      btnYes.className = 'btn-primary';
+      btnYes.textContent = 'Да, продолжить';
+      btnYes.onclick = () => { overlay.classList.remove('show'); onConfirm(); };
+      
+      const btnNo = document.createElement('button');
+      btnNo.className = 'btn-secondary';
+      btnNo.textContent = 'Отмена';
+      btnNo.onclick = () => { overlay.classList.remove('show'); if(onCancel) onCancel(); };
+      
+      actionsBox.appendChild(btnYes);
+      actionsBox.appendChild(btnNo);
+      
+      overlay.classList.add('show');
+    }
+
+    // === СОСТОЯНИЕ ===
+    const state = {
+      questions: [], currentIndex: 0, score: 0, correctCount: 0,
+      startTime: 0, timerId: null, timeLeft: TIME_PER_QUESTION,
+      answersLocked: false, lastSafeAmount: 0, finished: false,
+      category: 'Mix', lifelineUsed: false,
+      playerName: '', playerPin: '', attemptsLeft: 3
+    };
+
+    const $ = (id) => document.getElementById(id);
+    function formatMoney(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+    function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+    function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+    // === КРАСИВЫЙ САЛЮТ ===
+    function fireCorrectEffect() {
+      document.body.classList.add('flash-effect');
+      setTimeout(() => document.body.classList.remove('flash-effect'), 400);
+
+      const defaults = { origin: { y: 0.6 }, colors: ['#fbbf24', '#f59e0b', '#6366f1', '#a855f7', '#ec4899'] };
+      
+      confetti({ ...defaults, particleCount: 60, spread: 120, startVelocity: 45, ticks: 200, gravity: 0.8, scalar: 1.2, shapes: ['circle', 'square'] });
+      setTimeout(() => { confetti({ ...defaults, particleCount: 40, spread: 80, startVelocity: 35, ticks: 150, scalar: 0.9, shapes: ['circle'] }); }, 150);
+    }
+
+    document.querySelectorAll('.mm-cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.mm-cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.category = btn.dataset.category;
+      });
+    });
+
+    $('btn-5050').addEventListener('click', () => {
+      if (state.lifelineUsed || state.answersLocked) return;
+      const wrongBtns = Array.from(document.querySelectorAll('.mm-option')).filter(btn => 
+        btn.dataset.letter !== state.questions[state.currentIndex].correct && !btn.classList.contains('hidden')
+      );
+      shuffle(wrongBtns).slice(0, 2).forEach(btn => {
+        btn.classList.add('hidden');
+        btn.disabled = true;
+      });
+      state.lifelineUsed = true;
+      $('btn-5050').disabled = true;
+      saveGameState();
+    });
+
+    async function loadQuestions(category) {
+      let query = supabaseClient.from('millionaire_questions').select('*');
+      if (category !== 'Mix') { query = query.eq('category', category); }
+      const { data, error } = await query;
+      if (error) return [];
+      if (!data || !data.length) return [];
+
+      const easy = shuffle(data.filter(q => q.difficulty === 'easy')).slice(0, DISTRIBUTION.easy);
+      const medium = shuffle(data.filter(q => q.difficulty === 'medium')).slice(0, DISTRIBUTION.medium);
+      const hard = shuffle(data.filter(q => q.difficulty === 'hard')).slice(0, DISTRIBUTION.hard);
+      
+      let result = [...easy, ...medium, ...hard];
+      if (result.length < TOTAL_QUESTIONS) { result = shuffle(data).slice(0, TOTAL_QUESTIONS); }
+      return result;
+    }
+
+    function renderLadder() {
+      const tiers = [
+        { name: 'Джекпот', from: 19, to: 15 },
+        { name: 'Высокая ставка', from: 14, to: 10 },
+        { name: 'Середина', from: 9, to: 5 },
+        { name: 'База', from: 4, to: 0 },
+      ];
+      let html = '';
+      for (const tier of tiers) {
+        html += `<div class="mm-ladder-tier"><div class="mm-ladder-tier-name">${tier.name}</div>`;
+        for (let i = tier.from; i >= tier.to; i--) {
+          const isCurrent = i === state.currentIndex;
+          const isPassed = i < state.currentIndex;
+          const isSafe = SAFE_LEVELS.includes(i);
+          html += `<div class="mm-ladder-item ${isCurrent ? 'current' : ''} ${isPassed ? 'passed' : ''} ${isSafe ? 'safe' : ''}"><span class="mm-ladder-level">${i + 1}</span><span class="mm-ladder-amount">${formatMoney(AMOUNTS[i])}</span></div>`;
+        }
+        html += `</div>`;
+      }
+      $('ladder-items').innerHTML = html;
+
+      setTimeout(() => {
+        const currentEl = document.querySelector('.mm-ladder-item.current');
+        const container = document.getElementById('ladder-container');
+        if (currentEl && container) {
+            const containerRect = container.getBoundingClientRect();
+            const currentRect = currentEl.getBoundingClientRect();
+            const scrollOffset = currentRect.top - containerRect.top;
+            const targetScroll = container.scrollTop + scrollOffset - (container.clientHeight / 2) + (currentRect.height / 2);
+            container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+        }
+      }, 150);
+    }
+
+    function renderQuestion() {
+      const q = state.questions[state.currentIndex];
+      if (!q) return;
+      $('level-badge').textContent = `Уровень ${state.currentIndex + 1} · ${formatMoney(AMOUNTS[state.currentIndex])}`;
+      $('question-text').textContent = q.question;
+      $('progress-info').textContent = `Вопрос ${state.currentIndex + 1} из ${state.questions.length}`;
+      
+      const options = ['A', 'B', 'C', 'D'].map(letter => ({ letter, text: q['option_' + letter.toLowerCase()] }));
+      const shuffledOptions = shuffle(options);
+
+      $('options').innerHTML = shuffledOptions.map(o => `
+        <button class="mm-option" data-letter="${o.letter}">
+          <span class="mm-option-letter">${o.letter}</span>
+          <span>${escapeHtml(o.text)}</span>
+        </button>
+      `).join('');
+      
+      $('options').querySelectorAll('.mm-option').forEach(btn => btn.addEventListener('click', () => selectAnswer(btn.dataset.letter)));
+      renderLadder();
+      startTimer();
+    }
+
+    function startTimer() {
+      stopTimer();
+      state.timeLeft = TIME_PER_QUESTION;
+      updateTimerDisplay();
+      $('timer').classList.remove('warning');
+      state.timerId = setInterval(() => {
+        state.timeLeft--;
+        updateTimerDisplay();
+        if (state.timeLeft <= 10) $('timer').classList.add('warning');
+        if (state.timeLeft <= 0) { stopTimer(); timeOut(); }
+      }, 1000);
+    }
+    function stopTimer() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } }
+    function updateTimerDisplay() { $('timer-text').textContent = Math.max(0, state.timeLeft); }
+
+    function saveGameState() {
+        const save = { ...state };
+        delete save.timerId;
+        localStorage.setItem('mm_active_game', JSON.stringify(save));
+    }
+    function clearGameState() { localStorage.removeItem('mm_active_game'); }
+
+    function selectAnswer(letter) {
+      if (state.answersLocked) return;
+      state.answersLocked = true;
+      stopTimer();
+      const q = state.questions[state.currentIndex];
+      const isCorrect = letter === q.correct;
+      
+      $('options').querySelectorAll('.mm-option').forEach(btn => {
+        btn.disabled = true;
+        if (btn.dataset.letter === q.correct) btn.classList.add('correct');
+        else if (btn.dataset.letter === letter && !isCorrect) btn.classList.add('wrong');
+        else if (btn.dataset.letter !== q.correct) btn.classList.add('dimmed');
+      });
+
+      if (isCorrect) {
+        if (!isSoundMuted) { sfxCorrect.currentTime = 0; sfxCorrect.play().catch(()=>{}); }
+        fireCorrectEffect();
+        if (SAFE_LEVELS.includes(state.currentIndex)) { setTimeout(fireCorrectEffect, 400); }
+
+        state.correctCount++;
+        state.score = AMOUNTS[state.currentIndex];
+        if (SAFE_LEVELS.includes(state.currentIndex)) state.lastSafeAmount = state.score;
+        saveGameState();
+
+        setTimeout(() => {
+          if (state.currentIndex === state.questions.length - 1) finishGame(true);
+          else { state.currentIndex++; state.answersLocked = false; renderQuestion(); }
+        }, 1400);
+      } else {
+        if (!isSoundMuted) { sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{}); }
+        setTimeout(() => finishGame(false), 1800);
+      }
+    }
+
+    function timeOut() {
+      if (state.answersLocked) return;
+      state.answersLocked = true;
+      const q = state.questions[state.currentIndex];
+      $('options').querySelectorAll('.mm-option').forEach(btn => {
+        btn.disabled = true;
+        if (btn.dataset.letter === q.correct) btn.classList.add('correct');
+        else btn.classList.add('dimmed');
+      });
+      if (!isSoundMuted) { sfxWrong.currentTime = 0; sfxWrong.play().catch(()=>{}); }
+      setTimeout(() => finishGame(false, true), 1600);
+    }
+
+    async function finishGame(won = false, timeout = false) {
+      if (state.finished) return;
+      state.finished = true;
+      stopTimer();
+      bgm.pause();
+      clearGameState();
+
+      const finalScore = won ? AMOUNTS[AMOUNTS.length - 1] : state.lastSafeAmount;
+      const totalTime = Math.round((Date.now() - state.startTime) / 1000);
+
+      // Сохраняем результат в БД
+      await supabaseClient.from('millionaire_results').insert({
+        player_name: state.playerName, player_code: state.playerPin, player_pin: state.playerPin,
+        score: finalScore, time_seconds: totalTime, 
+        correct_count: state.correctCount, total_questions: state.questions.length, reached_level: state.currentIndex + 1,
+      });
+
+      // Проверяем, сколько попыток осталось
+      const today = new Date().toISOString().split('T')[0];
+      const { data: existing } = await supabaseClient.from('millionaire_results')
+          .select('id').eq('player_pin', state.playerPin).eq('player_name', state.playerName).gte('created_at', today + 'T00:00:00Z');
+      
+      state.attemptsLeft = 3 - (existing ? existing.length : 0);
+
+      $('game-screen').classList.add('game-hide');
+      $('start-screen').classList.add('game-hide');
+      $('home-leaderboard').classList.add('game-hide');
+      $('result-screen').classList.remove('game-hide');
+
+      $('result-title').textContent = won ? 'Поздравляем!' : timeout ? 'Время вышло!' : 'Ошибка...';
+      $('result-amount').textContent = formatMoney(finalScore);
+
+      if (won) {
+        $('result-subtitle').textContent = 'Ты ответил на все 20 вопросов. Настоящий миллионер знаний!';
+        $('btn-retry').style.display = 'none'; // Если выиграл, сбрасывать не нужно, но если хочет - можно оставить. Уберем для чистоты.
+        if (!isSoundMuted) sfxWin.play().catch(()=>{});
+        fireBigConfetti();
+      } else {
+        if (state.attemptsLeft > 0) {
+            $('result-subtitle').textContent = `Ты дошёл до ${state.currentIndex + 1} вопроса. Осталось попыток: ${state.attemptsLeft}.`;
+            $('btn-retry').style.display = 'inline-block';
+        } else {
+            $('result-subtitle').textContent = `Вы использовали все 3 попытки на сегодня. Обратитесь к руководителю, чтобы получить новый PIN-код.`;
+            $('btn-retry').style.display = 'none';
+        }
+      }
+
+      loadLeaderboard('lb-list-result');
+    }
+
+    async function loadLeaderboard(targetId) {
+      const target = $(targetId);
+      if (!target) return;
+      const { data, error } = await supabaseClient.from('millionaire_results').select('*').order('score', { ascending: false }).order('time_seconds', { ascending: true }).limit(200);
+      
+      if (error || !data || !data.length) { 
+        target.innerHTML = `<div style="text-align:center; color:var(--ink-3); padding:20px; grid-column: 1/-1;">Пока никто не играл. Будь первым!</div>`; 
+        return; 
+      }
+      
+      const best = new Map();
+      for (const r of data) {
+        const key = r.player_code || r.id;
+        const cur = best.get(key);
+        if (!cur || r.score > cur.score || (r.score === cur.score && r.time_seconds < cur.time_seconds)) best.set(key, r);
+      }
+      
+      const top10 = [...best.values()].sort((a, b) => b.score - a.score || a.time_seconds - b.time_seconds).slice(0, 10);
+      const maxScore = top10[0].score || 1;
+
+      target.innerHTML = top10.map((r, i) => {
+        const percent = Math.max(4, (r.score / maxScore) * 100);
+        return `
+          <div class="lb-item rank-${i + 1}">
+            <div class="lb-rank">${i + 1}</div>
+            <div class="lb-info">
+              <div class="lb-header">
+                 <div class="lb-name">${escapeHtml(r.player_name)}</div>
+                 <div class="lb-score">${formatMoney(r.score)}</div>
+              </div>
+              <div class="lb-bar-wrap"><div class="lb-bar" style="width: ${percent}%"></div></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // === ЗАПУСК ИГРЫ (ПРОВЕРКА ПОПЫТОК) ===
+    async function checkAndStartGame() {
+      const nick = $('player-nick').value.trim();
+      const pin = $('player-pin').value.trim().toUpperCase();
+
+      if (!nick || !pin) {
+          showCustomAlert('Внимание', 'Пожалуйста, введите ваш ник и PIN-код от администратора.', 'error');
+          return;
+      }
+
+      $('btn-start').disabled = true;
+      $('btn-start').textContent = 'Проверка...';
+
+      // 1. Проверяем пин
+      const { data: isValid, error: pinError } = await supabaseClient.rpc('verify_mm_pin', { input_pin: pin });
+      
+      if (pinError) {
+          showCustomAlert('Ошибка сервера', 'Не удалось связаться с базой данных. Попробуйте позже.', 'error');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
+          return;
+      }
+
+      if (!isValid) {
+          showCustomAlert('Доступ запрещен', 'Неверный или неактивный PIN-код. Проверьте правильность ввода.', 'error');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
+          return;
+      }
+
+      // 2. Проверяем количество попыток
+      const today = new Date().toISOString().split('T')[0];
+      const { data: existing } = await supabaseClient.from('millionaire_results')
+          .select('id').eq('player_pin', pin).eq('player_name', nick).gte('created_at', today + 'T00:00:00Z');
+      
+      const attemptsUsed = existing ? existing.length : 0;
+      
+      if (attemptsUsed >= 3) {
+          showCustomAlert('Лимит исчерпан', 'Вы использовали все 3 попытки на сегодня. Обратитесь к руководителю, чтобы получить новый PIN-код.', 'info');
+          $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
+          return;
+      }
+
+      // 3. Загрузка вопросов и старт
+      const questions = await loadQuestions(state.category);
+      if (questions.length < TOTAL_QUESTIONS) {
+        showCustomAlert('Мало вопросов', 'В базе недостаточно вопросов для этой категории.', 'error');
+        $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру';
+        return;
+      }
+      
+      if (!isSoundMuted) { bgm.play().catch(e => console.log(e)); }
+
+      state.questions = questions;
+      state.currentIndex = 0;
+      state.correctCount = 0;
+      state.score = 0;
+      state.lastSafeAmount = 0;
+      state.startTime = Date.now();
+      state.answersLocked = false;
+      state.finished = false;
+      state.lifelineUsed = false;
+      state.playerName = nick;
+      state.playerPin = pin;
+      state.attemptsLeft = 3 - attemptsUsed;
+
+      saveGameState();
+
+      $('btn-5050').disabled = false;
+      $('start-screen').classList.add('game-hide');
+      $('result-screen').classList.add('game-hide');
+      $('home-leaderboard').classList.add('game-hide');
+      $('game-screen').classList.remove('game-hide');
+      
+      $('btn-start').disabled = false;
+      $('btn-start').textContent = 'Начать игру';
+      
+      renderQuestion();
+    }
+
+    $('btn-start').addEventListener('click', checkAndStartGame);
+    
+    // Кнопка "Попробовать снова" на экране результатов
+    $('btn-retry').addEventListener('click', () => {
+        $('player-nick').value = state.playerName;
+        $('player-pin').value = state.playerPin;
+        checkAndStartGame();
+    });
+
+    // Проверка при загрузке
+    window.addEventListener('DOMContentLoaded', () => {
+        loadLeaderboard('lb-list-home');
+        
+        const saved = localStorage.getItem('mm_active_game');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                showCustomConfirm('Незавершенная игра', `У вас есть незавершенная игра (Ник: ${data.playerName}). Хотите продолжить с того же места?`, 
+                  () => {
+                    Object.assign(state, data);
+                    $('start-screen').classList.add('game-hide');
+                    $('home-leaderboard').classList.add('game-hide');
+                    $('game-screen').classList.remove('game-hide');
+                    renderQuestion(); 
+                  },
+                  () => { clearGameState(); }
+                );
+            } catch(e) { clearGameState(); }
+        }
+    });
+  </script>
+</body>
+</html>
