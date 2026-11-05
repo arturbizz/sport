@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Рабочая шпаргалка — База знаний</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="kb-styles.css">
+  <style>
+    /* ГЛОБАЛЬНЫЙ СБРОС КУРСОРОВ */
+    * { cursor: default; caret-color: transparent; box-sizing: border-box; }
+    input, textarea, select { cursor: text; caret-color: auto; }
+    button, a, select, .cursor-pointer, [role="button"], label, .category-btn, .article-head, .qa-card { cursor: pointer; }
+
+    /* Стили для экрана блокировки */
+    #pin-lock-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    .pin-lock-card { background: var(--bg-elevated); padding: 40px; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); text-align: center; max-width: 400px; width: 100%; border: 1px solid var(--hairline); animation: fadeUp 0.4s var(--spring); }
+    .pin-lock-card h2 { margin-bottom: 8px; font-family: var(--font-display); font-size: 24px; }
+    .pin-lock-card p { color: var(--ink-2); margin-bottom: 24px; font-size: 14px; }
+    .pin-input { width: 100%; padding: 16px; border: 1px solid var(--hairline-2); border-radius: var(--radius-md); font-size: 20px; text-align: center; letter-spacing: 4px; font-family: var(--font-mono); text-transform: uppercase; margin-bottom: 16px; outline: none; transition: all 0.2s; }
+    .pin-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .pin-error { color: var(--error); font-size: 13px; margin-top: 12px; display: none; }
+
+    /* Стили для красивых Q&A карточек */
+    .qa-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+    .qa-card { background: var(--bg-elevated); border: 1px solid var(--hairline-2); border-radius: var(--radius-md); overflow: hidden; transition: all 0.2s; box-shadow: var(--shadow-sm); }
+    .qa-card:hover { border-color: rgba(79, 142, 255, 0.4); box-shadow: var(--shadow-md); }
+    .qa-card[open] { border-color: var(--accent); box-shadow: 0 4px 20px var(--accent-soft); }
+    .qa-summary { padding: 16px 20px; font-weight: 600; font-size: 15px; color: var(--ink); display: flex; align-items: center; justify-content: space-between; list-style: none; }
+    .qa-summary::-webkit-details-marker { display: none; }
+    .qa-summary::after { content: '+'; font-size: 18px; color: var(--ink-3); transition: transform 0.2s; }
+    .qa-card[open] .qa-summary::after { content: '−'; transform: rotate(180deg); color: var(--accent); }
+    .qa-content { padding: 0 20px 20px; color: var(--ink-2); font-size: 14px; line-height: 1.6; border-top: 1px solid var(--hairline); padding-top: 16px; }
+
+    /* Подсветка совпадений в поиске */
+    .highlight { background: rgba(250, 204, 21, 0.4); border-radius: 2px; padding: 0 2px; color: var(--ink); }
+    
+    /* Инфо-плашка */
+    .kb-alert { background: linear-gradient(135deg, rgba(79, 142, 255, 0.1), rgba(124, 93, 245, 0.1)); border-left: 4px solid var(--accent); padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 13.5px; color: var(--ink-2); }
+  </style>
+</head>
+<body>
+
+  <!-- ЭКРАН БЛОКИРОВКИ -->
+  <div id="pin-lock-screen" style="display: none;">
+    <div class="pin-lock-card">
+      <div class="brand-mark" style="width: 40px; height: 40px; margin: 0 auto 20px;"></div>
+      <h2>Рабочая шпаргалка</h2>
+      <p>Введите PIN-код, который выдал ваш руководитель.</p>
+      <input type="text" id="pin-input" class="pin-input" placeholder="KB-XXXX" maxlength="7" autocomplete="off">
+      <button id="pin-submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Войти</button>
+      <div id="pin-error" class="pin-error">Неверный PIN-код. Попробуйте еще раз.</div>
+    </div>
+  </div>
+
+  <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+  <div id="main-content" style="display: none;">
+    <button class="sidebar-open-fab" id="sidebar-open-fab" title="Открыть меню">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <div class="layout" id="kb-layout">
+      <aside class="sidebar">
+        <div class="brand" style="cursor:default;">
+          <span class="brand-mark"></span>
+          <span class="brand-name">Шпаргалка</span>
+          <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" title="Свернуть меню">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+        </div>
+
+        <div class="must-know-wrap" id="must-know-wrap" style="display:none;">
+          <button class="must-know-btn" id="must-know-btn">
+            <svg class="must-know-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <span>Важное</span>
+            <span class="count" id="must-know-count">0</span>
+          </button>
+        </div>
+
+        <div class="section-label">Разделы</div>
+        <nav class="categories" id="categories"></nav>
+        <div class="sidebar-footer">
+            <a href="kb-training.html" style="color:var(--accent); font-weight:500; text-decoration:underline;">Перейти в Обучение →</a>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="search-wrap">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="8" cy="8" r="5"/><path d="M12 12l4 4"/></svg>
+          <input type="search" class="search-input" id="search-input" placeholder="Умный поиск: ищет по заголовку, тегам и тексту..." autocomplete="off">
+        </div>
+        <div class="results" id="results"><div class="loading-text">Загрузка…</div></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.11/dist/purify.min.js"></script>
+  <script>
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Логика проверки PIN
+    async function checkAccess() {
+      const accessExpires = localStorage.getItem('kb_access_expires');
+      const lockScreen = document.getElementById('pin-lock-screen');
+      const mainContent = document.getElementById('main-content');
+      
+      if (accessExpires && Date.now() < parseInt(accessExpires)) {
+        lockScreen.style.display = 'none';
+        mainContent.style.display = 'block';
+        return true; 
+      } else {
+        localStorage.removeItem('kb_access_expires');
+        lockScreen.style.display = 'flex';
+        mainContent.style.display = 'none';
+        return false;
+      }
+    }
+
+    document.getElementById('pin-submit').addEventListener('click', async () => {
+      const pin = document.getElementById('pin-input').value.trim();
+      const errorEl = document.getElementById('pin-error');
+      if (!pin) return;
+
+      const btn = document.getElementById('pin-submit');
+      btn.textContent = 'Проверка...'; btn.disabled = true;
+
+      const { data: isValid, error } = await supabaseClient.rpc('verify_kb_pin', { input_pin: pin });
+      
+      btn.textContent = 'Войти'; btn.disabled = false;
+
+      if (error) { errorEl.textContent = 'Ошибка сервера'; errorEl.style.display = 'block'; return; }
+
+      if (isValid) {
+        const expiresAt = Date.now() + (24 * 60 * 60 * 1000); 
+        localStorage.setItem('kb_access_expires', expiresAt.toString());
+        document.getElementById('pin-lock-screen').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        loadArticles(); 
+      } else {
+        errorEl.style.display = 'block';
+        document.getElementById('pin-input').value = '';
+      }
+    });
+
+    if (checkAccess()) { setTimeout(() => { initUI(); }, 0); }
+
+    let allArticles = [];
+    let activeCategory = '';
+    let activePinned = false;
+
+    const els = {
+      results: document.getElementById('results'),
+      categories: document.getElementById('categories'),
+      search: document.getElementById('search-input'),
+      mustKnowWrap: document.getElementById('must-know-wrap'),
+      mustKnowBtn: document.getElementById('must-know-btn'),
+      mustKnowCount: document.getElementById('must-know-count'),
+      layout: document.getElementById('kb-layout'),
+      collapseBtn: document.getElementById('sidebar-collapse-btn'),
+      openFab: document.getElementById('sidebar-open-fab'),
+    };
+
+    const SIDEBAR_KEY = 'kb_public_sidebar_hidden';
+    function updateSidebarState() {
+      const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
+      els.layout.classList.toggle('sidebar-hidden', hidden);
+      els.openFab.classList.toggle('show', hidden);
+    }
+    if(els.collapseBtn) els.collapseBtn.addEventListener('click', () => { localStorage.setItem(SIDEBAR_KEY, '1'); updateSidebarState(); });
+    if(els.openFab) els.openFab.addEventListener('click', () => { localStorage.setItem(SIDEBAR_KEY, '0'); updateSidebarState(); });
+    updateSidebarState();
+
+    const PURIFY_CONFIG = {
+      ADD_TAGS: ['figure', 'figcaption', 'img', 'mark', 'u', 'del', 'div', 'span', 'details', 'summary'],
+      ADD_ATTR: ['src', 'alt', 'title', 'width', 'height', 'loading', 'target', 'rel', 'class'],
+    };
+
+    const CALLOUT_TITLES = { note: 'Заметка', tip: 'Совет', warning: 'Внимание', danger: 'Запрещено', success: 'Готово', important: 'Важно' };
+    const CALLOUT_TYPES = 'note|tip|warning|danger|success|important';
+
+    function preprocessMarkdown(md) {
+      md = md.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const regex = new RegExp(`(^|\\n):::(${CALLOUT_TYPES})([\\s\\S]*?):::[ \\t]*(?=\\n|$)`, 'g');
+      md = md.replace(regex, (m, prefix, type, body) => {
+        const title = CALLOUT_TITLES[type] || type;
+        const inner = marked.parse(body.trim());
+        return `${prefix}\n<div class="callout callout-${type}"><div class="callout-title">${title}</div>${inner}</div>\n`;
+      });
+      md = md.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
+      return md;
+    }
+
+    function renderMarkdown(text) {
+      if (!text) return '';
+      const preprocessed = preprocessMarkdown(text);
+      const rawHtml = marked.parse(preprocessed);
+      const clean = DOMPurify.sanitize(rawHtml, PURIFY_CONFIG);
+      return clean;
+    }
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+
+    function excerpt(text, len = 180) {
+      const plain = (text || '').replace(/<[^>]*>/g, '').replace(/:::\w+/g, '').replace(/[#*`>\-!\[\]\(\)=:]/g, '').replace(/\s+/g, ' ').trim();
+      return plain.length > len ? plain.slice(0, len).trim() + '…' : plain;
+    }
+
+    async function loadArticles() {
+      // Загружаем ТОЛЬКО статьи типа 'kb' (Шпаргалка)
+      const { data, error } = await supabaseClient
+        .from('knowledge_articles').select('*')
+        .eq('article_type', 'kb')
+        .order('category', { ascending: true }).order('title', { ascending: true });
+      
+      if (error) {
+        els.results.innerHTML = `<div class="empty-state"><strong>Ошибка загрузки</strong>${escapeHtml(error.message)}</div>`;
+        return;
+      }
+      allArticles = data || [];
+      renderCategories();
+      renderList(filterArticles());
+    }
+
+    function renderCategories() {
+      const counts = {};
+      allArticles.forEach(a => { counts[a.category] = (counts[a.category] || 0) + 1; });
+      const pinnedCount = allArticles.filter(a => a.pinned).length;
+
+      els.mustKnowWrap.style.display = pinnedCount > 0 ? 'block' : 'none';
+      els.mustKnowCount.textContent = pinnedCount;
+      els.mustKnowBtn.classList.toggle('active', activePinned);
+      els.mustKnowBtn.onclick = () => {
+        activePinned = !activePinned;
+        if (activePinned) activeCategory = '';
+        renderCategories();
+        renderList(filterArticles());
+      };
+
+      let html = `<button class="category-btn ${!activePinned && activeCategory === '' ? 'active' : ''}" data-cat="">
+        <span>Все разделы</span><span class="category-count">${allArticles.length}</span>
+      </button>`;
+      Object.keys(counts).sort().forEach(cat => {
+        html += `<button class="category-btn ${!activePinned && activeCategory === cat ? 'active' : ''}" data-cat="${escapeHtml(cat)}">
+          <span>${escapeHtml(cat)}</span>
+          <span class="category-count">${counts[cat]}</span>
+        </button>`;
+      });
+      els.categories.innerHTML = html;
+      els.categories.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activePinned = false;
+          activeCategory = btn.dataset.cat;
+          renderCategories();
+          renderList(filterArticles());
+        });
+      });
+    }
+
+    // УМНЫЙ ПОИСК
+    function filterArticles() {
+      const q = els.search.value.trim().toLowerCase();
+      return allArticles.filter(a => {
+        if (activePinned && !a.pinned) return false;
+        if (!activePinned && activeCategory && a.category !== activeCategory) return false;
+        if (!q) return true;
+        
+        // Ищем по заголовку, категории, тегам и контенту
+        const searchString = `${a.title} ${a.category} ${(a.tags || []).join(' ')} ${a.content}`.toLowerCase();
+        // Разбиваем запрос на слова (чтобы искать "принтер мфу" даже если они в разных местах)
+        const words = q.split(' ').filter(w => w.length > 1);
+        return words.every(word => searchString.includes(word));
+      });
+    }
+
+    function highlightText(text, query) {
+        if (!query) return escapeHtml(text);
+        const words = query.split(' ').filter(w => w.length > 1).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        if (words.length === 0) return escapeHtml(text);
+        const regex = new RegExp(`(${words.join('|')})`, 'gi');
+        return escapeHtml(text).replace(regex, '<span class="highlight">$1</span>');
+    }
+
+    function renderList(articles) {
+      if (!articles.length) {
+        els.results.innerHTML = `<div class="empty-state"><strong>Ничего не найдено</strong>Попробуйте изменить запрос.</div>`;
+        return;
+      }
+
+      const query = els.search.value.trim();
+
+      // Если выбран раздел Q&A, выводим в виде аккордеонов
+      if (activeCategory === 'Вопрос-Ответ (Q&A)' || (query && articles.every(a => a.category === 'Вопрос-Ответ (Q&A)'))) {
+          els.results.innerHTML = `<div class="kb-alert"><strong>Совет:</strong> Нажмите на вопрос, чтобы раскрыть ответ.</div><div class="qa-list">` + 
+          articles.map(a => {
+              const qTitle = highlightText(a.title.replace('Q&A: ', ''), query);
+              return `
+              <details class="qa-card">
+                  <summary class="qa-summary">${qTitle}</summary>
+                  <div class="qa-content">${renderMarkdown(a.content)}</div>
+              </details>
+              `;
+          }).join('') + `</div>`;
+          return;
+      }
+
+      // Обычный вывод для остальных статей
+      els.results.innerHTML = articles.map(a => {
+        const badges = a.pinned ? '<span class="badge-pinned">Важное</span>' : '';
+        const title = highlightText(a.title, query);
+        return `
+          <article class="article" style="padding: 20px 0; border-bottom: 1px solid var(--hairline);">
+            <div class="article-head">
+              <div class="article-meta">
+                <span>${escapeHtml(a.category)}</span>
+              </div>
+              <h2 class="article-title">${title}${badges}</h2>
+              <p class="article-excerpt">${escapeHtml(excerpt(a.content))}</p>
+            </div>
+            <div style="display:none;">${a.content}</div>
+          </article>
+        `;
+      }).join('');
+
+      // Для обычных статей открываем модальное окно или переходим к тексту
+      els.results.querySelectorAll('.article-head').forEach((head, idx) => {
+        head.addEventListener('click', () => {
+          const a = articles[idx];
+          els.results.innerHTML = `
+            <div class="article-view">
+              <button class="article-back-btn" id="btn-back">← Назад</button>
+              <div class="article-view-meta"><span>${escapeHtml(a.category)}</span></div>
+              <h1 class="article-view-title">${escapeHtml(a.title)}</h1>
+              <div class="article-view-body"><div class="prose">${renderMarkdown(a.content)}</div></div>
+            </div>
+          `;
+          document.getElementById('btn-back').addEventListener('click', () => renderList(filterArticles()));
+        });
+      });
+    }
+
+    els.search.addEventListener('input', () => renderList(filterArticles()));
+
+    function initUI() {
+      updateSidebarState();
+      loadArticles();
+    }
+  </script>
+</body>
+</html>
