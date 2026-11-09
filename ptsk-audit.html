@@ -1164,4 +1164,280 @@
     function updateTgPreview() {
       if (currentTgIndex === null || !currentSession) return;
       const item = currentSession.items[currentTgIndex];
-      const opName = document.getElementById('
+      const opName = document.getElementById('tg-operator-input').value.trim();
+      item.operator_line1_name = opName;
+      const line1Input = document.getElementById(`line1-${currentTgIndex}`);
+      if (line1Input) line1Input.value = opName;
+      scheduleSave();
+
+      const err1 = document.getElementById('tg-err-1').checked;
+      const err2 = document.getElementById('tg-err-2').checked;
+      const err3 = document.getElementById('tg-err-3').checked;
+      const err4 = document.getElementById('tg-err-4').checked;
+      const errors = [];
+      if (err1) errors.push('не уточнил актуальность ремонта');
+      if (err2) errors.push('не предупредил что специалист свяжется в течении 10 минут');
+      if (err3) errors.push('не получил согласие на перезвон');
+      if (err4) errors.push('не проверил контактный телефон для перезвона');
+
+      let text = `${item.request_number} ${opName}`;
+      if (errors.length > 0) text += `, ${errors.join(', ')}. Заберите, пожалуйста`;
+      else text += `. Заберите, пожалуйста`;
+      document.getElementById('tg-preview').value = text;
+    }
+
+    function copyTgTemplate() {
+      copyToClipboard(document.getElementById('tg-preview').value);
+      closeModal('tg-modal');
+    }
+
+    // ОТЧЁТЫ
+    function switchReportTab(tab) {
+      currentReportTab = tab;
+      document.getElementById('rtab-line1').classList.toggle('active', tab === 'line1');
+      document.getElementById('rtab-line2').classList.toggle('active', tab === 'line2');
+      renderReports();
+    }
+
+    async function openReports() {
+      openModal('reports-modal');
+      await renderReports();
+    }
+
+    async function renderReports() {
+      const body = document.getElementById('reports-body');
+      const exportBar = document.getElementById('export-bar');
+      exportBar.innerHTML = '<div style="text-align:center; width: 100%; color: var(--ink-tertiary); font-size: 13px;">Загрузка...</div>';
+      body.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--ink-tertiary);">Загрузка...</div>';
+
+      try {
+        const { data: completedSessions } = await supabaseClient.from('audit_sessions').select('id').eq('status', 'completed');
+        const completedIds = (completedSessions || []).map(s => s.id);
+
+        let allItems = [];
+        if (completedIds.length > 0) {
+          const { data: items } = await supabaseClient.from('audit_ptsk').select('*').in('session_id', completedIds);
+          allItems = items || [];
+        }
+        const { data: legacy } = await supabaseClient.from('audit_ptsk').select('*').is('session_id', null).neq('audit_result', 'pending');
+        allItems = allItems.concat(legacy || []);
+
+        reportsData = allItems;
+
+        if (allItems.length === 0) {
+          exportBar.innerHTML = '';
+          body.innerHTML = '<p style="text-align:center; padding:40px; color:var(--ink-tertiary)">Нет завершённых аудитов для отчёта.</p>';
+          return;
+        }
+
+        renderExportBar();
+        if (currentReportTab === 'line1') renderReportLine1(body, allItems);
+        else renderReportLine2(body, allItems);
+      } catch (err) {
+        body.innerHTML = `<p style="color:var(--status-error); padding:20px;">Ошибка: ${escapeHtml(err.message)}</p>`;
+      }
+    }
+
+    function renderExportBar() {
+      const items = reportsData;
+      const incorrect = items.filter(it => it.audit_result === 'incorrect').length;
+      const slow = items.filter(it => it.line2_issue === 'slow_callback').length;
+      const exportBar = document.getElementById('export-bar');
+      exportBar.innerHTML = `
+        <span class="export-bar-label">Экспорт:</span>
+        <button class="btn btn-outline btn-sm" onclick="copyManagerReport()">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Отчёт для руководителя
+        </button>
+        ${incorrect > 0 ? `<button class="btn btn-outline btn-sm" onclick="copyAllIncorrect()">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          Все ошибочные (${incorrect})
+        </button>` : ''}
+        ${slow > 0 ? `<button class="btn btn-outline btn-sm" onclick="copyAllSlowCallback()">
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Долгий перезвон (${slow})
+        </button>` : ''}
+      `;
+    }
+
+    function copyAllIncorrect() {
+      const incorrect = reportsData.filter(it => it.audit_result === 'incorrect');
+      if (incorrect.length === 0) return;
+      let text = `Заявки с ошибками 1 линии (${incorrect.length}):\n\n`;
+      incorrect.forEach(it => {
+        text += it.request_number;
+        if (it.operator_line1_name) text += ` — ${it.operator_line1_name}`;
+        if (it.error_reason) text += ` (${it.error_reason})`;
+        text += '\n';
+      });
+      copyToClipboard(text, `Скопировано ${incorrect.length} заявок.`);
+    }
+
+    function copyAllSlowCallback() {
+      const slow = reportsData.filter(it => it.line2_issue === 'slow_callback');
+      if (slow.length === 0) return;
+      let text = `Заявки с долгим перезвоном >10 минут (${slow.length}):\n\n`;
+      slow.forEach(it => {
+        text += it.request_number;
+        if (it.operator_name) text += ` — ${it.operator_name}`;
+        text += '\n';
+      });
+      copyToClipboard(text, `Скопировано ${slow.length} заявок.`);
+    }
+
+    function copyManagerReport() {
+      if (reportsData.length === 0) return;
+      const text = generateManagerReport(reportsData);
+      copyToClipboard(text, 'Отчёт для руководителя скопирован.');
+    }
+
+    function generateManagerReport(items) {
+      const total = items.length;
+      const correct = items.filter(it => it.audit_result === 'correct').length;
+      const incorrect = items.filter(it => it.audit_result === 'incorrect').length;
+      const pending = items.filter(it => it.audit_result === 'pending_info').length;
+
+      const errStats = {};
+      items.filter(it => it.audit_result === 'incorrect').forEach(it => {
+        const r = it.error_reason || 'Не указана';
+        errStats[r] = (errStats[r] || 0) + 1;
+      });
+
+      const slow = items.filter(it => it.line2_issue === 'slow_callback').length;
+      const other = items.filter(it => it.line2_issue === 'other').length;
+
+      const op1Stats = {};
+      items.forEach(it => {
+        const n = it.operator_line1_name || 'Не указан';
+        if (!op1Stats[n]) op1Stats[n] = { total: 0, errors: 0 };
+        op1Stats[n].total++;
+        if (it.audit_result === 'incorrect') op1Stats[n].errors++;
+      });
+
+      const topOps = Object.entries(op1Stats)
+        .filter(([_, d]) => d.errors > 0)
+        .sort((a, b) => b[1].errors - a[1].errors);
+
+      let text = `📊 Отчет по аудиту ПЦК\n`;
+      text += `═══════════════════════\n\n`;
+      text += `Всего проверено: ${total}\n`;
+      text += `✅ Верно: ${correct} (${total ? (correct / total * 100).toFixed(1) : 0}%)\n`;
+      text += `⚠️ Уточнение: ${pending}\n`;
+      text += `❌ Ошибки 1 линии: ${incorrect} (${total ? (incorrect / total * 100).toFixed(1) : 0}%)\n\n`;
+
+      if (Object.keys(errStats).length > 0) {
+        text += `Ошибки по темам:\n`;
+        for (const [r, c] of Object.entries(errStats).sort((a, b) => b[1] - a[1])) {
+          text += `  • ${r}: ${c}\n`;
+        }
+        text += `\n`;
+      }
+
+      if (slow + other > 0) {
+        text += `Проблемы 2 линии:\n`;
+        if (slow) text += `  • Долгий перезвон (>10 мин): ${slow}\n`;
+        if (other) text += `  • Другое: ${other}\n`;
+        text += `\n`;
+      }
+
+      if (topOps.length > 0) {
+        text += `Операторы 1 линии с ошибками:\n`;
+        topOps.forEach(([n, d], i) => {
+          text += `  ${i + 1}. ${n}: ${d.errors} из ${d.total} (${(d.errors / d.total * 100).toFixed(0)}%)\n`;
+        });
+      }
+
+      return text;
+    }
+
+    function renderReportLine1(body, items) {
+      const stats = {};
+      items.forEach(req => {
+        const name = req.operator_line1_name || 'Не указан';
+        if (!stats[name]) stats[name] = { total: 0, correct: 0, incorrect: 0, pending: 0, errors: {} };
+        stats[name].total++;
+        if (req.audit_result === 'correct') stats[name].correct++;
+        else if (req.audit_result === 'pending_info') stats[name].pending++;
+        else if (req.audit_result === 'incorrect') {
+          stats[name].incorrect++;
+          const r = req.error_reason || 'Не указана';
+          stats[name].errors[r] = (stats[name].errors[r] || 0) + 1;
+        }
+      });
+
+      let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0;
+      let html = `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Оператор 1 линии</th><th style="text-align:center;">Всего</th><th style="text-align:center;">Верно</th><th style="text-align:center;">Уточнение</th><th style="text-align:center;">Ошибки</th><th>Тематики ошибок</th><th style="width: 100px;">Действия</th></tr></thead><tbody>`;
+
+      for (const [name, data] of Object.entries(stats)) {
+        totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
+        const errorTags = Object.entries(data.errors).map(([r, c]) => `<span class="tag">${escapeHtml(r)} (${c})</span>`).join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
+        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${errorTags}</td><td>${data.incorrect > 0 ? `<button class="btn-icon" onclick="copyOperator1Errors('${escapeHtml(name)}')" title="Скопировать номера ошибок"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>` : ''}</td></tr>`;
+      }
+
+      html += `<tr class="report-total"><td>ОБЩАЯ СВОДКА</td><td style="text-align:center;">${totalAll}</td><td style="text-align:center;">${correctAll}</td><td style="text-align:center;">${pendingAll}</td><td style="text-align:center;">${incorrectAll}</td><td>Процент ошибок: ${totalAll ? ((incorrectAll / totalAll) * 100).toFixed(1) : 0}%</td><td></td></tr></tbody></table></div>`;
+      body.innerHTML = html;
+    }
+
+    function renderReportLine2(body, items) {
+      const stats = {};
+      items.forEach(req => {
+        const name = req.operator_name || 'Не указан';
+        if (!stats[name]) stats[name] = { total: 0, correct: 0, incorrect: 0, pending: 0, errors: {}, line2Slow: 0, line2Other: 0, actions: { done: 0, ret_op: 0, ret_chat: 0 } };
+        stats[name].total++;
+        if (req.audit_result === 'correct') stats[name].correct++;
+        else if (req.audit_result === 'pending_info') stats[name].pending++;
+        else if (req.audit_result === 'incorrect') {
+          stats[name].incorrect++;
+          const r = req.error_reason || 'Не указана';
+          stats[name].errors[r] = (stats[name].errors[r] || 0) + 1;
+        }
+        if (req.line2_issue === 'slow_callback') stats[name].line2Slow++;
+        if (req.line2_issue === 'other') stats[name].line2Other++;
+        if (req.action_status === 'returned_operator') stats[name].actions.ret_op++;
+        else if (req.action_status === 'returned_chat') stats[name].actions.ret_chat++;
+        else stats[name].actions.done++;
+      });
+
+      let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0, slowAll = 0, otherAll = 0;
+      let html = `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Оператор 2 линии</th><th style="text-align:center;">Всего</th><th style="text-align:center;">Верно</th><th style="text-align:center;">Уточн.</th><th style="text-align:center;">Ошибки 1Л</th><th>Проблемы 2Л</th><th>Действия</th></tr></thead><tbody>`;
+
+      for (const [name, data] of Object.entries(stats)) {
+        totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
+        slowAll += data.line2Slow; otherAll += data.line2Other;
+        const issues = [];
+        if (data.line2Slow) issues.push(`<span class="tag line2">Долгий перезвон: ${data.line2Slow}</span>`);
+        if (data.line2Other) issues.push(`<span class="tag line2">Другое: ${data.line2Other}</span>`);
+        const issuesHtml = issues.join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
+        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${issuesHtml}</td><td style="font-size:12px; color:var(--ink-secondary);">${data.actions.done} / <span style="color:var(--status-warning)">Оператору: ${data.actions.ret_op}</span> / <span style="color:var(--status-warning)">В чат: ${data.actions.ret_chat}</span></td></tr>`;
+      }
+
+      html += `<tr class="report-total"><td>ОБЩАЯ СВОДКА</td><td style="text-align:center;">${totalAll}</td><td style="text-align:center;">${correctAll}</td><td style="text-align:center;">${pendingAll}</td><td style="text-align:center;">${incorrectAll}</td><td>${slowAll || otherAll ? `Долгий: ${slowAll}, Другое: ${otherAll}` : '—'}</td><td></td></tr></tbody></table></div>`;
+      body.innerHTML = html;
+    }
+
+    function copyOperator1Errors(opName) {
+      const items = reportsData.filter(it => (it.operator_line1_name || 'Не указан') === opName && it.audit_result === 'incorrect');
+      if (items.length === 0) return;
+      let text = `Заявки с ошибками оператора 1 линии ${opName} (${items.length}):\n\n`;
+      items.forEach(it => {
+        text += it.request_number;
+        if (it.error_reason) text += ` — ${it.error_reason}`;
+        text += '\n';
+      });
+      copyToClipboard(text, `Скопировано ${items.length} заявок оператора ${opName}.`);
+    }
+
+    // ПРЕДУПРЕЖДЕНИЕ ПРИ ЗАКРЫТИИ
+    window.addEventListener('beforeunload', (e) => {
+      if (hasUnsavedChanges) { e.preventDefault(); e.returnValue = ''; }
+    });
+
+    // ИНИЦИАЛИЗАЦИЯ
+    window.addEventListener('DOMContentLoaded', () => {
+      initSidebar();
+      loadSessions();
+      switchView('sessions');
+    });
+  </script>
+</body>
+</html>
