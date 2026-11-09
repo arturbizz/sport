@@ -94,9 +94,17 @@
       padding: 6px 16px; border-radius: var(--radius-md); border: none; background: transparent;
       font-family: inherit; font-weight: 500; font-size: 14px; color: var(--ink-secondary);
       transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px;
+      position: relative;
     }
     .nav-tab:hover { color: var(--ink-primary); }
     .nav-tab.active { background: var(--bg-surface); color: var(--brand-primary); box-shadow: var(--shadow-sm); font-weight: 600; }
+    
+    /* Индикатор незавершённой работы */
+    .nav-tab .dot-indicator {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--status-warning);
+      position: absolute; top: 4px; right: 4px; animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
 
     /* ================= КНОПКИ ================= */
     .btn {
@@ -539,7 +547,7 @@
       <div class="modal-body">
         <div style="margin-bottom: 16px;">
           <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">ФИО Оператора</label>
-          <input type="text" class="bulk-op-input" id="tg-operator-input" style="width: 100%; padding: 12px;" placeholder="Введите имя...">
+          <input type="text" class="bulk-op-input" id="tg-operator-input" style="width: 100%; padding: 12px;" placeholder="Введите имя..." oninput="updateTgPreview()">
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -587,6 +595,71 @@
     let itemToDeleteId = null;
     let currentTgTicketNum = null;
     let currentTgIndex = null;
+
+    // ================= АВТОСОХРАНЕНИЕ В LOCALSTORAGE =================
+    const BULK_STORAGE_KEY = 'audit_ptsk_bulk_v1';
+    const STORAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 дней
+    let saveTimeout;
+
+    function saveBulkState() {
+      clearTimeout(saveTimeout);
+      try {
+        if (bulkItems.length > 0) {
+          const state = {
+            items: bulkItems,
+            operator: document.getElementById('bulk-current-op').textContent,
+            activeTab: document.getElementById('tab-bulk').classList.contains('active') ? 'bulk' : 'history',
+            timestamp: Date.now()
+          };
+          localStorage.setItem(BULK_STORAGE_KEY, JSON.stringify(state));
+        } else {
+          localStorage.removeItem(BULK_STORAGE_KEY);
+        }
+      } catch (e) { console.warn('Save error:', e); }
+    }
+
+    function debouncedSaveBulkState() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveBulkState, 300);
+    }
+
+    function loadBulkState() {
+      try {
+        const raw = localStorage.getItem(BULK_STORAGE_KEY);
+        if (!raw) return null;
+        const state = JSON.parse(raw);
+        if (!state.items || !Array.isArray(state.items) || state.items.length === 0) {
+          localStorage.removeItem(BULK_STORAGE_KEY);
+          return null;
+        }
+        if (state.timestamp && Date.now() - state.timestamp > STORAGE_TTL_MS) {
+          localStorage.removeItem(BULK_STORAGE_KEY);
+          return null;
+        }
+        return state;
+      } catch (e) {
+        localStorage.removeItem(BULK_STORAGE_KEY);
+        return null;
+      }
+    }
+
+    function clearBulkState() {
+      clearTimeout(saveTimeout);
+      localStorage.removeItem(BULK_STORAGE_KEY);
+    }
+
+    // Индикатор незавершённой работы на вкладке
+    function updateBulkTabIndicator() {
+      const tabBulk = document.getElementById('tab-bulk');
+      const existingDot = tabBulk.querySelector('.dot-indicator');
+      if (bulkItems.length > 0 && !existingDot) {
+        const dot = document.createElement('span');
+        dot.className = 'dot-indicator';
+        tabBulk.appendChild(dot);
+      } else if (bulkItems.length === 0 && existingDot) {
+        existingDot.remove();
+      }
+    }
 
     // --- УВЕДОМЛЕНИЯ ---
     function showToast(type, title, message) {
@@ -699,6 +772,7 @@
         containerHistory.classList.add('hidden');
         if (bulkItems.length > 0) document.getElementById('bulk-workspace').classList.add('active');
       }
+      saveBulkState(); // Сохраняем активную вкладку
     }
 
     // --- ЗАГРУЗКА ИСТОРИИ ---
@@ -803,6 +877,8 @@
       renderBulkWorkspace();
       document.getElementById('bulk-workspace').classList.add('active');
       document.getElementById('bulk-input-card').style.display = 'none';
+      saveBulkState(); // Сохраняем сразу после создания
+      updateBulkTabIndicator();
     }
 
     function renderBulkWorkspace() {
@@ -847,7 +923,7 @@
           </td>
           
           <td>
-            <input type="text" class="bulk-input-comment" id="comment-${index}" placeholder="Комментарий..." value="${item.comment}" onchange="updateBulkField(${index}, 'comment', this.value)">
+            <input type="text" class="bulk-input-comment" id="comment-${index}" placeholder="Комментарий..." value="${item.comment ? item.comment.replace(/"/g, '&quot;') : ''}" oninput="updateBulkField(${index}, 'comment', this.value)">
           </td>
 
           <td>
@@ -877,10 +953,16 @@
       } else if (val === 'incorrect') {
         reasonSelect.disabled = false;
       }
+      saveBulkState(); // Сохраняем после смены вердикта
     }
 
     function updateBulkField(index, field, value) {
       bulkItems[index][field] = value;
+      if (field === 'comment') {
+        debouncedSaveBulkState(); // Для текста - с задержкой
+      } else {
+        saveBulkState(); // Для селектов - сразу
+      }
     }
 
     function cancelBulk() {
@@ -889,6 +971,8 @@
       document.getElementById('bulk-input-card').style.display = 'flex';
       document.getElementById('bulk-ids').value = '';
       document.getElementById('bulk-current-op').textContent = '—';
+      clearBulkState(); // Очищаем память
+      updateBulkTabIndicator();
     }
 
     async function saveBulk() {
@@ -916,7 +1000,7 @@
         if (error) throw error;
 
         showToast('success', 'Успешно', `Сохранено ${payload.length} заявок.`);
-        cancelBulk();
+        cancelBulk(); // Очищает и localStorage
         loadData();
         switchTab('history');
       } catch (err) {
@@ -935,7 +1019,6 @@
       
       document.getElementById('tg-operator-input').value = item.operator_name;
       
-      // Сбрасываем чекбоксы
       document.getElementById('tg-err-1').checked = false;
       document.getElementById('tg-err-2').checked = false;
       document.getElementById('tg-err-3').checked = false;
@@ -1061,9 +1144,34 @@
       document.getElementById('sidebar').classList.toggle('collapsed');
     });
 
+    // ================= ИНИЦИАЛИЗАЦИЯ =================
     window.addEventListener('DOMContentLoaded', () => {
       loadData();
       if (window.innerWidth < 1024) document.getElementById('sidebar').classList.add('collapsed');
+
+      // Восстанавливаем незавершённую массовую проверку
+      const saved = loadBulkState();
+      if (saved) {
+        bulkItems = saved.items;
+        document.getElementById('bulk-current-op').textContent = saved.operator || '—';
+        document.getElementById('bulk-operator').value = saved.operator || '';
+        renderBulkWorkspace();
+        document.getElementById('bulk-workspace').classList.add('active');
+        document.getElementById('bulk-input-card').style.display = 'none';
+        updateBulkTabIndicator();
+
+        // Возвращаемся на ту вкладку, где был пользователь
+        if (saved.activeTab === 'bulk') {
+          document.getElementById('tab-bulk').classList.add('active');
+          document.getElementById('tab-history').classList.remove('active');
+          document.getElementById('bulk-container').classList.add('active');
+          document.getElementById('history-container').classList.add('hidden');
+        }
+
+        setTimeout(() => {
+          showToast('info', 'Восстановлено', `Незавершённая проверка: ${saved.items.length} заявок. Продолжайте с того же места.`);
+        }, 500);
+      }
     });
   </script>
   <style>
