@@ -31,7 +31,8 @@
       --transition-spring: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--ink-primary); min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+    html, body { height: 100%; }
+    body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--ink-primary); overflow: hidden; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -39,27 +40,27 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    .icon { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .icon { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
     .icon-sm { width: 14px; height: 14px; }
     .icon-lg { width: 20px; height: 20px; }
 
     /* ТОПБАР */
-    .topbar { background-color: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; gap: 16px; }
-    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; color: var(--ink-primary); }
-    .logo-mark { width: 28px; height: 28px; background: linear-gradient(135deg, var(--brand-primary), #8B5CF6); border-radius: 8px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
+    .topbar { background-color: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; z-index: 100; gap: 16px; flex-shrink: 0; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; color: var(--ink-primary); }
+    .logo-mark { width: 26px; height: 26px; background: linear-gradient(135deg, var(--brand-primary), #8B5CF6); border-radius: 7px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
     .topbar-center { flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; min-width: 0; }
-    .save-indicator { display: none; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 8px; }
+    .save-indicator { display: none; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 8px; }
     .save-indicator.show { display: inline-flex; }
     .save-indicator.saving { background: var(--status-warning-bg); color: #B45309; }
     .save-indicator.saved { background: var(--status-success-bg); color: #047857; }
     .save-indicator.error { background: var(--status-error-bg); color: #BE123C; }
     .save-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
     .save-indicator.saving .dot { animation: pulseDot 1s infinite; }
-    .sidebar-toggle-btn { background: none; border: none; color: var(--ink-secondary); padding: 8px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth); }
+    .sidebar-toggle-btn { background: none; border: none; color: var(--ink-secondary); padding: 7px; border-radius: 7px; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth); }
     .sidebar-toggle-btn:hover { background: var(--bg-subtle); color: var(--brand-primary); }
 
     /* КНОПКИ */
-    .btn { padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid transparent; font-family: inherit; font-weight: 500; font-size: 14px; transition: var(--transition-smooth); display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
+    .btn { padding: 8px 14px; border-radius: var(--radius-md); border: 1px solid transparent; font-family: inherit; font-weight: 500; font-size: 13.5px; transition: var(--transition-smooth); display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
     .btn-primary { background: var(--brand-primary); color: white; box-shadow: var(--shadow-sm); }
     .btn-primary:hover { background: var(--brand-hover); box-shadow: var(--shadow-md); transform: translateY(-1px); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -72,49 +73,47 @@
     .btn-success { background: var(--status-success); color: white; box-shadow: var(--shadow-sm); }
     .btn-success:hover { background: #059669; box-shadow: var(--shadow-md); transform: translateY(-1px); }
     .btn-success:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .btn-sm { padding: 6px 12px; font-size: 12.5px; }
+    .btn-sm { padding: 6px 11px; font-size: 12px; }
     .btn-icon { background: transparent; border: none; color: var(--ink-tertiary); cursor: pointer; padding: 6px; border-radius: 6px; transition: var(--transition-smooth); display: inline-flex; align-items: center; justify-content: center; }
     .btn-icon:hover { color: var(--ink-primary); background: var(--bg-subtle); }
-    .btn-icon.danger:hover { color: var(--status-error); background: var(--status-error-bg); }
-    .btn-tg { background: rgba(0, 136, 204, 0.1); color: #0088cc; border: 1px solid rgba(0, 136, 204, 0.2); padding: 6px 12px; border-radius: var(--radius-md); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition-smooth); }
+    .btn-tg { background: rgba(0, 136, 204, 0.1); color: #0088cc; border: 1px solid rgba(0, 136, 204, 0.2); padding: 6px 10px; border-radius: var(--radius-md); font-size: 11.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; transition: var(--transition-smooth); }
     .btn-tg:hover { background: #0088cc; color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3); }
 
     /* LAYOUT */
-    .layout { display: flex; flex: 1; overflow: hidden; }
-    .sidebar { width: 320px; background: var(--bg-surface); border-right: 1px solid var(--border-light); padding: 24px 20px; overflow-y: auto; flex-shrink: 0; transition: width 0.3s var(--transition-spring), padding 0.3s, opacity 0.2s; }
+    .layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+    .sidebar { width: 320px; background: var(--bg-surface); border-right: 1px solid var(--border-light); padding: 20px 18px; overflow-y: auto; flex-shrink: 0; transition: width 0.3s var(--transition-spring), padding 0.3s, opacity 0.2s; }
     .sidebar.collapsed { width: 0; padding: 0; opacity: 0; pointer-events: none; border-right: 0; }
-    .sidebar-section { margin-bottom: 24px; }
-    .sidebar-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-tertiary); font-weight: 700; margin-bottom: 10px; }
-    .rule-card { background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px; margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start; }
+    .sidebar-section { margin-bottom: 20px; }
+    .sidebar-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-tertiary); font-weight: 700; margin-bottom: 8px; }
+    .rule-card { background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 12px; margin-bottom: 8px; display: flex; gap: 9px; align-items: flex-start; }
     .rule-card.warning { border-left: 3px solid var(--status-warning); }
     .rule-card.danger { border-left: 3px solid var(--status-error); }
     .rule-card.success { border-left: 3px solid var(--status-success); }
     .rule-card.info { border-left: 3px solid var(--status-info); }
-    .rule-text { font-size: 12.5px; color: var(--ink-secondary); line-height: 1.5; }
+    .rule-text { font-size: 12px; color: var(--ink-secondary); line-height: 1.5; }
     .rule-text strong { color: var(--ink-primary); font-weight: 600; display: block; margin-bottom: 2px; }
 
-    .main-content { flex: 1; min-width: 0; padding: 24px; overflow-y: auto; overflow-x: auto; }
+    .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; padding: 20px; }
 
-    /* ЭКРАНЫ */
-    .view { display: none; animation: fadeIn 0.25s ease-out; }
-    .view.active { display: block; }
+    /* ВЬЮ */
+    .view { display: none; flex-direction: column; min-height: 0; }
+    .view.active { display: flex; flex: 1; min-height: 0; animation: fadeIn 0.2s ease-out; }
+    #view-sessions.active, #view-create.active { display: block; overflow-y: auto; }
 
     /* СПИСОК АУДИТОВ */
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-    .page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
-    .page-subtitle { font-size: 14px; color: var(--ink-secondary); margin-top: 4px; }
-
-    .sessions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-    .session-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 20px; box-shadow: var(--shadow-sm); transition: var(--transition-spring); display: flex; flex-direction: column; gap: 14px; animation: slideUp 0.3s ease-out both; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .page-subtitle { font-size: 13.5px; color: var(--ink-secondary); margin-top: 3px; }
+    .sessions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+    .session-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 18px; box-shadow: var(--shadow-sm); transition: var(--transition-spring); display: flex; flex-direction: column; gap: 12px; animation: slideUp 0.3s ease-out both; }
     .session-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .session-card.draft { border-left: 4px solid var(--status-warning); }
     .session-card.completed { border-left: 4px solid var(--status-success); opacity: 0.92; }
     .session-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-    .session-op { font-size: 16px; font-weight: 700; color: var(--ink-primary); }
-    .session-meta { font-size: 12px; color: var(--ink-tertiary); margin-top: 4px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .session-meta span { display: inline-flex; align-items: center; gap: 4px; }
-    .session-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-    .stat-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .session-op { font-size: 15px; font-weight: 700; color: var(--ink-primary); }
+    .session-meta { font-size: 11.5px; color: var(--ink-tertiary); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .session-stats { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 3px; }
+    .stat-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; }
     .stat-pill.total { background: var(--bg-subtle); color: var(--ink-secondary); }
     .stat-pill.correct { background: var(--status-success-bg); color: #047857; }
     .stat-pill.pending { background: var(--status-warning-bg); color: #B45309; }
@@ -122,123 +121,130 @@
     .stat-pill.unchecked { background: var(--bg-subtle); color: var(--ink-tertiary); }
     .stat-pill.line2 { background: var(--status-info-bg); color: #1D4ED8; }
     .session-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 8px; flex-wrap: wrap; }
-    .empty-sessions { grid-column: 1 / -1; text-align: center; padding: 80px 20px; background: var(--bg-surface); border: 2px dashed var(--border-light); border-radius: var(--radius-xl); }
-    .empty-sessions h3 { font-size: 18px; font-weight: 700; color: var(--ink-primary); margin-bottom: 8px; }
-    .empty-sessions p { color: var(--ink-secondary); font-size: 14px; }
+    .empty-sessions { grid-column: 1 / -1; text-align: center; padding: 70px 20px; background: var(--bg-surface); border: 2px dashed var(--border-light); border-radius: var(--radius-xl); }
+    .empty-sessions h3 { font-size: 17px; font-weight: 700; color: var(--ink-primary); margin-bottom: 8px; }
+    .empty-sessions p { color: var(--ink-secondary); font-size: 13.5px; }
 
     /* СОЗДАНИЕ */
-    .create-form { max-width: 720px; margin: 0 auto; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 32px; box-shadow: var(--shadow-sm); }
-    .form-group { margin-bottom: 20px; }
-    .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-    .form-input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 14px; background: var(--bg-body); transition: var(--transition-smooth); }
+    .create-form { max-width: 700px; margin: 0 auto; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 28px; box-shadow: var(--shadow-sm); }
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 7px; }
+    .form-input { width: 100%; padding: 11px 14px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 14px; background: var(--bg-body); transition: var(--transition-smooth); }
     .form-input:focus { outline: none; background: var(--bg-surface); border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-light); }
-    .form-textarea { width: 100%; min-height: 180px; padding: 14px 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; background: var(--bg-body); transition: var(--transition-smooth); resize: vertical; }
+    .form-textarea { width: 100%; min-height: 160px; padding: 13px 14px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.7; background: var(--bg-body); transition: var(--transition-smooth); resize: vertical; }
     .form-textarea:focus { outline: none; background: var(--bg-surface); border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-light); }
-    .form-hint { font-size: 12px; color: var(--ink-tertiary); margin-top: 6px; }
     .parser-hint { font-size: 12px; color: var(--brand-primary); background: var(--brand-light); padding: 6px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-weight: 600; }
-    .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); }
+    .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border-light); }
 
-    /* АУДИТ */
-    .audit-header { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 20px 24px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-    .audit-title { font-size: 18px; font-weight: 800; color: var(--ink-primary); }
-    .audit-subtitle { font-size: 13px; color: var(--ink-secondary); margin-top: 4px; }
+    /* АУДИТ — ГЛАВНОЕ: FLEX LAYOUT С ВНУТРЕННИМ СКРОЛЛОМ */
+    #audit-header-container { flex-shrink: 0; margin-bottom: 14px; }
+    .audit-header { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 16px 20px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .audit-title { font-size: 16px; font-weight: 800; color: var(--ink-primary); }
+    .audit-subtitle { font-size: 12.5px; color: var(--ink-secondary); margin-top: 3px; }
     .audit-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .audit-progress-bar { height: 6px; background: var(--bg-subtle); border-radius: 3px; overflow: hidden; margin-top: 12px; width: 100%; }
+    .audit-progress-bar { height: 5px; background: var(--bg-subtle); border-radius: 3px; overflow: hidden; margin-top: 10px; width: 100%; }
     .audit-progress-fill { height: 100%; background: linear-gradient(90deg, var(--brand-primary), #8B5CF6); border-radius: 3px; transition: width 0.4s var(--transition-spring); }
-    .audit-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .audit-summary { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 
-    .audit-table-wrap { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); overflow: hidden; }
-    .bulk-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%; }
-    .bulk-table { width: 100%; min-width: 1300px; border-collapse: collapse; text-align: left; }
-    .bulk-table th { background: var(--bg-body); padding: 12px; font-size: 10.5px; text-transform: uppercase; color: var(--ink-tertiary); font-weight: 700; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
-    .bulk-table td { padding: 12px; border-bottom: 1px solid var(--border-light); vertical-align: middle; transition: background 0.15s; }
-    .bulk-table tr:last-child td { border-bottom: none; }
+    .audit-table-wrap { flex: 1; min-height: 0; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); display: flex; flex-direction: column; overflow: hidden; }
+
+    /* Ключевое: контейнер таблицы занимает остаток, скролл внутри */
+    .bulk-table-scroll { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+
+    .bulk-table { width: 100%; min-width: 1280px; border-collapse: separate; border-spacing: 0; text-align: left; }
+    .bulk-table th { background: var(--bg-body); padding: 11px 10px; font-size: 10.5px; text-transform: uppercase; color: var(--ink-tertiary); font-weight: 700; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); white-space: nowrap; position: sticky; top: 0; z-index: 3; }
+    .bulk-table td { padding: 10px; border-bottom: 1px solid var(--border-light); vertical-align: top; transition: background 0.15s; }
+    .bulk-table tbody tr:last-child td { border-bottom: none; }
     .bulk-table tbody tr:hover td { background: var(--bg-body); }
     .bulk-table th:first-child, .bulk-table td:first-child { position: sticky; left: 0; background: var(--bg-surface); z-index: 2; box-shadow: 1px 0 0 var(--border-light); }
+    .bulk-table th:first-child { z-index: 4; }
     .bulk-table tbody tr:hover td:first-child { background: var(--bg-body); }
 
     /* Подсветка активной строки */
     .bulk-table tbody tr.active-row td { background: #EEF2FF !important; }
     .bulk-table tbody tr.active-row td:first-child { background: #E0E7FF !important; }
 
-    .bulk-req-num { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 13px; color: var(--ink-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: var(--transition-smooth); }
+    .bulk-req-num { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 12.5px; color: var(--ink-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: var(--transition-smooth); padding-top: 8px; }
     .bulk-req-num:hover { color: var(--brand-primary); text-decoration: underline; }
     .bulk-req-num svg { opacity: 0.4; transition: opacity 0.2s; }
     .bulk-req-num:hover svg { opacity: 1; color: var(--brand-primary); }
 
     .segmented-control { display: inline-flex; background: var(--bg-body); padding: 3px; border-radius: var(--radius-md); border: 1px solid var(--border-light); }
-    .segmented-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; font-size: 11.5px; font-weight: 500; color: var(--ink-secondary); transition: var(--transition-smooth); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+    .segmented-btn { padding: 6px 8px; border-radius: 5px; border: none; background: transparent; font-size: 11px; font-weight: 500; color: var(--ink-secondary); transition: var(--transition-smooth); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
     .segmented-btn:hover { color: var(--ink-primary); }
-    .segmented-btn.active-correct { background: var(--status-success-bg); color: #047857; font-weight: 600; box-shadow: var(--shadow-sm); }
-    .segmented-btn.active-incorrect { background: var(--status-error-bg); color: #BE123C; font-weight: 600; box-shadow: var(--shadow-sm); }
-    .segmented-btn.active-pending { background: var(--status-warning-bg); color: #B45309; font-weight: 600; box-shadow: var(--shadow-sm); }
+    .segmented-btn.active-correct { background: var(--status-success-bg); color: #047857; font-weight: 600; }
+    .segmented-btn.active-incorrect { background: var(--status-error-bg); color: #BE123C; font-weight: 600; }
+    .segmented-btn.active-pending { background: var(--status-warning-bg); color: #B45309; font-weight: 600; }
 
-    .bulk-select, .bulk-input-comment, .bulk-input-line1 { width: 100%; padding: 8px 10px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 12.5px; background: var(--bg-surface); transition: var(--transition-smooth); }
-    .bulk-select:focus, .bulk-input-comment:focus, .bulk-input-line1:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 2px var(--brand-light); }
-    .bulk-select:disabled, .bulk-input-line1:disabled { opacity: 0.5; background: var(--bg-body); cursor: not-allowed; border-color: transparent; }
-    
+    .bulk-select, .bulk-input-line1 { width: 100%; padding: 7px 9px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 12px; background: var(--bg-surface); transition: var(--transition-smooth); }
+    .bulk-select:focus, .bulk-input-line1:focus, .bulk-input-comment:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 2px var(--brand-light); }
+    .bulk-select:disabled, .bulk-input-line1:disabled, .bulk-input-comment:disabled { opacity: 0.5; background: var(--bg-body); cursor: not-allowed; border-color: transparent; }
+
+    /* Комментарий — textarea с авто-расширением */
+    .bulk-input-comment { width: 100%; padding: 7px 9px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 12px; background: var(--bg-surface); transition: border-color 0.2s; min-height: 32px; max-height: 140px; resize: vertical; line-height: 1.4; overflow-y: auto; }
+
     .line2-cell { display: flex; flex-direction: column; gap: 4px; }
     .line2-cell select.slow { background: #FFF7ED; border-color: #FDBA74; color: #C2410C; font-weight: 600; }
     .line2-cell select.other { background: #F5F3FF; border-color: #C4B5FD; color: #6D28D9; font-weight: 600; }
 
-    .bulk-footer { padding: 16px 20px; background: var(--bg-body); border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .bulk-footer-left, .bulk-footer-right { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bulk-footer { padding: 12px 16px; background: var(--bg-body); border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+    .bulk-footer-left, .bulk-footer-right { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
     /* МОДАЛКИ */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
     .modal-overlay.open { opacity: 1; pointer-events: auto; }
     .modal-content { background: var(--bg-surface); width: 100%; max-width: 600px; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); transform: scale(0.95); opacity: 0; transition: var(--transition-spring); display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
     .modal-overlay.open .modal-content { transform: scale(1); opacity: 1; }
     .modal-content.large { max-width: 1400px; width: 96vw; }
-    .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
-    .modal-title { font-size: 18px; font-weight: 700; }
-    .close-btn { background: none; border: none; color: var(--ink-tertiary); transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 6px; }
+    .modal-header { padding: 18px 22px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+    .modal-title { font-size: 17px; font-weight: 700; }
+    .close-btn { background: none; border: none; color: var(--ink-tertiary); padding: 4px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth); }
     .close-btn:hover { color: var(--ink-primary); background: var(--bg-subtle); }
-    .modal-body { padding: 24px; overflow-y: auto; }
-    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px; background: var(--bg-body); }
+    .modal-body { padding: 20px 22px; overflow-y: auto; }
+    .modal-footer { padding: 14px 22px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px; background: var(--bg-body); }
 
     /* Чек-лист ТГ */
-    .tg-checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-    .tg-check-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; transition: var(--transition-smooth); background: var(--bg-surface); }
+    .tg-checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+    .tg-check-item { display: flex; align-items: flex-start; gap: 10px; padding: 11px; border: 1px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; transition: var(--transition-smooth); background: var(--bg-surface); }
     .tg-check-item:hover { border-color: var(--brand-primary); background: var(--brand-light); }
     .tg-check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; margin-top: 2px; }
     .tg-check-text { display: flex; flex-direction: column; gap: 2px; }
-    .tg-check-title { font-size: 14px; font-weight: 600; color: var(--ink-primary); }
-    .tg-check-desc { font-size: 12px; color: var(--ink-secondary); }
+    .tg-check-title { font-size: 13.5px; font-weight: 600; color: var(--ink-primary); }
+    .tg-check-desc { font-size: 11.5px; color: var(--ink-secondary); }
 
     /* ОТЧЁТЫ */
-    .report-tabs { display: flex; gap: 4px; background: var(--bg-subtle); padding: 4px; border-radius: var(--radius-md); margin-bottom: 16px; }
-    .report-tab { flex: 1; padding: 10px; border: none; border-radius: 6px; background: transparent; font-family: inherit; font-weight: 600; font-size: 13px; color: var(--ink-secondary); transition: var(--transition-smooth); }
+    .report-tabs { display: flex; gap: 4px; background: var(--bg-subtle); padding: 4px; border-radius: var(--radius-md); margin-bottom: 14px; }
+    .report-tab { flex: 1; padding: 9px; border: none; border-radius: 6px; background: transparent; font-family: inherit; font-weight: 600; font-size: 12.5px; color: var(--ink-secondary); transition: var(--transition-smooth); }
     .report-tab.active { background: var(--bg-surface); color: var(--brand-primary); box-shadow: var(--shadow-sm); }
 
-    .export-bar { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px; background: var(--bg-body); border-radius: var(--radius-md); margin-bottom: 16px; align-items: center; }
-    .export-bar-label { font-size: 12px; font-weight: 700; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-right: 8px; }
+    .export-bar { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px; background: var(--bg-body); border-radius: var(--radius-md); margin-bottom: 14px; align-items: center; }
+    .export-bar-label { font-size: 11px; font-weight: 700; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-right: 4px; }
 
     .report-table-wrap { overflow-x: auto; }
-    .report-table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 13px; }
-    .report-table th { padding: 12px 14px; text-align: left; font-size: 10.5px; text-transform: uppercase; color: var(--ink-tertiary); border-bottom: 1px solid var(--border-light); background: var(--bg-surface); }
-    .report-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+    .report-table { width: 100%; min-width: 800px; border-collapse: collapse; font-size: 12.5px; }
+    .report-table th { padding: 11px 12px; text-align: left; font-size: 10.5px; text-transform: uppercase; color: var(--ink-tertiary); border-bottom: 1px solid var(--border-light); background: var(--bg-surface); }
+    .report-table td { padding: 11px 12px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
     .report-table tr:hover td { background: var(--bg-body); }
     .report-total td { font-weight: 700; background: var(--brand-light) !important; color: var(--brand-primary); border-bottom: none; }
-    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px; background: var(--status-error-bg); color: var(--status-error); }
+    .tag { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px; background: var(--status-error-bg); color: var(--status-error); }
     .tag.line2 { background: var(--status-info-bg); color: #1D4ED8; }
 
     /* ТОСТ */
-    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; }
-    .toast { background: var(--bg-surface); border: 1px solid var(--border-light); box-shadow: var(--shadow-lg); padding: 16px; border-radius: var(--radius-lg); display: flex; align-items: flex-start; gap: 12px; min-width: 320px; max-width: 400px; animation: slideInRight 0.3s var(--transition-spring); }
-    .toast-icon-wrapper { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--bg-surface); border: 1px solid var(--border-light); box-shadow: var(--shadow-lg); padding: 14px; border-radius: var(--radius-lg); display: flex; align-items: flex-start; gap: 11px; min-width: 300px; max-width: 400px; animation: slideInRight 0.3s var(--transition-spring); }
+    .toast-icon-wrapper { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .toast.success .toast-icon-wrapper { background: var(--status-success-bg); color: var(--status-success); }
     .toast.error .toast-icon-wrapper { background: var(--status-error-bg); color: var(--status-error); }
     .toast.info .toast-icon-wrapper { background: var(--brand-light); color: var(--brand-primary); }
     .toast-content { flex: 1; }
-    .toast-title { font-weight: 600; font-size: 14px; color: var(--ink-primary); margin-bottom: 2px; }
-    .toast-msg { font-size: 13px; color: var(--ink-secondary); line-height: 1.4; }
+    .toast-title { font-weight: 600; font-size: 13.5px; color: var(--ink-primary); margin-bottom: 2px; }
+    .toast-msg { font-size: 12.5px; color: var(--ink-secondary); line-height: 1.4; }
 
     @media (max-width: 1024px) {
-      .sidebar { position: fixed; top: 64px; left: 0; height: calc(100vh - 64px); width: 320px; padding: 24px 20px; z-index: 999; box-shadow: var(--shadow-xl); transform: translateX(0); transition: transform 0.3s var(--transition-spring); opacity: 1; pointer-events: auto; border-right: 1px solid var(--border-light); }
-      .sidebar.collapsed { width: 320px; padding: 24px 20px; transform: translateX(-100%); opacity: 1; pointer-events: auto; border-right: 1px solid var(--border-light); }
-      .main-content { padding: 16px; }
-      .create-form { padding: 20px; }
+      .sidebar { position: fixed; top: 60px; left: 0; height: calc(100vh - 60px); width: 320px; padding: 20px 18px; z-index: 999; box-shadow: var(--shadow-xl); transform: translateX(0); transition: transform 0.3s var(--transition-spring); opacity: 1; pointer-events: auto; border-right: 1px solid var(--border-light); }
+      .sidebar.collapsed { width: 320px; padding: 20px 18px; transform: translateX(-100%); opacity: 1; pointer-events: auto; border-right: 1px solid var(--border-light); }
+      .main-content { padding: 12px; }
+      .create-form { padding: 18px; }
     }
   </style>
 </head>
@@ -253,7 +259,7 @@
       Аудит ПЦК
     </div>
     <div class="topbar-center" id="topbar-center"></div>
-    <div style="display:flex; gap:12px; align-items:center;">
+    <div style="display:flex; gap:10px; align-items:center;">
       <button class="btn btn-outline" onclick="openReports()">
         <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         Отчеты
@@ -271,7 +277,7 @@
         </div>
       </div>
       <div class="sidebar-section">
-        <div class="sidebar-title">Вердикты (по 1 линии)</div>
+        <div class="sidebar-title">Вердикты по 1 линии</div>
         <div class="rule-card success"><svg class="icon" viewBox="0 0 24 24" style="color: var(--status-success); flex-shrink: 0;"><polyline points="20 6 9 17 4 12"/></svg><div class="rule-text"><strong>Верно</strong>ПЦК создан обоснованно.</div></div>
         <div class="rule-card warning"><svg class="icon" viewBox="0 0 24 24" style="color: var(--status-warning); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><div class="rule-text"><strong>Уточнение</strong>Спорная заявка.</div></div>
         <div class="rule-card danger"><svg class="icon" viewBox="0 0 24 24" style="color: var(--status-error); flex-shrink: 0;"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg><div class="rule-text"><strong>Ошибка</strong>Оператор нарушил регламент.</div></div>
@@ -279,7 +285,7 @@
       <div class="sidebar-section">
         <div class="sidebar-title">Тематики ошибок</div>
         <div class="rule-card">
-          <div class="rule-text" style="font-size:12px; line-height:1.6;">
+          <div class="rule-text" style="font-size:11.5px; line-height:1.6;">
             <div style="margin-bottom:6px;"><b>1.</b> Не уточнил актуальность ремонта</div>
             <div style="margin-bottom:6px;"><b>2а.</b> Не предупредил о звонке в 10 минут</div>
             <div style="margin-bottom:6px;"><b>2б.</b> Не получил согласие на перезвон</div>
@@ -290,12 +296,12 @@
       <div class="sidebar-section">
         <div class="sidebar-title">Проблема 2 линии</div>
         <div class="rule-card info">
-          <svg class="icon" viewBox="0 0 24 24" style="color: var(--status-info); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <svg class="icon" viewBox="0 0 24 24" style="color: var(--status-info); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <div class="rule-text"><strong>Долгий перезвон</strong>Если оператор 2Л перезвонил позже 10 мин.</div>
         </div>
         <div class="rule-card info">
           <svg class="icon" viewBox="0 0 24 24" style="color: var(--status-info); flex-shrink: 0;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          <div class="rule-text"><strong>Другое</strong>Любая другая проблема с описанием.</div>
+          <div class="rule-text"><strong>Другое</strong>Свой комментарий.</div>
         </div>
       </div>
     </aside>
@@ -355,14 +361,14 @@
             <table class="bulk-table">
               <thead>
                 <tr>
-                  <th style="width: 110px;">Заявка</th>
-                  <th style="width: 170px;">Оператор 1Л</th>
-                  <th style="width: 215px;">Вердикт</th>
-                  <th style="min-width: 200px;">Тематика ошибки</th>
-                  <th style="width: 150px;">Действие</th>
-                  <th style="width: 180px;">Проблема 2Л</th>
-                  <th style="width: 140px;">Комментарий</th>
-                  <th style="width: 70px;">ТГ</th>
+                  <th style="width: 105px;">Заявка</th>
+                  <th style="width: 160px;">Оператор 1Л</th>
+                  <th style="width: 200px;">Вердикт 1Л</th>
+                  <th style="min-width: 190px;">Тематика ошибки</th>
+                  <th style="width: 140px;">Действие</th>
+                  <th style="width: 195px;">Проблема 2Л</th>
+                  <th style="width: 220px;">Комментарий</th>
+                  <th style="width: 60px;">ТГ</th>
                 </tr>
               </thead>
               <tbody id="audit-tbody"></tbody>
@@ -370,9 +376,9 @@
           </div>
           <div class="bulk-footer">
             <div class="bulk-footer-left">
-              <button class="btn btn-ghost" id="btn-back-to-sessions">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
-                К списку аудитов
+              <button class="btn btn-ghost btn-sm" id="btn-back-to-sessions">
+                <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+                К списку
               </button>
               <button class="btn btn-outline btn-sm" onclick="goToNextPending()" title="Alt+N">
                 <svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
@@ -412,7 +418,7 @@
 
   <!-- МОДАЛКА ТГ -->
   <div class="modal-overlay" id="tg-modal">
-    <div class="modal-content" style="max-width: 550px;">
+    <div class="modal-content" style="max-width: 540px;">
       <div class="modal-header">
         <h2 class="modal-title">Шаблон для Telegram</h2>
         <button class="close-btn" onclick="closeModal('tg-modal')">
@@ -420,12 +426,12 @@
         </button>
       </div>
       <div class="modal-body">
-        <div style="margin-bottom: 16px;">
-          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">ФИО оператора 1 линии</label>
+        <div style="margin-bottom: 14px;">
+          <label style="display:block; font-size:12.5px; font-weight:600; color:var(--ink-secondary); margin-bottom:7px;">ФИО оператора 1 линии</label>
           <input type="text" class="form-input" id="tg-operator-input" oninput="updateTgPreview()">
         </div>
-        <div style="margin-bottom: 16px;">
-          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">Отметьте ошибки</label>
+        <div style="margin-bottom: 14px;">
+          <label style="display:block; font-size:12.5px; font-weight:600; color:var(--ink-secondary); margin-bottom:7px;">Отметьте ошибки</label>
           <div class="tg-checklist">
             <label class="tg-check-item"><input type="checkbox" id="tg-err-1" onchange="updateTgPreview()"><div class="tg-check-text"><span class="tg-check-title">1. Актуальность ремонта</span><span class="tg-check-desc">Не уточнил актуальность ремонта</span></div></label>
             <label class="tg-check-item"><input type="checkbox" id="tg-err-2" onchange="updateTgPreview()"><div class="tg-check-text"><span class="tg-check-title">2а. Время ожидания</span><span class="tg-check-desc">Не предупредил о 10 минутах</span></div></label>
@@ -434,8 +440,8 @@
           </div>
         </div>
         <div>
-          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">Предпросмотр</label>
-          <textarea class="form-textarea" id="tg-preview" readonly style="min-height: 90px; cursor: text; font-family: 'Inter', sans-serif; font-size: 13px;"></textarea>
+          <label style="display:block; font-size:12.5px; font-weight:600; color:var(--ink-secondary); margin-bottom:7px;">Предпросмотр</label>
+          <textarea class="form-textarea" id="tg-preview" readonly style="min-height: 80px; cursor: text; font-family: 'Inter', sans-serif; font-size: 12.5px;"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -450,12 +456,12 @@
 
   <!-- МОДАЛКА ПОДТВЕРЖДЕНИЯ -->
   <div class="modal-overlay" id="confirm-modal">
-    <div class="modal-content" style="max-width: 440px;">
-      <div class="modal-body" style="padding: 32px 28px; text-align: center;">
-        <div id="confirm-icon-wrap" style="width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center;"></div>
-        <h3 id="confirm-title" style="font-size: 18px; font-weight: 700; margin-bottom: 8px;"></h3>
-        <p id="confirm-message" style="font-size: 14px; color: var(--ink-secondary); margin-bottom: 24px; line-height: 1.5;"></p>
-        <div style="display: flex; gap: 12px;">
+    <div class="modal-content" style="max-width: 430px;">
+      <div class="modal-body" style="padding: 28px 24px; text-align: center;">
+        <div id="confirm-icon-wrap" style="width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;"></div>
+        <h3 id="confirm-title" style="font-size: 17px; font-weight: 700; margin-bottom: 8px;"></h3>
+        <p id="confirm-message" style="font-size: 13.5px; color: var(--ink-secondary); margin-bottom: 22px; line-height: 1.5;"></p>
+        <div style="display: flex; gap: 10px;">
           <button class="btn btn-outline" style="flex: 1;" onclick="closeModal('confirm-modal')">Отмена</button>
           <button class="btn" id="confirm-action-btn" style="flex: 1;"></button>
         </div>
@@ -484,10 +490,11 @@
     let currentTgIndex = null;
     let currentReportTab = 'line1';
     let reportsData = [];
+    let sessionsMap = {};
     let confirmCallback = null;
 
     // САЙДБАР
-    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v3';
+    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v4';
     function initSidebar() {
       if (localStorage.getItem(SIDEBAR_KEY) === null) localStorage.setItem(SIDEBAR_KEY, '1');
       const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
@@ -606,14 +613,9 @@
             <div class="session-header">
               <div>
                 <div class="session-op">${escapeHtml(s.operator_line2)}</div>
-                <div class="session-meta">
-                  <span>
-                    <svg class="icon icon-sm" viewBox="0 0 24 24" style="opacity:0.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    ${formatDate(s.created_at)}
-                  </span>
-                </div>
+                <div class="session-meta"><span>${formatDate(s.created_at)}</span></div>
               </div>
-              <span class="badge ${isDraft ? 'badge-warning' : 'badge-success'}" style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; background: ${isDraft ? 'var(--status-warning-bg)' : 'var(--status-success-bg)'}; color: ${isDraft ? '#B45309' : '#047857'};">
+              <span style="padding: 3px 9px; border-radius: 6px; font-size: 10.5px; font-weight: 600; text-transform: uppercase; background: ${isDraft ? 'var(--status-warning-bg)' : 'var(--status-success-bg)'}; color: ${isDraft ? '#B45309' : '#047857'};">
                 ${isDraft ? 'Черновик' : 'Завершён'}
               </span>
             </div>
@@ -626,7 +628,7 @@
               ${stats.pending > 0 ? `<span class="stat-pill unchecked">Не проверено: ${stats.pending}</span>` : ''}
             </div>
             ${isDraft ? `
-              <div style="font-size: 12px; color: var(--ink-tertiary);">Проверено ${checked} из ${s.itemsCount}</div>
+              <div style="font-size: 11.5px; color: var(--ink-tertiary);">Проверено ${checked} из ${s.itemsCount}</div>
               <div class="audit-progress-bar"><div class="audit-progress-fill" style="width: ${s.itemsCount ? (checked / s.itemsCount * 100) : 0}%"></div></div>
             ` : ''}
             <div class="session-actions">
@@ -649,7 +651,6 @@
       switchView('create');
       setTimeout(() => document.getElementById('create-operator').focus(), 100);
     }
-
     function cancelCreate() { switchView('sessions'); }
 
     document.getElementById('create-ids')?.addEventListener('paste', function(e) {
@@ -659,9 +660,8 @@
       if (numbers && numbers.length > 0) {
         const unique = [...new Set(numbers)];
         this.value = unique.join('\n');
-        const hint = document.getElementById('parser-hint');
+        document.getElementById('parser-hint').style.display = 'inline-flex';
         document.getElementById('parser-hint-text').textContent = `Найдено ${unique.length} номеров (дубли убраны)`;
-        hint.style.display = 'inline-flex';
       } else {
         this.value = pastedText;
         document.getElementById('parser-hint').style.display = 'none';
@@ -683,18 +683,13 @@
 
       try {
         const { data: sessData, error: err1 } = await supabaseClient.from('audit_sessions').insert({
-          operator_line2: operator2,
-          status: 'draft'
+          operator_line2: operator2, status: 'draft'
         }).select().single();
         if (err1) throw err1;
 
         const itemsPayload = ids.map(n => ({
-          request_number: n,
-          operator_name: operator2,
-          session_id: sessData.id,
-          audit_result: 'pending',
-          action_status: 'done',
-          line2_issue: 'none'
+          request_number: n, operator_name: operator2, session_id: sessData.id,
+          audit_result: 'pending', action_status: 'done', line2_issue: 'none'
         }));
 
         const { data: itemsData, error: err2 } = await supabaseClient.from('audit_ptsk').insert(itemsPayload).select();
@@ -713,15 +708,12 @@
       }
     }
 
-    // ОТКРЫТИЕ СЕССИИ
     async function openSession(id) {
       try {
         const { data: sessData, error: err1 } = await supabaseClient.from('audit_sessions').select('*').eq('id', id).single();
         if (err1) throw err1;
-
         const { data: itemsData, error: err2 } = await supabaseClient.from('audit_ptsk').select('*').eq('session_id', id).order('created_at', { ascending: true });
         if (err2) throw err2;
-
         currentSession = { ...sessData, items: itemsData || [] };
         renderAuditView();
         switchView('audit');
@@ -731,13 +723,12 @@
       }
     }
 
-    // РЕНДЕР ХЕДЕРА (отдельно, чтобы обновлять без перерисовки таблицы)
+    // РЕНДЕР ХЕДЕРА
     function renderAuditHeader() {
       if (!currentSession) return;
       const s = currentSession;
       const isDraft = s.status === 'draft';
       const items = s.items;
-
       const stats = { correct: 0, pending_info: 0, incorrect: 0, pending: 0, line2Issues: 0 };
       items.forEach(it => {
         const r = it.audit_result || 'pending';
@@ -750,12 +741,12 @@
       document.getElementById('audit-header-container').innerHTML = `
         <div class="audit-header">
           <div style="flex: 1; min-width: 260px;">
-            <div class="audit-title">Аудит оператора 2 линии: ${escapeHtml(s.operator_line2)}</div>
-            <div class="audit-subtitle">${isDraft ? 'Черновик' : 'Завершён'} · Создан ${formatDate(s.created_at)}</div>
+            <div class="audit-title">Аудит 2 линии: ${escapeHtml(s.operator_line2)}</div>
+            <div class="audit-subtitle">${isDraft ? 'Черновик' : 'Завершён'} · ${formatDate(s.created_at)}</div>
             <div class="audit-summary">
               <span class="stat-pill total">Всего: ${total}</span>
               <span class="stat-pill correct">Верно: ${stats.correct}</span>
-              <span class="stat-pill pending">Уточнение: ${stats.pending_info}</span>
+              <span class="stat-pill pending">Уточн.: ${stats.pending_info}</span>
               <span class="stat-pill incorrect">Ошибки: ${stats.incorrect}</span>
               ${stats.line2Issues > 0 ? `<span class="stat-pill line2">Проблемы 2Л: ${stats.line2Issues}</span>` : ''}
               ${stats.pending > 0 ? `<span class="stat-pill unchecked">Не проверено: ${stats.pending}</span>` : ''}
@@ -763,8 +754,14 @@
             <div class="audit-progress-bar"><div class="audit-progress-fill" style="width: ${total ? (checked / total * 100) : 0}%"></div></div>
           </div>
           <div class="audit-header-actions">
-            ${stats.correct > 0 ? `<button class="btn btn-outline btn-sm" onclick="copyForOperator2()"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>Для 2Л (${stats.correct})</button>` : ''}
-            ${stats.line2Issues > 0 ? `<button class="btn btn-outline btn-sm" onclick="copyLine2Issues()"><svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Проблемы 2Л (${stats.line2Issues})</button>` : ''}
+            ${stats.correct > 0 ? `<button class="btn btn-outline btn-sm" onclick="copyForOperator2()" title="Скопировать список верных заявок для отправки оператору 2 линии">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              Верные заявки для 2Л (${stats.correct})
+            </button>` : ''}
+            ${stats.line2Issues > 0 ? `<button class="btn btn-outline btn-sm" onclick="copyLine2Issues()" title="Скопировать заявки с проблемами 2 линии (долгий перезвон / другое)">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Заявки с проблемами 2Л (${stats.line2Issues})
+            </button>` : ''}
           </div>
         </div>
       `;
@@ -775,7 +772,6 @@
       if (!currentSession) return;
       const s = currentSession;
       const isDraft = s.status === 'draft';
-
       renderAuditHeader();
 
       const tbody = document.getElementById('audit-tbody');
@@ -796,7 +792,7 @@
         return `
           <tr data-index="${index}">
             <td><span class="bulk-req-num" onclick="copyToClipboard('${item.request_number}', 'Номер ${item.request_number} скопирован')" title="Скопировать">${item.request_number}<svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></td>
-            <td><input type="text" class="bulk-input-line1" id="line1-${index}" placeholder="ФИО 1 линии" value="${(item.operator_line1_name || '').replace(/"/g, '&quot;')}" oninput="updateItemField(${index}, 'operator_line1_name', this.value)" ${disabledAttr}></td>
+            <td><input type="text" class="bulk-input-line1" id="line1-${index}" placeholder="ФИО" value="${(item.operator_line1_name || '').replace(/"/g, '&quot;')}" oninput="updateItemField(${index}, 'operator_line1_name', this.value)" ${disabledAttr}></td>
             <td>
               <div class="segmented-control">
                 <button class="segmented-btn ${isCorrect ? 'active-correct' : ''}" onclick="setVerdict(${index}, 'correct')" ${disabledAttr}><svg class="icon icon-sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Верно</button>
@@ -824,13 +820,20 @@
                   <option value="slow_callback" ${l2i === 'slow_callback' ? 'selected' : ''}>Долгий перезвон</option>
                   <option value="other" ${l2i === 'other' ? 'selected' : ''}>Другое</option>
                 </select>
-                <input type="text" class="bulk-input-line1" id="l2c-${index}" placeholder="Опишите проблему..." value="${l2c.replace(/"/g, '&quot;')}" oninput="updateItemField(${index}, 'line2_issue_comment', this.value)" ${(!isDraft || l2i !== 'other') ? 'disabled' : ''} style="${l2i !== 'other' ? 'display:none;' : ''}">
+                <textarea class="bulk-input-comment" id="l2c-${index}" placeholder="Опишите проблему..." oninput="updateItemField(${index}, 'line2_issue_comment', this.value); autoResize(this)" ${(!isDraft || l2i !== 'other') ? 'disabled' : ''} style="${l2i !== 'other' ? 'display:none;' : ''}">${l2c.replace(/</g, '&lt;')}</textarea>
               </div>
             </td>
-            <td><input type="text" class="bulk-input-comment" id="comment-${index}" placeholder="Комментарий..." value="${(item.auditor_comment || '').replace(/"/g, '&quot;')}" oninput="updateItemField(${index}, 'comment', this.value)" ${disabledAttr}></td>
-            <td id="tg-cell-${index}">${isIncorrect && isDraft ? `<button class="btn-tg" onclick="openTgModal(${index})"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>ТГ</button>` : (isIncorrect ? `<button class="btn-tg" onclick="openTgModal(${index})" style="opacity:0.6;"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>ТГ</button>` : '')}</td>
+            <td>
+              <textarea class="bulk-input-comment" id="comment-${index}" placeholder="Комментарий..." oninput="updateItemField(${index}, 'comment', this.value); autoResize(this)" ${disabledAttr}>${(item.auditor_comment || '').replace(/</g, '&lt;')}</textarea>
+            </td>
+            <td id="tg-cell-${index}">${isIncorrect ? `<button class="btn-tg" onclick="openTgModal(${index})"><svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>ТГ</button>` : ''}</td>
           </tr>`;
       }).join('');
+
+      // Авторасширение для существующих textarea
+      setTimeout(() => {
+        document.querySelectorAll('.bulk-input-comment').forEach(t => autoResize(t));
+      }, 50);
 
       // Футер
       const footerEl = document.getElementById('audit-footer-actions');
@@ -838,7 +841,7 @@
         footerEl.innerHTML = `
           <button class="btn btn-danger btn-sm" onclick="deleteSession('${s.id}', '${escapeHtml(s.operator_line2)}')">
             <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            Удалить аудит
+            Удалить
           </button>
           <button class="btn btn-success" id="btn-complete-audit" onclick="completeAudit()">
             <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -861,19 +864,13 @@
             message: 'Есть несохранённые изменения. Сохранить перед выходом?',
             confirmText: 'Сохранить и выйти',
             variant: 'primary',
-            onConfirm: async () => {
-              await forceSave();
-              switchView('sessions');
-              loadSessions();
-            }
+            onConfirm: async () => { await forceSave(); switchView('sessions'); loadSessions(); }
           });
         } else {
-          switchView('sessions');
-          loadSessions();
+          switchView('sessions'); loadSessions();
         }
       };
 
-      // Автоактивация первой непроверенной
       setTimeout(() => {
         const firstPending = s.items.findIndex(it => !it.audit_result || it.audit_result === 'pending');
         const idx = firstPending >= 0 ? firstPending : 0;
@@ -881,29 +878,31 @@
       }, 150);
     }
 
-    // ПОДСВЕТКА СТРОКИ
+    // АВТО-РАСШИРЕНИЕ TEXTAREA
+    function autoResize(el) {
+      el.style.height = 'auto';
+      const newH = Math.min(Math.max(el.scrollHeight, 32), 140);
+      el.style.height = newH + 'px';
+    }
+
+    // ПОДСВЕТКА
     function focusRow(idx, scroll = true) {
       const tr = document.querySelector(`#audit-tbody tr[data-index="${idx}"]`);
       if (!tr) return;
       document.querySelectorAll('#audit-tbody tr.active-row').forEach(r => r.classList.remove('active-row'));
       tr.classList.add('active-row');
-      if (scroll) {
-        tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+      if (scroll) tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     document.addEventListener('focusin', (e) => {
       if (!e.target.closest('#audit-tbody')) return;
-      const tr = e.target.closest('tr');
-      if (!tr) return;
+      const tr = e.target.closest('tr'); if (!tr) return;
       document.querySelectorAll('#audit-tbody tr.active-row').forEach(r => r.classList.remove('active-row'));
       tr.classList.add('active-row');
     });
-
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#audit-tbody')) return;
-      const tr = e.target.closest('tr');
-      if (!tr) return;
+      const tr = e.target.closest('tr'); if (!tr) return;
       document.querySelectorAll('#audit-tbody tr.active-row').forEach(r => r.classList.remove('active-row'));
       tr.classList.add('active-row');
     });
@@ -925,12 +924,10 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.altKey && e.key === 'n' && currentSession && currentSession.status === 'draft') {
-        e.preventDefault();
-        goToNextPending();
+        e.preventDefault(); goToNextPending();
       }
     });
 
-    // ИЗМЕНЕНИЕ ВЕРДИКТА (точечно, без ре-рендера)
     function setVerdict(index, val) {
       if (!currentSession || currentSession.status !== 'draft') return;
       const item = currentSession.items[index];
@@ -959,7 +956,6 @@
       scheduleSave();
     }
 
-    // ИЗМЕНЕНИЕ ПРОБЛЕМЫ 2Л
     function setLine2Issue(index, val) {
       if (!currentSession || currentSession.status !== 'draft') return;
       const item = currentSession.items[index];
@@ -973,14 +969,8 @@
       }
       const input = document.getElementById(`l2c-${index}`);
       if (input) {
-        if (val === 'other') {
-          input.style.display = '';
-          input.disabled = false;
-        } else {
-          input.style.display = 'none';
-          input.disabled = true;
-          input.value = '';
-        }
+        if (val === 'other') { input.style.display = ''; input.disabled = false; setTimeout(() => autoResize(input), 10); }
+        else { input.style.display = 'none'; input.disabled = true; input.value = ''; }
       }
       renderAuditHeader();
       scheduleSave();
@@ -1028,96 +1018,69 @@
         showToast('error', 'Ошибка сохранения', err.message);
       }
     }
-
-    async function forceSave() {
-      clearTimeout(saveTimeout);
-      await doSave();
-    }
+    async function forceSave() { clearTimeout(saveTimeout); await doSave(); }
 
     // ЗАВЕРШЕНИЕ
     async function completeAudit() {
       if (!currentSession) return;
       const unchecked = currentSession.items.filter(it => !it.audit_result || it.audit_result === 'pending');
-      if (unchecked.length > 0) {
-        showToast('error', 'Нельзя завершить', `Не проверено заявок: ${unchecked.length}.`);
-        return;
-      }
+      if (unchecked.length > 0) { showToast('error', 'Нельзя завершить', `Не проверено заявок: ${unchecked.length}.`); return; }
       const incorrectNoLine1 = currentSession.items.filter(it => it.audit_result === 'incorrect' && !it.operator_line1_name?.trim());
-      if (incorrectNoLine1.length > 0) {
-        showToast('error', 'Нельзя завершить', `У ${incorrectNoLine1.length} ошибочных не указан оператор 1Л.`);
-        return;
-      }
+      if (incorrectNoLine1.length > 0) { showToast('error', 'Нельзя завершить', `У ${incorrectNoLine1.length} ошибочных не указан оператор 1Л.`); return; }
       const incorrectNoReason = currentSession.items.filter(it => it.audit_result === 'incorrect' && !it.error_reason);
-      if (incorrectNoReason.length > 0) {
-        showToast('error', 'Нельзя завершить', `У ${incorrectNoReason.length} ошибочных не указана причина.`);
-        return;
-      }
+      if (incorrectNoReason.length > 0) { showToast('error', 'Нельзя завершить', `У ${incorrectNoReason.length} ошибочных не указана причина.`); return; }
 
       showConfirm({
         title: 'Завершить аудит?',
         message: 'После завершения аудит перейдёт в отчёты. Редактирование будет недоступно (можно вернуть в работу).',
-        confirmText: 'Завершить',
-        variant: 'success',
+        confirmText: 'Завершить', variant: 'success',
         onConfirm: async () => {
           try {
             await forceSave();
             const { error } = await supabaseClient.from('audit_sessions').update({ status: 'completed', updated_at: new Date().toISOString() }).eq('id', currentSession.id);
             if (error) throw error;
-            showToast('success', 'Аудит завершён', 'Результаты сохранены и доступны в отчётах.');
+            showToast('success', 'Аудит завершён', 'Результаты сохранены.');
             currentSession.status = 'completed';
             await loadSessions();
             switchView('sessions');
-          } catch (err) {
-            showToast('error', 'Ошибка', err.message);
-          }
+          } catch (err) { showToast('error', 'Ошибка', err.message); }
         }
       });
     }
 
     async function reopenSession(id) {
       showConfirm({
-        title: 'Вернуть аудит в работу?',
-        message: 'Аудит снова станет черновиком и будет доступен для редактирования.',
-        confirmText: 'Вернуть',
-        variant: 'primary',
+        title: 'Вернуть аудит в работу?', message: 'Аудит снова станет черновиком и будет доступен для редактирования.',
+        confirmText: 'Вернуть', variant: 'primary',
         onConfirm: async () => {
           try {
             const { error } = await supabaseClient.from('audit_sessions').update({ status: 'draft', updated_at: new Date().toISOString() }).eq('id', id);
             if (error) throw error;
             showToast('success', 'Возвращено', 'Аудит снова в работе.');
             loadSessions();
-          } catch (err) {
-            showToast('error', 'Ошибка', err.message);
-          }
+          } catch (err) { showToast('error', 'Ошибка', err.message); }
         }
       });
     }
 
     async function deleteSession(id, opName) {
       showConfirm({
-        title: 'Удалить аудит?',
-        message: `Аудит оператора «${opName}» и все его заявки будут удалены безвозвратно.`,
-        confirmText: 'Удалить',
-        variant: 'danger',
+        title: 'Удалить аудит?', message: `Аудит оператора «${opName}» и все его заявки будут удалены безвозвратно.`,
+        confirmText: 'Удалить', variant: 'danger',
         onConfirm: async () => {
           try {
             await supabaseClient.from('audit_ptsk').delete().eq('session_id', id);
             const { error } = await supabaseClient.from('audit_sessions').delete().eq('id', id);
             if (error) throw error;
             showToast('success', 'Удалено', 'Аудит полностью удалён.');
-            if (currentSession && currentSession.id === id) {
-              currentSession = null;
-              switchView('sessions');
-            }
+            if (currentSession && currentSession.id === id) { currentSession = null; switchView('sessions'); }
             loadSessions();
-          } catch (err) {
-            showToast('error', 'Ошибка удаления', err.message);
-          }
+          } catch (err) { showToast('error', 'Ошибка удаления', err.message); }
         }
       });
     }
 
-    // КОПИРОВАНИЕ СПИСКА (верные для оператора 2 линии)
+    // КОПИРОВАНИЕ
     function copyForOperator2() {
       if (!currentSession) return;
       const correct = currentSession.items.filter(it => it.audit_result === 'correct');
@@ -1126,7 +1089,6 @@
       copyToClipboard(text, `Список из ${correct.length} заявок скопирован.`);
     }
 
-    // КОПИРОВАНИЕ ПРОБЛЕМ 2Л
     function copyLine2Issues() {
       if (!currentSession) return;
       const issues = currentSession.items.filter(it => it.line2_issue && it.line2_issue !== 'none');
@@ -1141,7 +1103,7 @@
       copyToClipboard(text, `Скопировано ${issues.length} заявок.`);
     }
 
-    // ТГ ШАБЛОН
+    // ТГ
     function openTgModal(index) {
       if (!currentSession) return;
       currentTgIndex = index;
@@ -1207,12 +1169,16 @@
     async function renderReports() {
       const body = document.getElementById('reports-body');
       const exportBar = document.getElementById('export-bar');
-      exportBar.innerHTML = '<div style="text-align:center; width: 100%; color: var(--ink-tertiary); font-size: 13px;">Загрузка...</div>';
+      exportBar.innerHTML = '<div style="text-align:center; width: 100%; color: var(--ink-tertiary); font-size: 12.5px;">Загрузка...</div>';
       body.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--ink-tertiary);">Загрузка...</div>';
 
       try {
-        const { data: completedSessions } = await supabaseClient.from('audit_sessions').select('id').eq('status', 'completed');
-        const completedIds = (completedSessions || []).map(s => s.id);
+        // ВАЖНО: подгружаем все сессии, чтобы знать имя оператора 2 линии
+        const { data: allSessions } = await supabaseClient.from('audit_sessions').select('id, operator_line2, status');
+        sessionsMap = {};
+        (allSessions || []).forEach(s => { sessionsMap[s.id] = s; });
+
+        const completedIds = (allSessions || []).filter(s => s.status === 'completed').map(s => s.id);
 
         let allItems = [];
         if (completedIds.length > 0) {
@@ -1238,6 +1204,14 @@
       }
     }
 
+    // Имя оператора 2 линии для записи: сначала из сессии, потом fallback на operator_name
+    function getOperator2Name(item) {
+      if (item.session_id && sessionsMap[item.session_id]) {
+        return sessionsMap[item.session_id].operator_line2 || 'Не указан';
+      }
+      return item.operator_name || 'Не указан';
+    }
+
     function renderExportBar() {
       const items = reportsData;
       const incorrect = items.filter(it => it.audit_result === 'incorrect').length;
@@ -1246,7 +1220,7 @@
       exportBar.innerHTML = `
         <span class="export-bar-label">Экспорт:</span>
         <button class="btn btn-outline btn-sm" onclick="copyManagerReport()">
-          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Отчёт для руководителя
         </button>
         ${incorrect > 0 ? `<button class="btn btn-outline btn-sm" onclick="copyAllIncorrect()">
@@ -1278,9 +1252,7 @@
       if (slow.length === 0) return;
       let text = `Заявки с долгим перезвоном >10 минут (${slow.length}):\n\n`;
       slow.forEach(it => {
-        text += it.request_number;
-        if (it.operator_name) text += ` — ${it.operator_name}`;
-        text += '\n';
+        text += it.request_number + ` — ${getOperator2Name(it)}\n`;
       });
       copyToClipboard(text, `Скопировано ${slow.length} заявок.`);
     }
@@ -1314,9 +1286,15 @@
         if (it.audit_result === 'incorrect') op1Stats[n].errors++;
       });
 
-      const topOps = Object.entries(op1Stats)
-        .filter(([_, d]) => d.errors > 0)
-        .sort((a, b) => b[1].errors - a[1].errors);
+      const op2Stats = {};
+      items.forEach(it => {
+        const n = getOperator2Name(it);
+        if (!op2Stats[n]) op2Stats[n] = { total: 0, slow: 0 };
+        op2Stats[n].total++;
+        if (it.line2_issue === 'slow_callback') op2Stats[n].slow++;
+      });
+
+      const topOps = Object.entries(op1Stats).filter(([_, d]) => d.errors > 0).sort((a, b) => b[1].errors - a[1].errors);
 
       let text = `📊 Отчет по аудиту ПЦК\n`;
       text += `═══════════════════════\n\n`;
@@ -1366,12 +1344,12 @@
       });
 
       let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0;
-      let html = `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Оператор 1 линии</th><th style="text-align:center;">Всего</th><th style="text-align:center;">Верно</th><th style="text-align:center;">Уточнение</th><th style="text-align:center;">Ошибки</th><th>Тематики ошибок</th><th style="width: 100px;">Действия</th></tr></thead><tbody>`;
+      let html = `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Оператор 1 линии</th><th style="text-align:center;">Всего</th><th style="text-align:center;">Верно</th><th style="text-align:center;">Уточн.</th><th style="text-align:center;">Ошибки</th><th>Тематики ошибок</th><th style="width: 60px;"></th></tr></thead><tbody>`;
 
       for (const [name, data] of Object.entries(stats)) {
         totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
         const errorTags = Object.entries(data.errors).map(([r, c]) => `<span class="tag">${escapeHtml(r)} (${c})</span>`).join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
-        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${errorTags}</td><td>${data.incorrect > 0 ? `<button class="btn-icon" onclick="copyOperator1Errors('${escapeHtml(name)}')" title="Скопировать номера ошибок"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>` : ''}</td></tr>`;
+        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${errorTags}</td><td>${data.incorrect > 0 ? `<button class="btn-icon" onclick="copyOperator1Errors('${escapeHtml(name)}')" title="Скопировать номера ошибок этого оператора"><svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>` : ''}</td></tr>`;
       }
 
       html += `<tr class="report-total"><td>ОБЩАЯ СВОДКА</td><td style="text-align:center;">${totalAll}</td><td style="text-align:center;">${correctAll}</td><td style="text-align:center;">${pendingAll}</td><td style="text-align:center;">${incorrectAll}</td><td>Процент ошибок: ${totalAll ? ((incorrectAll / totalAll) * 100).toFixed(1) : 0}%</td><td></td></tr></tbody></table></div>`;
@@ -1381,16 +1359,12 @@
     function renderReportLine2(body, items) {
       const stats = {};
       items.forEach(req => {
-        const name = req.operator_name || 'Не указан';
-        if (!stats[name]) stats[name] = { total: 0, correct: 0, incorrect: 0, pending: 0, errors: {}, line2Slow: 0, line2Other: 0, actions: { done: 0, ret_op: 0, ret_chat: 0 } };
+        const name = getOperator2Name(req);  // ИСПРАВЛЕНО: берём имя из сессии
+        if (!stats[name]) stats[name] = { total: 0, correct: 0, incorrect: 0, pending: 0, line2Slow: 0, line2Other: 0, actions: { done: 0, ret_op: 0, ret_chat: 0 } };
         stats[name].total++;
         if (req.audit_result === 'correct') stats[name].correct++;
         else if (req.audit_result === 'pending_info') stats[name].pending++;
-        else if (req.audit_result === 'incorrect') {
-          stats[name].incorrect++;
-          const r = req.error_reason || 'Не указана';
-          stats[name].errors[r] = (stats[name].errors[r] || 0) + 1;
-        }
+        else if (req.audit_result === 'incorrect') stats[name].incorrect++;
         if (req.line2_issue === 'slow_callback') stats[name].line2Slow++;
         if (req.line2_issue === 'other') stats[name].line2Other++;
         if (req.action_status === 'returned_operator') stats[name].actions.ret_op++;
@@ -1408,7 +1382,7 @@
         if (data.line2Slow) issues.push(`<span class="tag line2">Долгий перезвон: ${data.line2Slow}</span>`);
         if (data.line2Other) issues.push(`<span class="tag line2">Другое: ${data.line2Other}</span>`);
         const issuesHtml = issues.join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
-        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${issuesHtml}</td><td style="font-size:12px; color:var(--ink-secondary);">${data.actions.done} / <span style="color:var(--status-warning)">Оператору: ${data.actions.ret_op}</span> / <span style="color:var(--status-warning)">В чат: ${data.actions.ret_chat}</span></td></tr>`;
+        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${issuesHtml}</td><td style="font-size:11.5px; color:var(--ink-secondary);">${data.actions.done} / <span style="color:var(--status-warning)">Оператору: ${data.actions.ret_op}</span> / <span style="color:var(--status-warning)">В чат: ${data.actions.ret_chat}</span></td></tr>`;
       }
 
       html += `<tr class="report-total"><td>ОБЩАЯ СВОДКА</td><td style="text-align:center;">${totalAll}</td><td style="text-align:center;">${correctAll}</td><td style="text-align:center;">${pendingAll}</td><td style="text-align:center;">${incorrectAll}</td><td>${slowAll || otherAll ? `Долгий: ${slowAll}, Другое: ${otherAll}` : '—'}</td><td></td></tr></tbody></table></div>`;
@@ -1427,12 +1401,10 @@
       copyToClipboard(text, `Скопировано ${items.length} заявок оператора ${opName}.`);
     }
 
-    // ПРЕДУПРЕЖДЕНИЕ ПРИ ЗАКРЫТИИ
     window.addEventListener('beforeunload', (e) => {
       if (hasUnsavedChanges) { e.preventDefault(); e.returnValue = ''; }
     });
 
-    // ИНИЦИАЛИЗАЦИЯ
     window.addEventListener('DOMContentLoaded', () => {
       initSidebar();
       loadSessions();
