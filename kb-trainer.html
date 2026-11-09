@@ -14,11 +14,11 @@
       --ink: #1e293b;
       --ink-2: #475569;
       
-      --primary: #10b981; /* Изумрудный */
+      --primary: #10b981;
       --primary-dark: #059669;
       --primary-soft: #d1fae5;
       
-      --accent: #f59e0b; /* Желтый */
+      --accent: #f59e0b;
       --accent-soft: #fef3c7;
       
       --danger: #ef4444;
@@ -174,7 +174,7 @@
       background: #1e293b; border-radius: 16px; overflow: hidden;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       display: flex; justify-content: center; align-items: center;
-      padding: 10px; /* Отступ для красоты */
+      padding: 10px;
     }
     .erp-image-wrapper {
       position: relative; width: 100%; height: 100%;
@@ -182,17 +182,31 @@
     }
     .erp-image { max-width: 100%; max-height: 100%; object-fit: contain; display: block; user-select: none; pointer-events: none; border-radius: 4px; }
     
-    /* Невидимые зоны кликов (Hotspots) */
+    /* Невидимые зоны кликов */
     .erp-hotspot {
       position: absolute; cursor: pointer; border-radius: 4px;
       border: 2px solid transparent; transition: all 0.2s;
       background: rgba(16, 185, 129, 0.01);
+      z-index: 5;
     }
-    .erp-hotspot:hover { background: rgba(16, 185, 129, 0.3); border-color: var(--primary); box-shadow: 0 0 15px rgba(16,185,129,0.6); }
-    .erp-hotspot.correct { background: rgba(16, 185, 129, 0.5); border-color: var(--primary); animation: flashGreen 0.5s; }
-    .erp-hotspot.wrong { background: rgba(239, 68, 68, 0.5); border-color: var(--danger); animation: shake 0.4s; }
     
-    @keyframes flashGreen { 0% { background: rgba(16, 185, 129, 0.9); } 100% { background: rgba(16, 185, 129, 0.5); } }
+    /* Подсветка активной зоны (чтобы не застрять) */
+    .erp-hotspot.pulse {
+      border: 2px dashed var(--primary);
+      background: rgba(16, 185, 129, 0.2);
+      animation: hotspotPulse 1.5s infinite;
+    }
+    @keyframes hotspotPulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); background: rgba(16, 185, 129, 0.1); }
+      50% { box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.3); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); background: rgba(16, 185, 129, 0.1); }
+    }
+
+    .erp-hotspot:hover { background: rgba(16, 185, 129, 0.4); border-color: var(--primary); box-shadow: 0 0 15px rgba(16,185,129,0.8); }
+    .erp-hotspot.correct { background: rgba(16, 185, 129, 0.6); border: 2px solid var(--primary); animation: flashGreen 0.5s; box-shadow: none; }
+    .erp-hotspot.wrong { background: rgba(239, 68, 68, 0.5); border: 2px solid var(--danger); animation: shake 0.4s; }
+    
+    @keyframes flashGreen { 0% { background: rgba(16, 185, 129, 1); } 100% { background: rgba(16, 185, 129, 0.6); } }
     @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
     /* ===== МОДАЛКА ТЕОРИИ ===== */
@@ -237,7 +251,6 @@
 
   <div class="main-content">
     
-    <!-- ЭКРАН 1: ГЛАВНАЯ -->
     <div id="screen-home" class="screen active">
       <div class="hero">
         <h1>Выберите сценарий</h1>
@@ -252,10 +265,8 @@
       </div>
     </div>
 
-    <!-- ЭКРАН 2: ТРЕНАЖЕР -->
     <div id="screen-dialog" class="screen" style="height: 100%;">
       
-      <!-- ЧАТ -->
       <div class="dialog-layout" id="chat-view">
         <div class="chat-header">
           <div class="chat-header-title" id="dialog-title">Диалог с клиентом</div>
@@ -265,7 +276,6 @@
         <div class="options-container" id="options-container"></div>
       </div>
 
-      <!-- ERP СИМУЛЯТОР -->
       <div class="erp-view-layout" id="erp-view">
         <div class="erp-task-banner" id="erp-task-text">
           <h4>Задание</h4>
@@ -274,21 +284,22 @@
         
         <div class="erp-screen-container">
           <div class="erp-image-wrapper">
-            <!-- ВАЖНО: Файл должен называться erp-screen.jpg и лежать в той же папке -->
             <img src="erp-screen.jpg" id="erp-image" class="erp-image" alt="ERP Карточка">
             
-            <!-- Зоны кликов (Hotspots) -->
-            <div class="erp-hotspot" id="hotspot-name" style="left: 23%; top: 14%; width: 12%; height: 3.5%;" onclick="handleErpClick('name')" title="Имя клиента"></div>
-            <div class="erp-hotspot" id="hotspot-to" style="left: 53%; top: 14%; width: 25%; height: 3.5%;" onclick="handleErpClick('to')" title="Тип оборудования"></div>
-            <div class="erp-hotspot" id="hotspot-address" style="left: 77%; top: 42%; width: 15%; height: 3.5%;" onclick="handleErpClick('address')" title="Улица"></div>
-            <div class="erp-hotspot" id="hotspot-problem" style="left: 10%; top: 36%; width: 23%; height: 8%;" onclick="handleErpClick('problem')" title="Проблема со слов клиента"></div>
+            <!-- Координаты скорректированы и увеличены для удобства клика -->
+            <div class="erp-hotspot" id="hotspot-name" style="left: 22%; top: 13%; width: 15%; height: 4%;" onclick="handleErpClick('name')" title="Имя клиента"></div>
+            <div class="erp-hotspot" id="hotspot-to" style="left: 53%; top: 13%; width: 25%; height: 4%;" onclick="handleErpClick('to')" title="Тип оборудования"></div>
+            
+            <!-- Поле Улица. Чуть больше по высоте и ширине -->
+            <div class="erp-hotspot" id="hotspot-address" style="left: 79%; top: 46%; width: 16%; height: 4.5%;" onclick="handleErpClick('address')" title="Улица"></div>
+            
+            <div class="erp-hotspot" id="hotspot-problem" style="left: 10%; top: 34%; width: 23%; height: 9%;" onclick="handleErpClick('problem')" title="Проблема со слов клиента"></div>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- ЭКРАН 3: УСПЕХ -->
     <div id="screen-success" class="screen" style="text-align: center; align-items: center; justify-content: center; height: 100%;">
       <div style="background: var(--primary-soft); width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
         <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -300,7 +311,6 @@
 
   </div>
 
-  <!-- МОДАЛКА ТЕОРИИ -->
   <div class="theory-modal" id="theory-modal">
     <div class="theory-content-box">
       <h3><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> Подсказка</h3>
@@ -460,7 +470,17 @@
 
     function renderErpStep(step) {
       $('erp-task-text').innerHTML = `<h4>Клиент: "${step.client}"</h4><p>${step.taskText}</p>`;
-      document.querySelectorAll('.erp-hotspot').forEach(el => el.className = 'erp-hotspot');
+      
+      // Сбрасываем классы со всех hotspot'ов
+      document.querySelectorAll('.erp-hotspot').forEach(el => {
+        el.className = 'erp-hotspot';
+      });
+
+      // Добавляем пульсацию правильному полю (чтобы пользователь точно не застрял)
+      const correctHotspot = $(`hotspot-${step.hotspot}`);
+      if (correctHotspot) {
+        correctHotspot.classList.add('pulse');
+      }
     }
 
     window.handleErpClick = function(id) {
@@ -469,6 +489,7 @@
       const targetEl = $(`hotspot-${id}`);
 
       if (id === correctId) {
+        targetEl.classList.remove('pulse');
         targetEl.classList.add('correct');
         setTimeout(() => {
           state.currentStepIndex++;
@@ -476,7 +497,7 @@
         }, 800);
       } else {
         targetEl.classList.add('wrong');
-        showToast('Неверно! Посмотрите внимательно на поля ERP.');
+        showToast('Неверно! Кликните на пульсирующее поле.');
         setTimeout(() => targetEl.classList.remove('wrong'), 1000);
       }
     };
