@@ -15,50 +15,23 @@
     button, a, select, .clickable { cursor: pointer; }
 
     :root {
-      --bg-body: #F8FAFC;
-      --bg-surface: #FFFFFF;
-      --bg-subtle: #F1F5F9;
-      
-      --ink-primary: #0F172A;
-      --ink-secondary: #475569;
-      --ink-tertiary: #94A3B8;
-      
-      --brand-primary: #4F46E5;
-      --brand-light: #EEF2FF;
-      --brand-hover: #4338CA;
-      
-      --status-success: #10B981;
-      --status-success-bg: #ECFDF5;
-      --status-error: #F43F5E;
-      --status-error-bg: #FFF1F2;
-      --status-warning: #F59E0B;
-      --status-warning-bg: #FFFBEB;
-
+      --bg-body: #F8FAFC; --bg-surface: #FFFFFF; --bg-subtle: #F1F5F9;
+      --ink-primary: #0F172A; --ink-secondary: #475569; --ink-tertiary: #94A3B8;
+      --brand-primary: #4F46E5; --brand-light: #EEF2FF; --brand-hover: #4338CA;
+      --status-success: #10B981; --status-success-bg: #ECFDF5;
+      --status-error: #F43F5E; --status-error-bg: #FFF1F2;
+      --status-warning: #F59E0B; --status-warning-bg: #FFFBEB;
       --border-light: #E2E8F0;
-      
       --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
       --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
       --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
       --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-      
-      --radius-md: 8px;
-      --radius-lg: 12px;
-      --radius-xl: 16px;
-      
+      --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
       --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       --transition-spring: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg-body);
-      color: var(--ink-primary);
-      min-height: 100vh;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      -webkit-font-smoothing: antialiased;
-    }
+    body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--ink-primary); min-height: 100vh; overflow-x: hidden; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -69,132 +42,70 @@
     .icon-lg { width: 20px; height: 20px; }
 
     /* ================= ТОПБАР ================= */
-    .topbar {
-      background-color: var(--bg-surface);
-      border-bottom: 1px solid var(--border-light);
-      padding: 0 32px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+    .topbar { background-color: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
     .logo { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 16px; letter-spacing: -0.01em; color: var(--ink-primary); }
-    .logo-mark {
-      width: 28px; height: 28px;
-      background: linear-gradient(135deg, var(--brand-primary), #8B5CF6);
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-    }
+    .logo-mark { width: 28px; height: 28px; background: linear-gradient(135deg, var(--brand-primary), #8B5CF6); border-radius: 8px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
     
     .nav-tabs { display: flex; gap: 4px; background: var(--bg-subtle); padding: 4px; border-radius: var(--radius-lg); }
-    .nav-tab {
-      padding: 6px 16px; border-radius: var(--radius-md); border: none; background: transparent;
-      font-family: inherit; font-weight: 500; font-size: 14px; color: var(--ink-secondary);
-      transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px;
-      position: relative;
-    }
+    .nav-tab { padding: 6px 16px; border-radius: var(--radius-md); border: none; background: transparent; font-family: inherit; font-weight: 500; font-size: 14px; color: var(--ink-secondary); transition: var(--transition-smooth); display: flex; align-items: center; gap: 8px; position: relative; }
     .nav-tab:hover { color: var(--ink-primary); }
     .nav-tab.active { background: var(--bg-surface); color: var(--brand-primary); box-shadow: var(--shadow-sm); font-weight: 600; }
     
-    .nav-tab .dot-indicator {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--status-warning);
-      position: absolute; top: 4px; right: 4px; animation: pulseDot 2s infinite;
-    }
+    .nav-tab .dot-indicator { width: 6px; height: 6px; border-radius: 50%; background: var(--status-warning); position: absolute; top: 4px; right: 4px; animation: pulseDot 2s infinite; }
     @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
 
     /* ================= КНОПКИ ================= */
-    .btn {
-      padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid transparent;
-      font-family: inherit; font-weight: 500; font-size: 14px;
-      transition: var(--transition-smooth); display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    }
+    .btn { padding: 8px 16px; border-radius: var(--radius-md); border: 1px solid transparent; font-family: inherit; font-weight: 500; font-size: 14px; transition: var(--transition-smooth); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-primary { background: var(--brand-primary); color: white; box-shadow: var(--shadow-sm); }
     .btn-primary:hover { background: var(--brand-hover); box-shadow: var(--shadow-md); transform: translateY(-1px); }
     .btn-outline { background: var(--bg-surface); border-color: var(--border-light); color: var(--ink-secondary); box-shadow: var(--shadow-sm); }
     .btn-outline:hover { background: var(--bg-subtle); color: var(--ink-primary); border-color: var(--ink-tertiary); }
     .btn-ghost { background: transparent; color: var(--ink-secondary); }
     .btn-ghost:hover { background: var(--bg-subtle); color: var(--ink-primary); }
-    
     .btn-danger { background: var(--status-error); color: white; }
     .btn-danger:hover { background: #E11D48; box-shadow: var(--shadow-md); transform: translateY(-1px); }
 
-    .btn-icon {
-      background: transparent; border: none; color: var(--ink-tertiary); cursor: pointer;
-      padding: 6px; border-radius: 6px; transition: var(--transition-smooth);
-      display: flex; align-items: center; justify-content: center;
-    }
+    .btn-icon { background: transparent; border: none; color: var(--ink-tertiary); cursor: pointer; padding: 6px; border-radius: 6px; transition: var(--transition-smooth); display: flex; align-items: center; justify-content: center; }
     .btn-icon:hover { color: var(--status-error); background: var(--status-error-bg); }
 
-    .btn-tg {
-      background: rgba(0, 136, 204, 0.1); color: #0088cc; border: 1px solid rgba(0, 136, 204, 0.2);
-      padding: 6px 12px; border-radius: var(--radius-md); font-size: 12px; font-weight: 600;
-      display: inline-flex; align-items: center; gap: 6px; transition: var(--transition-smooth);
-    }
+    .btn-tg { background: rgba(0, 136, 204, 0.1); color: #0088cc; border: 1px solid rgba(0, 136, 204, 0.2); padding: 6px 12px; border-radius: var(--radius-md); font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; transition: var(--transition-smooth); }
     .btn-tg:hover { background: #0088cc; color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3); }
 
     /* ================= ОСНОВНОЙ КОНТЕНТ ================= */
     .layout { display: flex; flex: 1; overflow: hidden; }
 
-    /* Шпаргалка */
-    .sidebar {
-      width: 320px; background: var(--bg-surface); border-right: 1px solid var(--border-light);
-      padding: 32px 24px; overflow-y: auto; flex-shrink: 0;
-      transition: var(--transition-spring);
-    }
+    .sidebar { width: 320px; background: var(--bg-surface); border-right: 1px solid var(--border-light); padding: 32px 24px; overflow-y: auto; flex-shrink: 0; transition: var(--transition-spring); }
     .sidebar.collapsed { transform: translateX(-100%); margin-right: -320px; }
     
     .sidebar-section { margin-bottom: 32px; }
     .sidebar-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-tertiary); font-weight: 700; margin-bottom: 12px; }
     
-    .rule-card {
-      background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius-md);
-      padding: 16px; margin-bottom: 12px; display: flex; gap: 12px; align-items: flex-start;
-    }
+    .rule-card { background: var(--bg-body); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; display: flex; gap: 12px; align-items: flex-start; }
     .rule-card.warning { border-left: 3px solid var(--status-warning); }
     .rule-card.danger { border-left: 3px solid var(--status-error); }
     .rule-card.success { border-left: 3px solid var(--status-success); }
     .rule-text { font-size: 13px; color: var(--ink-secondary); line-height: 1.5; }
     .rule-text strong { color: var(--ink-primary); font-weight: 600; display: block; margin-bottom: 2px; }
 
-    /* Центральная часть */
     .main-content { flex: 1; padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
 
-    /* ================= РЕЖИМ: ИСТОРИЯ ================= */
-    .filters-bar {
-      display: flex; gap: 12px; flex-wrap: wrap; background: var(--bg-surface); padding: 16px;
-      border-radius: var(--radius-xl); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); align-items: center;
-    }
-    .search-input {
-      flex: 1; min-width: 200px; padding: 10px 16px; border: 1px solid var(--border-light);
-      border-radius: var(--radius-md); font-family: inherit; font-size: 14px; outline: none; transition: var(--transition-smooth);
-      background: var(--bg-body);
-    }
+    /* ================= ИСТОРИЯ ================= */
+    .filters-bar { display: flex; gap: 12px; flex-wrap: wrap; background: var(--bg-surface); padding: 16px; border-radius: var(--radius-xl); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); align-items: center; }
+    .search-input { flex: 1; min-width: 200px; padding: 10px 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 14px; outline: none; transition: var(--transition-smooth); background: var(--bg-body); }
     .search-input:focus { background: var(--bg-surface); border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-light); }
-    .filter-select {
-      padding: 10px 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md);
-      font-family: inherit; font-size: 14px; outline: none; background: var(--bg-body); color: var(--ink-primary);
-      transition: var(--transition-smooth);
-    }
+    .filter-select { padding: 10px 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 14px; outline: none; background: var(--bg-body); color: var(--ink-primary); transition: var(--transition-smooth); }
     .filter-select:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-light); }
 
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-    .audit-card {
-      background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl);
-      padding: 20px; box-shadow: var(--shadow-sm); transition: var(--transition-spring);
-      display: flex; flex-direction: column; gap: 16px; animation: slideUp 0.4s ease-out both;
-    }
+    .audit-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 20px; box-shadow: var(--shadow-sm); transition: var(--transition-spring); display: flex; flex-direction: column; gap: 16px; animation: slideUp 0.4s ease-out both; }
     .audit-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--ink-tertiary); }
-    
-    /* Выделение для спорных */
     .audit-card.status-pending { border-left: 4px solid var(--status-warning); }
 
     .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .card-title { font-size: 16px; font-weight: 700; color: var(--ink-primary); margin-bottom: 4px; cursor: pointer; transition: var(--transition-smooth); }
     .card-title:hover { color: var(--brand-primary); }
     .card-subtitle { font-size: 13px; color: var(--ink-secondary); }
+    .card-subtitle-sm { font-size: 12px; color: var(--ink-tertiary); margin-top: 2px; }
     
     .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
     .badge-success { background: var(--status-success-bg); color: #047857; }
@@ -202,106 +113,64 @@
     .badge-warning { background: var(--status-warning-bg); color: #B45309; }
 
     .card-body { background: var(--bg-body); padding: 12px; border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
-    .detail-row { display: flex; justify-content: space-between; align-items: center; }
-    .detail-label { color: var(--ink-secondary); }
-    .detail-val { font-weight: 500; color: var(--ink-primary); }
+    .detail-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .detail-label { color: var(--ink-secondary); white-space: nowrap; }
+    .detail-val { font-weight: 500; color: var(--ink-primary); text-align: right; word-break: break-word; }
 
-    /* ================= РЕЖИМ: МАССОВАЯ ПРОВЕРКА ================= */
+    /* ================= МАССОВАЯ ПРОВЕРКА ================= */
     .bulk-container { display: none; flex-direction: column; gap: 24px; animation: fadeIn 0.3s ease-out; }
     .bulk-container.active { display: flex; }
     .history-container { display: flex; flex-direction: column; gap: 24px; }
     .history-container.hidden { display: none; }
 
-    .bulk-input-card {
-      background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl);
-      padding: 32px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 20px;
-    }
-    .bulk-input-row { display: flex; gap: 20px; align-items: flex-start; }
-    .bulk-textarea-wrapper { flex: 1; position: relative; }
-    .bulk-textarea {
-      width: 100%; min-height: 160px; padding: 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md);
-      font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.6; resize: vertical;
-      background: var(--bg-body); transition: var(--transition-smooth);
-    }
+    .bulk-input-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 32px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 20px; }
+    .bulk-input-row { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; }
+    .bulk-textarea-wrapper { flex: 1; min-width: 280px; position: relative; }
+    .bulk-textarea { width: 100%; min-height: 160px; padding: 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.6; resize: vertical; background: var(--bg-body); transition: var(--transition-smooth); }
     .bulk-textarea:focus { outline: none; background: var(--bg-surface); border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-light); }
     
-    .parser-hint {
-      position: absolute; right: 12px; bottom: 12px; font-size: 11px; color: var(--brand-primary);
-      background: var(--brand-light); padding: 4px 8px; border-radius: 4px; font-weight: 600;
-      pointer-events: none; display: flex; align-items: center; gap: 4px;
-    }
+    .parser-hint { position: absolute; right: 12px; bottom: 12px; font-size: 11px; color: var(--brand-primary); background: var(--brand-light); padding: 4px 8px; border-radius: 4px; font-weight: 600; pointer-events: none; display: flex; align-items: center; gap: 4px; }
 
-    .bulk-op-input {
-      width: 280px; padding: 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md);
-      font-family: inherit; font-size: 14px; font-weight: 500; background: var(--bg-body); transition: var(--transition-smooth);
-    }
+    .bulk-op-input-group { display: flex; flex-direction: column; gap: 12px; min-width: 260px; flex: 1; }
+    .input-label-sm { font-size: 11px; font-weight: 700; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; display: block; }
+    .bulk-op-input { width: 100%; padding: 12px 16px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 14px; font-weight: 500; background: var(--bg-body); transition: var(--transition-smooth); }
     .bulk-op-input:focus { outline: none; background: var(--bg-surface); border-color: var(--brand-primary); box-shadow: 0 0 0 3px var(--brand-light); }
 
-    /* Рабочая область массовой проверки */
-    .bulk-workspace {
-      background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-md); overflow: hidden; display: none; animation: slideUp 0.4s ease-out;
-    }
+    .bulk-workspace { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); overflow: hidden; display: none; animation: slideUp 0.4s ease-out; }
     .bulk-workspace.active { display: block; }
     
-    .bulk-workspace-header {
-      padding: 16px 20px; background: var(--bg-body); border-bottom: 1px solid var(--border-light);
-      display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-secondary);
-    }
+    .bulk-workspace-header { padding: 16px 20px; background: var(--bg-body); border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-secondary); flex-wrap: wrap; }
     .bulk-workspace-header strong { color: var(--brand-primary); font-weight: 700; font-size: 15px; }
+    .bulk-workspace-header .badge-line1 { background: var(--status-warning-bg); color: #B45309; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-left: 8px; }
 
     .bulk-table { width: 100%; border-collapse: collapse; text-align: left; }
-    .bulk-table th {
-      background: var(--bg-surface); padding: 14px 20px; font-size: 11px; text-transform: uppercase;
-      color: var(--ink-tertiary); font-weight: 700; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light);
-    }
-    .bulk-table td { padding: 16px 20px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+    .bulk-table th { background: var(--bg-surface); padding: 14px 16px; font-size: 11px; text-transform: uppercase; color: var(--ink-tertiary); font-weight: 700; letter-spacing: 0.05em; border-bottom: 1px solid var(--border-light); }
+    .bulk-table td { padding: 14px 16px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
     .bulk-table tr:last-child td { border-bottom: none; }
     .bulk-table tr:hover { background: var(--bg-body); }
     
-    .bulk-req-num {
-      font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; color: var(--ink-primary);
-      cursor: pointer; transition: var(--transition-smooth); display: inline-flex; align-items: center; gap: 6px;
-    }
+    .bulk-req-num { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; color: var(--ink-primary); cursor: pointer; transition: var(--transition-smooth); display: inline-flex; align-items: center; gap: 6px; }
     .bulk-req-num:hover { color: var(--brand-primary); text-decoration: underline; }
     .bulk-req-num svg { opacity: 0.4; transition: opacity 0.2s; }
     .bulk-req-num:hover svg { opacity: 1; color: var(--brand-primary); }
     
     .segmented-control { display: inline-flex; background: var(--bg-body); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-light); }
-    .segmented-btn {
-      padding: 6px 12px; border-radius: 6px; border: none; background: transparent;
-      font-size: 12px; font-weight: 500; color: var(--ink-secondary); transition: var(--transition-smooth);
-      display: flex; align-items: center; gap: 4px;
-    }
+    .segmented-btn { padding: 6px 10px; border-radius: 6px; border: none; background: transparent; font-size: 12px; font-weight: 500; color: var(--ink-secondary); transition: var(--transition-smooth); display: flex; align-items: center; gap: 4px; }
     .segmented-btn:hover { color: var(--ink-primary); }
     .segmented-btn.active-correct { background: var(--status-success-bg); color: #047857; font-weight: 600; box-shadow: var(--shadow-sm); }
     .segmented-btn.active-incorrect { background: var(--status-error-bg); color: #BE123C; font-weight: 600; box-shadow: var(--shadow-sm); }
     .segmented-btn.active-pending { background: var(--status-warning-bg); color: #B45309; font-weight: 600; box-shadow: var(--shadow-sm); }
 
-    .bulk-select, .bulk-input-comment {
-      width: 100%; padding: 8px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md);
-      font-family: inherit; font-size: 13px; background: var(--bg-surface); transition: var(--transition-smooth);
-    }
-    .bulk-select:focus, .bulk-input-comment:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 2px var(--brand-light); }
+    .bulk-select, .bulk-input-comment, .bulk-input-line1 { width: 100%; padding: 8px 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md); font-family: inherit; font-size: 13px; background: var(--bg-surface); transition: var(--transition-smooth); }
+    .bulk-select:focus, .bulk-input-comment:focus, .bulk-input-line1:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 2px var(--brand-light); }
     .bulk-select:disabled { opacity: 0.5; background: var(--bg-body); cursor: not-allowed; border-color: transparent; }
 
-    .bulk-footer {
-      padding: 20px 24px; background: var(--bg-body); border-top: 1px solid var(--border-light);
-      display: flex; justify-content: flex-end; gap: 12px;
-    }
+    .bulk-footer { padding: 20px 24px; background: var(--bg-body); border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px; }
 
     /* ================= МОДАЛЬНЫЕ ОКНА ================= */
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px);
-      z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;
-      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
     .modal-overlay.open { opacity: 1; pointer-events: auto; }
-    .modal-content {
-      background: var(--bg-surface); width: 100%; max-width: 600px; border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-xl); transform: scale(0.95); opacity: 0;
-      transition: var(--transition-spring); display: flex; flex-direction: column; max-height: 90vh; overflow: hidden;
-    }
+    .modal-content { background: var(--bg-surface); width: 100%; max-width: 600px; border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); transform: scale(0.95); opacity: 0; transition: var(--transition-spring); display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
     .modal-content.large { max-width: 900px; }
     .modal-overlay.open .modal-content { transform: scale(1); opacity: 1; }
 
@@ -314,10 +183,7 @@
 
     /* Чек-лист в модалке ТГ */
     .tg-checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-    .tg-check-item {
-      display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border-light);
-      border-radius: var(--radius-md); cursor: pointer; transition: var(--transition-smooth); background: var(--bg-surface);
-    }
+    .tg-check-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border-light); border-radius: var(--radius-md); cursor: pointer; transition: var(--transition-smooth); background: var(--bg-surface); }
     .tg-check-item:hover { border-color: var(--brand-primary); background: var(--brand-light); }
     .tg-check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; margin-top: 2px; }
     .tg-check-text { display: flex; flex-direction: column; gap: 2px; }
@@ -325,6 +191,10 @@
     .tg-check-desc { font-size: 12px; color: var(--ink-secondary); }
 
     /* ================= ОТЧЕТЫ ================= */
+    .report-tabs { display: flex; gap: 4px; background: var(--bg-subtle); padding: 4px; border-radius: var(--radius-md); margin-bottom: 20px; }
+    .report-tab { flex: 1; padding: 10px; border: none; border-radius: 6px; background: transparent; font-family: inherit; font-weight: 600; font-size: 13px; color: var(--ink-secondary); transition: var(--transition-smooth); }
+    .report-tab.active { background: var(--bg-surface); color: var(--brand-primary); box-shadow: var(--shadow-sm); }
+
     .report-table { width: 100%; border-collapse: collapse; font-size: 14px; }
     .report-table th { padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--ink-tertiary); border-bottom: 1px solid var(--border-light); }
     .report-table td { padding: 16px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
@@ -334,11 +204,7 @@
 
     /* ================= УВЕДОМЛЕНИЯ ================= */
     .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 12px; }
-    .toast {
-      background: var(--bg-surface); border: 1px solid var(--border-light); box-shadow: var(--shadow-lg);
-      padding: 16px; border-radius: var(--radius-lg); display: flex; align-items: flex-start; gap: 12px; min-width: 320px; max-width: 400px;
-      animation: slideInRight 0.3s var(--transition-spring);
-    }
+    .toast { background: var(--bg-surface); border: 1px solid var(--border-light); box-shadow: var(--shadow-lg); padding: 16px; border-radius: var(--radius-lg); display: flex; align-items: flex-start; gap: 12px; min-width: 320px; max-width: 400px; animation: slideInRight 0.3s var(--transition-spring); }
     .toast-icon-wrapper { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .toast.success .toast-icon-wrapper { background: var(--status-success-bg); color: var(--status-success); }
     .toast.error .toast-icon-wrapper { background: var(--status-error-bg); color: var(--status-error); }
@@ -353,7 +219,6 @@
       .mobile-menu-btn { display: block; }
       .nav-tabs { display: none; }
       .bulk-input-row { flex-direction: column; }
-      .bulk-op-input { width: 100%; }
       .bulk-workspace { overflow-x: auto; }
     }
   </style>
@@ -396,7 +261,7 @@
           <svg class="icon" viewBox="0 0 24 24" style="color: var(--status-warning); flex-shrink: 0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
           <div class="rule-text">
             <strong>Задача аудита</strong>
-            Проверить, обоснованно ли оператор создал ПЦК (был ли там реальный недозвон или отказ без консультации).
+            Проверить, обоснованно ли оператор 1 линии создал ПЦК (был ли там реальный недозвон или отказ без консультации).
           </div>
         </div>
       </div>
@@ -407,7 +272,7 @@
           <svg class="icon" viewBox="0 0 24 24" style="color: var(--status-success); flex-shrink: 0;"><polyline points="20 6 9 17 4 12"/></svg>
           <div class="rule-text">
             <strong>Верно</strong>
-            Оператор правильно создал ПЦК (клиент не брал трубку или сразу отказался).
+            Оператор 1 линии правильно создал ПЦК (клиент не брал трубку или сразу отказался).
           </div>
         </div>
         <div class="rule-card warning">
@@ -421,7 +286,19 @@
           <svg class="icon" viewBox="0 0 24 24" style="color: var(--status-error); flex-shrink: 0;"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           <div class="rule-text">
             <strong>Ошибка</strong>
-            Оператор создал ПЦК необоснованно (клиент был готов говорить, но оператор сбросил).
+            Оператор 1 линии создал ПЦК необоснованно (клиент был готов говорить, но оператор сбросил).
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Тематики ошибок</div>
+        <div class="rule-card">
+          <div class="rule-text" style="font-size:12.5px; line-height:1.6;">
+            <div style="margin-bottom:6px;"><b>1.</b> Оператор не уточнил актуальность ремонта</div>
+            <div style="margin-bottom:6px;"><b>2а.</b> Оператор не предупредил что специалист свяжется в течении 10 минут</div>
+            <div style="margin-bottom:6px;"><b>2б.</b> Оператор не получил согласие на перезвон</div>
+            <div><b>3.</b> Оператор не проверил контактный телефон для перезвона</div>
           </div>
         </div>
       </div>
@@ -430,7 +307,7 @@
         <div class="sidebar-title">Действия</div>
         <div class="rule-card">
           <svg class="icon" viewBox="0 0 24 24" style="color: var(--ink-tertiary); flex-shrink: 0;"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-          <div class="rule-text">Вернул оператору для смены статуса</div>
+          <div class="rule-text">Вернул оператору 1 линии для смены статуса</div>
         </div>
         <div class="rule-card">
           <svg class="icon" viewBox="0 0 24 24" style="color: var(--ink-tertiary); flex-shrink: 0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -464,7 +341,7 @@
         <div class="bulk-input-card" id="bulk-input-card">
           <div>
             <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">Новая пачка заявок</h2>
-            <p style="font-size: 14px; color: var(--ink-secondary);">Вставьте текст из чата, и умный парсер оставит только номера заявок. Затем укажите оператора.</p>
+            <p style="font-size: 14px; color: var(--ink-secondary);">Вставьте текст из чата — парсер оставит только номера. Укажите оператора 2 линии (кто прислал) и оператора 1 линии (кто создал ПЦК).</p>
           </div>
           <div class="bulk-input-row">
             <div class="bulk-textarea-wrapper">
@@ -474,7 +351,16 @@
                 Автоочистка при вставке
               </div>
             </div>
-            <input type="text" class="bulk-op-input" id="bulk-operator" placeholder="Имя оператора">
+            <div class="bulk-op-input-group">
+              <div>
+                <label class="input-label-sm">Оператор 2 линии (принял ПЦК)</label>
+                <input type="text" class="bulk-op-input" id="bulk-operator" placeholder="Например: Артем">
+              </div>
+              <div>
+                <label class="input-label-sm">Оператор 1 линии (создал ПЦК) — по умолчанию</label>
+                <input type="text" class="bulk-op-input" id="bulk-operator-line1" placeholder="Например: Айнагуль Жаналинова">
+              </div>
+            </div>
           </div>
           <div style="display:flex; justify-content:flex-end;">
             <button class="btn btn-primary" onclick="generateBulkList()">
@@ -487,18 +373,19 @@
         <div class="bulk-workspace" id="bulk-workspace">
           <div class="bulk-workspace-header">
             <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Аудит оператора: <strong id="bulk-current-op">—</strong>
+            Оператор 2 линии: <strong id="bulk-current-op">—</strong>
           </div>
           
           <table class="bulk-table">
             <thead>
               <tr>
-                <th style="width: 140px;">Заявка</th>
-                <th style="width: 280px;">Вердикт</th>
-                <th>Тематика ошибки (если ошибка)</th>
-                <th style="width: 220px;">Действие</th>
-                <th style="width: 180px;">Комментарий</th>
-                <th style="width: 100px;">ТГ-Шаблон</th>
+                <th style="width: 120px;">Заявка</th>
+                <th style="width: 200px;">Оператор 1 линии</th>
+                <th style="width: 240px;">Вердикт</th>
+                <th style="min-width: 240px;">Тематика ошибки</th>
+                <th style="width: 200px;">Действие</th>
+                <th style="width: 160px;">Комментарий</th>
+                <th style="width: 80px;">ТГ</th>
               </tr>
             </thead>
             <tbody id="bulk-tbody"></tbody>
@@ -520,12 +407,18 @@
   <div class="modal-overlay" id="reports-modal">
     <div class="modal-content large">
       <div class="modal-header">
-        <h2 class="modal-title">Отчет по операторам</h2>
+        <h2 class="modal-title">Отчеты</h2>
         <button class="close-btn" onclick="closeModal('reports-modal')">
           <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
         </button>
       </div>
-      <div class="modal-body" id="reports-body"></div>
+      <div class="modal-body">
+        <div class="report-tabs">
+          <button class="report-tab active" id="rtab-line1" onclick="switchReportTab('line1')">По операторам 1 линии (ошибки)</button>
+          <button class="report-tab" id="rtab-line2" onclick="switchReportTab('line2')">По операторам 2 линии (статистика)</button>
+        </div>
+        <div id="reports-body"></div>
+      </div>
       <div class="modal-footer">
         <button class="btn btn-primary" onclick="closeModal('reports-modal')">Понятно</button>
       </div>
@@ -560,8 +453,8 @@
       </div>
       <div class="modal-body">
         <div style="margin-bottom: 16px;">
-          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">ФИО Оператора</label>
-          <input type="text" class="bulk-op-input" id="tg-operator-input" style="width: 100%; padding: 12px;" placeholder="Введите имя..." oninput="updateTgPreview()">
+          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">ФИО оператора 1 линии (кому возвращаем)</label>
+          <input type="text" class="bulk-op-input" id="tg-operator-input" style="width: 100%; padding: 12px;" placeholder="Введите ФИО..." oninput="updateTgPreview()">
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -580,7 +473,7 @@
               <input type="checkbox" id="tg-err-2" onchange="updateTgPreview()">
               <div class="tg-check-text">
                 <span class="tg-check-title">2а. Время ожидания</span>
-                <span class="tg-check-desc">Не предупредил о звонке в течение 10 минут</span>
+                <span class="tg-check-desc">Не предупредил что специалист свяжется в течении 10 минут</span>
               </div>
             </label>
             
@@ -596,7 +489,7 @@
               <input type="checkbox" id="tg-err-4" onchange="updateTgPreview()">
               <div class="tg-check-text">
                 <span class="tg-check-title">3. Контактный телефон</span>
-                <span class="tg-check-desc">Оператор не проверил телефон для перезвона</span>
+                <span class="tg-check-desc">Оператор не проверил контактный телефон для перезвона</span>
               </div>
             </label>
           </div>
@@ -629,8 +522,16 @@
     let itemToDeleteId = null;
     let currentTgTicketNum = null;
     let currentTgIndex = null;
+    let currentReportTab = 'line1';
 
-    // ================= АВТОСОХРАНЕНИЕ В LOCALSTORAGE =================
+    const ERROR_REASONS = [
+      { value: '1. Оператор не уточнил актуальность ремонта', label: '1. Оператор не уточнил актуальность ремонта' },
+      { value: '2а. Оператор не предупредил что специалист свяжется в течении 10 минут', label: '2а. Оператор не предупредил что специалист свяжется в течении 10 минут' },
+      { value: '2б. Оператор не получил согласие на перезвон', label: '2б. Оператор не получил согласие на перезвон' },
+      { value: '3. Оператор не проверил контактный телефон для перезвона', label: '3. Оператор не проверил контактный телефон для перезвона' }
+    ];
+
+    // ================= АВТОСОХРАНЕНИЕ =================
     const BULK_STORAGE_KEY = 'audit_ptsk_bulk_v1';
     const STORAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
     let saveTimeout;
@@ -829,7 +730,9 @@
       const filter = document.getElementById('filter-status').value;
 
       const filtered = allRequests.filter(req => {
-        const matchSearch = req.request_number.toLowerCase().includes(query) || req.operator_name.toLowerCase().includes(query);
+        const line1 = (req.operator_line1_name || '').toLowerCase();
+        const line2 = (req.operator_name || '').toLowerCase();
+        const matchSearch = req.request_number.toLowerCase().includes(query) || line1.includes(query) || line2.includes(query);
         const matchFilter = filter === 'all' || req.audit_result === filter;
         return matchSearch && matchFilter;
       });
@@ -863,7 +766,8 @@
                 <div class="card-title" onclick="copyToClipboard('${req.request_number}')" title="Скопировать номер">
                   Заявка ${req.request_number}
                 </div>
-                <div class="card-subtitle">Оператор: ${req.operator_name}</div>
+                <div class="card-subtitle">2 линия: ${req.operator_name || '—'}</div>
+                <div class="card-subtitle-sm">1 линия: ${req.operator_line1_name || '—'}</div>
               </div>
               <div style="display:flex; gap:8px; align-items:center;">
                 <span class="badge ${badgeClass}">
@@ -875,7 +779,7 @@
               </div>
             </div>
             <div class="card-body">
-              ${!isCorrect && !isPending ? `<div class="detail-row"><span class="detail-label">Ошибка:</span><span class="detail-val" style="color:var(--status-error)">${req.error_reason || '—'}</span></div>` : ''}
+              ${!isCorrect && !isPending ? `<div class="detail-row"><span class="detail-label">Ошибка:</span><span class="detail-val" style="color:var(--status-error); text-align: right; max-width: 65%;">${req.error_reason || '—'}</span></div>` : ''}
               <div class="detail-row"><span class="detail-label">Действие:</span><span class="detail-val" style="color:${actionColor}">${actionText}</span></div>
               ${req.auditor_comment ? `<div class="detail-row"><span class="detail-label">Комментарий:</span><span class="detail-val" style="font-weight:400">${req.auditor_comment}</span></div>` : ''}
               <div class="detail-row" style="margin-top:4px;"><span class="detail-label" style="font-size:11px;">Проверено: ${date}</span></div>
@@ -888,10 +792,11 @@
     // --- МАССОВАЯ ПРОВЕРКА ---
     function generateBulkList() {
       const idsRaw = document.getElementById('bulk-ids').value;
-      const operator = document.getElementById('bulk-operator').value.trim();
+      const operator2 = document.getElementById('bulk-operator').value.trim();
+      const operator1 = document.getElementById('bulk-operator-line1').value.trim();
 
-      if (!idsRaw.trim() || !operator) {
-        showToast('error', 'Ошибка', 'Вставьте номера заявок и укажите оператора.');
+      if (!idsRaw.trim() || !operator2) {
+        showToast('error', 'Ошибка', 'Вставьте номера заявок и укажите оператора 2 линии.');
         return;
       }
 
@@ -901,11 +806,12 @@
         return;
       }
 
-      document.getElementById('bulk-current-op').textContent = operator;
+      document.getElementById('bulk-current-op').textContent = operator2;
 
       bulkItems = ids.map(id => ({
         request_number: id,
-        operator_name: operator,
+        operator_name: operator2,
+        operator_line1_name: operator1,
         verdict: null,
         error_reason: '',
         action_status: 'done',
@@ -922,13 +828,25 @@
     function renderBulkWorkspace() {
       const tbody = document.getElementById('bulk-tbody');
       
-      tbody.innerHTML = bulkItems.map((item, index) => `
+      const reasonOptionsHtml = ERROR_REASONS.map(r => 
+        `<option value="${r.value}">${r.label}</option>`
+      ).join('');
+
+      tbody.innerHTML = bulkItems.map((item, index) => {
+        const isReasonValid = ERROR_REASONS.some(r => r.value === item.error_reason);
+        const reasonSelectValue = isReasonValid ? item.error_reason : '';
+
+        return `
         <tr data-index="${index}">
           <td>
             <span class="bulk-req-num" onclick="copyToClipboard('${item.request_number}')" title="Нажмите, чтобы скопировать">
               ${item.request_number}
               <svg class="icon icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </span>
+          </td>
+
+          <td>
+            <input type="text" class="bulk-input-line1" id="line1-${index}" placeholder="ФИО 1 линии" value="${(item.operator_line1_name || '').replace(/"/g, '&quot;')}" oninput="updateBulkField(${index}, 'operator_line1_name', this.value)">
           </td>
           
           <td>
@@ -948,10 +866,7 @@
           <td>
             <select class="bulk-select" id="reason-${index}" onchange="updateBulkField(${index}, 'error_reason', this.value)" ${item.verdict !== 'incorrect' ? 'disabled' : ''}>
               <option value="">— Не выбрана —</option>
-              <option value="Клиент был готов к диалогу" ${item.error_reason === 'Клиент был готов к диалогу' ? 'selected' : ''}>Клиент был готов к диалогу</option>
-              <option value="Клиент согласился на консультацию" ${item.error_reason === 'Клиент согласился на консультацию' ? 'selected' : ''}>Клиент согласился на консультацию</option>
-              <option value="Оператор неверно понял отказ" ${item.error_reason === 'Оператор неверно понял отказ' ? 'selected' : ''}>Неверно понял отказ</option>
-              <option value="Другое" ${item.error_reason === 'Другое' ? 'selected' : ''}>Другое (см. коммент)</option>
+              ${reasonOptionsHtml.replace(`value="${reasonSelectValue}"`, `value="${reasonSelectValue}" selected`)}
             </select>
           </td>
           
@@ -974,7 +889,7 @@
             </button>
           </td>
         </tr>
-      `).join('');
+      `}).join('');
     }
 
     function setBulkVerdict(index, val) {
@@ -1001,7 +916,7 @@
 
     function updateBulkField(index, field, value) {
       bulkItems[index][field] = value;
-      if (field === 'comment') {
+      if (field === 'comment' || field === 'operator_line1_name') {
         debouncedSaveBulkState();
       } else {
         saveBulkState();
@@ -1025,6 +940,13 @@
         return;
       }
 
+      // Проверяем, что для ошибочных заявок указан оператор 1 линии
+      const missingLine1 = bulkItems.filter(item => item.verdict === 'incorrect' && !item.operator_line1_name.trim());
+      if (missingLine1.length > 0) {
+        showToast('error', 'Внимание', `У ${missingLine1.length} ошибочных заявок не указан оператор 1 линии.`);
+        return;
+      }
+
       const btn = document.getElementById('btn-save-bulk');
       btn.disabled = true;
       btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Сохранение...';
@@ -1032,6 +954,7 @@
       const payload = bulkItems.map(item => ({
         request_number: item.request_number,
         operator_name: item.operator_name,
+        operator_line1_name: item.operator_line1_name.trim(),
         audit_result: item.verdict,
         error_reason: item.verdict === 'incorrect' ? item.error_reason : null,
         action_status: item.action_status,
@@ -1060,7 +983,8 @@
       const item = bulkItems[index];
       currentTgTicketNum = item.request_number;
       
-      document.getElementById('tg-operator-input').value = item.operator_name;
+      // Берем ФИО оператора 1 линии (кому возвращаем)
+      document.getElementById('tg-operator-input').value = item.operator_line1_name || '';
       
       document.getElementById('tg-err-1').checked = false;
       document.getElementById('tg-err-2').checked = false;
@@ -1073,6 +997,15 @@
 
     function updateTgPreview() {
       const opName = document.getElementById('tg-operator-input').value.trim();
+      
+      // Синхронизируем значение обратно в bulkItems
+      if (currentTgIndex !== null) {
+        bulkItems[currentTgIndex].operator_line1_name = opName;
+        const line1Input = document.getElementById(`line1-${currentTgIndex}`);
+        if (line1Input) line1Input.value = opName;
+        debouncedSaveBulkState();
+      }
+
       const err1 = document.getElementById('tg-err-1').checked;
       const err2 = document.getElementById('tg-err-2').checked;
       const err3 = document.getElementById('tg-err-3').checked;
@@ -1080,9 +1013,9 @@
 
       const errors = [];
       if (err1) errors.push('не уточнил актуальность ремонта');
-      if (err2) errors.push('не предупредил о звонке в 10 минут');
+      if (err2) errors.push('не предупредил что специалист свяжется в течении 10 минут');
       if (err3) errors.push('не получил согласие на перезвон');
-      if (err4) errors.push('не проверил контактный телефон');
+      if (err4) errors.push('не проверил контактный телефон для перезвона');
 
       let text = `${currentTgTicketNum} ${opName}`;
       
@@ -1102,89 +1035,166 @@
     }
 
     // --- ОТЧЕТЫ ---
+    function switchReportTab(tab) {
+      currentReportTab = tab;
+      document.getElementById('rtab-line1').classList.toggle('active', tab === 'line1');
+      document.getElementById('rtab-line2').classList.toggle('active', tab === 'line2');
+      renderReports();
+    }
+
     function openReports() {
-      const body = document.getElementById('reports-body');
       if (allRequests.length === 0) {
-        body.innerHTML = '<p style="text-align:center; padding:40px; color:var(--ink-tertiary)">Нет данных для формирования отчета.</p>';
+        document.getElementById('reports-body').innerHTML = '<p style="text-align:center; padding:40px; color:var(--ink-tertiary)">Нет данных для формирования отчета.</p>';
         document.getElementById('reports-modal').classList.add('open');
         return;
       }
+      renderReports();
+      document.getElementById('reports-modal').classList.add('open');
+    }
 
-      const stats = {};
-      allRequests.forEach(req => {
-        if (!stats[req.operator_name]) {
-          stats[req.operator_name] = { total: 0, correct: 0, incorrect: 0, pending: 0, errors: {}, actions: { done: 0, ret_op: 0, ret_chat: 0 } };
-        }
-        stats[req.operator_name].total++;
-        if (req.audit_result === 'correct') {
-          stats[req.operator_name].correct++;
-        } else if (req.audit_result === 'pending_info') {
-          stats[req.operator_name].pending++;
-        } else {
-          stats[req.operator_name].incorrect++;
-          const reason = req.error_reason || 'Не указана';
-          stats[req.operator_name].errors[reason] = (stats[req.operator_name].errors[reason] || 0) + 1;
-        }
-        
-        if (req.action_status === 'returned_operator') stats[req.operator_name].actions.ret_op++;
-        else if (req.action_status === 'returned_chat') stats[req.operator_name].actions.ret_chat++;
-        else stats[req.operator_name].actions.done++;
-      });
-
-      let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0;
-
-      let html = `<table class="report-table">
-        <thead>
-          <tr>
-            <th>Оператор</th>
-            <th style="text-align:center;">Всего</th>
-            <th style="text-align:center;">Верно</th>
-            <th style="text-align:center;">Уточнение</th>
-            <th style="text-align:center;">Ошибки</th>
-            <th>Тематики ошибок</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-      for (const [opName, data] of Object.entries(stats)) {
-        totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
-
-        const errorTags = Object.entries(data.errors)
-          .map(([reason, count]) => `<span class="tag">${reason} (${count})</span>`)
-          .join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
-
-        html += `
-          <tr>
-            <td style="font-weight:600;">${opName}</td>
-            <td style="text-align:center; font-weight:600;">${data.total}</td>
-            <td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td>
-            <td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td>
-            <td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td>
-            <td>${errorTags}</td>
-            <td style="font-size:12px; color:var(--ink-secondary);">
-              ${data.actions.done} / 
-              <span style="color:var(--status-warning)">Оператору: ${data.actions.ret_op}</span> / 
-              <span style="color:var(--status-warning)">В чат: ${data.actions.ret_chat}</span>
-            </td>
-          </tr>
-        `;
+    function renderReports() {
+      const body = document.getElementById('reports-body');
+      if (allRequests.length === 0) {
+        body.innerHTML = '<p style="text-align:center; padding:40px; color:var(--ink-tertiary)">Нет данных.</p>';
+        return;
       }
 
-      html += `
-        <tr class="report-total">
-          <td>ОБЩАЯ СВОДКА</td>
-          <td style="text-align:center;">${totalAll}</td>
-          <td style="text-align:center;">${correctAll}</td>
-          <td style="text-align:center;">${pendingAll}</td>
-          <td style="text-align:center;">${incorrectAll}</td>
-          <td>Процент ошибок: ${((incorrectAll / totalAll) * 100).toFixed(1)}%</td>
-          <td></td>
-        </tr>
-      </tbody></table>`;
+      if (currentReportTab === 'line1') {
+        // Отчет по операторам 1 линии (кто создал ПЦК)
+        const stats = {};
+        allRequests.forEach(req => {
+          const name = req.operator_line1_name || 'Не указан';
+          if (!stats[name]) {
+            stats[name] = { total: 0, correct: 0, incorrect: 0, pending: 0, errors: {} };
+          }
+          stats[name].total++;
+          if (req.audit_result === 'correct') stats[name].correct++;
+          else if (req.audit_result === 'pending_info') stats[name].pending++;
+          else {
+            stats[name].incorrect++;
+            const reason = req.error_reason || 'Не указана';
+            stats[name].errors[reason] = (stats[name].errors[reason] || 0) + 1;
+          }
+        });
 
-      body.innerHTML = html;
-      document.getElementById('reports-modal').classList.add('open');
+        let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0;
+        let html = `<table class="report-table">
+          <thead>
+            <tr>
+              <th>Оператор 1 линии</th>
+              <th style="text-align:center;">Всего проверено</th>
+              <th style="text-align:center;">Верно</th>
+              <th style="text-align:center;">Уточнение</th>
+              <th style="text-align:center;">Ошибки</th>
+              <th>Тематики ошибок</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+        for (const [name, data] of Object.entries(stats)) {
+          totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
+          const errorTags = Object.entries(data.errors)
+            .map(([reason, count]) => `<span class="tag">${reason} (${count})</span>`)
+            .join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
+
+          html += `
+            <tr>
+              <td style="font-weight:600;">${name}</td>
+              <td style="text-align:center; font-weight:600;">${data.total}</td>
+              <td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td>
+              <td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td>
+              <td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td>
+              <td>${errorTags}</td>
+            </tr>
+          `;
+        }
+
+        html += `
+          <tr class="report-total">
+            <td>ОБЩАЯ СВОДКА</td>
+            <td style="text-align:center;">${totalAll}</td>
+            <td style="text-align:center;">${correctAll}</td>
+            <td style="text-align:center;">${pendingAll}</td>
+            <td style="text-align:center;">${incorrectAll}</td>
+            <td>Процент ошибок: ${((incorrectAll / totalAll) * 100).toFixed(1)}%</td>
+          </tr>
+        </tbody></table>`;
+
+        body.innerHTML = html;
+      } else {
+        // Отчет по операторам 2 линии (кто принял ПЦК)
+        const stats = {};
+        allRequests.forEach(req => {
+          const name = req.operator_name || 'Не указан';
+          if (!stats[name]) {
+            stats[name] = { total: 0, correct: 0, incorrect: 0, pending: 0, errors: {}, actions: { done: 0, ret_op: 0, ret_chat: 0 } };
+          }
+          stats[name].total++;
+          if (req.audit_result === 'correct') stats[name].correct++;
+          else if (req.audit_result === 'pending_info') stats[name].pending++;
+          else {
+            stats[name].incorrect++;
+            const reason = req.error_reason || 'Не указана';
+            stats[name].errors[reason] = (stats[name].errors[reason] || 0) + 1;
+          }
+          
+          if (req.action_status === 'returned_operator') stats[name].actions.ret_op++;
+          else if (req.action_status === 'returned_chat') stats[name].actions.ret_chat++;
+          else stats[name].actions.done++;
+        });
+
+        let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0;
+        let html = `<table class="report-table">
+          <thead>
+            <tr>
+              <th>Оператор 2 линии</th>
+              <th style="text-align:center;">Всего</th>
+              <th style="text-align:center;">Верно</th>
+              <th style="text-align:center;">Уточнение</th>
+              <th style="text-align:center;">Ошибки</th>
+              <th>Тематики ошибок</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+        for (const [name, data] of Object.entries(stats)) {
+          totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
+          const errorTags = Object.entries(data.errors)
+            .map(([reason, count]) => `<span class="tag">${reason} (${count})</span>`)
+            .join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
+
+          html += `
+            <tr>
+              <td style="font-weight:600;">${name}</td>
+              <td style="text-align:center; font-weight:600;">${data.total}</td>
+              <td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td>
+              <td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td>
+              <td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td>
+              <td>${errorTags}</td>
+              <td style="font-size:12px; color:var(--ink-secondary);">
+                ${data.actions.done} / 
+                <span style="color:var(--status-warning)">Оператору: ${data.actions.ret_op}</span> / 
+                <span style="color:var(--status-warning)">В чат: ${data.actions.ret_chat}</span>
+              </td>
+            </tr>
+          `;
+        }
+
+        html += `
+          <tr class="report-total">
+            <td>ОБЩАЯ СВОДКА</td>
+            <td style="text-align:center;">${totalAll}</td>
+            <td style="text-align:center;">${correctAll}</td>
+            <td style="text-align:center;">${pendingAll}</td>
+            <td style="text-align:center;">${incorrectAll}</td>
+            <td>Процент ошибок: ${((incorrectAll / totalAll) * 100).toFixed(1)}%</td>
+            <td></td>
+          </tr>
+        </tbody></table>`;
+
+        body.innerHTML = html;
+      }
     }
 
     function closeModal(id) { document.getElementById(id).classList.remove('open'); }
@@ -1202,9 +1212,13 @@
 
       const saved = loadBulkState();
       if (saved) {
-        bulkItems = saved.items;
+        bulkItems = saved.items.map(item => ({
+          ...item,
+          operator_line1_name: item.operator_line1_name || ''
+        }));
         document.getElementById('bulk-current-op').textContent = saved.operator || '—';
         document.getElementById('bulk-operator').value = saved.operator || '';
+        document.getElementById('bulk-operator-line1').value = saved.items[0]?.operator_line1_name || '';
         renderBulkWorkspace();
         document.getElementById('bulk-workspace').classList.add('active');
         document.getElementById('bulk-input-card').style.display = 'none';
