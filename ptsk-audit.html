@@ -99,7 +99,6 @@
     .nav-tab:hover { color: var(--ink-primary); }
     .nav-tab.active { background: var(--bg-surface); color: var(--brand-primary); box-shadow: var(--shadow-sm); font-weight: 600; }
     
-    /* Индикатор незавершённой работы */
     .nav-tab .dot-indicator {
       width: 6px; height: 6px; border-radius: 50%; background: var(--status-warning);
       position: absolute; top: 4px; right: 4px; animation: pulseDot 2s infinite;
@@ -311,12 +310,14 @@
     /* Чек-лист в модалке ТГ */
     .tg-checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
     .tg-check-item {
-      display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border-light);
+      display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid var(--border-light);
       border-radius: var(--radius-md); cursor: pointer; transition: var(--transition-smooth); background: var(--bg-surface);
     }
     .tg-check-item:hover { border-color: var(--brand-primary); background: var(--brand-light); }
-    .tg-check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; }
-    .tg-check-item span { font-size: 14px; font-weight: 500; color: var(--ink-primary); }
+    .tg-check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; margin-top: 2px; }
+    .tg-check-text { display: flex; flex-direction: column; gap: 2px; }
+    .tg-check-title { font-size: 14px; font-weight: 600; color: var(--ink-primary); }
+    .tg-check-desc { font-size: 12px; color: var(--ink-secondary); }
 
     /* ================= ОТЧЕТЫ ================= */
     .report-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -537,7 +538,7 @@
 
   <!-- МОДАЛКА ШАБЛОНА ТГ -->
   <div class="modal-overlay" id="tg-modal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 550px;">
       <div class="modal-header">
         <h2 class="modal-title">Шаблон для Telegram</h2>
         <button class="close-btn" onclick="closeModal('tg-modal')">
@@ -551,26 +552,46 @@
         </div>
         
         <div style="margin-bottom: 16px;">
-          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">Выберите ошибки</label>
+          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">Отметьте допущенные ошибки (по регламенту)</label>
+          
           <div class="tg-checklist">
             <label class="tg-check-item">
               <input type="checkbox" id="tg-err-1" onchange="updateTgPreview()">
-              <span>номер не уточнила</span>
+              <div class="tg-check-text">
+                <span class="tg-check-title">1. Актуальность ремонта</span>
+                <span class="tg-check-desc">Оператор не уточнил актуальность ремонта</span>
+              </div>
             </label>
+            
             <label class="tg-check-item">
               <input type="checkbox" id="tg-err-2" onchange="updateTgPreview()">
-              <span>согласие на ПЦК не получено</span>
+              <div class="tg-check-text">
+                <span class="tg-check-title">2а. Время ожидания</span>
+                <span class="tg-check-desc">Не предупредил о звонке в течение 10 минут</span>
+              </div>
             </label>
+            
             <label class="tg-check-item">
               <input type="checkbox" id="tg-err-3" onchange="updateTgPreview()">
-              <span>До кл не дозвонились</span>
+              <div class="tg-check-text">
+                <span class="tg-check-title">2б. Согласие на перезвон</span>
+                <span class="tg-check-desc">Оператор не получил согласие на перезвон</span>
+              </div>
+            </label>
+            
+            <label class="tg-check-item">
+              <input type="checkbox" id="tg-err-4" onchange="updateTgPreview()">
+              <div class="tg-check-text">
+                <span class="tg-check-title">3. Контактный телефон</span>
+                <span class="tg-check-desc">Оператор не проверил телефон для перезвона</span>
+              </div>
             </label>
           </div>
         </div>
 
         <div>
           <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">Предпросмотр</label>
-          <textarea class="bulk-textarea" id="tg-preview" readonly style="min-height: 100px; background: var(--bg-body); cursor: text;"></textarea>
+          <textarea class="bulk-textarea" id="tg-preview" readonly style="min-height: 100px; background: var(--bg-body); cursor: text; font-family: 'Inter', sans-serif; font-size: 14px;"></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -648,7 +669,6 @@
       localStorage.removeItem(BULK_STORAGE_KEY);
     }
 
-    // Индикатор незавершённой работы на вкладке
     function updateBulkTabIndicator() {
       const tabBulk = document.getElementById('tab-bulk');
       const existingDot = tabBulk.querySelector('.dot-indicator');
@@ -772,7 +792,7 @@
         containerHistory.classList.add('hidden');
         if (bulkItems.length > 0) document.getElementById('bulk-workspace').classList.add('active');
       }
-      saveBulkState(); // Сохраняем активную вкладку
+      saveBulkState();
     }
 
     // --- ЗАГРУЗКА ИСТОРИИ ---
@@ -877,7 +897,7 @@
       renderBulkWorkspace();
       document.getElementById('bulk-workspace').classList.add('active');
       document.getElementById('bulk-input-card').style.display = 'none';
-      saveBulkState(); // Сохраняем сразу после создания
+      saveBulkState();
       updateBulkTabIndicator();
     }
 
@@ -953,15 +973,15 @@
       } else if (val === 'incorrect') {
         reasonSelect.disabled = false;
       }
-      saveBulkState(); // Сохраняем после смены вердикта
+      saveBulkState();
     }
 
     function updateBulkField(index, field, value) {
       bulkItems[index][field] = value;
       if (field === 'comment') {
-        debouncedSaveBulkState(); // Для текста - с задержкой
+        debouncedSaveBulkState();
       } else {
-        saveBulkState(); // Для селектов - сразу
+        saveBulkState();
       }
     }
 
@@ -971,7 +991,7 @@
       document.getElementById('bulk-input-card').style.display = 'flex';
       document.getElementById('bulk-ids').value = '';
       document.getElementById('bulk-current-op').textContent = '—';
-      clearBulkState(); // Очищаем память
+      clearBulkState();
       updateBulkTabIndicator();
     }
 
@@ -1000,7 +1020,7 @@
         if (error) throw error;
 
         showToast('success', 'Успешно', `Сохранено ${payload.length} заявок.`);
-        cancelBulk(); // Очищает и localStorage
+        cancelBulk();
         loadData();
         switchTab('history');
       } catch (err) {
@@ -1022,6 +1042,7 @@
       document.getElementById('tg-err-1').checked = false;
       document.getElementById('tg-err-2').checked = false;
       document.getElementById('tg-err-3').checked = false;
+      document.getElementById('tg-err-4').checked = false;
       
       updateTgPreview();
       document.getElementById('tg-modal').classList.add('open');
@@ -1032,11 +1053,13 @@
       const err1 = document.getElementById('tg-err-1').checked;
       const err2 = document.getElementById('tg-err-2').checked;
       const err3 = document.getElementById('tg-err-3').checked;
+      const err4 = document.getElementById('tg-err-4').checked;
 
       const errors = [];
-      if (err1) errors.push('номер не уточнила');
-      if (err2) errors.push('согласие на ПЦК не получено');
-      if (err3) errors.push('До кл не дозвонились');
+      if (err1) errors.push('не уточнил актуальность ремонта');
+      if (err2) errors.push('не предупредил о звонке в 10 минут');
+      if (err3) errors.push('не получил согласие на перезвон');
+      if (err4) errors.push('не проверил контактный телефон');
 
       let text = `${currentTgTicketNum} ${opName}`;
       
@@ -1149,7 +1172,6 @@
       loadData();
       if (window.innerWidth < 1024) document.getElementById('sidebar').classList.add('collapsed');
 
-      // Восстанавливаем незавершённую массовую проверку
       const saved = loadBulkState();
       if (saved) {
         bulkItems = saved.items;
@@ -1160,7 +1182,6 @@
         document.getElementById('bulk-input-card').style.display = 'none';
         updateBulkTabIndicator();
 
-        // Возвращаемся на ту вкладку, где был пользователь
         if (saved.activeTab === 'bulk') {
           document.getElementById('tab-bulk').classList.add('active');
           document.getElementById('tab-history').classList.remove('active');
