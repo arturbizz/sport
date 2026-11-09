@@ -110,6 +110,16 @@
     .btn-outline:hover { background: var(--bg-subtle); color: var(--ink-primary); border-color: var(--ink-tertiary); }
     .btn-ghost { background: transparent; color: var(--ink-secondary); }
     .btn-ghost:hover { background: var(--bg-subtle); color: var(--ink-primary); }
+    
+    .btn-danger { background: var(--status-error); color: white; }
+    .btn-danger:hover { background: #E11D48; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+    .btn-icon {
+      background: transparent; border: none; color: var(--ink-tertiary); cursor: pointer;
+      padding: 6px; border-radius: 6px; transition: var(--transition-smooth);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-icon:hover { color: var(--status-error); background: var(--status-error-bg); }
 
     /* ================= ОСНОВНОЙ КОНТЕНТ ================= */
     .layout { display: flex; flex: 1; overflow: hidden; }
@@ -165,7 +175,8 @@
     .audit-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--ink-tertiary); }
     
     .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
-    .card-title { font-size: 16px; font-weight: 700; color: var(--ink-primary); margin-bottom: 4px; }
+    .card-title { font-size: 16px; font-weight: 700; color: var(--ink-primary); margin-bottom: 4px; cursor: pointer; transition: var(--transition-smooth); }
+    .card-title:hover { color: var(--brand-primary); }
     .card-subtitle { font-size: 13px; color: var(--ink-secondary); }
     
     .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
@@ -215,7 +226,6 @@
     }
     .bulk-workspace.active { display: block; }
     
-    /* Заголовок рабочей области с именем оператора */
     .bulk-workspace-header {
       padding: 16px 20px;
       background: var(--bg-body);
@@ -241,7 +251,6 @@
     .bulk-table tr:last-child td { border-bottom: none; }
     .bulk-table tr:hover { background: var(--bg-body); }
     
-    /* Кликабельный номер заявки для копирования */
     .bulk-req-num {
       font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; color: var(--ink-primary);
       cursor: pointer; transition: var(--transition-smooth); display: inline-flex; align-items: center; gap: 6px;
@@ -250,7 +259,6 @@
     .bulk-req-num svg { opacity: 0.4; transition: opacity 0.2s; }
     .bulk-req-num:hover svg { opacity: 1; color: var(--brand-primary); }
     
-    /* Сегментированный контрол для вердикта */
     .segmented-control { display: inline-flex; background: var(--bg-body); padding: 4px; border-radius: var(--radius-md); border: 1px solid var(--border-light); }
     .segmented-btn {
       padding: 6px 16px; border-radius: 6px; border: none; background: transparent;
@@ -449,7 +457,6 @@
         </div>
 
         <div class="bulk-workspace" id="bulk-workspace">
-          <!-- Заголовок с оператором -->
           <div class="bulk-workspace-header">
             <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             Аудит оператора: <strong id="bulk-current-op">—</strong>
@@ -496,6 +503,23 @@
     </div>
   </div>
 
+  <!-- МОДАЛКА УДАЛЕНИЯ -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div class="modal-body" style="padding-top: 32px; padding-bottom: 24px;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--status-error-bg); color: var(--status-error); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;">Удалить карточку?</h3>
+        <p style="font-size: 14px; color: var(--ink-secondary); margin-bottom: 24px;">Это действие нельзя отменить. Заявка <strong id="delete-req-num"></strong> будет удалена из истории.</p>
+        <div style="display: flex; gap: 12px;">
+          <button class="btn btn-outline" style="flex: 1;" onclick="closeModal('delete-modal')">Отмена</button>
+          <button class="btn btn-danger" style="flex: 1;" id="btn-confirm-delete" onclick="executeDelete()">Удалить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container"></div>
 
   <script>
@@ -505,6 +529,7 @@
 
     let allRequests = [];
     let bulkItems = [];
+    let itemToDeleteId = null;
 
     // --- УВЕДОМЛЕНИЯ ---
     function showToast(type, title, message) {
@@ -531,10 +556,9 @@
       }, 4000);
     }
 
-    // --- КОПИРОВАНИЕ В БУФЕР ---
+    // --- КОПИРОВАНИЕ ---
     function copyToClipboard(text) {
       if (!navigator.clipboard) {
-        // Fallback для старых браузеров
         const textArea = document.createElement("textarea");
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -543,19 +567,47 @@
           document.execCommand('copy');
           showToast('success', 'Скопировано', `Номер заявки ${text} скопирован.`);
         } catch (err) {
-          showToast('error', 'Ошибка', 'Не удалось скопировать номер.');
+          showToast('error', 'Ошибка', 'Не удалось скопировать.');
         }
         document.body.removeChild(textArea);
         return;
       }
       navigator.clipboard.writeText(text).then(() => {
-        showToast('success', 'Скопировано', `Номер заявки ${text} скопирован в буфер обмена.`);
+        showToast('success', 'Скопировано', `Номер заявки ${text} скопирован в буфер.`);
       }).catch(err => {
-        showToast('error', 'Ошибка', 'Не удалось скопировать номер.');
+        showToast('error', 'Ошибка', 'Не удалось скопировать.');
       });
     }
 
-    // --- УМНЫЙ ПАРСЕР ---
+    // --- УДАЛЕНИЕ ---
+    function confirmDelete(id, reqNum) {
+      itemToDeleteId = id;
+      document.getElementById('delete-req-num').textContent = reqNum;
+      document.getElementById('delete-modal').classList.add('open');
+    }
+
+    async function executeDelete() {
+      if (!itemToDeleteId) return;
+      const btn = document.getElementById('btn-confirm-delete');
+      btn.disabled = true;
+      btn.textContent = 'Удаление...';
+
+      try {
+        const { error } = await supabaseClient.from('audit_ptsk').delete().eq('id', itemToDeleteId);
+        if (error) throw error;
+        showToast('success', 'Удалено', 'Карточка успешно удалена из базы.');
+        closeModal('delete-modal');
+        loadData(); // Обновляем список
+      } catch (err) {
+        showToast('error', 'Ошибка удаления', err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Удалить';
+        itemToDeleteId = null;
+      }
+    }
+
+    // --- ПАРСЕР ---
     document.getElementById('bulk-ids').addEventListener('paste', function(e) {
       e.preventDefault();
       const pastedText = (e.clipboardData || window.clipboardData).getData('text');
@@ -564,7 +616,7 @@
       if (numbers && numbers.length > 0) {
         const uniqueNumbers = [...new Set(numbers)];
         this.value = uniqueNumbers.join('\n');
-        showToast('success', 'Парсер сработал', `Найдено и очищено: ${uniqueNumbers.length} номеров заявок.`);
+        showToast('success', 'Парсер сработал', `Найдено и очищено: ${uniqueNumbers.length} номеров.`);
       } else {
         this.value = pastedText;
         showToast('info', 'Парсер', 'Номера заявок не найдены. Вставлен исходный текст.');
@@ -639,14 +691,19 @@
           <div class="audit-card" style="animation-delay: ${i * 0.03}s">
             <div class="card-header">
               <div>
-                <div class="card-title" style="cursor: pointer;" onclick="copyToClipboard('${req.request_number}')" title="Скопировать номер">
+                <div class="card-title" onclick="copyToClipboard('${req.request_number}')" title="Скопировать номер">
                   Заявка ${req.request_number}
                 </div>
                 <div class="card-subtitle">Оператор: ${req.operator_name}</div>
               </div>
-              <span class="badge ${isCorrect ? 'badge-success' : 'badge-error'}">
-                ${isCorrect ? 'Верно' : 'Ошибка'}
-              </span>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <span class="badge ${isCorrect ? 'badge-success' : 'badge-error'}">
+                  ${isCorrect ? 'Верно' : 'Ошибка'}
+                </span>
+                <button class="btn-icon" onclick="confirmDelete('${req.id}', '${req.request_number}')" title="Удалить карточку">
+                  <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                </button>
+              </div>
             </div>
             <div class="card-body">
               ${!isCorrect ? `<div class="detail-row"><span class="detail-label">Ошибка:</span><span class="detail-val" style="color:var(--status-error)">${req.error_reason || '—'}</span></div>` : ''}
@@ -675,7 +732,6 @@
         return;
       }
 
-      // Устанавливаем имя оператора в заголовок рабочей области
       document.getElementById('bulk-current-op').textContent = operator;
 
       bulkItems = ids.map(id => ({
