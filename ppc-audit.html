@@ -49,7 +49,15 @@
       width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), #8B5CF6);
       border-radius: 10px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
     }
-    .nav-actions { display: flex; gap: 12px; }
+    .nav-tabs {
+      display: flex; gap: 4px; background: var(--surface-hover); padding: 4px; border-radius: var(--radius-md);
+    }
+    .nav-tab {
+      padding: 8px 16px; border-radius: 8px; border: none; background: transparent;
+      font-family: inherit; font-weight: 600; font-size: 14px; color: var(--ink-2); transition: all 0.2s;
+    }
+    .nav-tab:hover { color: var(--ink); }
+    .nav-tab.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); }
     
     /* ================= КНОПКИ ================= */
     .btn {
@@ -62,6 +70,7 @@
     .btn-outline:hover { background: var(--surface-hover); border-color: var(--ink-3); }
     .btn-ghost { background: var(--surface-hover); color: var(--ink-2); }
     .btn-ghost:hover { background: var(--border); color: var(--ink); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
 
     /* ================= ОСНОВНОЙ КОНТЕНТ ================= */
     .layout { display: flex; flex: 1; overflow: hidden; }
@@ -88,7 +97,7 @@
     /* Центральная часть */
     .main-content { flex: 1; padding: 24px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
 
-    /* Фильтры */
+    /* ================= РЕЖИМ: ИСТОРИЯ (КАРТОЧКИ) ================= */
     .filters-bar {
       display: flex; gap: 12px; flex-wrap: wrap; background: var(--surface); padding: 16px;
       border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); align-items: center;
@@ -100,10 +109,7 @@
     .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
     .filter-select { padding: 10px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); font-family: inherit; font-size: 14px; outline: none; background: var(--surface); color: var(--ink); }
 
-    /* Сетка карточек */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-
-    /* Карточка */
     .audit-card {
       background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
       padding: 20px; box-shadow: var(--shadow-sm); transition: all 0.25s var(--spring);
@@ -122,6 +128,67 @@
     .detail-item { display: flex; justify-content: space-between; }
     .detail-label { color: var(--ink-3); font-size: 12px; font-weight: 600; }
     .detail-value { font-weight: 600; color: var(--ink); text-align: right; }
+
+    /* ================= РЕЖИМ: МАССОВАЯ ПРОВЕРКА ================= */
+    .bulk-container { display: none; flex-direction: column; gap: 24px; animation: fadeUp 0.4s ease-out; }
+    .bulk-container.active { display: flex; }
+    .history-container { display: flex; flex-direction: column; gap: 24px; }
+    .history-container.hidden { display: none; }
+
+    .bulk-input-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 24px; box-shadow: var(--shadow-md); display: flex; flex-direction: column; gap: 16px;
+    }
+    .bulk-input-row { display: flex; gap: 16px; align-items: flex-start; }
+    .bulk-textarea {
+      flex: 1; min-height: 120px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md);
+      font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 1.6; resize: vertical;
+    }
+    .bulk-textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+    .bulk-op-input {
+      width: 250px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md);
+      font-family: inherit; font-size: 14px; font-weight: 600;
+    }
+    .bulk-op-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+
+    /* Таблица массовой проверки */
+    .bulk-workspace {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md); overflow: hidden; display: none;
+    }
+    .bulk-workspace.active { display: block; }
+    
+    .bulk-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .bulk-table th {
+      background: var(--bg); padding: 12px 16px; font-size: 12px; text-transform: uppercase;
+      color: var(--ink-3); font-weight: 700; letter-spacing: 0.05em; border-bottom: 1px solid var(--border);
+    }
+    .bulk-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .bulk-table tr:last-child td { border-bottom: none; }
+    .bulk-table tr:hover { background: var(--surface-hover); }
+    
+    .bulk-req-num { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 15px; color: var(--ink); padding-top: 10px; display: block; }
+    
+    .bulk-radio-group { display: flex; gap: 8px; }
+    .bulk-radio { 
+      display: flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border); 
+      border-radius: var(--radius-md); cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s;
+    }
+    .bulk-radio input { display: none; }
+    .bulk-radio.checked-correct { border-color: var(--success); background: var(--success-light); color: #047857; }
+    .bulk-radio.checked-incorrect { border-color: var(--error); background: var(--error-light); color: #B91C1C; }
+
+    .bulk-select, .bulk-input-comment {
+      width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-md);
+      font-family: inherit; font-size: 13px; background: var(--surface); transition: all 0.2s;
+    }
+    .bulk-select:focus, .bulk-input-comment:focus { outline: none; border-color: var(--accent); }
+    .bulk-select:disabled { opacity: 0.5; background: var(--bg); cursor: not-allowed; }
+
+    .bulk-footer {
+      padding: 16px 24px; background: var(--bg); border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; gap: 12px;
+    }
 
     /* ================= МОДАЛЬНЫЕ ОКНА ================= */
     .modal-overlay {
@@ -189,7 +256,10 @@
     @media (max-width: 900px) {
       .sidebar { position: fixed; height: 100vh; z-index: 999; box-shadow: var(--shadow-lg); }
       .mobile-menu-btn { display: block; }
-      .nav-actions .btn span { display: none; } /* Скрываем текст на мобилках, оставляем иконки */
+      .nav-tabs { display: none; }
+      .bulk-input-row { flex-direction: column; }
+      .bulk-op-input { width: 100%; }
+      .bulk-table { display: block; overflow-x: auto; }
     }
   </style>
 </head>
@@ -201,9 +271,12 @@
       <div class="logo-mark"></div>
       Аудит ПЦК
     </div>
-    <div class="nav-actions">
-      <button class="btn btn-outline" onclick="openReports()">📊 <span>Отчеты</span></button>
-      <button class="btn btn-primary" onclick="openCreateModal()">➕ <span>Создать проверку</span></button>
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-history" onclick="switchTab('history')">История</button>
+      <button class="nav-tab" id="tab-bulk" onclick="switchTab('bulk')">🚀 Массовая проверка</button>
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button class="btn btn-outline" onclick="openReports()">📊 Отчеты</button>
     </div>
   </header>
 
@@ -222,85 +295,77 @@
         </div>
         <div class="rule-item">
           <div class="rule-icon red">✗</div>
-          <div><b>Ошибка</b> — Оператор создал ПЦК необоснованно (клиент был готов говорить, но оператор сбросил, или неверно понял отказ).</div>
+          <div><b>Ошибка</b> — Оператор создал ПЦК необоснованно (клиент был готов говорить, но оператор сбросил).</div>
         </div>
       </div>
       <div class="rules-card">
-        <h3>Тематики ошибок</h3>
-        <p style="font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-bottom: 8px;">При выявлении ошибки выберите причину:</p>
+        <h3>Действия</h3>
+        <p style="font-size: 12.5px; color: var(--ink-2); line-height: 1.5; margin-bottom: 8px;">После прослушки отметь, что сделал:</p>
         <ul style="font-size: 12.5px; color: var(--ink-2); padding-left: 16px; line-height: 1.6;">
-          <li>Клиент был готов к диалогу</li>
-          <li>Клиент согласился на консультацию</li>
-          <li>Оператор неверно понял отказ</li>
-          <li>Другое (свой комментарий)</li>
+          <li>Вернул оператору (сменить статус)</li>
+          <li>Вернул в чат 1 линии</li>
+          <li>Сделано (закрыто)</li>
         </ul>
       </div>
     </aside>
 
     <main class="main-content">
-      <div class="filters-bar">
-        <input type="search" class="search-input" id="search-input" placeholder="Поиск по номеру заявки или оператору...">
-        <select class="filter-select" id="filter-status">
-          <option value="all">Все вердикты</option>
-          <option value="correct">Только верные (ПЦК обоснован)</option>
-          <option value="incorrect">Только с ошибками</option>
-        </select>
-        <button class="btn btn-ghost" onclick="loadData()">🔄 Обновить</button>
+      
+      <!-- РЕЖИМ 1: ИСТОРИЯ (КАРТОЧКИ) -->
+      <div class="history-container" id="history-container">
+        <div class="filters-bar">
+          <input type="search" class="search-input" id="search-input" placeholder="Поиск по номеру заявки или оператору...">
+          <select class="filter-select" id="filter-status">
+            <option value="all">Все вердикты</option>
+            <option value="correct">Только верные</option>
+            <option value="incorrect">Только с ошибками</option>
+          </select>
+          <button class="btn btn-ghost" onclick="loadData()">🔄 Обновить</button>
+        </div>
+        <div class="cards-grid" id="cards-grid"></div>
       </div>
-      <div class="cards-grid" id="cards-grid"></div>
-    </main>
-  </div>
 
-  <!-- МОДАЛКА: СОЗДАНИЕ/РЕДАКТИРОВАНИЕ -->
-  <div class="modal-overlay" id="audit-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="modal-title">Создать проверку</h2>
-        <button class="close-btn" onclick="closeModal('audit-modal')">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Номер заявки</label>
-          <input type="text" class="form-control" id="input-request-number" placeholder="Например: З-10452">
-        </div>
-        <div class="form-group">
-          <label>Оператор</label>
-          <input type="text" class="form-control" id="input-operator-name" placeholder="Имя оператора">
-        </div>
+      <!-- РЕЖИМ 2: МАССОВАЯ ПРОВЕРКА -->
+      <div class="bulk-container" id="bulk-container">
         
-        <div class="form-group">
-          <label>Вердикт (Правильно ли создан ПЦК?)</label>
-          <div class="radio-group">
-            <label class="radio-label" id="label-correct" onclick="setVerdict('correct')">
-              <input type="radio" name="verdict" value="correct"> Верно
-            </label>
-            <label class="radio-label" id="label-incorrect" onclick="setVerdict('incorrect')">
-              <input type="radio" name="verdict" value="incorrect"> Ошибка
-            </label>
+        <!-- Форма ввода -->
+        <div class="bulk-input-card" id="bulk-input-card">
+          <h2 style="font-size: 18px; font-weight: 800;">Новая пачка заявок</h2>
+          <p style="font-size: 14px; color: var(--ink-2);">Вставь номера заявок (каждый с новой строки) и укажи оператора.</p>
+          <div class="bulk-input-row">
+            <textarea class="bulk-textarea" id="bulk-ids" placeholder="З-10452&#10;З-10453&#10;З-10454"></textarea>
+            <input type="text" class="bulk-op-input" id="bulk-operator" placeholder="Имя оператора">
+          </div>
+          <div style="display:flex; justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="generateBulkList()">Сформировать список</button>
           </div>
         </div>
 
-        <div class="form-group" id="error-reason-group" style="display: none;">
-          <label>Тематика ошибки</label>
-          <select class="form-control" id="input-error-reason">
-            <option value="">— Выберите причину —</option>
-            <option value="Клиент был готов к диалогу">Клиент был готов к диалогу (не было глухого недозвона)</option>
-            <option value="Клиент согласился на консультацию">Клиент согласился на консультацию</option>
-            <option value="Оператор неверно понял отказ">Оператор неверно понял отказ клиента</option>
-            <option value="Другое">Другое (описать в комментарии)</option>
-          </select>
+        <!-- Таблица прослушки -->
+        <div class="bulk-workspace" id="bulk-workspace">
+          <table class="bulk-table">
+            <thead>
+              <tr>
+                <th style="width: 120px;">Заявка</th>
+                <th style="width: 200px;">Вердикт</th>
+                <th>Тематика ошибки (если ошибка)</th>
+                <th style="width: 220px;">Действие</th>
+                <th style="width: 200px;">Комментарий</th>
+              </tr>
+            </thead>
+            <tbody id="bulk-tbody">
+              <!-- Сюда рендерятся строки -->
+            </tbody>
+          </table>
+          <div class="bulk-footer">
+            <button class="btn btn-ghost" onclick="cancelBulk()">Отмена</button>
+            <button class="btn btn-primary" id="btn-save-bulk" onclick="saveBulk()">💾 Сохранить всё</button>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Комментарий / Вывод аудитора</label>
-          <textarea class="form-control" id="input-comment" placeholder="Опишите, что услышали в записи..."></textarea>
-        </div>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeModal('audit-modal')">Отмена</button>
-        <button class="btn btn-primary" id="save-audit-btn" onclick="saveAudit()">Сохранить</button>
-      </div>
-    </div>
+
+    </main>
   </div>
 
   <!-- МОДАЛКА: ОТЧЕТЫ -->
@@ -310,9 +375,7 @@
         <h2>📊 Отчет по операторам</h2>
         <button class="close-btn" onclick="closeModal('reports-modal')">×</button>
       </div>
-      <div class="modal-body" id="reports-body">
-        <!-- Сюда рендерится таблица -->
-      </div>
+      <div class="modal-body" id="reports-body"></div>
       <div class="modal-footer">
         <button class="btn btn-primary" onclick="closeModal('reports-modal')">Закрыть</button>
       </div>
@@ -327,9 +390,9 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allRequests = [];
-    let currentEditId = null;
-    let currentVerdict = null;
+    let bulkItems = []; // Массив для массовой проверки
 
+    // ================= УВЕДОМЛЕНИЯ =================
     function showToast(type, title, message) {
       const container = document.getElementById('toast-container');
       const toast = document.createElement('div');
@@ -343,6 +406,29 @@
       setTimeout(() => { toast.style.animation = 'slideIn 0.3s reverse forwards'; setTimeout(() => toast.remove(), 300); }, 4000);
     }
 
+    // ================= ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК =================
+    function switchTab(tab) {
+      const tabHistory = document.getElementById('tab-history');
+      const tabBulk = document.getElementById('tab-bulk');
+      const containerHistory = document.getElementById('history-container');
+      const containerBulk = document.getElementById('bulk-container');
+
+      if (tab === 'history') {
+        tabHistory.classList.add('active');
+        tabBulk.classList.remove('active');
+        containerHistory.classList.remove('hidden');
+        containerBulk.classList.remove('active');
+      } else {
+        tabBulk.classList.add('active');
+        tabHistory.classList.remove('active');
+        containerBulk.classList.add('active');
+        containerHistory.classList.add('hidden');
+        // Если список уже сгенерирован, показываем его
+        if (bulkItems.length > 0) document.getElementById('bulk-workspace').classList.add('active');
+      }
+    }
+
+    // ================= ИСТОРИЯ (КАРТОЧКИ) =================
     async function loadData() {
       const grid = document.getElementById('cards-grid');
       grid.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--ink-3);">Загрузка...</div>';
@@ -368,13 +454,19 @@
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--ink-3);"><h3>Нет данных</h3><p>Создайте первую проверку или измените фильтры.</p></div>`;
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--ink-3);"><h3>Нет данных</h3><p>История пуста или фильтры не совпадают.</p></div>`;
         return;
       }
 
       grid.innerHTML = filtered.map((req, i) => {
         const isCorrect = req.audit_result === 'correct';
         const date = new Date(req.created_at).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        
+        let actionText = 'Сделано';
+        let actionColor = 'var(--success)';
+        if (req.action_status === 'returned_operator') { actionText = 'Вернул оператору'; actionColor = 'var(--warning)'; }
+        if (req.action_status === 'returned_chat') { actionText = 'Вернул в чат'; actionColor = 'var(--warning)'; }
+
         return `
           <div class="audit-card" style="animation-delay: ${i * 0.05}s">
             <div class="card-header">
@@ -387,107 +479,163 @@
               </span>
             </div>
             <div class="card-details">
-              ${!isCorrect ? `<div class="detail-item"><span class="detail-label">Тематика ошибки:</span><span class="detail-value" style="color:var(--error)">${req.error_reason || '—'}</span></div>` : ''}
+              ${!isCorrect ? `<div class="detail-item"><span class="detail-label">Ошибка:</span><span class="detail-value" style="color:var(--error)">${req.error_reason || '—'}</span></div>` : ''}
+              <div class="detail-item"><span class="detail-label">Действие:</span><span class="detail-value" style="color:${actionColor}">${actionText}</span></div>
               ${req.auditor_comment ? `<div class="detail-item"><span class="detail-label">Комментарий:</span><span class="detail-value" style="font-weight:400">${req.auditor_comment}</span></div>` : ''}
               <div class="detail-item" style="margin-top:8px;"><span class="detail-label" style="font-size:10px;">Проверено: ${date}</span></div>
             </div>
-            <button class="btn btn-outline" style="margin-top:auto; width:100%;" onclick="openEditModal('${req.id}')">Редактировать</button>
           </div>
         `;
       }).join('');
     }
 
-    function openCreateModal() {
-      currentEditId = null;
-      currentVerdict = null;
-      document.getElementById('modal-title').textContent = 'Создать проверку';
-      document.getElementById('input-request-number').value = '';
-      document.getElementById('input-operator-name').value = '';
-      document.getElementById('input-error-reason').value = '';
-      document.getElementById('input-comment').value = '';
-      setVerdict(null);
-      document.getElementById('audit-modal').classList.add('open');
-    }
+    // ================= МАССОВАЯ ПРОВЕРКА =================
+    function generateBulkList() {
+      const idsRaw = document.getElementById('bulk-ids').value;
+      const operator = document.getElementById('bulk-operator').value.trim();
 
-    function openEditModal(id) {
-      const req = allRequests.find(r => r.id === id);
-      if (!req) return;
-      currentEditId = id;
-      document.getElementById('modal-title').textContent = 'Редактировать проверку';
-      document.getElementById('input-request-number').value = req.request_number;
-      document.getElementById('input-operator-name').value = req.operator_name;
-      document.getElementById('input-error-reason').value = req.error_reason || '';
-      document.getElementById('input-comment').value = req.auditor_comment || '';
-      setVerdict(req.audit_result);
-      document.getElementById('audit-modal').classList.add('open');
-    }
-
-    function setVerdict(val) {
-      currentVerdict = val;
-      const lblCorrect = document.getElementById('label-correct');
-      const lblIncorrect = document.getElementById('label-incorrect');
-      const errGroup = document.getElementById('error-reason-group');
-      
-      lblCorrect.classList.remove('checked-correct', 'checked-incorrect');
-      lblIncorrect.classList.remove('checked-correct', 'checked-incorrect');
-      document.querySelectorAll('input[name="verdict"]').forEach(r => r.checked = false);
-
-      if (val === 'correct') {
-        lblCorrect.classList.add('checked-correct');
-        document.querySelector('input[value="correct"]').checked = true;
-        errGroup.style.display = 'none';
-      } else if (val === 'incorrect') {
-        lblIncorrect.classList.add('checked-incorrect');
-        document.querySelector('input[value="incorrect"]').checked = true;
-        errGroup.style.display = 'block';
-      } else {
-        errGroup.style.display = 'none';
-      }
-    }
-
-    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
-    async function saveAudit() {
-      const reqNum = document.getElementById('input-request-number').value.trim();
-      const opName = document.getElementById('input-operator-name').value.trim();
-      const comment = document.getElementById('input-comment').value.trim();
-      const errorReason = document.getElementById('input-error-reason').value;
-
-      if (!reqNum || !opName || !currentVerdict) {
-        showToast('error', 'Заполните поля', 'Укажите номер заявки, оператора и выберите вердикт.');
+      if (!idsRaw.trim() || !operator) {
+        showToast('error', 'Ошибка', 'Вставьте номера заявок и укажите оператора.');
         return;
       }
 
-      const btn = document.getElementById('save-audit-btn');
-      btn.disabled = true; btn.textContent = 'Сохранение...';
+      // Парсим номера (разделяем по переносу строки, запятой или пробелу)
+      const ids = idsRaw.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0);
+      
+      if (ids.length === 0) {
+        showToast('error', 'Ошибка', 'Не найдено ни одного номера заявки.');
+        return;
+      }
 
-      const payload = {
-        request_number: reqNum,
-        operator_name: opName,
-        audit_result: currentVerdict,
-        error_reason: currentVerdict === 'incorrect' ? errorReason : null,
-        auditor_comment: comment
-      };
+      // Создаем объекты для массовой проверки
+      bulkItems = ids.map(id => ({
+        request_number: id,
+        operator_name: operator,
+        verdict: null,
+        error_reason: '',
+        action_status: 'done', // По умолчанию "Сделано"
+        comment: ''
+      }));
 
-      try {
-        if (currentEditId) {
-          const { error } = await supabaseClient.from('audit_ptsk').update(payload).eq('id', currentEditId);
-          if (error) throw error;
-        } else {
-          const { error } = await supabaseClient.from('audit_ptsk').insert(payload);
-          if (error) throw error;
-        }
-        showToast('success', 'Сохранено', 'Данные аудита успешно записаны.');
-        closeModal('audit-modal');
-        loadData();
-      } catch (err) {
-        showToast('error', 'Ошибка', err.message);
-      } finally {
-        btn.disabled = false; btn.textContent = 'Сохранить';
+      renderBulkWorkspace();
+      document.getElementById('bulk-workspace').classList.add('active');
+      document.getElementById('bulk-input-card').style.display = 'none';
+    }
+
+    function renderBulkWorkspace() {
+      const tbody = document.getElementById('bulk-tbody');
+      
+      tbody.innerHTML = bulkItems.map((item, index) => `
+        <tr data-index="${index}">
+          <td><span class="bulk-req-num">${item.request_number}</span></td>
+          
+          <td>
+            <div class="bulk-radio-group">
+              <label class="bulk-radio ${item.verdict === 'correct' ? 'checked-correct' : ''}" id="lbl-cor-${index}" onclick="setBulkVerdict(${index}, 'correct')">
+                <input type="radio" name="verdict-${index}"> Верно
+              </label>
+              <label class="bulk-radio ${item.verdict === 'incorrect' ? 'checked-incorrect' : ''}" id="lbl-inc-${index}" onclick="setBulkVerdict(${index}, 'incorrect')">
+                <input type="radio" name="verdict-${index}"> Ошибка
+              </label>
+            </div>
+          </td>
+          
+          <td>
+            <select class="bulk-select" id="reason-${index}" onchange="updateBulkField(${index}, 'error_reason', this.value)" ${item.verdict !== 'incorrect' ? 'disabled' : ''}>
+              <option value="">— Не выбрана —</option>
+              <option value="Клиент был готов к диалогу" ${item.error_reason === 'Клиент был готов к диалогу' ? 'selected' : ''}>Клиент был готов к диалогу</option>
+              <option value="Клиент согласился на консультацию" ${item.error_reason === 'Клиент согласился на консультацию' ? 'selected' : ''}>Клиент согласился на консультацию</option>
+              <option value="Оператор неверно понял отказ" ${item.error_reason === 'Оператор неверно понял отказ' ? 'selected' : ''}>Неверно понял отказ</option>
+              <option value="Другое" ${item.error_reason === 'Другое' ? 'selected' : ''}>Другое (см. коммент)</option>
+            </select>
+          </td>
+          
+          <td>
+            <select class="bulk-select" id="action-${index}" onchange="updateBulkField(${index}, 'action_status', this.value)">
+              <option value="done" ${item.action_status === 'done' ? 'selected' : ''}>Сделано (Закрыто)</option>
+              <option value="returned_operator" ${item.action_status === 'returned_operator' ? 'selected' : ''}>Вернул оператору</option>
+              <option value="returned_chat" ${item.action_status === 'returned_chat' ? 'selected' : ''}>Вернул в чат 1 линии</option>
+            </select>
+          </td>
+          
+          <td>
+            <input type="text" class="bulk-input-comment" id="comment-${index}" placeholder="Комментарий..." value="${item.comment}" onchange="updateBulkField(${index}, 'comment', this.value)">
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function setBulkVerdict(index, val) {
+      bulkItems[index].verdict = val;
+      
+      const lblCor = document.getElementById(`lbl-cor-${index}`);
+      const lblInc = document.getElementById(`lbl-inc-${index}`);
+      const reasonSelect = document.getElementById(`reason-${index}`);
+      
+      lblCor.classList.remove('checked-correct', 'checked-incorrect');
+      lblInc.classList.remove('checked-correct', 'checked-incorrect');
+
+      if (val === 'correct') {
+        lblCor.classList.add('checked-correct');
+        reasonSelect.disabled = true;
+        bulkItems[index].error_reason = ''; // Сбрасываем причину
+        reasonSelect.value = '';
+      } else if (val === 'incorrect') {
+        lblInc.classList.add('checked-incorrect');
+        reasonSelect.disabled = false;
       }
     }
 
-    // --- ЛОГИКА ОТЧЕТОВ ---
+    function updateBulkField(index, field, value) {
+      bulkItems[index][field] = value;
+    }
+
+    function cancelBulk() {
+      bulkItems = [];
+      document.getElementById('bulk-workspace').classList.remove('active');
+      document.getElementById('bulk-input-card').style.display = 'flex';
+      document.getElementById('bulk-ids').value = '';
+    }
+
+    async function saveBulk() {
+      // Валидация: у всех ли выставлен вердикт?
+      const missingVerdicts = bulkItems.filter(item => !item.verdict);
+      if (missingVerdicts.length > 0) {
+        showToast('error', 'Внимание', `Не у всех заявок выставлен вердикт (пропущено: ${missingVerdicts.length}).`);
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-bulk');
+      btn.disabled = true;
+      btn.textContent = 'Сохранение...';
+
+      // Формируем массив для вставки в Supabase
+      const payload = bulkItems.map(item => ({
+        request_number: item.request_number,
+        operator_name: item.operator_name,
+        audit_result: item.verdict,
+        error_reason: item.verdict === 'incorrect' ? item.error_reason : null,
+        action_status: item.action_status,
+        auditor_comment: item.comment
+      }));
+
+      try {
+        const { error } = await supabaseClient.from('audit_ptsk').insert(payload);
+        if (error) throw error;
+
+        showToast('success', 'Успешно', `Сохранено ${payload.length} заявок.`);
+        cancelBulk(); // Очищаем воркспейс
+        loadData();   // Обновляем историю
+        switchTab('history'); // Переключаем на историю, чтобы увидеть результат
+      } catch (err) {
+        showToast('error', 'Ошибка сохранения', err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Сохранить всё';
+      }
+    }
+
+    // ================= ОТЧЕТЫ =================
     function openReports() {
       const body = document.getElementById('reports-body');
       if (allRequests.length === 0) {
@@ -496,11 +644,10 @@
         return;
       }
 
-      // Группировка по операторам
       const stats = {};
       allRequests.forEach(req => {
         if (!stats[req.operator_name]) {
-          stats[req.operator_name] = { total: 0, correct: 0, incorrect: 0, errors: {} };
+          stats[req.operator_name] = { total: 0, correct: 0, incorrect: 0, errors: {}, actions: { done: 0, ret_op: 0, ret_chat: 0 } };
         }
         stats[req.operator_name].total++;
         if (req.audit_result === 'correct') {
@@ -510,27 +657,29 @@
           const reason = req.error_reason || 'Не указана';
           stats[req.operator_name].errors[reason] = (stats[req.operator_name].errors[reason] || 0) + 1;
         }
+        
+        if (req.action_status === 'returned_operator') stats[req.operator_name].actions.ret_op++;
+        else if (req.action_status === 'returned_chat') stats[req.operator_name].actions.ret_chat++;
+        else stats[req.operator_name].actions.done++;
       });
 
-      // Считаем общую сводку
       let totalAll = 0, correctAll = 0, incorrectAll = 0;
 
       let html = `<table class="report-table">
         <thead>
           <tr>
             <th>Оператор</th>
-            <th style="text-align:center;">Всего заявок</th>
+            <th style="text-align:center;">Всего</th>
             <th style="text-align:center; color:var(--success);">Верно</th>
             <th style="text-align:center; color:var(--error);">Ошибки</th>
             <th>Тематики ошибок</th>
+            <th>Действия (Сделано / Возвраты)</th>
           </tr>
         </thead>
         <tbody>`;
 
       for (const [opName, data] of Object.entries(stats)) {
-        totalAll += data.total;
-        correctAll += data.correct;
-        incorrectAll += data.incorrect;
+        totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect;
 
         const errorTags = Object.entries(data.errors)
           .map(([reason, count]) => `<span class="error-tag">${reason} (${count})</span>`)
@@ -543,11 +692,15 @@
             <td style="text-align:center; font-weight:700; color:var(--success);">${data.correct}</td>
             <td style="text-align:center; font-weight:700; color:var(--error);">${data.incorrect}</td>
             <td>${errorTags}</td>
+            <td style="font-size:12px;">
+              ✅ ${data.actions.done} / 
+              <span style="color:var(--warning)">↩️ Оператору: ${data.actions.ret_op}</span> / 
+              <span style="color:var(--warning)">💬 В чат: ${data.actions.ret_chat}</span>
+            </td>
           </tr>
         `;
       }
 
-      // Итоговая строка
       html += `
         <tr class="report-total">
           <td>ОБЩАЯ СВОДКА</td>
@@ -555,6 +708,7 @@
           <td style="text-align:center;">${correctAll}</td>
           <td style="text-align:center;">${incorrectAll}</td>
           <td>Процент ошибок: ${((incorrectAll / totalAll) * 100).toFixed(1)}%</td>
+          <td></td>
         </tr>
       </tbody></table>`;
 
@@ -562,9 +716,10 @@
       document.getElementById('reports-modal').classList.add('open');
     }
 
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
     document.getElementById('search-input').addEventListener('input', renderCards);
     document.getElementById('filter-status').addEventListener('change', renderCards);
-    
     document.getElementById('mobile-menu-btn').addEventListener('click', () => {
       document.getElementById('sidebar').classList.toggle('collapsed');
     });
