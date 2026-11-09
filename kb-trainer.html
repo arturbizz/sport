@@ -3,894 +3,790 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Тренажёр диалога — База знаний</title>
+  <title>Скрипт-Тренажёр — База Знаний</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="kb-game.css">
   <style>
-    /* ГЛОБАЛЬНЫЙ СБРОС КУРСОРОВ И КАРЕТОК */
-    * { cursor: default; caret-color: transparent; box-sizing: border-box; }
+    :root {
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --ink: #1e293b;
+      --ink-2: #475569;
+      --ink-3: #94a3b8;
+      
+      --primary: #10b981; /* Изумрудный */
+      --primary-dark: #059669;
+      --primary-soft: #d1fae5;
+      
+      --accent: #f59e0b; /* Желтый */
+      --accent-soft: #fef3c7;
+      
+      --danger: #ef4444;
+      --danger-soft: #fee2e2;
+      
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 30px rgba(16, 185, 129, 0.15);
+      
+      --font: 'Inter', sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+
+    * { cursor: default; caret-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
     input, textarea, select { cursor: text; caret-color: auto; }
-    button, a, select, .cursor-pointer, [role="button"], label, .tr-option, .erp-menu-item, .tab, .survey-opt { cursor: pointer; }
+    button, a, select, .cursor-pointer, [role="button"], label, .opt-btn { cursor: pointer; }
 
-    /* ===== ЧАТ ===== */
-    .tr-hero { text-align: center; padding: 20px 0 40px; animation: gFadeUp 0.5s var(--g-smooth); }
-    .tr-hero h1 { font-family: var(--g-font); font-size: 44px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 14px; background: linear-gradient(135deg, var(--g-emerald) 0%, var(--g-violet) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-    .tr-hero p { color: var(--g-ink-2); font-size: 16px; max-width: 560px; margin: 0 auto; }
-    .tr-scenario-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; max-width: 1080px; margin: 0 auto; }
-    .tr-scenario-card { background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 24px; transition: all 0.25s var(--g-smooth); position: relative; overflow: hidden; }
-    .tr-scenario-card:hover { border-color: var(--g-emerald); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(16, 229, 168, 0.15); }
-    .tr-scenario-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
-    .tr-scenario-card p { color: var(--g-ink-2); font-size: 14px; line-height: 1.6; margin-bottom: 0; }
-    .tr-scenario-card.boss { border-color: rgba(255, 59, 92, 0.4); background: linear-gradient(180deg, rgba(255, 59, 92, 0.08), rgba(255,255,255,0.02)); }
-    .tr-scenario-card.boss:hover { box-shadow: 0 12px 32px rgba(255, 59, 92, 0.2); border-color: var(--g-danger); }
-    
-    .tr-chat { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; }
-    .tr-message { display: flex; gap: 12px; align-items: flex-start; animation: gFadeUp 0.4s var(--g-smooth); }
-    .tr-message.client { flex-direction: row; }
-    .tr-message.operator { flex-direction: row-reverse; }
-    .tr-message.feedback { flex-direction: row; }
-    .tr-avatar { flex-shrink: 0; padding: 0 12px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--g-font); font-weight: 700; font-size: 11px; color: #0A0614; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }
-    .tr-message.client .tr-avatar { background: linear-gradient(135deg, var(--g-gold), var(--g-magenta)); }
-    .tr-message.operator .tr-avatar { background: linear-gradient(135deg, var(--g-emerald), var(--g-violet)); }
-    .tr-message.feedback .tr-avatar { background: rgba(255, 59, 92, 0.2); color: var(--g-danger); font-size: 16px; padding: 0; width: 32px; }
-    .tr-message.feedback.correct .tr-avatar { background: rgba(16, 229, 168, 0.2); color: var(--g-emerald); }
-    .tr-bubble { max-width: 75%; padding: 14px 18px; border-radius: 16px; font-size: 15px; line-height: 1.55; }
-    .tr-message.client .tr-bubble { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--g-hairline-2); border-top-left-radius: 4px; }
-    .tr-message.operator .tr-bubble { background: linear-gradient(135deg, rgba(16, 229, 168, 0.15), rgba(168, 85, 247, 0.12)); border: 1px solid rgba(16, 229, 168, 0.3); border-top-right-radius: 4px; }
-    .tr-message.feedback .tr-bubble { background: rgba(255, 59, 92, 0.1); border: 1px solid rgba(255, 59, 92, 0.3); font-size: 13px; }
-    .tr-message.feedback.correct .tr-bubble { background: rgba(16, 229, 168, 0.1); border: 1px solid rgba(16, 229, 168, 0.3); }
-    
-    .tr-options { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; animation: gFadeUp 0.4s var(--g-smooth) 0.2s both; }
-    .tr-option { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-hairline-2); border-radius: 12px; color: var(--g-ink); text-align: left; font-family: var(--g-font); font-size: 14px; line-height: 1.5; transition: all 0.2s var(--g-smooth); width: 100%; }
-    .tr-option:hover:not(:disabled) { border-color: var(--g-emerald); background: rgba(16, 229, 168, 0.06); transform: translateX(4px); }
-    .tr-option:disabled { opacity: 0.5; }
-    .tr-option.correct { border-color: var(--g-emerald); background: rgba(16, 229, 168, 0.15); opacity: 1; }
-    .tr-option.wrong { border-color: var(--g-danger); background: rgba(255, 59, 92, 0.1); animation: gShake 0.4s ease; opacity: 1; }
-    .tr-option-bullet { flex-shrink: 0; width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--g-hairline-2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--g-ink-3); margin-top: 1px; }
-    
-    .tr-progress { display: flex; align-items: center; gap: 12px; max-width: 800px; margin: 0 auto 24px; }
-    .tr-progress-bar { flex: 1; height: 6px; background: rgba(255, 255, 255, 0.06); border-radius: 3px; overflow: hidden; }
-    .tr-progress-fill { height: 100%; background: linear-gradient(90deg, var(--g-emerald), var(--g-violet)); border-radius: 3px; transition: width 0.4s var(--g-smooth); }
-    .tr-progress-text { font-family: var(--g-mono); font-size: 12px; font-weight: 700; color: var(--g-ink-2); min-width: 60px; text-align: right; }
-    .tr-back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; background: var(--g-surface); border: 1px solid var(--g-hairline-2); border-radius: 10px; color: var(--g-ink-2); font-family: var(--g-font); font-size: 13px; font-weight: 500; transition: all 0.2s; margin-bottom: 24px; }
-    .tr-back-btn:hover { color: var(--g-ink); border-color: var(--g-ink-3); background: var(--g-surface-2); }
+    body {
+      font-family: var(--font);
+      background: var(--bg-main);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
 
-    /* ===== ЖЕСТКИЙ ERP SIMULATOR ===== */
-    .erp-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; padding: 10px; overflow: hidden; align-items: center; justify-content: center; }
-    .erp-modal.open { display: flex; }
-    
-    .erp-window { 
-      width: 100%; max-width: 1450px;
-      background: #f0f0f0; 
-      border: 1px solid #707070; 
-      box-shadow: 0 10px 40px rgba(0,0,0,0.7); 
-      font-family: 'Tahoma', 'Segoe UI', sans-serif; 
-      font-size: 11px; 
-      color: #000; 
-      display: flex; 
-      flex-direction: column; 
-      height: 850px; 
-      max-height: 98vh; 
+    /* ===== ШАПКА ===== */
+    .header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 18px;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+    }
+    .logo-icon svg { width: 18px; height: 18px; }
+
+    /* ===== ГЛАВНЫЙ КОНТЕЙНЕР ===== */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== ЭКРАН ВЫБОРА СКРИПТА ===== */
+    .screen { display: none; animation: fadeUp 0.4s ease forwards; }
+    .screen.active { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+    .hero { text-align: center; margin-bottom: 40px; }
+    .hero h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 12px; color: var(--ink); }
+    .hero p { font-size: 16px; color: var(--ink-2); max-width: 600px; margin: 0 auto; }
+
+    .script-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .script-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+    .script-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary);
+    }
+    .script-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .script-card p { font-size: 14px; color: var(--ink-2); line-height: 1.5; flex: 1; margin-bottom: 20px; }
+    .script-card-btn {
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      padding: 10px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      transition: all 0.2s;
+    }
+    .script-card:hover .script-card-btn { background: var(--primary); color: white; }
+
+    /* ===== ЭКРАН ОБУЧЕНИЯ (ТЕОРИЯ + ПРАКТИКА) ===== */
+    .trainer-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+    @media (max-width: 860px) { .trainer-layout { grid-template-columns: 1fr; } }
+
+    .chat-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      height: 600px;
+      box-shadow: var(--shadow-md);
       overflow: hidden;
-      border-radius: 4px;
     }
-    
-    .erp-window *, .erp-window *::before, .erp-window *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    .erp-window button { width: auto; height: 22px; min-height: 22px; border-radius: 0; margin: 0; text-transform: none; font-weight: normal; letter-spacing: normal; background: #e1e1e1; border: 1px solid #7a7a7a; color: #000; font-size: 11px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; }
-    .erp-window button:hover { background: #d1d1d1; }
-    .erp-window input, .erp-window textarea, .erp-window select { border-radius: 0; margin: 0; width: 100%; font-family: inherit; font-size: 11px; background: #fff; border: 1px solid #7a7a7a; color: #000; height: 22px; padding: 2px 4px; outline: none; box-shadow: none; }
-    .erp-window textarea { height: auto; min-height: 40px; resize: none; }
-    .erp-window input:focus, .erp-window textarea:focus { outline: 1px solid #0078d7; outline-offset: -1px; border-color: #0078d7; }
-    .erp-window input.error { border-color: #ff0000; background: #ffeeee; }
-    .erp-window input.green { background: #c4f5c4; border-color: #5c9e5c; }
-    .erp-window input.purple { background: #ccbdf2; }
-    .erp-window label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; margin: 0; }
-    .erp-window input[type="radio"], .erp-window input[type="checkbox"] { width: auto; height: auto; margin: 0; }
-    
-    .erp-top-bar { background: #fff; padding: 4px 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; flex-shrink: 0; }
-    .erp-top-bar-left { display: flex; gap: 20px; align-items: center; }
-    .erp-top-bar-right { display: flex; gap: 20px; align-items: center; color: #d9534f; font-weight: bold; }
-    .erp-sub-bar { background: #dbe4f0; padding: 4px 8px; display: flex; justify-content: space-between; border-bottom: 1px solid #a0a0a0; font-weight: bold; color: #2c3e50; flex-shrink: 0; }
-    .erp-tabs { display: flex; background: #f0f0f0; border-bottom: 1px solid #ccc; padding-top: 5px; flex-shrink: 0; padding-left: 10px; }
-    .erp-tab { padding: 4px 12px; border: 1px solid transparent; border-bottom: none; margin-bottom: -1px; color: #555; }
-    .erp-tab.active { background: #fff; border-color: #ccc; font-weight: bold; color: #000; }
-    
-    .erp-main { display: flex; flex: 1; overflow: hidden; background: #fff; }
-    .erp-sidebar { width: 110px; background: #e6eaf0; border-right: 1px solid #a0a0a0; padding: 5px 0; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; overflow-y: auto; }
-    .erp-menu-header { font-weight: bold; padding: 4px 8px; background: #dcdcdc; border-bottom: 1px solid #ccc; margin-bottom: 4px; text-align: center; color: #333; }
-    .erp-menu-item { padding: 4px 8px; margin: 0 4px; border: 1px solid transparent; text-align: left; color: #333; }
-    .erp-menu-item:hover { background: #f0f0f0; border-color: #ccc; }
-    .erp-menu-item.active { background: #cce8ff; border-color: #99ccff; font-weight: bold; }
-    
-    .erp-content { 
-      flex: 1; padding: 10px 12px; overflow-y: auto; 
-      display: grid; 
-      grid-template-columns: minmax(0, 1fr) 460px; 
-      grid-template-rows: auto auto auto auto auto auto auto; 
-      gap: 8px 12px; 
-      height: 100%; 
-      align-items: start;
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
     }
+    .chat-header-title { font-weight: 700; font-size: 16px; }
+    .progress-bar { width: 120px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s ease; }
+
+    .chat-area {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: #ffffff;
+    }
+    .msg { max-width: 85%; display: flex; flex-direction: column; animation: fadeUp 0.3s ease; }
+    .msg.client { align-self: flex-start; }
+    .msg.operator { align-self: flex-end; align-items: flex-end; }
+    .msg.system { align-self: center; max-width: 100%; width: 100%; }
     
-    .erp-left-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 1; grid-row: 1 / span 6; }
-    .erp-right-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; grid-column: 2; grid-row: 1 / span 6; }
+    .msg-bubble {
+      padding: 14px 18px;
+      border-radius: 16px;
+      font-size: 15px;
+      line-height: 1.5;
+      position: relative;
+    }
+    .msg.client .msg-bubble {
+      background: #f1f5f9;
+      color: var(--ink);
+      border-bottom-left-radius: 4px;
+    }
+    .msg.operator .msg-bubble {
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      border-bottom-right-radius: 4px;
+      font-weight: 500;
+    }
+    .msg.system .msg-bubble {
+      background: var(--accent-soft);
+      color: #b45309;
+      text-align: center;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px dashed #fcd34d;
+    }
 
-    .erp-row { display: flex; gap: 6px; align-items: flex-end; min-width: 0; width: 100%; }
-    .erp-group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .erp-label { font-size: 11px; color: #000; white-space: nowrap; margin-bottom: 2px; }
+    .options-container {
+      padding: 20px;
+      border-top: 1px solid var(--border);
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .opt-btn {
+      width: 100%;
+      text-align: left;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .opt-btn:hover:not(:disabled) {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      transform: translateX(4px);
+    }
+    .opt-btn.correct { border-color: var(--primary); background: var(--primary); color: white; }
+    .opt-btn.wrong { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
+    .opt-btn:disabled { opacity: 0.6; cursor: default; }
+    .opt-icon {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #e2e8f0; color: var(--ink-2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+      transition: all 0.2s;
+    }
+    .opt-btn:hover:not(:disabled) .opt-icon { background: var(--primary); color: white; }
+    .opt-btn.correct .opt-icon { background: white; color: var(--primary); }
+
+    /* Блок Теории */
+    .theory-sidebar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      height: fit-content;
+      position: sticky;
+      top: 90px;
+    }
+    .theory-sidebar h3 { font-size: 16px; font-weight: 800; margin-bottom: 12px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+    .theory-sidebar h3 svg { color: var(--accent); }
+    .theory-text { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+    .theory-text strong { color: var(--ink); }
+    .theory-text ul { padding-left: 20px; margin-top: 8px; }
+    .theory-text li { margin-bottom: 6px; }
+
+    /* ===== МИНИ-ИГРА ===== */
+    .game-container {
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .game-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    .game-subtitle { color: var(--ink-2); margin-bottom: 32px; }
     
-    .w-60 { width: 60px; flex-shrink: 0; }
-    .w-80 { width: 80px; flex-shrink: 0; }
-    .w-100 { width: 100px; flex-shrink: 0; }
-    .w-150 { width: 150px; flex-shrink: 0; }
-    .w-250 { width: 250px; flex-shrink: 0; }
-
-    .erp-block-box { border: 1px solid #a0a0a0; padding: 8px; background: #fff; position: relative; display: flex; flex-direction: column; }
-    .erp-block-title { position: absolute; top: -7px; left: 6px; background: #fff; padding: 0 4px; font-size: 11px; color: #333; }
-    .erp-btn-small { padding: 0 4px !important; height: 22px !important; font-weight: bold !important; flex-shrink: 0; background: #dbe4f0 !important; }
+    .game-slots {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .game-slot {
+      background: var(--bg-card);
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.3s;
+      min-height: 64px;
+    }
+    .game-slot.filled {
+      border-style: solid;
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      box-shadow: var(--shadow-sm);
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .game-slot-num {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--border); color: var(--ink-3);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .game-slot.filled .game-slot-num { background: var(--primary); color: white; }
+    .game-slot-text { font-weight: 600; color: var(--ink); font-size: 15px; }
     
-    .erp-table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
-    .erp-table th, .erp-table td { border: 1px solid #ccc; padding: 2px 4px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .erp-table th { background: #dbe4f0; font-weight: normal; }
-    .erp-table th:nth-child(1) { width: 55%; }
-    .erp-table th:nth-child(2) { width: 30%; }
-    .erp-table th:nth-child(3) { width: 15%; text-align: center; }
-    
-    .erp-bottom-row { display: grid; grid-template-columns: 200px 1fr; gap: 8px; }
-    
-    .erp-action-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: auto; padding-top: 10px; }
-    .erp-action-btn { padding: 6px 40px !important; font-weight: bold !important; height: 28px !important; }
+    .game-pool {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    .game-token {
+      background: white;
+      border: 1.5px solid var(--border);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s;
+    }
+    .game-token:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .game-token.used { opacity: 0.3; pointer-events: none; transform: scale(0.9); }
 
-    /* LK и ALERTS */
-    .lk-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1100; padding: 20px; align-items: center; justify-content: center; }
-    .lk-modal.open { display: flex; }
-    .lk-window { width: 100%; max-width: 800px; background: #fff; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); font-family: 'Segoe UI', sans-serif; overflow: hidden; }
-    .lk-header { background: #2c3e50; color: #fff; padding: 12px 20px; font-weight: bold; display: flex; justify-content: space-between; }
-    .lk-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
-    .lk-section { margin-bottom: 15px; }
-    .lk-section h4 { margin: 0 0 5px 0; color: #4a90e2; font-size: 14px; }
-    .lk-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
-    .lk-table th, .lk-table td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-    .lk-table th { background: #f9f9f9; }
-    .lk-alert { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 10px; }
+    /* ===== ФИНАЛЬНЫЙ ЭКРАН ===== */
+    .success-screen { text-align: center; max-width: 500px; margin: 0 auto; padding: 40px 0; }
+    .success-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: var(--primary-soft); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 24px;
+      animation: pulse 2s infinite;
+    }
+    .success-icon svg { width: 40px; height: 40px; }
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+    .success-screen h2 { font-size: 28px; font-weight: 900; margin-bottom: 12px; }
+    .success-screen p { color: var(--ink-2); font-size: 16px; margin-bottom: 32px; }
 
-    .floating-erp-btn { position: fixed; bottom: 30px; right: 30px; z-index: 100; display: none; padding: 12px 24px; background: #0078d7; color: white; border: none; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: bold; font-size: 14px; animation: gPulse 2s infinite; }
-    .floating-erp-btn.show { display: block; }
-
-    .custom-alert-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .custom-alert-backdrop.open { display: flex; }
-    .custom-alert { background: var(--g-bg-2); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 32px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: center; animation: gFadeUp 0.3s var(--g-spring); }
-    .custom-alert h3 { font-size: 20px; margin-bottom: 12px; font-weight: 700; color: var(--g-ink); }
-    .custom-alert p { color: var(--g-ink-2); font-size: 14px; margin-bottom: 24px; line-height: 1.5; white-space: pre-wrap; }
-    .alert-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 700; border: none; border-radius: 10px; background: linear-gradient(135deg, var(--g-gold), var(--g-magenta)); color: #0A0614; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(255, 79, 163, 0.3); transition: transform 0.2s var(--g-smooth), box-shadow 0.2s var(--g-smooth), filter 0.2s; }
-    .alert-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent); transform: skewX(-20deg); animation: shimmer 2.5s infinite; z-index: 1; }
-    .alert-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255, 79, 163, 0.6); filter: brightness(1.1); }
-    .alert-btn:active { transform: translateY(0); }
-
-    /* SURVEY */
-    .survey-modal { display: none; position: fixed; inset: 0; background: rgba(10, 6, 20, 0.95); z-index: 2000; padding: 20px; align-items: center; justify-content: center; }
-    .survey-modal.open { display: flex; }
-    .survey-window { width: 100%; max-width: 700px; background: var(--g-bg-2); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); max-height: 90vh; overflow-y: auto; }
-    .survey-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: var(--g-gold); }
-    .survey-subtitle { color: var(--g-ink-2); margin-bottom: 24px; font-size: 14px; }
-    .survey-q { margin-bottom: 24px; }
-    .survey-q-title { font-weight: 600; margin-bottom: 12px; font-size: 15px; }
-    .survey-options { display: flex; flex-direction: column; gap: 8px; }
-    .survey-opt { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--g-hairline-2); border-radius: 8px; transition: all 0.2s; font-size: 14px; }
-    .survey-opt:hover { border-color: var(--g-gold); background: rgba(255, 201, 64, 0.06); }
-    .survey-opt input[type="radio"] { accent-color: var(--g-gold); width: 16px; height: 16px; }
-    .survey-textarea { width: 100%; padding: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--g-hairline-2); border-radius: 8px; color: var(--g-ink); font-family: var(--g-font); font-size: 14px; resize: vertical; min-height: 80px; }
-    .survey-textarea:focus { outline: none; border-color: var(--g-gold); }
-
-    .review-modal { display: none; position: fixed; inset: 0; background: rgba(10, 6, 20, 0.95); z-index: 2100; padding: 20px; align-items: center; justify-content: center; }
-    .review-modal.open { display: flex; }
-    .review-window { width: 100%; max-width: 900px; background: var(--g-bg-2); border: 1px solid var(--g-hairline-2); border-radius: 16px; padding: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); max-height: 90vh; display: flex; flex-direction: column; }
-    .review-list { flex: 1; overflow-y: auto; margin-bottom: 20px; padding-right: 10px; }
-    .review-item { background: rgba(255,255,255,0.03); border: 1px solid var(--g-hairline); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
-    .review-client { color: var(--g-gold); font-weight: 600; margin-bottom: 8px; font-size: 13px; }
-    .review-operator { color: var(--g-emerald); font-size: 14px; margin-bottom: 8px; }
-    .review-erp { background: #f0f2f5; color: #000; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-top: 8px; }
+    /* Общие кнопки */
+    .btn {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-family: var(--font);
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+    .btn-ghost { background: var(--bg-card); color: var(--ink); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: #f1f5f9; }
   </style>
 </head>
 <body>
 
-  <div class="game-bar">
-    <a href="knowledge-base.html" class="game-bar-logo">
-      <div class="game-bar-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-      <span class="game-bar-title">Тренажёр</span>
+  <header class="header">
+    <a href="knowledge-base.html" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      Скрипт-Тренажёр
     </a>
-    <div class="game-bar-spacer"></div>
-    <div class="game-bar-actions">
-      <a href="kb-millionaire.html" class="game-btn game-btn-sm">Миллионер</a>
-      <a href="knowledge-base.html" class="game-btn game-btn-sm">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
-        В БЗ
-      </a>
+    <div style="display:flex; gap:10px;">
+      <a href="kb-millionaire.html" class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px;">Миллионер</a>
+      <a href="knowledge-base.html" class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px;">В БЗ</a>
     </div>
-  </div>
+  </header>
 
-  <div class="game-wrap">
-    <div id="list-screen">
-      <div class="tr-hero"><h1>Тренажёр диалога</h1><p>Проверь свои навыки общения с клиентом.</p></div>
-      <div class="tr-scenario-list" id="scenario-list"></div>
-    </div>
-
-    <div id="chat-screen" class="game-hide">
-      <button class="tr-back-btn" id="back-to-list">К списку сценариев</button>
-      <div class="tr-progress">
-        <div class="tr-progress-bar"><div class="tr-progress-fill" id="progress-fill" style="width: 0%"></div></div>
-        <div class="tr-progress-text" id="progress-text">0 / 0</div>
+  <div class="container">
+    
+    <!-- ЭКРАН 1: ВЫБОР СКРИПТА -->
+    <div id="screen-home" class="screen active">
+      <div class="hero">
+        <h1>Выберите сценарий</h1>
+        <p>Интерактивный тренажёр для быстрого и веселого обучения новичков. Пройдите теорию, отработайте диалог и соберите пайплайн.</p>
       </div>
-      <div class="tr-chat" id="chat"></div>
-      <div class="tr-options" id="options-container"></div>
-    </div>
-  </div>
-
-  <button class="floating-erp-btn" id="floating-erp-btn">Вернуться в ERP</button>
-
-  <div class="custom-alert-backdrop" id="custom-alert">
-    <div class="custom-alert">
-      <h3 id="alert-title">Ошибка</h3>
-      <p id="alert-text">Текст ошибки</p>
-      <button class="alert-btn" id="alert-btn">Понятно</button>
-    </div>
-  </div>
-
-  <!-- ERP MODAL -->
-  <div class="erp-modal" id="erp-modal">
-    <div class="erp-window">
-      <div class="erp-top-bar">
-        <div class="erp-top-bar-left">
-          <span style="font-weight:bold; color:#000;">На перезвон № 270537026</span>
-          <span><strong>Тел. вызова</strong> 37081</span>
-          <span><strong>Линия</strong> 33045</span>
-          <span><strong>Вероятный город клиента:</strong> Москва</span>
-        </div>
-        <div class="erp-top-bar-right">
-          <span>Текущее время региона: 14:10:54</span>
-        </div>
+      <div class="script-grid" id="script-list">
+        <!-- Заполняется через JS -->
       </div>
-      <div class="erp-sub-bar">
-        <span>Назв. Компания: Егор Буртовой</span>
-        <span>Название: Москва</span>
-        <span>Проведено</span>
+    </div>
+
+    <!-- ЭКРАН 2: ДИАЛОГ (ТЕОРИЯ + ПРАКТИКА) -->
+    <div id="screen-dialog" class="screen">
+      <div style="margin-bottom: 24px;">
+        <button class="btn btn-ghost" onclick="goHome()" style="padding: 8px 16px; font-size: 14px;">← Назад к выбору</button>
       </div>
       
-      <div class="erp-tabs">
-        <div class="erp-tab active">Основная</div>
-        <div class="erp-tab">Стандарты работы</div>
-        <div class="erp-tab">История</div>
-        <div class="erp-tab">Неиспользуемые</div>
-        <div class="erp-tab">Поиск</div>
-      </div>
-      
-      <div class="erp-main">
-        <div class="erp-sidebar">
-          <div class="erp-menu-header">Команды</div>
-          <div class="erp-menu-item active" id="btn-lk">Подсказка</div>
-          <div class="erp-menu-item">Перезвонить</div>
-          <div class="erp-menu-item">Ждет обр. звонка</div>
-          <div class="erp-menu-item">Не могу принять заказ</div>
-          <div class="erp-menu-item">Перевести в другой КЦ</div>
-          <div class="erp-menu-item">Проверка</div>
-          <div class="erp-menu-item">Консультация</div>
-          <div class="erp-menu-item">Сотрудники</div>
-          <div class="erp-menu-item">Вакансии</div>
-          <div class="erp-menu-item">ПЦК</div>
-          <div class="erp-menu-item">Спам</div>
-          <div class="erp-menu-item">Создать дубль</div>
+      <div class="trainer-layout">
+        <div class="chat-container">
+          <div class="chat-header">
+            <div class="chat-header-title" id="dialog-title">Диалог</div>
+            <div class="progress-bar"><div class="progress-fill" id="dialog-progress"></div></div>
+          </div>
+          <div class="chat-area" id="chat-area">
+            <!-- Сообщения -->
+          </div>
+          <div class="options-container" id="options-container">
+            <!-- Варианты ответов -->
+          </div>
         </div>
 
-        <div class="erp-content">
-          <!-- ЛЕВАЯ КОЛОНКА -->
-          <div class="erp-left-col">
-            <div class="erp-row">
-              <div class="erp-group w-100"><div class="erp-label">Телефон</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group w-80"><div class="erp-label">Контрагент</div><input class="erp-input" type="text" value="23711457" readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group w-250"><div class="erp-label">Имя клиента</div><input class="erp-input" id="erp-name" type="text" placeholder="..."></div>
-            </div>
-
-            <div class="erp-row">
-              <div class="erp-group w-100"><div class="erp-label">Осн. телефон КА</div><input class="erp-input" type="text" value="(909) 656-6-..." readonly style="background:#f0f0f0;"></div>
-              <div class="erp-group w-100"><div class="erp-label">Доп. телефон КА</div><input class="erp-input" type="text"></div>
-            </div>
-
-            <div class="erp-row">
-              <div class="erp-group w-150"><div class="erp-label">Город клиента</div><select class="erp-input green"><option>Москва</option></select></div>
-            </div>
-
-            <div class="erp-row" style="margin-top: 4px;">
-              <div style="display:flex; gap:10px; align-items: center; height: 22px;">
-                <label><input type="radio" name="erp-type"> Стационар</label>
-                <label><input type="radio" name="erp-type" checked> Выездной</label>
-              </div>
-            </div>
-
-            <div class="erp-row" style="margin-top: 8px;">
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">Проблема со слов клиента</div>
-                <textarea class="erp-input purple" id="erp-problem" rows="3"></textarea>
-              </div>
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">Что озвучено по ценам</div>
-                <textarea class="erp-input purple" rows="3"></textarea>
-              </div>
-            </div>
-
-            <div class="erp-row" style="margin-top: 4px;">
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">О клиенте\заказе</div>
-                <table class="erp-table">
-                  <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
-                  <tr><td>Юр. лицо</td><td><input type="checkbox" checked></td><td></td></tr>
-                  <tr><td>Возраст клиента</td><td></td><td></td></tr>
-                  <tr><td>Настройки свойства стандартов Ч...</td><td></td><td></td></tr>
-                </table>
-              </div>
-              <div class="erp-block-box" style="flex: 1;">
-                <div class="erp-block-title">Об оборудовании</div>
-                <table class="erp-table">
-                  <tr><th>Свойство</th><th>Значение</th><th>Неизв</th></tr>
-                  <tr><td>Модель</td><td></td><td></td></tr>
-                  <tr><td>Разрешение экрана</td><td></td><td></td></tr>
-                  <tr><td>Изогнутый</td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
-                  <tr><td>Срочно</td><td><input type="checkbox"></td><td><input type="checkbox"></td></tr>
-                </table>
-              </div>
-            </div>
-
-            <div class="erp-bottom-row">
-              <div class="erp-block-box">
-                <div class="erp-block-title">Контакты</div>
-                <textarea class="erp-input" style="height: 80px;"></textarea>
-              </div>
-              <div class="erp-block-box">
-                <div class="erp-block-title">Обращение</div>
-                <textarea class="erp-input" style="height: 80px;"></textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- ПРАВАЯ КОЛОНКА -->
-          <div class="erp-right-col">
-            <div class="erp-group" style="width: 100%;">
-              <div class="erp-label">Тип оборуд.</div>
-              <div style="display:flex; gap:2px; width: 100%;">
-                <input class="erp-input" id="erp-to-code" type="text" placeholder="Код" style="width:50px; text-align:center; flex-shrink: 0;">
-                <input class="erp-input" id="erp-to-name" type="text" readonly placeholder="Название ТО..." style="flex:1;">
-                <button class="erp-btn erp-btn-small">Подсказка</button>
-              </div>
-            </div>
-
-            <div class="erp-group" style="width: 100%;">
-              <div class="erp-label">Бренд</div>
-              <div style="display:flex; gap:2px; width: 100%;">
-                <input class="erp-input" type="text">
-                <button class="erp-btn" style="width:22px; padding:0;">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-                <button class="erp-btn" style="width:22px; padding:0;">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="erp-group" style="width: 100%;">
-              <div class="erp-label">Неисправность</div>
-              <select class="erp-input">
-                <option></option>
-              </select>
-            </div>
-
-            <div class="erp-group" style="width: 100%;">
-              <div class="erp-label">Промоутер</div>
-              <div style="display:flex; gap:2px; width: 100%;">
-                <input class="erp-input" type="text">
-                <button class="erp-btn" style="width:22px; padding:0;">...</button>
-                <button class="erp-btn" style="width:22px; padding:0;">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-                <button class="erp-btn" style="width:22px; padding:0;">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                </button>
-              </div>
-            </div>
-
-            <div class="erp-block-box" id="block-address" style="margin-top: 4px; flex: 1;">
-              <div class="erp-block-title">Адрес КА</div>
-              
-              <div style="display:flex; gap:5px; margin-top:10px;">
-                <input class="erp-input" type="text" placeholder="Поиск по названию">
-                <button class="erp-btn" style="width: 28px; padding: 0;">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                </button>
-              </div>
-              
-              <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
-                <label><input type="checkbox" checked> Район</label>
-                <label><input type="checkbox" checked> Город</label>
-                <label><input type="checkbox" checked> Нас. пункт</label>
-                <label><input type="checkbox"> Название улицы</label>
-              </div>
-              
-              <div style="display:flex; gap:5px; margin-top:6px;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Регион</div><input class="erp-input" value="Москва г." readonly></div>
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Район</div><input class="erp-input"></div>
-              </div>
-              
-              <div style="display:flex; gap:5px; margin-top:4px;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Город</div><input class="erp-input"></div>
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Нас. пункт</div><input class="erp-input"></div>
-              </div>
-
-              <div style="display:flex; gap:5px; margin-top:4px; align-items: flex-end;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Улица</div><input class="erp-input" id="erp-address" placeholder="..."></div>
-                <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Дом</div><input class="erp-input"></div>
-                <div class="erp-group" style="width:55px; flex-shrink:0;"><div class="erp-label">Кв.</div><input class="erp-input"></div>
-              </div>
-
-              <div style="display:flex; gap:5px; margin-top:6px; align-items: flex-end;">
-                <div class="erp-group" style="flex:1;"><div class="erp-label">Ближайшая станция метро</div><input class="erp-input"></div>
-                <button class="erp-btn" style="height: 22px; width: 22px; padding: 0;">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              </div>
-
-              <div class="erp-group" style="margin-top:6px;">
-                <div class="erp-label">Как добраться</div>
-                <textarea class="erp-input" style="height: 60px;"></textarea>
-              </div>
-
-              <div class="erp-group" style="margin-top:6px;">
-                <div class="erp-label">Дата выезда</div>
-                <div style="display:flex; gap:5px;">
-                  <input class="erp-input" type="date">
-                  <button class="erp-btn">Граф. инженеров</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="erp-action-row">
-            <button class="erp-btn erp-action-btn" id="erp-save-btn">Сохранить карточку</button>
+        <div class="theory-sidebar">
+          <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Подсказка</h3>
+          <div class="theory-text" id="theory-content">
+            <!-- Текст теории -->
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- LK MODAL -->
-  <div class="lk-modal" id="lk-modal">
-    <div class="lk-window">
-      <div class="lk-header">
-        <span>Личный кабинет (Подсказка)</span>
-        <button style="background:none; border:none; color:#fff;" id="lk-close">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
+    <!-- ЭКРАН 3: МИНИ-ИГРА -->
+    <div id="screen-game" class="screen">
+      <div class="game-container">
+        <div class="game-title">Собери правильный пайплайн</div>
+        <div class="game-subtitle">Расставь шаги в правильном порядке, чтобы пройти звонок без ошибок.</div>
+        
+        <div class="game-slots" id="game-slots">
+          <!-- Слоты -->
+        </div>
+        
+        <div class="game-pool" id="game-pool">
+          <!-- Токены -->
+        </div>
+
+        <button class="btn btn-primary" id="btn-check-game" onclick="checkGame()" style="display: none; margin: 0 auto;">Проверить</button>
       </div>
-      <div class="lk-body" id="lk-content"></div>
     </div>
-  </div>
 
-  <!-- SURVEY MODAL -->
-  <div class="survey-modal" id="survey-modal">
-    <div class="survey-window">
-      <div class="survey-title">Саморефлексия</div>
-      <div class="survey-subtitle">Пожалуйста, ответьте на несколько вопросов перед тем, как узнать результат.</div>
-      
-      <div class="survey-q">
-        <div class="survey-q-title">1. Оцените общую сложность сценария:</div>
-        <div class="survey-options">
-          <label class="survey-opt"><input type="radio" name="q1" value="easy"> Было легко</label>
-          <label class="survey-opt"><input type="radio" name="q1" value="medium"> Средне, были моменты, где я задумался</label>
-          <label class="survey-opt"><input type="radio" name="q1" value="hard"> Было сложно</label>
+    <!-- ЭКРАН 4: ФИНАЛ -->
+    <div id="screen-success" class="screen">
+      <div class="success-screen">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
+        <h2>Сценарий пройден!</h2>
+        <p id="success-text">Вы отлично справились с диалогом и правилами. Теперь вы готовы к работе с реальными клиентами.</p>
+        <button class="btn btn-primary" onclick="goHome()">Вернуться к выбору</button>
       </div>
-
-      <div class="survey-q">
-        <div class="survey-q-title">2. Какой блок вызвал больше всего трудностей?</div>
-        <div class="survey-options">
-          <label class="survey-opt"><input type="radio" name="q2" value="to"> Определение ТО / работа с диагоналями</label>
-          <label class="survey-opt"><input type="radio" name="q2" value="erp"> Заполнение ERP карточки</label>
-          <label class="survey-opt"><input type="radio" name="q2" value="script"> Скрипты и отработка возражений</label>
-          <label class="survey-opt"><input type="radio" name="q2" value="none"> Всё было понятно</label>
-        </div>
-      </div>
-
-      <div class="survey-q">
-        <div class="survey-q-title">3. Как вы считаете, вы правильно оформили заявку?</div>
-        <div style="margin-bottom: 12px;">
-          <button class="game-btn game-btn-sm" id="btn-show-review">Посмотреть мои ответы и ERP</button>
-        </div>
-        <div class="survey-options">
-          <label class="survey-opt"><input type="radio" name="q3" value="yes"> Да, я всё сделал правильно</label>
-          <label class="survey-opt"><input type="radio" name="q3" value="no"> Нет, я чувствую, что где-то ошибся</label>
-          <label class="survey-opt"><input type="radio" name="q3" value="idk"> Сомневаюсь</label>
-        </div>
-      </div>
-
-      <div class="survey-q">
-        <div class="survey-q-title">4. Что осталось непонятным? (необязательно)</div>
-        <textarea class="survey-textarea" placeholder="Напишите здесь..."></textarea>
-      </div>
-
-      <button class="game-btn game-btn-primary" id="btn-finish-survey" style="width: 100%; padding: 14px;">Завершить и узнать результат</button>
     </div>
+
   </div>
 
-  <!-- REVIEW MODAL -->
-  <div class="review-modal" id="review-modal">
-    <div class="review-window">
-      <div class="survey-title" style="margin-bottom: 20px;">Саморазбор</div>
-      <div class="review-list" id="review-list"></div>
-      <button class="game-btn game-btn-primary" id="btn-close-review" style="width: 100%;">Вернуться к вопросам</button>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script>
-    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // =====================================================================
+    // НАСТРОЙКА СЦЕНАРИЕВ (ЛЕГКО РЕДАКТИРОВАТЬ И ДОБАВЛЯТЬ НОВЫЕ)
+    // =====================================================================
+    const SCRIPTS_DATA = [
+      {
+        id: 'universal',
+        title: 'Универсальный скрипт',
+        description: 'Базовый алгоритм оформления любой заявки. От приветствия до завершения.',
+        steps: [
+          {
+            theory: '<strong>Приветствие и Имя.</strong><br>Жестких рамок нет. Главное — сразу захватить инициативу и узнать имя, чтобы обращаться к клиенту в течение диалога.',
+            client: 'Здравствуйте, у меня не работает телевизор.',
+            options: [
+              { text: 'Здравствуйте, что починить?', correct: false, feedback: 'Клиент уже сказал, что с телевизором проблема. Лучше сразу узнать имя.' },
+              { text: 'Здравствуйте! Как я могу к вам обращаться?', correct: true, feedback: 'Отлично! Захватили инициативу и узнали имя.' },
+              { text: 'Здравствуйте, вы в Москве?', correct: false, feedback: 'Слишком рано. Сначала имя, потом проблема и ТО.' }
+            ]
+          },
+          {
+            theory: '<strong>Выявление проблемы.</strong><br>Если клиент уже точно обозначил проблему (нет изображения, не включается), не задаем лишних вопросов. Сразу переходим к делу.',
+            client: 'Иван. Телевизор включается, но нет изображения.',
+            options: [
+              { text: 'Иван, а какие именно полосы или пятна вы видите?', correct: false, feedback: 'Лишний вопрос. Клиент сказал "нет изображения". Этого достаточно.' },
+              { text: 'Иван, ремонтируем такое. Назовите марку и модель телевизора.', correct: true, feedback: 'Супер! Не затягиваем диалог, сразу переходим к определению ТО.' },
+              { text: 'Иван, а вы его сами не разбирали?', correct: false, feedback: 'Это стоп-фактор, но сначала нам нужно определить ТО (модель).' }
+            ]
+          },
+          {
+            theory: '<strong>Определение ТО (Тип Оборудования).</strong><br>Для телевизора минимально нужна диагональ и тип (ЖК, плазма, кинескоп). Для принтера — строго марка и модель.',
+            client: 'Модель не знаю, но LG 43 дюйма.',
+            options: [
+              { text: 'Отлично. Значит, это 25 ТО. Иван, вы в Москве в пределах МКАД?', correct: true, feedback: 'Верно! Выбрали правильное ТО по диагонали и перешли к городу.' },
+              { text: 'А какая именно модель? Без этого не смогу оформить.', correct: false, feedback: 'Если не знает модель, достаточно диагонали и типа.' },
+              { text: 'Иван, а какого цвета у вас телевизор?', correct: false, feedback: 'Это не относится к оформлению.' }
+            ]
+          },
+          {
+            theory: '<strong>Город и локация.</strong><br>Уточняем город и точку (в пределах МКАД/КАД, за МКАД/КАД) ДО озвучки цен и условий. Это нужно для правильного ЛК.',
+            client: 'В Москве, в пределах МКАД.',
+            options: [
+              { text: 'Супер, по вашему адресу выезжаем. Назовите полный адрес (улица, дом).', correct: true, feedback: 'Идеально! Подтвердили зону выезда и запрашиваем адрес.' },
+              { text: 'Тогда это будет стоить от 1000 рублей, диагностика...', correct: false, feedback: 'Нарушение! Цены озвучиваем только после проверки стоп-факторов.' },
+              { text: 'А в каком районе?', correct: false, feedback: 'Нарушение. Нужно уточнять строго: "Вы в пределах МКАД или за МКАД?", а не район.' }
+            ]
+          },
+          {
+            theory: '<strong>Стоп-факторы и оформление.</strong><br>Проверяем ЛК. Если стопов нет — согласовываем время и завершаем диалог с обязательной озвучкой.',
+            client: 'Улица Ленина, дом 5.',
+            options: [
+              { text: 'Иван, ожидайте мастера сегодня в 15:00, хорошего дня, до свидания!', correct: false, feedback: 'Забыли обязательную озвучку про "не трогайте технику" и "возможен забор в СЦ"!' },
+              { text: 'Иван, мастер будет у вас в 15:00. Убедительная просьба не трогать технику до приезда мастера. Возможен забор техники в СЦ. Хорошего дня, до свидания!', correct: true, feedback: 'Идеальное завершение! Все обязательные фразы озвучены.' },
+              { text: 'Иван, а вы точно будете дома в 15:00?', correct: false, feedback: 'Это лишний вопрос, клиент уже согласовал время.' }
+            ]
+          }
+        ],
+        gameSteps: [
+          'Приветствие и уточнение имени',
+          'Выявление проблемы',
+          'Определение ТО (марка/модель/диагональ)',
+          'Уточнение города и локации (МКАД/КАД)',
+          'Проверка на стоп-факторы в ЛК',
+          'Согласование времени и оформление',
+          'Завершение диалога с обязательной озвучкой'
+        ]
+      },
+      {
+        id: 'tv',
+        title: 'Телевизоры (МСК / СПБ)',
+        description: 'Особенности работы с ТВ: матрицы, кинескопы, плазмы и стоп-факторы.',
+        steps: [
+          {
+            theory: '<strong>Кинескопный телевизор (ЭЛТ).</strong><br>Старый, пузатый. Это стоп-фактор с возможностью продажи. Клиенту нужно предлагать купить новый ТВ.',
+            client: 'Здравствуйте, у меня старый телевизор с выпуклым экраном, перестал показывать.',
+            options: [
+              { text: 'Как я могу к вам обращаться?', correct: true, feedback: 'Сначала имя, это верно. Но дальше мы поймем, что это кинескоп.' },
+              { text: 'Давайте починим! Говорите адрес.', correct: false, feedback: 'Сначала нужно узнать имя и ТО. А это кинескоп — мы его не чиним.' }
+            ]
+          },
+          {
+            theory: '<strong>Стоп-фактор "Кинескоп".</strong><br>Мы не ремонтируем ЭЛТ телевизоры. Правильное действие — предложить продажу нового через "Не ремонт".',
+            client: 'Меня зовут Петр.',
+            options: [
+              { text: 'Петр, к сожалению, кинескопные телевизоры мы не ремонтируем. Но можем предложить вам новый телевизор со скидкой.', correct: true, feedback: 'Верно! Отработали стоп-фактор и сделали продажу.' },
+              { text: 'Петр, давайте оформим мастера.', correct: false, feedback: 'Это ошибка. Кинескоп — стоп-фактор.' }
+            ]
+          },
+          {
+            theory: '<strong>Матрица.</strong><br>Физические повреждения (паутинка, трещины) — это матрица. В Москве предлагаем замену (до 70% от нового). В СПб — стоп-фактор.',
+            client: 'Петр. У меня ЖК телевизор 55 дюймов, разбит экран, пошла паутинка.',
+            options: [
+              { text: 'Петр, вы в Москве или Санкт-Петербурге?', correct: true, feedback: 'Отлично! От города зависит ремонт (в Мск берем, в СПб — стоп).' },
+              { text: 'Петр, это подсветка, мы починим.', correct: false, feedback: 'Паутинка — это физическое повреждение матрицы, а не подсветка.' }
+            ]
+          }
+        ],
+        gameSteps: [
+          'Приветствие и уточнение имени',
+          'Выявление проблемы (паутинка? нет картинки?)',
+          'Определение типа ТВ и диагонали',
+          'Уточнение города (МСК/СПБ)',
+          'Проверка матрицы (ремонт в МСК / стоп в СПБ)',
+          'Согласование выезда или закрытие в стоп',
+          'Завершение диалога'
+        ]
+      }
+    ];
 
-    const TO_DICTIONARY = {
-      '406': 'Телевизор 16" - 31" (LCD)',
-      '26': 'Телевизор 32" - 42" (LCD)',
-      '25': 'Телевизор 43" - 50" (LCD)',
-      '411': 'Телевизор 51" - 100" (LCD)',
-      '632': 'Матрица (ТВ)',
-      '934': 'Настройка каналов'
-    };
-
-    const state = {
-      scenarios: [], scenario: null, currentStepId: null,
-      correctCount: 0, totalSteps: 0, startTime: 0, chat: [],
-      pendingAction: null, pendingNext: null, expectedValue: null,
-      isBoss: false, bossErrors: [], currentErrors: 0,
-      history: []
+    // =====================================================================
+    // ЛОГИКА ТРЕНАЖЁРА
+    // =====================================================================
+    let state = {
+      currentScript: null,
+      currentStepIndex: 0,
+      gameTokens: [],
+      gameSlots: []
     };
 
     const $ = (id) => document.getElementById(id);
 
-    function showAlert(title, message, isError = false) {
-      if ($('alert-title')) $('alert-title').textContent = title;
-      if ($('alert-title')) $('alert-title').style.color = isError ? 'var(--g-danger)' : 'var(--g-gold)';
-      if ($('alert-text')) $('alert-text').textContent = message;
-      if ($('custom-alert')) $('custom-alert').classList.add('open');
-    }
-    
-    function addSafeListener(id, event, callback) {
-      const el = $(id);
-      if (el) el.addEventListener(event, callback);
-      else console.warn(`Element with id "${id}" not found in DOM.`);
-    }
-
-    addSafeListener('alert-btn', 'click', () => { if ($('custom-alert')) $('custom-alert').classList.remove('open'); });
-
-    function escapeHtml(s) {
-      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-    }
-    function countTotalSteps(steps, startId) {
-      const visited = new Set(); const queue = [startId];
-      while (queue.length) {
-        const id = queue.shift();
-        if (visited.has(id) || !steps[id]) continue;
-        visited.add(id);
-        (steps[id].operator_options || []).forEach(opt => { if (opt.next && opt.next !== 'END') queue.push(opt.next); });
-      }
-      return visited.size;
-    }
-
-    async function loadScenarios() {
-      const { data } = await supabaseClient.from('trainer_scenarios').select('*').order('sort_order', { ascending: true });
-      return data || [];
-    }
-
-    function renderScenarioList() {
-      const list = $('scenario-list');
-      if (!list) return;
-      list.innerHTML = state.scenarios.map((s, i) => `
-        <div class="tr-scenario-card ${s.is_boss ? 'boss' : ''}" data-idx="${i}">
-          <h3>${escapeHtml(s.title)} ${s.is_boss ? '<svg style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-left:4px;color:var(--g-danger);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/></svg>' : ''}</h3>
-          <p>${escapeHtml(s.description)}</p>
+    // Инициализация списка скриптов
+    function initHome() {
+      const list = $('script-list');
+      list.innerHTML = SCRIPTS_DATA.map(s => `
+        <div class="script-card" onclick="startDialog('${s.id}')">
+          <h3>${s.title}</h3>
+          <p>${s.description}</p>
+          <button class="script-card-btn">Начать обучение</button>
         </div>
       `).join('');
-      list.querySelectorAll('.tr-scenario-card').forEach(card => {
-        card.addEventListener('click', () => {
-          state.scenario = state.scenarios[parseInt(card.dataset.idx)];
-          startScenario();
-        });
-      });
     }
 
-    function renderChat() {
-      const chat = $('chat');
-      if (!chat) return;
-      chat.innerHTML = state.chat.map(m => {
-        if (m.type === 'client') return `<div class="tr-message client"><div class="tr-avatar">Клиент</div><div class="tr-bubble">${escapeHtml(m.text)}</div></div>`;
-        if (m.type === 'operator') return `<div class="tr-message operator"><div class="tr-avatar">Специалист</div><div class="tr-bubble">${escapeHtml(m.text)}</div></div>`;
-        if (m.type === 'feedback') return `<div class="tr-message feedback ${m.correct ? 'correct' : ''}"><div class="tr-avatar">${m.correct ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'}</div><div class="tr-bubble">${escapeHtml(m.text)}</div></div>`;
-        return '';
-      }).join('');
-      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    // Переключение экранов
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      $(id).classList.add('active');
     }
 
-    function renderStep() {
-      const step = state.scenario.steps[state.currentStepId];
-      if (!step) { finishGame(); return; }
+    function goHome() {
+      showScreen('screen-home');
+      state.currentScript = null;
+    }
 
-      state.currentErrors = 0;
-
-      const visited = state.chat.filter(m => m.type === 'operator').length;
-      if ($('progress-fill')) $('progress-fill').style.width = Math.min(100, Math.round(visited / state.totalSteps * 100)) + '%';
-      if ($('progress-text')) $('progress-text').textContent = `${visited} / ${state.totalSteps}`;
-
-      const lastClient = state.chat.filter(m => m.type === 'client').pop();
-      if (!lastClient || lastClient.text !== step.client) {
-        state.chat.push({ type: 'client', text: step.client }); renderChat();
-      }
-
-      const opts = [...step.operator_options].sort(() => Math.random() - 0.5);
-      state.currentOptions = opts;
-
-      const container = $('options-container');
-      if (!container) return;
-
-      container.innerHTML = opts.map((o, i) => `
-        <button class="tr-option" data-idx="${i}"><span class="tr-option-bullet">${String.fromCharCode(65 + i)}</span><span>${escapeHtml(o.label)}</span></button>
-      `).join('');
+    // Запуск диалога
+    window.startDialog = function(id) {
+      state.currentScript = SCRIPTS_DATA.find(s => s.id === id);
+      state.currentStepIndex = 0;
       
-      container.querySelectorAll('.tr-option').forEach(btn => 
-        btn.addEventListener('click', () => selectOption(parseInt(btn.dataset.idx)))
-      );
+      $('dialog-title').textContent = state.currentScript.title;
+      $('chat-area').innerHTML = '';
+      $('dialog-progress').style.width = '0%';
+      
+      showScreen('screen-dialog');
+      renderStep();
+    };
+
+    // Отрисовка шага
+    function renderStep() {
+      const script = state.currentScript;
+      const step = script.steps[state.currentStepIndex];
+      
+      // Обновляем теорию
+      $('theory-content').innerHTML = step.theory;
+
+      // Добавляем сообщение клиента
+      const chat = $('chat-area');
+      chat.innerHTML += `
+        <div class="msg client">
+          <div class="msg-bubble">${step.client}</div>
+        </div>
+      `;
+      chat.scrollTop = chat.scrollHeight;
+
+      // Рендерим кнопки
+      const optsContainer = $('options-container');
+      optsContainer.innerHTML = '';
+      
+      // Перемешиваем варианты
+      const shuffledOpts = [...step.options].sort(() => Math.random() - 0.5);
+
+      shuffledOpts.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.innerHTML = `<div class="opt-icon">${String.fromCharCode(65 + idx)}</div> <span>${opt.text}</span>`;
+        btn.onclick = () => handleAnswer(btn, opt);
+        optsContainer.appendChild(btn);
+      });
+
+      // Обновляем прогресс
+      const progress = (state.currentStepIndex / script.steps.length) * 100;
+      $('dialog-progress').style.width = `${progress}%`;
     }
 
-    function selectOption(index) {
-      const option = state.currentOptions[index];
-      if (!option) return;
+    // Обработка ответа
+    function handleAnswer(btn, opt) {
+      const optsContainer = $('options-container');
+      
+      // Блокируем все кнопки
+      Array.from(optsContainer.children).forEach(b => b.disabled = true);
 
-      const step = state.scenario.steps[state.currentStepId];
-
-      state.history.push({ type: 'dialog', client: step.client, operator: option.label });
-
-      if (state.isBoss) {
-        if (!option.correct) {
-          state.bossErrors.push(`Шаг "${step.client}": Выбран неверный ответ («${option.label}»)`);
-        }
-        state.chat.push({ type: 'operator', text: option.label });
-        renderChat();
+      if (opt.correct) {
+        btn.classList.add('correct');
         
-        if (option.next === 'END' || !option.next) {
-           setTimeout(finishGame, 1000);
-        } else {
-           state.currentStepId = option.next;
-           setTimeout(renderStep, 1000);
-        }
-        return;
-      }
+        // Добавляем ответ оператора
+        const chat = $('chat-area');
+        chat.innerHTML += `
+          <div class="msg operator">
+            <div class="msg-bubble">${opt.text}</div>
+          </div>
+          <div class="msg system">
+            <div class="msg-bubble">✓ ${opt.feedback}</div>
+          </div>
+        `;
+        chat.scrollTop = chat.scrollHeight;
 
-      if (option.correct) {
-        $('options-container').querySelectorAll('.tr-option').forEach((btn, i) => {
-          btn.disabled = true;
-          if (btn.dataset.idx == index) btn.classList.add('correct');
-        });
-
-        state.chat.push({ type: 'operator', text: option.label });
-        if (option.feedback) state.chat.push({ type: 'feedback', text: option.feedback, correct: true });
-        state.correctCount++;
-        renderChat();
-
-        if (step.action) {
-          state.pendingAction = step.action;
-          state.pendingNext = option.next;
-          state.expectedValue = step.expected;
-          setTimeout(() => openERP(step.action), 800);
-        } else {
-          if (option.next === 'END' || !option.next) {
-            setTimeout(finishGame, 1400);
+        // Переход к следующему шагу или игре
+        setTimeout(() => {
+          state.currentStepIndex++;
+          if (state.currentStepIndex >= state.currentScript.steps.length) {
+            startGame();
           } else {
-            state.currentStepId = option.next;
-            setTimeout(renderStep, 1400);
+            // Очищаем кнопки перед новым шагом
+            optsContainer.innerHTML = ''; 
+            renderStep();
           }
-        }
+        }, 1500);
+
       } else {
-        state.currentErrors++;
-        const btn = $('options-container').querySelector(`.tr-option[data-idx="${index}"]`);
         btn.classList.add('wrong');
         
-        if (state.currentErrors === 1) {
-          state.chat.push({ type: 'feedback', text: option.feedback, correct: false });
-        } else {
-          state.chat.push({ type: 'feedback', text: "Будь пожалуйста внимательнее! Давай попробуем еще раз.", correct: false });
-        }
-        renderChat();
-        
+        // Показываем фидбек об ошибке
+        const chat = $('chat-area');
+        chat.innerHTML += `
+          <div class="msg system" style="background: var(--danger-soft); border-color: var(--danger); color: var(--danger);">
+            <div class="msg-bubble">✗ ${opt.feedback}</div>
+          </div>
+        `;
+        chat.scrollTop = chat.scrollHeight;
+
+        // Разблокируем через 2 секунды
         setTimeout(() => {
           btn.classList.remove('wrong');
-          btn.disabled = false;
-        }, 1000);
+          Array.from(optsContainer.children).forEach(b => b.disabled = false);
+        }, 2000);
       }
     }
 
-    function startScenario() {
-      state.isBoss = state.scenario.is_boss || false;
-      state.bossErrors = [];
-      state.history = [];
-      state.currentStepId = state.scenario.start_step;
-      state.correctCount = 0; state.startTime = Date.now(); state.chat = [];
-      state.totalSteps = countTotalSteps(state.scenario.steps, state.scenario.start_step);
-      state.pendingAction = null; state.pendingNext = null;
+    // =====================================================================
+    // МИНИ-ИГРА
+    // =====================================================================
+    function startGame() {
+      showScreen('screen-game');
       
-      if ($('erp-name')) $('erp-name').value = '';
-      if ($('erp-address')) $('erp-address').value = '';
-      if ($('erp-problem')) $('erp-problem').value = '';
-      if ($('erp-to-code')) $('erp-to-code').value = '';
-      if ($('erp-to-name')) $('erp-to-name').value = '';
+      // Берем шаги из скрипта и перемешиваем для пула
+      const correctSteps = state.currentScript.gameSteps;
+      state.gameSlots = new Array(correctSteps.length).fill(null);
+      state.gameTokens = [...correctSteps].sort(() => Math.random() - 0.5);
 
-      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
-      if ($('list-screen')) $('list-screen').classList.add('game-hide');
-      if ($('chat-screen')) $('chat-screen').classList.remove('game-hide');
-      renderStep();
+      renderGame();
     }
 
-    function openERP(action) {
-      if ($('erp-modal')) $('erp-modal').classList.add('open');
-      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
-      
-      document.querySelectorAll('.erp-block-box').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.erp-input').forEach(el => el.classList.remove('error'));
+    function renderGame() {
+      // Рендер слотов
+      const slotsContainer = $('game-slots');
+      slotsContainer.innerHTML = state.gameSlots.map((slot, i) => `
+        <div class="game-slot ${slot ? 'filled' : ''}" onclick="removeToken(${i})">
+          <div class="game-slot-num">${i + 1}</div>
+          <div class="game-slot-text">${slot ? slot : 'Нажмите сюда, чтобы вставить шаг...'}</div>
+        </div>
+      `).join('');
 
-      if (action === 'fill_name') {
-        if ($('erp-name')) $('erp-name').focus();
-      } 
-      else if (action === 'fill_to') {
-        if ($('erp-to-code')) $('erp-to-code').focus();
-      }
-      else if (action === 'fill_address') {
-        if ($('erp-address')) $('erp-address').focus();
-      }
-      else if (action === 'fill_problem') {
-        if ($('erp-problem')) $('erp-problem').focus();
-      }
-    }
-
-    addSafeListener('erp-to-code', 'keydown', (e) => {
-      if (e.key === 'Enter') {
-        const code = e.target.value.trim();
-        if (TO_DICTIONARY[code]) {
-          if ($('erp-to-name')) $('erp-to-name').value = `${TO_DICTIONARY[code]}`;
-          $('erp-to-code').classList.remove('error');
-        } else {
-          if ($('erp-to-name')) $('erp-to-name').value = 'Код не найден!';
-          $('erp-to-code').classList.add('error');
-        }
-      }
-    });
-
-    addSafeListener('erp-save-btn', 'click', () => {
-      let isValid = true;
-      const exp = state.expectedValue.toLowerCase();
-      let enteredValue = '';
-
-      if (state.pendingAction === 'fill_name') {
-        enteredValue = $('erp-name').value.trim();
-        if (enteredValue.toLowerCase() !== exp) { $('erp-name').classList.add('error'); isValid = false; }
-      } 
-      else if (state.pendingAction === 'fill_to') {
-        enteredValue = $('erp-to-code').value.trim();
-        if (enteredValue !== state.expectedValue) { $('erp-to-code').classList.add('error'); isValid = false; }
-      }
-      else if (state.pendingAction === 'fill_address') {
-        enteredValue = $('erp-address').value.trim();
-        if (!enteredValue.toLowerCase().includes(exp)) { $('erp-address').classList.add('error'); isValid = false; }
-      }
-      else if (state.pendingAction === 'fill_problem') {
-        enteredValue = $('erp-problem').value.trim();
-        if (!enteredValue.toLowerCase().includes(exp)) { $('erp-problem').classList.add('error'); isValid = false; }
-      }
-
-      if (!isValid) {
-        if (state.isBoss) state.bossErrors.push(`ERP (${state.pendingAction}): введено неверно`);
-        return; 
-      }
-
-      state.history.push({ type: 'erp', field: state.pendingAction, value: enteredValue });
-
-      if ($('erp-modal')) $('erp-modal').classList.remove('open');
-      if (!state.isBoss) {
-        state.chat.push({ type: 'feedback', text: 'Данные успешно внесены в ERP.', correct: true });
-        renderChat();
-      }
-      
-      state.currentStepId = state.pendingNext;
-      state.pendingAction = null; state.pendingNext = null;
-      setTimeout(renderStep, 1000);
-    });
-
-    addSafeListener('erp-close', 'click', () => {
-      if ($('erp-modal')) $('erp-modal').classList.remove('open');
-      if (state.pendingAction && $('floating-erp-btn')) $('floating-erp-btn').classList.add('show');
-    });
-
-    addSafeListener('floating-erp-btn', 'click', () => {
-      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
-      openERP(state.pendingAction);
-    });
-
-    addSafeListener('btn-lk', 'click', () => {
-      const toName = $('erp-to-name') ? $('erp-to-name').value : '';
-      if ($('lk-content')) {
-        $('lk-content').innerHTML = `
-          <div class="lk-alert">Внимание! Это симулятор. В реальном ЛК данные обновляются автоматически.</div>
-          <div class="lk-section"><h4>Тип оборудования: ${toName || 'Не выбрано'}</h4><p style="font-size:12px; color:#666;">Город: Москва (в пределах МКАД)</p></div>
-          <div class="lk-section"><h4>Стоп-факторы</h4><table class="lk-table"><tr><th>Фактор</th><th>Действие</th></tr><tr><td>Матрица</td><td>Оформляем в Мск (до 70%)</td></tr><tr><td>Кинескоп</td><td>Стоп-фактор</td></tr></table></div>
+      // Рендер пула токенов
+      const poolContainer = $('game-pool');
+      poolContainer.innerHTML = state.gameTokens.map((token, i) => {
+        const isUsed = state.gameSlots.includes(token);
+        return `
+          <button class="game-token ${isUsed ? 'used' : ''}" onclick="placeToken('${token}')">
+            ${token}
+          </button>
         `;
-      }
-      if ($('lk-modal')) $('lk-modal').classList.add('open');
-    });
+      }).join('');
 
-    addSafeListener('lk-close', 'click', () => { if ($('lk-modal')) $('lk-modal').classList.remove('open'); });
-
-    function finishGame() {
-      if ($('chat-screen')) $('chat-screen').classList.add('game-hide');
-      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
-
-      if (state.isBoss) {
-        if ($('survey-modal')) $('survey-modal').classList.add('open');
-      } else {
-        showAlert('Тренажёр пройден!', `Верных шагов: ${state.correctCount}`);
-        if ($('list-screen')) $('list-screen').classList.remove('game-hide');
-      }
+      // Показываем кнопку проверки, если все слоты заполнены
+      const allFilled = state.gameSlots.every(s => s !== null);
+      $('btn-check-game').style.display = allFilled ? 'block' : 'none';
     }
 
-    addSafeListener('btn-show-review', 'click', () => {
-      const list = $('review-list');
-      if (!list) return;
-      let html = '';
-      let stepIndex = 0;
-      state.history.forEach(item => {
-        if (item.type === 'dialog') {
-          stepIndex++;
-          html += `<div class="review-item"><div class="review-client">Шаг ${stepIndex}. Клиент: ${escapeHtml(item.client)}</div><div class="review-operator">Ваш ответ: ${escapeHtml(item.operator)}</div>`;
-        } else if (item.type === 'erp') {
-          html += `<div class="review-erp">ERP (${item.field}): ${escapeHtml(item.value)}</div></div>`;
-        }
-      });
-      list.innerHTML = html;
-      if ($('review-modal')) $('review-modal').classList.add('open');
-    });
-
-    addSafeListener('btn-close-review', 'click', () => { if ($('review-modal')) $('review-modal').classList.remove('open'); });
-
-    addSafeListener('btn-finish-survey', 'click', () => {
-      const q1 = document.querySelector('input[name="q1"]:checked');
-      const q3 = document.querySelector('input[name="q3"]:checked');
-      if (!q1 || !q3) { showAlert('Внимание', 'Пожалуйста, ответьте на 1 и 3 вопросы анкеты.', true); return; }
-
-      if ($('survey-modal')) $('survey-modal').classList.remove('open');
-      if ($('list-screen')) $('list-screen').classList.remove('game-hide');
-
-      if (state.bossErrors.length === 0) {
-        showAlert("Поздравляем!", "Босс повержен.\nВы не допустили ни одной ошибки. Вы полностью готовы к работе с реальными клиентами!");
-      } else {
-        showAlert("Ошибки", `Вы допустили ошибки:\n\n${state.bossErrors.join('\n')}\n\nПожалуйста, повторите материал и попробуйте снова.`, true);
+    window.placeToken = function(token) {
+      const emptyIndex = state.gameSlots.indexOf(null);
+      if (emptyIndex !== -1) {
+        state.gameSlots[emptyIndex] = token;
+        renderGame();
       }
-    });
+    };
 
-    addSafeListener('back-to-list', 'click', () => { 
-      if ($('chat-screen')) $('chat-screen').classList.add('game-hide'); 
-      if ($('list-screen')) $('list-screen').classList.remove('game-hide'); 
-      if ($('floating-erp-btn')) $('floating-erp-btn').classList.remove('show');
-      if ($('survey-modal')) $('survey-modal').classList.remove('open');
-      if ($('review-modal')) $('review-modal').classList.remove('open');
-    });
+    window.removeToken = function(index) {
+      if (state.gameSlots[index]) {
+        state.gameSlots[index] = null;
+        renderGame();
+      }
+    };
 
-    (async () => { 
-      state.scenarios = await loadScenarios(); 
-      renderScenarioList(); 
-    })();
+    window.checkGame = function() {
+      const correctSteps = state.currentScript.gameSteps;
+      let isCorrect = true;
+      
+      state.gameSlots.forEach((slot, i) => {
+        if (slot !== correctSteps[i]) isCorrect = false;
+      });
+
+      if (isCorrect) {
+        // Успех!
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#f59e0b', '#34d399'] });
+        showScreen('screen-success');
+      } else {
+        // Ошибка - подсвечиваем неправильные
+        const slotsContainer = $('game-slots');
+        Array.from(slotsContainer.children).forEach((el, i) => {
+          if (state.gameSlots[i] !== correctSteps[i]) {
+            el.style.borderColor = 'var(--danger)';
+            el.style.background = 'var(--danger-soft)';
+            setTimeout(() => {
+              el.style.borderColor = '';
+              el.style.background = '';
+            }, 2000);
+          }
+        });
+      }
+    };
+
+    // Инициализация
+    initHome();
+
   </script>
 </body>
 </html>
