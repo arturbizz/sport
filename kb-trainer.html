@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Скрипт-Тренажёр — База Знаний</title>
+  <title>Скрипт-Тренажёр 2.0 — База Знаний</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
       --bg-card: #ffffff;
       --ink: #1e293b;
       --ink-2: #475569;
-      --ink-3: #94a3b8;
       
       --primary: #10b981; /* Изумрудный */
       --primary-dark: #059669;
@@ -31,21 +30,20 @@
       --shadow-lg: 0 10px 30px rgba(16, 185, 129, 0.15);
       
       --font: 'Inter', sans-serif;
-      --mono: 'JetBrains Mono', monospace;
     }
 
     * { cursor: default; caret-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
-    input, textarea, select { cursor: text; caret-color: auto; }
-    button, a, select, .cursor-pointer, [role="button"], label, .opt-btn { cursor: pointer; }
+    input, textarea { cursor: text; caret-color: auto; }
+    button, a, .cursor-pointer { cursor: pointer; }
 
     body {
       font-family: var(--font);
       background: var(--bg-main);
       color: var(--ink);
-      min-height: 100vh;
+      height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
+      overflow: hidden;
     }
 
     /* ===== ШАПКА ===== */
@@ -56,508 +54,313 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      height: 70px;
+      flex-shrink: 0;
+      z-index: 10;
     }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 800;
-      font-size: 18px;
-      color: var(--ink);
-      text-decoration: none;
-    }
-    .logo-icon {
-      width: 32px; height: 32px;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      color: white;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 18px; }
+    .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
     .logo-icon svg { width: 18px; height: 18px; }
 
-    /* ===== ГЛАВНЫЙ КОНТЕЙНЕР ===== */
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      width: 100%;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ===== ЭКРАН ВЫБОРА СКРИПТА ===== */
-    .screen { display: none; animation: fadeUp 0.4s ease forwards; }
-    .screen.active { display: block; }
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-    .hero { text-align: center; margin-bottom: 40px; }
-    .hero h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 12px; color: var(--ink); }
-    .hero p { font-size: 16px; color: var(--ink-2); max-width: 600px; margin: 0 auto; }
-
-    .script-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-    }
-    .script-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px;
-      transition: all 0.3s ease;
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      flex-direction: column;
-    }
-    .script-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-lg);
-      border-color: var(--primary);
-    }
-    .script-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .script-card p { font-size: 14px; color: var(--ink-2); line-height: 1.5; flex: 1; margin-bottom: 20px; }
-    .script-card-btn {
-      background: var(--primary-soft);
-      color: var(--primary-dark);
-      padding: 10px;
-      border-radius: 10px;
-      text-align: center;
-      font-weight: 600;
-      font-size: 14px;
-      border: none;
-      transition: all 0.2s;
-    }
-    .script-card:hover .script-card-btn { background: var(--primary); color: white; }
-
-    /* ===== ЭКРАН ОБУЧЕНИЯ (ТЕОРИЯ + ПРАКТИКА) ===== */
-    .trainer-layout {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      gap: 24px;
-    }
-    @media (max-width: 860px) { .trainer-layout { grid-template-columns: 1fr; } }
-
-    .chat-container {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      height: 600px;
-      box-shadow: var(--shadow-md);
-      overflow: hidden;
-    }
-    .chat-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
+    /* ===== АНИМИРОВАННАЯ КНОПКА "?" ===== */
+    .help-btn {
+      position: fixed;
+      top: 85px;
+      right: 32px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      font-size: 26px;
+      font-weight: 900;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      background: #f8fafc;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+      z-index: 100;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: pulseGlow 2s infinite;
     }
-    .chat-header-title { font-weight: 700; font-size: 16px; }
-    .progress-bar { width: 120px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .help-btn:hover { transform: scale(1.1) rotate(10deg); background: var(--accent); color: white; animation: none; }
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+      70% { box-shadow: 0 0 0 20px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
+    /* ===== ГЛАВНЫЙ ЭКРАН ===== */
+    .main-content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .screen { display: none; width: 100%; max-width: 1000px; animation: fadeUp 0.4s ease forwards; }
+    .screen.active { display: flex; flex-direction: column; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== ЭКРАН ВЫБОРА ===== */
+    .hero { text-align: center; margin-bottom: 40px; }
+    .hero h1 { font-size: 36px; font-weight: 900; margin-bottom: 12px; }
+    .hero p { font-size: 16px; color: var(--ink-2); }
+    .script-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; width: 100%; }
+    .script-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: all 0.3s; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
+    .script-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+    .script-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .script-card p { font-size: 14px; color: var(--ink-2); line-height: 1.5; flex: 1; margin-bottom: 20px; }
+    .script-card-btn { background: var(--primary-soft); color: var(--primary-dark); padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; border: none; transition: all 0.2s; }
+    .script-card:hover .script-card-btn { background: var(--primary); color: white; }
+
+    /* ===== ЭКРАН ДИАЛОГА ===== */
+    .dialog-layout { display: flex; flex-direction: column; height: calc(100vh - 150px); width: 100%; max-width: 900px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow-md); overflow: hidden; position: relative; }
+    .chat-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
+    .chat-header-title { font-weight: 800; font-size: 18px; }
+    .progress-bar { width: 150px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s ease; }
 
-    .chat-area {
-      flex: 1;
-      padding: 24px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      background: #ffffff;
-    }
-    .msg { max-width: 85%; display: flex; flex-direction: column; animation: fadeUp 0.3s ease; }
+    .chat-area { flex: 1; padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+    .msg { max-width: 80%; display: flex; flex-direction: column; animation: fadeUp 0.3s ease; }
     .msg.client { align-self: flex-start; }
     .msg.operator { align-self: flex-end; align-items: flex-end; }
     .msg.system { align-self: center; max-width: 100%; width: 100%; }
     
-    .msg-bubble {
-      padding: 14px 18px;
-      border-radius: 16px;
-      font-size: 15px;
-      line-height: 1.5;
-      position: relative;
-    }
-    .msg.client .msg-bubble {
-      background: #f1f5f9;
-      color: var(--ink);
-      border-bottom-left-radius: 4px;
-    }
-    .msg.operator .msg-bubble {
-      background: var(--primary-soft);
-      color: var(--primary-dark);
-      border-bottom-right-radius: 4px;
-      font-weight: 500;
-    }
-    .msg.system .msg-bubble {
-      background: var(--accent-soft);
-      color: #b45309;
-      text-align: center;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      border: 1px dashed #fcd34d;
-    }
+    .msg-bubble { padding: 16px 20px; border-radius: 16px; font-size: 16px; line-height: 1.5; }
+    .msg.client .msg-bubble { background: #f1f5f9; border-bottom-left-radius: 4px; }
+    .msg.operator .msg-bubble { background: var(--primary-soft); color: var(--primary-dark); border-bottom-right-radius: 4px; font-weight: 500; }
+    .msg.system .msg-bubble { background: var(--accent-soft); color: #b45309; text-align: center; border-radius: 12px; font-size: 14px; font-weight: 600; border: 1px dashed #fcd34d; }
 
-    .options-container {
-      padding: 20px;
-      border-top: 1px solid var(--border);
-      background: #f8fafc;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .opt-btn {
-      width: 100%;
-      text-align: left;
-      padding: 16px 20px;
-      background: var(--bg-card);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--ink);
-      transition: all 0.2s;
-      box-shadow: var(--shadow-sm);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .opt-btn:hover:not(:disabled) {
-      border-color: var(--primary);
-      background: var(--primary-soft);
-      transform: translateX(4px);
-    }
+    .options-container { padding: 24px; border-top: 1px solid var(--border); background: #f8fafc; display: flex; flex-direction: column; gap: 12px; }
+    .opt-btn { width: 100%; text-align: left; padding: 18px 24px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; font-size: 16px; font-weight: 500; color: var(--ink); transition: all 0.2s; display: flex; align-items: center; gap: 16px; }
+    .opt-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-soft); transform: translateX(6px); }
     .opt-btn.correct { border-color: var(--primary); background: var(--primary); color: white; }
     .opt-btn.wrong { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
-    .opt-btn:disabled { opacity: 0.6; cursor: default; }
-    .opt-icon {
-      width: 24px; height: 24px; border-radius: 50%;
-      background: #e2e8f0; color: var(--ink-2);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 700; flex-shrink: 0;
-      transition: all 0.2s;
-    }
+    .opt-icon { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: var(--ink-2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
     .opt-btn:hover:not(:disabled) .opt-icon { background: var(--primary); color: white; }
     .opt-btn.correct .opt-icon { background: white; color: var(--primary); }
 
-    /* Блок Теории */
-    .theory-sidebar {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: var(--shadow-sm);
-      height: fit-content;
-      position: sticky;
-      top: 90px;
-    }
-    .theory-sidebar h3 { font-size: 16px; font-weight: 800; margin-bottom: 12px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
-    .theory-sidebar h3 svg { color: var(--accent); }
-    .theory-text { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
-    .theory-text strong { color: var(--ink); }
-    .theory-text ul { padding-left: 20px; margin-top: 8px; }
-    .theory-text li { margin-bottom: 6px; }
-
-    /* ===== МИНИ-ИГРА ===== */
-    .game-container {
-      max-width: 800px;
-      margin: 0 auto;
-      text-align: center;
-    }
-    .game-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
-    .game-subtitle { color: var(--ink-2); margin-bottom: 32px; }
-    
-    .game-slots {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 32px;
-    }
-    .game-slot {
-      background: var(--bg-card);
-      border: 2px dashed var(--border);
+    /* Плашка задачи для ERP */
+    .erp-task-banner {
+      background: linear-gradient(135deg, #1e293b, #334155);
+      color: white;
+      padding: 20px;
       border-radius: 16px;
-      padding: 16px 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      transition: all 0.3s;
-      min-height: 64px;
+      text-align: center;
+      margin-bottom: 20px;
+      animation: fadeUp 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    .game-slot.filled {
-      border-style: solid;
-      border-color: var(--primary);
-      background: var(--primary-soft);
-      box-shadow: var(--shadow-sm);
-      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    .erp-task-banner h4 { font-size: 18px; margin-bottom: 4px; color: #fcd34d; }
+    .erp-task-banner p { font-size: 15px; color: #cbd5e1; }
+
+    /* ===== ИНТЕРАКТИВНЫЙ ERP СКРИНШОТ ===== */
+    .erp-screen-container {
+      position: relative;
+      width: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
     }
-    @keyframes popIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .game-slot-num {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: var(--border); color: var(--ink-3);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 14px; flex-shrink: 0;
-    }
-    .game-slot.filled .game-slot-num { background: var(--primary); color: white; }
-    .game-slot-text { font-weight: 600; color: var(--ink); font-size: 15px; }
+    .erp-image { width: 100%; display: block; user-select: none; pointer-events: none; }
     
-    .game-pool {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: center;
-      margin-bottom: 32px;
-    }
-    .game-token {
-      background: white;
-      border: 1.5px solid var(--border);
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--ink);
-      box-shadow: var(--shadow-sm);
+    /* Невидимые зоны кликов (Hotspots) */
+    .erp-hotspot {
+      position: absolute;
+      cursor: pointer;
+      border-radius: 4px;
+      border: 2px solid transparent;
       transition: all 0.2s;
+      background: rgba(16, 185, 129, 0.01);
     }
-    .game-token:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .game-token.used { opacity: 0.3; pointer-events: none; transform: scale(0.9); }
+    .erp-hotspot:hover { background: rgba(16, 185, 129, 0.15); border-color: var(--primary); }
+    .erp-hotspot.correct { background: rgba(16, 185, 129, 0.4); border-color: var(--primary); animation: flashGreen 0.5s; }
+    .erp-hotspot.wrong { background: rgba(239, 68, 68, 0.3); border-color: var(--danger); animation: shake 0.4s; }
+    
+    @keyframes flashGreen { 0% { background: rgba(16, 185, 129, 0.8); } 100% { background: rgba(16, 185, 129, 0.4); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
 
-    /* ===== ФИНАЛЬНЫЙ ЭКРАН ===== */
-    .success-screen { text-align: center; max-width: 500px; margin: 0 auto; padding: 40px 0; }
-    .success-icon {
-      width: 80px; height: 80px; border-radius: 50%;
-      background: var(--primary-soft); color: var(--primary);
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 24px;
-      animation: pulse 2s infinite;
-    }
-    .success-icon svg { width: 40px; height: 40px; }
-    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-    .success-screen h2 { font-size: 28px; font-weight: 900; margin-bottom: 12px; }
-    .success-screen p { color: var(--ink-2); font-size: 16px; margin-bottom: 32px; }
+    /* ===== МОДАЛКА ТЕОРИИ ===== */
+    .theory-modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.3s; }
+    .theory-modal.open { display: flex; opacity: 1; }
+    .theory-content-box { background: var(--bg-card); padding: 32px; border-radius: 20px; max-width: 500px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.3); transform: translateY(20px); transition: transform 0.3s; }
+    .theory-modal.open .theory-content-box { transform: translateY(0); }
+    .theory-content-box h3 { font-size: 22px; margin-bottom: 16px; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+    .theory-content-box p, .theory-content-box li { font-size: 15px; color: var(--ink-2); line-height: 1.6; margin-bottom: 12px; }
+    .theory-content-box ul { padding-left: 20px; }
+    .btn-close-modal { width: 100%; margin-top: 20px; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 16px; cursor: pointer; transition: background 0.2s; }
+    .btn-close-modal:hover { background: #d97706; }
 
-    /* Общие кнопки */
-    .btn {
-      padding: 14px 28px;
-      border-radius: 12px;
-      font-family: var(--font);
-      font-size: 16px;
-      font-weight: 700;
-      border: none;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3); }
-    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4); }
+    /* ===== ТОСТ УВЕДОМЛЕНИЯ ===== */
+    .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    .toast { background: var(--danger); color: white; padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3); display: flex; align-items: center; gap: 10px; animation: toastSlideDown 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .toast svg { width: 20px; height: 20px; flex-shrink: 0; }
+    @keyframes toastSlideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    .toast.closing { animation: toastFadeOut 0.3s forwards; }
+    @keyframes toastFadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
+    /* Утилиты */
+    .hidden { display: none !important; }
+    .btn { padding: 12px 24px; border-radius: 12px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
     .btn-ghost { background: var(--bg-card); color: var(--ink); border: 1px solid var(--border); }
     .btn-ghost:hover { background: #f1f5f9; }
   </style>
 </head>
 <body>
 
+  <!-- Контейнер для уведомлений -->
+  <div class="toast-container" id="toast-container"></div>
+
   <header class="header">
-    <a href="knowledge-base.html" class="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      </div>
-      Скрипт-Тренажёр
-    </a>
-    <div style="display:flex; gap:10px;">
-      <a href="kb-millionaire.html" class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px;">Миллионер</a>
-      <a href="knowledge-base.html" class="btn btn-ghost" style="padding: 8px 16px; font-size: 14px;">В БЗ</a>
+    <div class="logo">
+      <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      Скрипт-Тренажёр 2.0
     </div>
+    <button class="btn btn-ghost" onclick="goHome()">← В меню</button>
   </header>
 
-  <div class="container">
+  <!-- Анимированная кнопка помощи -->
+  <button class="help-btn hidden" id="help-btn" onclick="toggleTheory()">?</button>
+
+  <div class="main-content">
     
-    <!-- ЭКРАН 1: ВЫБОР СКРИПТА -->
+    <!-- ЭКРАН 1: ГЛАВНАЯ -->
     <div id="screen-home" class="screen active">
       <div class="hero">
         <h1>Выберите сценарий</h1>
-        <p>Интерактивный тренажёр для быстрого и веселого обучения новичков. Пройдите теорию, отработайте диалог и соберите пайплайн.</p>
+        <p>Изучайте скрипты, отрабатывайте диалоги и учитесь заполнять ERP-карточку.</p>
       </div>
-      <div class="script-grid" id="script-list">
-        <!-- Заполняется через JS -->
+      <div class="script-grid">
+        <div class="script-card" onclick="startDialog()">
+          <h3>Прием звонка по ТВ</h3>
+          <p>Полный цикл: от приветствия до выбора ТО в ERP и проверки адреса.</p>
+          <button class="script-card-btn">Начать обучение</button>
+        </div>
       </div>
     </div>
 
-    <!-- ЭКРАН 2: ДИАЛОГ (ТЕОРИЯ + ПРАКТИКА) -->
-    <div id="screen-dialog" class="screen">
-      <div style="margin-bottom: 24px;">
-        <button class="btn btn-ghost" onclick="goHome()" style="padding: 8px 16px; font-size: 14px;">← Назад к выбору</button>
-      </div>
+    <!-- ЭКРАН 2: ТРЕНАЖЕР -->
+    <div id="screen-dialog" class="screen" style="height: 100%;">
       
-      <div class="trainer-layout">
-        <div class="chat-container">
-          <div class="chat-header">
-            <div class="chat-header-title" id="dialog-title">Диалог</div>
-            <div class="progress-bar"><div class="progress-fill" id="dialog-progress"></div></div>
-          </div>
-          <div class="chat-area" id="chat-area">
-            <!-- Сообщения -->
-          </div>
-          <div class="options-container" id="options-container">
-            <!-- Варианты ответов -->
-          </div>
+      <!-- ЧАТ -->
+      <div class="dialog-layout" id="chat-view">
+        <div class="chat-header">
+          <div class="chat-header-title" id="dialog-title">Диалог с клиентом</div>
+          <div class="progress-bar"><div class="progress-fill" id="dialog-progress"></div></div>
         </div>
+        <div class="chat-area" id="chat-area"></div>
+        <div class="options-container" id="options-container"></div>
+      </div>
 
-        <div class="theory-sidebar">
-          <h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg> Подсказка</h3>
-          <div class="theory-text" id="theory-content">
-            <!-- Текст теории -->
-          </div>
+      <!-- ERP СИМУЛЯТОР -->
+      <div class="dialog-layout hidden" id="erp-view" style="padding: 24px; overflow-y: auto;">
+        <div class="erp-task-banner" id="erp-task-text">
+          <h4>Задание</h4>
+          <p>Кликните на нужное поле</p>
+        </div>
+        <div class="erp-screen-container" id="erp-container">
+          <!-- Ссылка на твою картинку -->
+          <img src="erp-screen.png" id="erp-image" class="erp-image" alt="ERP Карточка">
+          
+          <!-- Точки кликов (координаты в %) -->
+          <div class="erp-hotspot" id="hotspot-name" style="left: 23%; top: 14%; width: 12%; height: 3.5%;" onclick="handleErpClick('name')" title="Имя клиента"></div>
+          <div class="erp-hotspot" id="hotspot-to" style="left: 53%; top: 14%; width: 25%; height: 3.5%;" onclick="handleErpClick('to')" title="Тип оборудования"></div>
+          <div class="erp-hotspot" id="hotspot-address" style="left: 77%; top: 42%; width: 15%; height: 3.5%;" onclick="handleErpClick('address')" title="Улица"></div>
+          <div class="erp-hotspot" id="hotspot-problem" style="left: 10%; top: 36%; width: 23%; height: 8%;" onclick="handleErpClick('problem')" title="Проблема со слов клиента"></div>
         </div>
       </div>
+
     </div>
 
-    <!-- ЭКРАН 3: МИНИ-ИГРА -->
-    <div id="screen-game" class="screen">
-      <div class="game-container">
-        <div class="game-title">Собери правильный пайплайн</div>
-        <div class="game-subtitle">Расставь шаги в правильном порядке, чтобы пройти звонок без ошибок.</div>
-        
-        <div class="game-slots" id="game-slots">
-          <!-- Слоты -->
-        </div>
-        
-        <div class="game-pool" id="game-pool">
-          <!-- Токены -->
-        </div>
-
-        <button class="btn btn-primary" id="btn-check-game" onclick="checkGame()" style="display: none; margin: 0 auto;">Проверить</button>
+    <!-- ЭКРАН 3: УСПЕХ -->
+    <div id="screen-success" class="screen" style="text-align: center; align-items: center; justify-content: center; height: 100%;">
+      <div style="background: var(--primary-soft); width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-    </div>
-
-    <!-- ЭКРАН 4: ФИНАЛ -->
-    <div id="screen-success" class="screen">
-      <div class="success-screen">
-        <div class="success-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <h2>Сценарий пройден!</h2>
-        <p id="success-text">Вы отлично справились с диалогом и правилами. Теперь вы готовы к работе с реальными клиентами.</p>
-        <button class="btn btn-primary" onclick="goHome()">Вернуться к выбору</button>
-      </div>
+      <h2 style="font-size: 32px; margin-bottom: 12px;">Сценарий пройден!</h2>
+      <p style="color: var(--ink-2); margin-bottom: 32px; max-width: 400px;">Вы успешно справились с диалогом и заполнением ERP.</p>
+      <button class="btn btn-primary" style="background: var(--primary); color: white; padding: 16px 32px; font-size: 16px;" onclick="goHome()">Вернуться в меню</button>
     </div>
 
   </div>
 
+  <!-- МОДАЛКА ТЕОРИИ -->
+  <div class="theory-modal" id="theory-modal">
+    <div class="theory-content-box">
+      <h3><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> Подсказка</h3>
+      <div id="theory-text"></div>
+      <button class="btn-close-modal" onclick="toggleTheory()">Понятно</button>
+    </div>
+  </div>
+
+  <!-- Подключаем конфетти для победы -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <script>
     // =====================================================================
-    // НАСТРОЙКА СЦЕНАРИЕВ (ЛЕГКО РЕДАКТИРОВАТЬ И ДОБАВЛЯТЬ НОВЫЕ)
+    // НАСТРОЙКА СЦЕНАРИЯ
     // =====================================================================
-    const SCRIPTS_DATA = [
+    const SCRIPT_DATA = [
+      // Шаг 1
       {
-        id: 'universal',
-        title: 'Универсальный скрипт',
-        description: 'Базовый алгоритм оформления любой заявки. От приветствия до завершения.',
-        steps: [
-          {
-            theory: '<strong>Приветствие и Имя.</strong><br>Жестких рамок нет. Главное — сразу захватить инициативу и узнать имя, чтобы обращаться к клиенту в течение диалога.',
-            client: 'Здравствуйте, у меня не работает телевизор.',
-            options: [
-              { text: 'Здравствуйте, что починить?', correct: false, feedback: 'Клиент уже сказал, что с телевизором проблема. Лучше сразу узнать имя.' },
-              { text: 'Здравствуйте! Как я могу к вам обращаться?', correct: true, feedback: 'Отлично! Захватили инициативу и узнали имя.' },
-              { text: 'Здравствуйте, вы в Москве?', correct: false, feedback: 'Слишком рано. Сначала имя, потом проблема и ТО.' }
-            ]
-          },
-          {
-            theory: '<strong>Выявление проблемы.</strong><br>Если клиент уже точно обозначил проблему (нет изображения, не включается), не задаем лишних вопросов. Сразу переходим к делу.',
-            client: 'Иван. Телевизор включается, но нет изображения.',
-            options: [
-              { text: 'Иван, а какие именно полосы или пятна вы видите?', correct: false, feedback: 'Лишний вопрос. Клиент сказал "нет изображения". Этого достаточно.' },
-              { text: 'Иван, ремонтируем такое. Назовите марку и модель телевизора.', correct: true, feedback: 'Супер! Не затягиваем диалог, сразу переходим к определению ТО.' },
-              { text: 'Иван, а вы его сами не разбирали?', correct: false, feedback: 'Это стоп-фактор, но сначала нам нужно определить ТО (модель).' }
-            ]
-          },
-          {
-            theory: '<strong>Определение ТО (Тип Оборудования).</strong><br>Для телевизора минимально нужна диагональ и тип (ЖК, плазма, кинескоп). Для принтера — строго марка и модель.',
-            client: 'Модель не знаю, но LG 43 дюйма.',
-            options: [
-              { text: 'Отлично. Значит, это 25 ТО. Иван, вы в Москве в пределах МКАД?', correct: true, feedback: 'Верно! Выбрали правильное ТО по диагонали и перешли к городу.' },
-              { text: 'А какая именно модель? Без этого не смогу оформить.', correct: false, feedback: 'Если не знает модель, достаточно диагонали и типа.' },
-              { text: 'Иван, а какого цвета у вас телевизор?', correct: false, feedback: 'Это не относится к оформлению.' }
-            ]
-          },
-          {
-            theory: '<strong>Город и локация.</strong><br>Уточняем город и точку (в пределах МКАД/КАД, за МКАД/КАД) ДО озвучки цен и условий. Это нужно для правильного ЛК.',
-            client: 'В Москве, в пределах МКАД.',
-            options: [
-              { text: 'Супер, по вашему адресу выезжаем. Назовите полный адрес (улица, дом).', correct: true, feedback: 'Идеально! Подтвердили зону выезда и запрашиваем адрес.' },
-              { text: 'Тогда это будет стоить от 1000 рублей, диагностика...', correct: false, feedback: 'Нарушение! Цены озвучиваем только после проверки стоп-факторов.' },
-              { text: 'А в каком районе?', correct: false, feedback: 'Нарушение. Нужно уточнять строго: "Вы в пределах МКАД или за МКАД?", а не район.' }
-            ]
-          },
-          {
-            theory: '<strong>Стоп-факторы и оформление.</strong><br>Проверяем ЛК. Если стопов нет — согласовываем время и завершаем диалог с обязательной озвучкой.',
-            client: 'Улица Ленина, дом 5.',
-            options: [
-              { text: 'Иван, ожидайте мастера сегодня в 15:00, хорошего дня, до свидания!', correct: false, feedback: 'Забыли обязательную озвучку про "не трогайте технику" и "возможен забор в СЦ"!' },
-              { text: 'Иван, мастер будет у вас в 15:00. Убедительная просьба не трогать технику до приезда мастера. Возможен забор техники в СЦ. Хорошего дня, до свидания!', correct: true, feedback: 'Идеальное завершение! Все обязательные фразы озвучены.' },
-              { text: 'Иван, а вы точно будете дома в 15:00?', correct: false, feedback: 'Это лишний вопрос, клиент уже согласовал время.' }
-            ]
-          }
-        ],
-        gameSteps: [
-          'Приветствие и уточнение имени',
-          'Выявление проблемы',
-          'Определение ТО (марка/модель/диагональ)',
-          'Уточнение города и локации (МКАД/КАД)',
-          'Проверка на стоп-факторы в ЛК',
-          'Согласование времени и оформление',
-          'Завершение диалога с обязательной озвучкой'
+        type: 'dialog',
+        theory: '<strong>Приветствие и Имя.</strong><br>Жестких рамок нет. Главное — сразу захватить инициативу и узнать имя, чтобы обращаться к клиенту в течение диалога.',
+        client: 'Здравствуйте, у меня не работает телевизор.',
+        options: [
+          { text: 'Здравствуйте, что починить?', correct: false, feedback: 'Клиент уже сказал, что с телевизором проблема. Лучше сразу узнать имя.' },
+          { text: 'Здравствуйте! Как я могу к вам обращаться?', correct: true, feedback: 'Отлично! Захватили инициативу и узнали имя.' },
+          { text: 'Здравствуйте, вы в Москве?', correct: false, feedback: 'Слишком рано. Сначала имя, потом проблема и ТО.' }
         ]
       },
+      // Шаг 2
       {
-        id: 'tv',
-        title: 'Телевизоры (МСК / СПБ)',
-        description: 'Особенности работы с ТВ: матрицы, кинескопы, плазмы и стоп-факторы.',
-        steps: [
-          {
-            theory: '<strong>Кинескопный телевизор (ЭЛТ).</strong><br>Старый, пузатый. Это стоп-фактор с возможностью продажи. Клиенту нужно предлагать купить новый ТВ.',
-            client: 'Здравствуйте, у меня старый телевизор с выпуклым экраном, перестал показывать.',
-            options: [
-              { text: 'Как я могу к вам обращаться?', correct: true, feedback: 'Сначала имя, это верно. Но дальше мы поймем, что это кинескоп.' },
-              { text: 'Давайте починим! Говорите адрес.', correct: false, feedback: 'Сначала нужно узнать имя и ТО. А это кинескоп — мы его не чиним.' }
-            ]
-          },
-          {
-            theory: '<strong>Стоп-фактор "Кинескоп".</strong><br>Мы не ремонтируем ЭЛТ телевизоры. Правильное действие — предложить продажу нового через "Не ремонт".',
-            client: 'Меня зовут Петр.',
-            options: [
-              { text: 'Петр, к сожалению, кинескопные телевизоры мы не ремонтируем. Но можем предложить вам новый телевизор со скидкой.', correct: true, feedback: 'Верно! Отработали стоп-фактор и сделали продажу.' },
-              { text: 'Петр, давайте оформим мастера.', correct: false, feedback: 'Это ошибка. Кинескоп — стоп-фактор.' }
-            ]
-          },
-          {
-            theory: '<strong>Матрица.</strong><br>Физические повреждения (паутинка, трещины) — это матрица. В Москве предлагаем замену (до 70% от нового). В СПб — стоп-фактор.',
-            client: 'Петр. У меня ЖК телевизор 55 дюймов, разбит экран, пошла паутинка.',
-            options: [
-              { text: 'Петр, вы в Москве или Санкт-Петербурге?', correct: true, feedback: 'Отлично! От города зависит ремонт (в Мск берем, в СПб — стоп).' },
-              { text: 'Петр, это подсветка, мы починим.', correct: false, feedback: 'Паутинка — это физическое повреждение матрицы, а не подсветка.' }
-            ]
-          }
-        ],
-        gameSteps: [
-          'Приветствие и уточнение имени',
-          'Выявление проблемы (паутинка? нет картинки?)',
-          'Определение типа ТВ и диагонали',
-          'Уточнение города (МСК/СПБ)',
-          'Проверка матрицы (ремонт в МСК / стоп в СПБ)',
-          'Согласование выезда или закрытие в стоп',
-          'Завершение диалога'
+        type: 'dialog',
+        theory: '<strong>Выявление проблемы.</strong><br>Если клиент уже точно обозначил проблему (нет изображения, не включается), не задаем лишних вопросов. Сразу переходим к делу.',
+        client: 'Иван. Телевизор включается, но нет изображения.',
+        options: [
+          { text: 'Иван, ремонтируем такое. Назовите марку и модель телевизора.', correct: true, feedback: 'Супер! Не затягиваем диалог, сразу переходим к определению ТО.' },
+          { text: 'Иван, а какие именно полосы или пятна вы видите?', correct: false, feedback: 'Лишний вопрос. Клиент сказал "нет изображения". Этого достаточно.' }
+        ]
+      },
+      // Шаг 3 (ERP)
+      {
+        type: 'erp',
+        theory: '<strong>Определение ТО.</strong><br>Мы узнали, что это ЖК 43 дюйма. Это 25 ТО. В ERP его нужно вносить в поле <strong>"Тип оборуд."</strong> (справа вверху).',
+        client: 'Модель не знаю, но LG 43 дюйма.',
+        taskText: 'Отлично. Значит, это 25 ТО. Внесите ТО в ERP карточку.',
+        hotspot: 'to' // Правильный клик
+      },
+      // Шаг 4
+      {
+        type: 'dialog',
+        theory: '<strong>Город и локация.</strong><br>Уточняем город и точку (в пределах МКАД/КАД) ДО озвучки цен. Это нужно для правильного ЛК.',
+        client: 'В Москве, в пределах МКАД.',
+        options: [
+          { text: 'Супер, по вашему адресу выезжаем. Назовите полный адрес (улица, дом).', correct: true, feedback: 'Идеально! Подтвердили зону выезда и запрашиваем адрес.' },
+          { text: 'Тогда это будет стоить от 1000 рублей...', correct: false, feedback: 'Нарушение! Цены озвучиваем только после проверки стоп-факторов.' }
+        ]
+      },
+      // Шаг 5 (ERP)
+      {
+        type: 'erp',
+        theory: '<strong>Адрес.</strong><br>Записываем адрес в ERP. Обрати внимание, куда именно вбивается улица.',
+        client: 'Улица Ленина, дом 5.',
+        taskText: 'Клиент назвал адрес: "Ленина 5". Куда внесем улицу?',
+        hotspot: 'address'
+      },
+      // Шаг 6
+      {
+        type: 'dialog',
+        theory: '<strong>Завершение.</strong><br>Обязательно проговариваем про "не трогать технику" и прощаемся.',
+        client: 'Хорошо, жду мастера.',
+        options: [
+          { text: 'Иван, мастер будет у вас в 15:00. Убедительная просьба не трогать технику до приезда мастера. Хорошего дня!', correct: true, feedback: 'Идеальное завершение! Все обязательные фразы озвучены.' },
+          { text: 'Иван, ожидайте, до свидания!', correct: false, feedback: 'Забыли обязательную озвучку про "не трогать технику"!' }
         ]
       }
     ];
@@ -566,68 +369,64 @@
     // ЛОГИКА ТРЕНАЖЁРА
     // =====================================================================
     let state = {
-      currentScript: null,
-      currentStepIndex: 0,
-      gameTokens: [],
-      gameSlots: []
+      currentStepIndex: 0
     };
 
     const $ = (id) => document.getElementById(id);
 
-    // Инициализация списка скриптов
-    function initHome() {
-      const list = $('script-list');
-      list.innerHTML = SCRIPTS_DATA.map(s => `
-        <div class="script-card" onclick="startDialog('${s.id}')">
-          <h3>${s.title}</h3>
-          <p>${s.description}</p>
-          <button class="script-card-btn">Начать обучение</button>
-        </div>
-      `).join('');
-    }
-
-    // Переключение экранов
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      $(id).classList.add('active');
-    }
-
-    function goHome() {
-      showScreen('screen-home');
-      state.currentScript = null;
-    }
-
-    // Запуск диалога
-    window.startDialog = function(id) {
-      state.currentScript = SCRIPTS_DATA.find(s => s.id === id);
+    window.startDialog = function() {
       state.currentStepIndex = 0;
-      
-      $('dialog-title').textContent = state.currentScript.title;
       $('chat-area').innerHTML = '';
       $('dialog-progress').style.width = '0%';
+      $('help-btn').classList.remove('hidden');
       
       showScreen('screen-dialog');
       renderStep();
     };
 
-    // Отрисовка шага
-    function renderStep() {
-      const script = state.currentScript;
-      const step = script.steps[state.currentStepIndex];
-      
-      // Обновляем теорию
-      $('theory-content').innerHTML = step.theory;
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      $(id).classList.add('active');
+    }
 
-      // Добавляем сообщение клиента
+    window.goHome = function() {
+      showScreen('screen-home');
+      $('help-btn').classList.add('hidden');
+      $('theory-modal').classList.remove('open');
+    };
+
+    function renderStep() {
+      const step = SCRIPT_DATA[state.currentStepIndex];
+      if (!step) return finishGame();
+
+      // Обновляем теорию
+      $('theory-text').innerHTML = step.theory;
+      $('theory-modal').classList.remove('open');
+
+      // Прогресс
+      const progress = (state.currentStepIndex / SCRIPT_DATA.length) * 100;
+      $('dialog-progress').style.width = `${progress}%`;
+
+      if (step.type === 'dialog') {
+        $('chat-view').classList.remove('hidden');
+        $('erp-view').classList.add('hidden');
+        renderDialogStep(step);
+      } else if (step.type === 'erp') {
+        $('chat-view').classList.add('hidden');
+        $('erp-view').classList.remove('hidden');
+        renderErpStep(step);
+      }
+    }
+
+    // --- ЛОГИКА ДИАЛОГА ---
+    function renderDialogStep(step) {
       const chat = $('chat-area');
-      chat.innerHTML += `
+      chat.innerHTML = `
         <div class="msg client">
           <div class="msg-bubble">${step.client}</div>
         </div>
       `;
-      chat.scrollTop = chat.scrollHeight;
-
-      // Рендерим кнопки
+      
       const optsContainer = $('options-container');
       optsContainer.innerHTML = '';
       
@@ -638,62 +437,34 @@
         const btn = document.createElement('button');
         btn.className = 'opt-btn';
         btn.innerHTML = `<div class="opt-icon">${String.fromCharCode(65 + idx)}</div> <span>${opt.text}</span>`;
-        btn.onclick = () => handleAnswer(btn, opt);
+        btn.onclick = () => handleDialogAnswer(btn, opt);
         optsContainer.appendChild(btn);
       });
-
-      // Обновляем прогресс
-      const progress = (state.currentStepIndex / script.steps.length) * 100;
-      $('dialog-progress').style.width = `${progress}%`;
     }
 
-    // Обработка ответа
-    function handleAnswer(btn, opt) {
+    function handleDialogAnswer(btn, opt) {
       const optsContainer = $('options-container');
-      
-      // Блокируем все кнопки
       Array.from(optsContainer.children).forEach(b => b.disabled = true);
 
       if (opt.correct) {
         btn.classList.add('correct');
-        
-        // Добавляем ответ оператора
         const chat = $('chat-area');
         chat.innerHTML += `
-          <div class="msg operator">
-            <div class="msg-bubble">${opt.text}</div>
-          </div>
-          <div class="msg system">
-            <div class="msg-bubble">✓ ${opt.feedback}</div>
-          </div>
+          <div class="msg operator"><div class="msg-bubble">${opt.text}</div></div>
+          <div class="msg system"><div class="msg-bubble">✓ ${opt.feedback}</div></div>
         `;
         chat.scrollTop = chat.scrollHeight;
 
-        // Переход к следующему шагу или игре
         setTimeout(() => {
           state.currentStepIndex++;
-          if (state.currentStepIndex >= state.currentScript.steps.length) {
-            startGame();
-          } else {
-            // Очищаем кнопки перед новым шагом
-            optsContainer.innerHTML = ''; 
-            renderStep();
-          }
+          renderStep();
         }, 1500);
-
       } else {
         btn.classList.add('wrong');
-        
-        // Показываем фидбек об ошибке
         const chat = $('chat-area');
-        chat.innerHTML += `
-          <div class="msg system" style="background: var(--danger-soft); border-color: var(--danger); color: var(--danger);">
-            <div class="msg-bubble">✗ ${opt.feedback}</div>
-          </div>
-        `;
+        chat.innerHTML += `<div class="msg system" style="background: var(--danger-soft); border-color: var(--danger); color: var(--danger);"><div class="msg-bubble">✗ ${opt.feedback}</div></div>`;
         chat.scrollTop = chat.scrollHeight;
 
-        // Разблокируем через 2 секунды
         setTimeout(() => {
           btn.classList.remove('wrong');
           Array.from(optsContainer.children).forEach(b => b.disabled = false);
@@ -701,91 +472,65 @@
       }
     }
 
-    // =====================================================================
-    // МИНИ-ИГРА
-    // =====================================================================
-    function startGame() {
-      showScreen('screen-game');
+    // --- ЛОГИКА ERP ---
+    function renderErpStep(step) {
+      $('erp-task-text').innerHTML = `<h4>Клиент: "${step.client}"</h4><p>${step.taskText}</p>`;
       
-      // Берем шаги из скрипта и перемешиваем для пула
-      const correctSteps = state.currentScript.gameSteps;
-      state.gameSlots = new Array(correctSteps.length).fill(null);
-      state.gameTokens = [...correctSteps].sort(() => Math.random() - 0.5);
-
-      renderGame();
-    }
-
-    function renderGame() {
-      // Рендер слотов
-      const slotsContainer = $('game-slots');
-      slotsContainer.innerHTML = state.gameSlots.map((slot, i) => `
-        <div class="game-slot ${slot ? 'filled' : ''}" onclick="removeToken(${i})">
-          <div class="game-slot-num">${i + 1}</div>
-          <div class="game-slot-text">${slot ? slot : 'Нажмите сюда, чтобы вставить шаг...'}</div>
-        </div>
-      `).join('');
-
-      // Рендер пула токенов
-      const poolContainer = $('game-pool');
-      poolContainer.innerHTML = state.gameTokens.map((token, i) => {
-        const isUsed = state.gameSlots.includes(token);
-        return `
-          <button class="game-token ${isUsed ? 'used' : ''}" onclick="placeToken('${token}')">
-            ${token}
-          </button>
-        `;
-      }).join('');
-
-      // Показываем кнопку проверки, если все слоты заполнены
-      const allFilled = state.gameSlots.every(s => s !== null);
-      $('btn-check-game').style.display = allFilled ? 'block' : 'none';
-    }
-
-    window.placeToken = function(token) {
-      const emptyIndex = state.gameSlots.indexOf(null);
-      if (emptyIndex !== -1) {
-        state.gameSlots[emptyIndex] = token;
-        renderGame();
-      }
-    };
-
-    window.removeToken = function(index) {
-      if (state.gameSlots[index]) {
-        state.gameSlots[index] = null;
-        renderGame();
-      }
-    };
-
-    window.checkGame = function() {
-      const correctSteps = state.currentScript.gameSteps;
-      let isCorrect = true;
-      
-      state.gameSlots.forEach((slot, i) => {
-        if (slot !== correctSteps[i]) isCorrect = false;
+      // Сбрасываем подсветку с прошлых кликов
+      document.querySelectorAll('.erp-hotspot').forEach(el => {
+        el.className = 'erp-hotspot';
       });
+    }
 
-      if (isCorrect) {
-        // Успех!
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#f59e0b', '#34d399'] });
-        showScreen('screen-success');
+    window.handleErpClick = function(id) {
+      const currentStep = SCRIPT_DATA[state.currentStepIndex];
+      const correctId = currentStep.hotspot;
+      const targetEl = $(`hotspot-${id}`);
+
+      if (id === correctId) {
+        targetEl.classList.add('correct');
+        // Небольшая задержка для визуального фидбека
+        setTimeout(() => {
+          state.currentStepIndex++;
+          renderStep();
+        }, 800);
       } else {
-        // Ошибка - подсвечиваем неправильные
-        const slotsContainer = $('game-slots');
-        Array.from(slotsContainer.children).forEach((el, i) => {
-          if (state.gameSlots[i] !== correctSteps[i]) {
-            el.style.borderColor = 'var(--danger)';
-            el.style.background = 'var(--danger-soft)';
-            setTimeout(() => {
-              el.style.borderColor = '';
-              el.style.background = '';
-            }, 2000);
-          }
-        });
+        targetEl.classList.add('wrong');
+        showToast('Неверно! Посмотрите внимательно на поля ERP.');
+        setTimeout(() => {
+          targetEl.classList.remove('wrong');
+        }, 1000);
       }
     };
 
-    // Инициализация
-    initHome();
+    // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+    function toggleTheory() {
+      $('theory-modal').classList.toggle('open');
+    }
+
+    function finishGame() {
+      showScreen('screen-success');
+      $('help-btn').classList.add('hidden');
+      // Запуск конфетти
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#f59e0b', '#34d399'] });
+    }
+
+    // Кастомный тост для ошибок
+    function showToast(message) {
+      const container = $('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('closing');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
 
   </script>
 </body>
