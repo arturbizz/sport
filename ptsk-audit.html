@@ -175,23 +175,18 @@
     .bulk-table th:first-child { z-index: 4; }
     .bulk-table tbody tr:hover td:first-child { background: var(--bg-body); }
 
-    /* ==== СТАТУСЫ СТРОК ==== */
-    /* Не проверено — оранжевый маркер + мягкий жёлтый фон */
     .bulk-table tbody tr.row-pending td { background: #FFF7ED; }
     .bulk-table tbody tr.row-pending td:first-child { background: #FFF7ED; box-shadow: inset 3px 0 0 var(--status-warning), 1px 0 0 var(--border-light); }
     .bulk-table tbody tr.row-pending:hover td { background: #FFEDD5; }
     .bulk-table tbody tr.row-pending:hover td:first-child { background: #FFEDD5; }
 
-    /* В работе — синий маркер + мягкий голубой фон */
     .bulk-table tbody tr.row-inprogress td { background: #EFF6FF; }
     .bulk-table tbody tr.row-inprogress td:first-child { background: #EFF6FF; box-shadow: inset 3px 0 0 var(--status-info), 1px 0 0 var(--border-light); }
     .bulk-table tbody tr.row-inprogress:hover td { background: #DBEAFE; }
     .bulk-table tbody tr.row-inprogress:hover td:first-child { background: #DBEAFE; }
 
-    /* Проверено — зелёный маркер, белый фон (визуально «уходит» на второй план) */
     .bulk-table tbody tr.row-done td:first-child { box-shadow: inset 3px 0 0 var(--status-success), 1px 0 0 var(--border-light); }
 
-    /* Активная строка перекрывает фон — но левый цветной маркер остаётся (это box-shadow) */
     .bulk-table tbody tr.active-row td { background: #EEF2FF !important; }
     .bulk-table tbody tr.active-row td:first-child { background: #E0E7FF !important; }
 
@@ -316,18 +311,18 @@
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-title">Действия (2 линия)</div>
+        <div class="sidebar-title">Действия (Продажи)</div>
         <div class="rule-card danger">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-error); flex-shrink: 0;"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           <div class="rule-text"><strong>Вернул 1Л</strong>Оператор 1 линии ошибся. Заявка возвращается ему.</div>
         </div>
         <div class="rule-card warning">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-warning); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <div class="rule-text"><strong>Ошибка 2Л</strong>Виноват оператор 2 линии (долгий перезвон или др.).</div>
+          <div class="rule-text"><strong>Ошибка Продаж</strong>Виноват менеджер продаж (долгий перезвон или др.).</div>
         </div>
         <div class="rule-card success">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-success); flex-shrink: 0;"><polyline points="20 6 9 17 4 12"/></svg>
-          <div class="rule-text"><strong>Закрыть 2Л</strong>Ошибок нет. Оператор 2Л приводит заявку к финальному статусу.</div>
+          <div class="rule-text"><strong>Закрыть</strong>Ошибок нет. Менеджер продаж приводит заявку к финальному статусу.</div>
         </div>
       </div>
 
@@ -351,10 +346,10 @@
       </div>
 
       <div class="sidebar-section">
-        <div class="sidebar-title">Проблема 2 линии</div>
+        <div class="sidebar-title">Проблема Продаж</div>
         <div class="rule-card info">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-info); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <div class="rule-text"><strong>Долгий перезвон</strong>Оператор 2Л перезвонил позже 10 мин.</div>
+          <div class="rule-text"><strong>Долгий перезвон</strong>Менеджер перезвонил позже 10 мин.</div>
         </div>
         <div class="rule-card info">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-info); flex-shrink: 0;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -390,7 +385,7 @@
         </div>
         <div class="create-form">
           <div class="form-group">
-            <label class="form-label">Оператор 2 линии (принял ПЦК)</label>
+            <label class="form-label">Менеджер Продаж (принял ПЦК)</label>
             <input type="text" class="form-input" id="create-operator" placeholder="Например: Артем">
           </div>
           <div class="form-group">
@@ -422,7 +417,7 @@
                   <th style="width: 130px;">Оператор 1Л</th>
                   <th style="width: 130px;">Вердикт 1Л</th>
                   <th style="min-width: 160px;">Тематика ошибки</th>
-                  <th style="width: 175px;">Проблема 2Л</th>
+                  <th style="width: 175px;">Проблема Продаж</th>
                   <th style="width: 130px;">Действие</th>
                   <th style="width: 180px;">Комментарий</th>
                   <th style="width: 45px;"></th>
@@ -461,7 +456,7 @@
       <div class="modal-body">
         <div class="report-tabs">
           <button class="report-tab active" id="rtab-line1" onclick="switchReportTab('line1')">По операторам 1 линии</button>
-          <button class="report-tab" id="rtab-line2" onclick="switchReportTab('line2')">По операторам 2 линии</button>
+          <button class="report-tab" id="rtab-line2" onclick="switchReportTab('line2')">По менеджерам Продаж</button>
         </div>
         <div class="export-bar" id="export-bar"></div>
         <div id="reports-body"></div>
@@ -586,7 +581,7 @@
     let sessionsMap = {};
     let confirmCallback = null;
 
-    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v7';
+    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v8';
     function initSidebar() {
       if (localStorage.getItem(SIDEBAR_KEY) === null) localStorage.setItem(SIDEBAR_KEY, '1');
       const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
@@ -659,10 +654,6 @@
       el.innerHTML = `<div class="save-indicator show ${state}"><div class="dot"></div>${text}</div>`;
     }
 
-    // ==== ОПРЕДЕЛЕНИЕ СТАТУСА СТРОКИ ====
-    // pending: не брал в работу (пусто)
-    // inprogress: начал, но не завершил
-    // done: проверено
     function getRowState(item) {
       const verdict = item.audit_result;
       const hasLine1 = !!(item.operator_line1_name && item.operator_line1_name.trim());
@@ -677,13 +668,11 @@
         return anythingFilled ? 'inprogress' : 'pending';
       }
 
-      // Вердикт установлен
       if (verdict === 'incorrect') {
         if (!hasLine1 || !hasReason) return 'inprogress';
         return 'done';
       }
 
-      // correct или pending_info — считается завершённым
       return 'done';
     }
 
@@ -695,7 +684,6 @@
       tr.classList.add('row-' + state);
     }
 
-    // РАБОТА С ПРИЧИНАМИ ОШИБОК
     function splitReasons(reasonStr) {
       if (!reasonStr) return [];
       return reasonStr.split(', ').filter(x => x.trim()).map(x => x.trim());
@@ -771,7 +759,7 @@
               <span class="stat-pill correct">✓ ${stats.correct}</span>
               <span class="stat-pill pending">? ${stats.pending_info}</span>
               <span class="stat-pill incorrect">✕ ${stats.incorrect}</span>
-              ${stats.line2Issues > 0 ? `<span class="stat-pill line2">2Л: ${stats.line2Issues}</span>` : ''}
+              ${stats.line2Issues > 0 ? `<span class="stat-pill line2">Продажи: ${stats.line2Issues}</span>` : ''}
               ${stats.pending > 0 ? `<span class="stat-pill unchecked">Не пров.: ${stats.pending}</span>` : ''}
               ${stats.inprogress > 0 ? `<span class="stat-pill inprogress">В раб.: ${stats.inprogress}</span>` : ''}
             </div>
@@ -818,7 +806,7 @@
     async function submitCreate() {
       const operator2 = document.getElementById('create-operator').value.trim();
       const idsRaw = document.getElementById('create-ids').value.trim();
-      if (!operator2) { showToast('error', 'Ошибка', 'Укажите оператора 2 линии.'); return; }
+      if (!operator2) { showToast('error', 'Ошибка', 'Укажите менеджера продаж.'); return; }
       if (!idsRaw) { showToast('error', 'Ошибка', 'Вставьте номера заявок.'); return; }
 
       const ids = idsRaw.split(/[\n,]+/).map(s => s.trim()).filter(s => s.length > 0);
@@ -892,25 +880,25 @@
       document.getElementById('audit-header-container').innerHTML = `
         <div class="audit-header">
           <div class="audit-title-block">
-            <div class="audit-title">Аудит 2Л: ${escapeHtml(s.operator_line2)}</div>
+            <div class="audit-title">Аудит Продаж: ${escapeHtml(s.operator_line2)}</div>
             <div class="audit-subtitle">${isDraft ? 'Черновик' : 'Завершён'} · ${total} заявок</div>
           </div>
           <div class="audit-stats-compact">
             <span class="stat-pill correct" title="Верно">✓ ${stats.correct}</span>
             <span class="stat-pill pending" title="Уточнение">? ${stats.pending_info}</span>
             <span class="stat-pill incorrect" title="Ошибки 1Л">✕ ${stats.incorrect}</span>
-            ${stats.line2Issues > 0 ? `<span class="stat-pill line2" title="Проблемы 2Л">2Л: ${stats.line2Issues}</span>` : ''}
+            ${stats.line2Issues > 0 ? `<span class="stat-pill line2" title="Проблемы Продаж">Продажи: ${stats.line2Issues}</span>` : ''}
             ${stats.pending > 0 ? `<span class="stat-pill unchecked" title="Не брал в работу">Не пров.: ${stats.pending}</span>` : ''}
             ${stats.inprogress > 0 ? `<span class="stat-pill inprogress" title="Начато, но не завершено">В работе: ${stats.inprogress}</span>` : ''}
           </div>
           <div class="audit-toolbar-actions">
-            ${stats.correct > 0 ? `<button class="btn-premium" onclick="copyForOperator2()" title="Скопировать список верных заявок для отправки оператору 2 линии">
+            ${stats.correct > 0 ? `<button class="btn-premium" onclick="copyForOperator2()" title="Скопировать список верных заявок для отправки менеджеру Продаж">
               <svg class="icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
-              Верные 2Л <span class="badge-count">${stats.correct}</span>
+              Верные для Продаж <span class="badge-count">${stats.correct}</span>
             </button>` : ''}
-            ${stats.line2Issues > 0 ? `<button class="btn-premium info" onclick="copyLine2Issues()" title="Скопировать заявки, где оператор 2 линии ошибся (долгий перезвон / другое)">
+            ${stats.line2Issues > 0 ? `<button class="btn-premium info" onclick="copyLine2Issues()" title="Скопировать заявки, где менеджер Продаж ошибся (долгий перезвон / другое)">
               <svg class="icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              2Л ошибки <span class="badge-count">${stats.line2Issues}</span>
+              Ошибки Продаж <span class="badge-count">${stats.line2Issues}</span>
             </button>` : ''}
             ${stats.incorrect > 0 ? `<button class="btn-premium warn" onclick="copyAllIncorrectInSession()" title="Скопировать заявки, где оператор 1 линии нарушил регламент">
               <svg class="icon-sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
@@ -981,9 +969,9 @@
             </td>
             <td>
               <select class="bulk-select" id="action-${index}" onchange="updateItemField(${index}, 'action_status', this.value)" ${disabledAttr}>
-                <option value="closed_2l" ${item.action_status === 'closed_2l' ? 'selected' : ''}>Закрыть 2Л</option>
+                <option value="closed_2l" ${item.action_status === 'closed_2l' ? 'selected' : ''}>Закрыть</option>
                 <option value="returned_1l" ${item.action_status === 'returned_1l' ? 'selected' : ''}>Вернул 1Л</option>
-                <option value="error_2l" ${item.action_status === 'error_2l' ? 'selected' : ''}>Ошибка 2Л</option>
+                <option value="error_2l" ${item.action_status === 'error_2l' ? 'selected' : ''}>Ошибка Продаж</option>
               </select>
             </td>
             <td>
@@ -1244,15 +1232,6 @@
       if (!currentSession) return;
       const notDone = currentSession.items.filter(it => getRowState(it) !== 'done');
       if (notDone.length > 0) {
-        const notDoneDetails = currentSession.items
-          .map((it, i) => ({ it, i }))
-          .filter(x => getRowState(x.it) !== 'done')
-          .map(x => {
-            const state = getRowState(x.it);
-            return `  • ${x.it.request_number} — ${state === 'pending' ? 'не проверено' : 'не завершено'}`;
-          })
-          .slice(0, 5)
-          .join('\n');
         showToast('error', 'Нельзя завершить', `Есть незавершённые заявки: ${notDone.length}.`);
         return;
       }
@@ -1292,7 +1271,7 @@
 
     async function deleteSession(id, opName) {
       showConfirm({
-        title: 'Удалить аудит?', message: `Аудит оператора «${opName}» и все его заявки будут удалены безвозвратно.`,
+        title: 'Удалить аудит?', message: `Аудит менеджера «${opName}» и все его заявки будут удалены безвозвратно.`,
         confirmText: 'Удалить', variant: 'danger',
         onConfirm: async () => {
           try {
@@ -1318,8 +1297,8 @@
     function copyLine2Issues() {
       if (!currentSession) return;
       const issues = currentSession.items.filter(it => it.line2_issue && it.line2_issue !== 'none');
-      if (issues.length === 0) { showToast('info', 'Нет данных', 'Нет заявок с проблемами 2Л.'); return; }
-      let text = `Заявки с проблемами 2 линии (${issues.length}):\n\n`;
+      if (issues.length === 0) { showToast('info', 'Нет данных', 'Нет заявок с проблемами Продаж.'); return; }
+      let text = `Заявки с проблемами Продаж (${issues.length}):\n\n`;
       issues.forEach(it => {
         let line = it.request_number;
         if (it.line2_issue === 'slow_callback') line += ' — Долгий перезвон (>10 мин)';
@@ -1506,7 +1485,7 @@
       copyToClipboard(text, 'Отчёт для руководителя скопирован.');
     }
 
-    function generateManagerReport(items) {
+    function generateManagerReport(items, specificOperator = null) {
       const total = items.length;
       const correct = items.filter(it => it.audit_result === 'correct').length;
       const incorrect = items.filter(it => it.audit_result === 'incorrect').length;
@@ -1529,7 +1508,13 @@
       });
       const topOps = Object.entries(op1Stats).filter(([_, d]) => d.errors > 0).sort((a, b) => b[1].errors - a[1].errors);
 
-      let text = `📊 Отчет по аудиту ПЦК\n`;
+      let text = `📊 Отчет по аудиту ПЦК (Продажи)\n`;
+      if (specificOperator) {
+        text += `Оператор: ${specificOperator}\n`;
+      } else {
+        const uniqueOps = [...new Set(items.map(it => getOperator2Name(it)))];
+        text += `Операторы: ${uniqueOps.join(', ')}\n`;
+      }
       text += `═══════════════════════\n\n`;
       text += `Всего проверено: ${total}\n`;
       text += `✅ Верно: ${correct} (${total ? (correct / total * 100).toFixed(1) : 0}%)\n`;
@@ -1541,7 +1526,7 @@
         text += `\n`;
       }
       if (slow + other > 0) {
-        text += `Проблемы 2 линии:\n`;
+        text += `Проблемы Продаж:\n`;
         if (slow) text += `  • Долгий перезвон (>10 мин): ${slow}\n`;
         if (other) text += `  • Другое: ${other}\n`;
         text += `\n`;
@@ -1594,7 +1579,7 @@
         if (stats[name].actions[act] !== undefined) stats[name].actions[act]++;
       });
       let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0, slowAll = 0, otherAll = 0;
-      let html = `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Оператор 2 линии</th><th style="text-align:center;">Всего</th><th style="text-align:center;">Верно</th><th style="text-align:center;">Уточн.</th><th style="text-align:center;">Ошибки 1Л</th><th>Проблемы 2Л</th><th>Действия 2Л</th></tr></thead><tbody>`;
+      let html = `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Менеджер Продаж</th><th style="text-align:center;">Всего</th><th style="text-align:center;">Верно</th><th style="text-align:center;">Уточн.</th><th style="text-align:center;">Ошибки 1Л</th><th>Проблемы Продаж</th><th>Действия</th><th style="width: 50px;"></th></tr></thead><tbody>`;
       for (const [name, data] of Object.entries(stats)) {
         totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
         slowAll += data.line2Slow; otherAll += data.line2Other;
@@ -1602,9 +1587,9 @@
         if (data.line2Slow) issues.push(`<span class="tag line2">Долгий: ${data.line2Slow}</span>`);
         if (data.line2Other) issues.push(`<span class="tag line2">Другое: ${data.line2Other}</span>`);
         const issuesHtml = issues.join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
-        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${issuesHtml}</td><td style="font-size:11px; color:var(--ink-secondary);"><span style="color:var(--status-warning)">1Л: ${data.actions.returned_1l}</span> / <span style="color:var(--status-success)">Закр: ${data.actions.closed_2l}</span> / <span style="color:var(--status-error)">2Л: ${data.actions.error_2l}</span></td></tr>`;
+        html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${issuesHtml}</td><td style="font-size:11px; color:var(--ink-secondary);"><span style="color:var(--status-warning)">1Л: ${data.actions.returned_1l}</span> / <span style="color:var(--status-success)">Закр: ${data.actions.closed_2l}</span> / <span style="color:var(--status-error)">Ош: ${data.actions.error_2l}</span></td><td>${data.total > 0 ? `<button class="btn-icon" onclick="copyOperator2Report('${escapeHtml(name)}')" title="Скопировать отчёт по этому менеджеру"><svg class="icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>` : ''}</td></tr>`;
       }
-      html += `<tr class="report-total"><td>ОБЩАЯ СВОДКА</td><td style="text-align:center;">${totalAll}</td><td style="text-align:center;">${correctAll}</td><td style="text-align:center;">${pendingAll}</td><td style="text-align:center;">${incorrectAll}</td><td>${slowAll || otherAll ? `Долгий: ${slowAll}, Другое: ${otherAll}` : '—'}</td><td></td></tr></tbody></table></div>`;
+      html += `<tr class="report-total"><td>ОБЩАЯ СВОДКА</td><td style="text-align:center;">${totalAll}</td><td style="text-align:center;">${correctAll}</td><td style="text-align:center;">${pendingAll}</td><td style="text-align:center;">${incorrectAll}</td><td>${slowAll || otherAll ? `Долгий: ${slowAll}, Другое: ${otherAll}` : '—'}</td><td></td><td></td></tr></tbody></table></div>`;
       body.innerHTML = html;
     }
 
@@ -1618,6 +1603,13 @@
         text += '\n';
       });
       copyToClipboard(text, `Скопировано ${items.length} заявок.`);
+    }
+
+    function copyOperator2Report(opName) {
+      const items = reportsData.filter(it => getOperator2Name(it) === opName);
+      if (items.length === 0) return;
+      const text = generateManagerReport(items, opName);
+      copyToClipboard(text, `Отчёт по менеджеру ${opName} скопирован.`);
     }
 
     window.addEventListener('beforeunload', (e) => { if (hasUnsavedChanges) { e.preventDefault(); e.returnValue = ''; } });
