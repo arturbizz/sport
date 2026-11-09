@@ -87,7 +87,6 @@
     .btn-premium.info:hover { border-color: #3B82F6; box-shadow: 0 4px 10px rgba(59,130,246,0.15); }
     .btn-premium.info .badge-count { background: var(--status-info-bg); color: #1D4ED8; }
 
-    /* Кнопка-селектор ошибок */
     .btn-reasons {
       width: 100%; padding: 5px 8px; border: 1px solid var(--border-light);
       border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 500;
@@ -135,6 +134,7 @@
     .stat-pill.total { background: var(--bg-subtle); color: var(--ink-secondary); }
     .stat-pill.correct { background: var(--status-success-bg); color: #047857; }
     .stat-pill.pending { background: var(--status-warning-bg); color: #B45309; }
+    .stat-pill.inprogress { background: #DBEAFE; color: #1E40AF; }
     .stat-pill.incorrect { background: var(--status-error-bg); color: #BE123C; }
     .stat-pill.unchecked { background: var(--bg-subtle); color: var(--ink-tertiary); }
     .stat-pill.line2 { background: var(--status-info-bg); color: #1D4ED8; }
@@ -175,6 +175,23 @@
     .bulk-table th:first-child { z-index: 4; }
     .bulk-table tbody tr:hover td:first-child { background: var(--bg-body); }
 
+    /* ==== СТАТУСЫ СТРОК ==== */
+    /* Не проверено — оранжевый маркер + мягкий жёлтый фон */
+    .bulk-table tbody tr.row-pending td { background: #FFF7ED; }
+    .bulk-table tbody tr.row-pending td:first-child { background: #FFF7ED; box-shadow: inset 3px 0 0 var(--status-warning), 1px 0 0 var(--border-light); }
+    .bulk-table tbody tr.row-pending:hover td { background: #FFEDD5; }
+    .bulk-table tbody tr.row-pending:hover td:first-child { background: #FFEDD5; }
+
+    /* В работе — синий маркер + мягкий голубой фон */
+    .bulk-table tbody tr.row-inprogress td { background: #EFF6FF; }
+    .bulk-table tbody tr.row-inprogress td:first-child { background: #EFF6FF; box-shadow: inset 3px 0 0 var(--status-info), 1px 0 0 var(--border-light); }
+    .bulk-table tbody tr.row-inprogress:hover td { background: #DBEAFE; }
+    .bulk-table tbody tr.row-inprogress:hover td:first-child { background: #DBEAFE; }
+
+    /* Проверено — зелёный маркер, белый фон (визуально «уходит» на второй план) */
+    .bulk-table tbody tr.row-done td:first-child { box-shadow: inset 3px 0 0 var(--status-success), 1px 0 0 var(--border-light); }
+
+    /* Активная строка перекрывает фон — но левый цветной маркер остаётся (это box-shadow) */
     .bulk-table tbody tr.active-row td { background: #EEF2FF !important; }
     .bulk-table tbody tr.active-row td:first-child { background: #E0E7FF !important; }
 
@@ -286,20 +303,31 @@
           <div class="rule-text"><strong>Задача</strong>Проверить, обоснованно ли оператор 1 линии создал ПЦК.</div>
         </div>
       </div>
-      
+
+      <div class="sidebar-section">
+        <div class="sidebar-title">Статусы строк</div>
+        <div class="rule-card">
+          <div class="rule-text" style="font-size:11px; line-height:1.9;">
+            <div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:14px; height:14px; background:#FFF7ED; border-left:3px solid #F59E0B; border-radius:2px; border-top:1px solid var(--border-light); border-right:1px solid var(--border-light); border-bottom:1px solid var(--border-light); flex-shrink:0;"></span> Не проверено</div>
+            <div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:14px; height:14px; background:#EFF6FF; border-left:3px solid #3B82F6; border-radius:2px; border-top:1px solid var(--border-light); border-right:1px solid var(--border-light); border-bottom:1px solid var(--border-light); flex-shrink:0;"></span> В работе (начато)</div>
+            <div style="display:flex; align-items:center; gap:6px;"><span style="display:inline-block; width:14px; height:14px; background:#fff; border-left:3px solid #10B981; border-radius:2px; border-top:1px solid var(--border-light); border-right:1px solid var(--border-light); border-bottom:1px solid var(--border-light); flex-shrink:0;"></span> Проверено</div>
+          </div>
+        </div>
+      </div>
+
       <div class="sidebar-section">
         <div class="sidebar-title">Действия (2 линия)</div>
         <div class="rule-card danger">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-error); flex-shrink: 0;"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
-          <div class="rule-text"><strong>Вернул 1Л</strong>Оператор 1 линии ошибся (не выполнил правила ПЦК). Заявка возвращается ему.</div>
+          <div class="rule-text"><strong>Вернул 1Л</strong>Оператор 1 линии ошибся. Заявка возвращается ему.</div>
         </div>
         <div class="rule-card warning">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-warning); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <div class="rule-text"><strong>Ошибка 2Л</strong>Виноват оператор 2 линии (долгий перезвон или др. проблема).</div>
+          <div class="rule-text"><strong>Ошибка 2Л</strong>Виноват оператор 2 линии (долгий перезвон или др.).</div>
         </div>
         <div class="rule-card success">
           <svg class="icon-sm" viewBox="0 0 24 24" style="color: var(--status-success); flex-shrink: 0;"><polyline points="20 6 9 17 4 12"/></svg>
-          <div class="rule-text"><strong>Закрыть 2Л</strong>Ошибок нет. Оператор 2Л должен привести заявку к финальному статусу (напр. недозвон).</div>
+          <div class="rule-text"><strong>Закрыть 2Л</strong>Ошибок нет. Оператор 2Л приводит заявку к финальному статусу.</div>
         </div>
       </div>
 
@@ -422,7 +450,6 @@
     </main>
   </div>
 
-  <!-- МОДАЛКА ОТЧЕТОВ -->
   <div class="modal-overlay" id="reports-modal">
     <div class="modal-content large">
       <div class="modal-header">
@@ -445,7 +472,6 @@
     </div>
   </div>
 
-  <!-- МОДАЛКА ТГ -->
   <div class="modal-overlay" id="tg-modal">
     <div class="modal-content" style="max-width: 520px;">
       <div class="modal-header">
@@ -483,7 +509,6 @@
     </div>
   </div>
 
-  <!-- МОДАЛКА ВЫБОРА ОШИБОК (МУЛЬТИСЕЛЕКТ) -->
   <div class="modal-overlay" id="reasons-modal">
     <div class="modal-content" style="max-width: 450px;">
       <div class="modal-header">
@@ -503,7 +528,6 @@
     </div>
   </div>
 
-  <!-- МОДАЛКА КОММЕНТАРИЯ -->
   <div class="modal-overlay" id="comment-modal">
     <div class="modal-content" style="max-width: 500px;">
       <div class="modal-header">
@@ -522,7 +546,6 @@
     </div>
   </div>
 
-  <!-- МОДАЛКА ПОДТВЕРЖДЕНИЯ -->
   <div class="modal-overlay" id="confirm-modal">
     <div class="modal-content" style="max-width: 400px;">
       <div class="modal-body" style="padding: 24px 22px; text-align: center;">
@@ -563,7 +586,7 @@
     let sessionsMap = {};
     let confirmCallback = null;
 
-    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v6';
+    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v7';
     function initSidebar() {
       if (localStorage.getItem(SIDEBAR_KEY) === null) localStorage.setItem(SIDEBAR_KEY, '1');
       const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
@@ -636,22 +659,52 @@
       el.innerHTML = `<div class="save-indicator show ${state}"><div class="dot"></div>${text}</div>`;
     }
 
-    // РАБОТА С ПРИЧИНАМИ ОШИБОК (МУЛЬТИСЕЛЕКТ)
+    // ==== ОПРЕДЕЛЕНИЕ СТАТУСА СТРОКИ ====
+    // pending: не брал в работу (пусто)
+    // inprogress: начал, но не завершил
+    // done: проверено
+    function getRowState(item) {
+      const verdict = item.audit_result;
+      const hasLine1 = !!(item.operator_line1_name && item.operator_line1_name.trim());
+      const hasReason = !!(item.error_reason && item.error_reason.trim());
+      const hasComment = !!(item.auditor_comment && item.auditor_comment.trim());
+      const hasL2Issue = item.line2_issue && item.line2_issue !== 'none';
+      const hasL2Comment = !!(item.line2_issue_comment && item.line2_issue_comment.trim());
+
+      const anythingFilled = hasLine1 || hasReason || hasComment || hasL2Issue || hasL2Comment;
+
+      if (!verdict || verdict === 'pending') {
+        return anythingFilled ? 'inprogress' : 'pending';
+      }
+
+      // Вердикт установлен
+      if (verdict === 'incorrect') {
+        if (!hasLine1 || !hasReason) return 'inprogress';
+        return 'done';
+      }
+
+      // correct или pending_info — считается завершённым
+      return 'done';
+    }
+
+    function updateRowState(index) {
+      const tr = document.querySelector(`#audit-tbody tr[data-index="${index}"]`);
+      if (!tr || !currentSession) return;
+      const state = getRowState(currentSession.items[index]);
+      tr.classList.remove('row-pending', 'row-inprogress', 'row-done');
+      tr.classList.add('row-' + state);
+    }
+
+    // РАБОТА С ПРИЧИНАМИ ОШИБОК
     function splitReasons(reasonStr) {
       if (!reasonStr) return [];
-      // Разделяем по ", " но проверяем, чтобы это не было внутри одного value
       return reasonStr.split(', ').filter(x => x.trim()).map(x => x.trim());
     }
-
-    function joinReasons(reasonsArray) {
-      return reasonsArray.join(', ');
-    }
-
+    function joinReasons(reasonsArray) { return reasonsArray.join(', '); }
     function getShortLabel(value) {
       const r = ERROR_REASONS.find(x => x.value === value);
       return r ? r.label : value.slice(0, 15);
     }
-
     function getReasonsPreview(reasonStr) {
       const parts = splitReasons(reasonStr);
       if (parts.length === 0) return '— не выбрана —';
@@ -674,15 +727,19 @@
         sessions = sessData || [];
 
         for (const s of sessions) {
-          const { data: items } = await supabaseClient.from('audit_ptsk').select('audit_result, line2_issue').eq('session_id', s.id);
+          const { data: items } = await supabaseClient.from('audit_ptsk').select('*').eq('session_id', s.id);
           s.itemsCount = items?.length || 0;
-          s.stats = { correct: 0, pending_info: 0, incorrect: 0, pending: 0, line2Issues: 0 };
+          s.stats = { correct: 0, pending_info: 0, incorrect: 0, pending: 0, inprogress: 0, line2Issues: 0 };
           (items || []).forEach(it => {
             const r = it.audit_result || 'pending';
-            if (s.stats[r] !== undefined) s.stats[r]++;
+            if (r === 'correct') s.stats.correct++;
+            else if (r === 'pending_info') s.stats.pending_info++;
+            else if (r === 'incorrect') s.stats.incorrect++;
+            const st = getRowState(it);
+            if (st === 'pending') s.stats.pending++;
+            else if (st === 'inprogress') s.stats.inprogress++;
             if (it.line2_issue && it.line2_issue !== 'none') s.stats.line2Issues++;
           });
-          s.checkedCount = s.stats.correct + s.stats.pending_info + s.stats.incorrect;
         }
         renderSessions();
       } catch (err) { showToast('error', 'Ошибка загрузки', err.message); }
@@ -696,8 +753,8 @@
       }
       grid.innerHTML = sessions.map((s, i) => {
         const isDraft = s.status === 'draft';
-        const stats = s.stats || { correct: 0, pending_info: 0, incorrect: 0, pending: 0, line2Issues: 0 };
-        const checked = stats.correct + stats.pending_info + stats.incorrect;
+        const stats = s.stats || { correct: 0, pending_info: 0, incorrect: 0, pending: 0, inprogress: 0, line2Issues: 0 };
+        const done = s.itemsCount - stats.pending - stats.inprogress;
         return `
           <div class="session-card ${s.status}" style="animation-delay: ${i * 0.03}s">
             <div class="session-header">
@@ -716,10 +773,11 @@
               <span class="stat-pill incorrect">✕ ${stats.incorrect}</span>
               ${stats.line2Issues > 0 ? `<span class="stat-pill line2">2Л: ${stats.line2Issues}</span>` : ''}
               ${stats.pending > 0 ? `<span class="stat-pill unchecked">Не пров.: ${stats.pending}</span>` : ''}
+              ${stats.inprogress > 0 ? `<span class="stat-pill inprogress">В раб.: ${stats.inprogress}</span>` : ''}
             </div>
             ${isDraft ? `
-              <div style="font-size: 10.5px; color: var(--ink-tertiary);">${checked} из ${s.itemsCount}</div>
-              <div style="height: 4px; background: var(--bg-subtle); border-radius: 2px; overflow: hidden;"><div style="height: 100%; background: linear-gradient(90deg, var(--brand-primary), #8B5CF6); width: ${s.itemsCount ? (checked / s.itemsCount * 100) : 0}%;"></div></div>
+              <div style="font-size: 10.5px; color: var(--ink-tertiary);">${done} из ${s.itemsCount}</div>
+              <div style="height: 4px; background: var(--bg-subtle); border-radius: 2px; overflow: hidden;"><div style="height: 100%; background: linear-gradient(90deg, var(--brand-primary), #8B5CF6); width: ${s.itemsCount ? (done / s.itemsCount * 100) : 0}%;"></div></div>
             ` : ''}
             <div class="session-actions">
               ${isDraft
@@ -816,15 +874,20 @@
       const s = currentSession;
       const isDraft = s.status === 'draft';
       const items = s.items;
-      const stats = { correct: 0, pending_info: 0, incorrect: 0, pending: 0, line2Issues: 0 };
+      const stats = { correct: 0, pending_info: 0, incorrect: 0, pending: 0, inprogress: 0, line2Issues: 0 };
       items.forEach(it => {
         const r = it.audit_result || 'pending';
-        if (stats[r] !== undefined) stats[r]++;
+        if (r === 'correct') stats.correct++;
+        else if (r === 'pending_info') stats.pending_info++;
+        else if (r === 'incorrect') stats.incorrect++;
+        const st = getRowState(it);
+        if (st === 'pending') stats.pending++;
+        else if (st === 'inprogress') stats.inprogress++;
         if (it.line2_issue && it.line2_issue !== 'none') stats.line2Issues++;
       });
-      const checked = stats.correct + stats.pending_info + stats.incorrect;
+      const done = items.length - stats.pending - stats.inprogress;
       const total = items.length;
-      const pct = total ? (checked / total * 100) : 0;
+      const pct = total ? (done / total * 100) : 0;
 
       document.getElementById('audit-header-container').innerHTML = `
         <div class="audit-header">
@@ -837,7 +900,8 @@
             <span class="stat-pill pending" title="Уточнение">? ${stats.pending_info}</span>
             <span class="stat-pill incorrect" title="Ошибки 1Л">✕ ${stats.incorrect}</span>
             ${stats.line2Issues > 0 ? `<span class="stat-pill line2" title="Проблемы 2Л">2Л: ${stats.line2Issues}</span>` : ''}
-            ${stats.pending > 0 ? `<span class="stat-pill unchecked" title="Не проверено">Не пров.: ${stats.pending}</span>` : ''}
+            ${stats.pending > 0 ? `<span class="stat-pill unchecked" title="Не брал в работу">Не пров.: ${stats.pending}</span>` : ''}
+            ${stats.inprogress > 0 ? `<span class="stat-pill inprogress" title="Начато, но не завершено">В работе: ${stats.inprogress}</span>` : ''}
           </div>
           <div class="audit-toolbar-actions">
             ${stats.correct > 0 ? `<button class="btn-premium" onclick="copyForOperator2()" title="Скопировать список верных заявок для отправки оператору 2 линии">
@@ -878,18 +942,18 @@
         const reasonDisabled = (!isIncorrect || !isDraft);
         const l2i = item.line2_issue || 'none';
         const l2c = item.line2_issue_comment || '';
-        const l2Disabled = !isDraft;
         const comment = item.auditor_comment || '';
         const reasonsPreview = getReasonsPreview(item.error_reason);
         const hasErrors = isIncorrect && splitReasons(item.error_reason).length > 0;
-        
+        const rowState = getRowState(item);
+
         let verdictClass = '';
         if (isCorrect) verdictClass = 'verdict-correct';
         else if (isPending) verdictClass = 'verdict-pending';
         else if (isIncorrect) verdictClass = 'verdict-incorrect';
 
         return `
-          <tr data-index="${index}">
+          <tr data-index="${index}" class="row-${rowState}">
             <td><span class="bulk-req-num" onclick="copyToClipboard('${item.request_number}', 'Номер ${item.request_number} скопирован')" title="Скопировать">${item.request_number}<svg class="icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span></td>
             <td><input type="text" class="bulk-input-line1" id="line1-${index}" placeholder="ФИО" value="${(item.operator_line1_name || '').replace(/"/g, '&quot;')}" oninput="updateItemField(${index}, 'operator_line1_name', this.value)" ${disabledAttr}></td>
             <td>
@@ -907,7 +971,7 @@
             </td>
             <td>
               <div class="line2-cell">
-                <select class="bulk-select ${l2i === 'slow_callback' ? 'slow' : ''} ${l2i === 'other' ? 'other' : ''}" id="l2i-${index}" onchange="setLine2Issue(${index}, this.value)" ${l2Disabled ? 'disabled' : ''}>
+                <select class="bulk-select ${l2i === 'slow_callback' ? 'slow' : ''} ${l2i === 'other' ? 'other' : ''}" id="l2i-${index}" onchange="setLine2Issue(${index}, this.value)" ${!isDraft ? 'disabled' : ''}>
                   <option value="none" ${l2i === 'none' ? 'selected' : ''}>— нет —</option>
                   <option value="slow_callback" ${l2i === 'slow_callback' ? 'selected' : ''}>Долгий перезвон</option>
                   <option value="other" ${l2i === 'other' ? 'selected' : ''}>Другое</option>
@@ -965,18 +1029,17 @@
       };
 
       setTimeout(() => {
-        const firstPending = s.items.findIndex(it => !it.audit_result || it.audit_result === 'pending');
+        const firstPending = s.items.findIndex(it => getRowState(it) === 'pending');
         const idx = firstPending >= 0 ? firstPending : 0;
         focusRow(idx, false);
       }, 150);
     }
 
-    // МОДАЛКА ВЫБОРА ОШИБОК (МУЛЬТИСЕЛЕКТ)
     function openReasonsModal(index) {
       if (!currentSession || currentSession.status !== 'draft') return;
       currentReasonsIndex = index;
       const item = currentSession.items[index];
-      if (item.audit_result !== 'incorrect') return; // Только для ошибочных
+      if (item.audit_result !== 'incorrect') return;
 
       document.getElementById('reasons-modal-title').textContent = `Ошибки 1Л · Заявка ${item.request_number}`;
       const existing = splitReasons(item.error_reason);
@@ -995,20 +1058,21 @@
       const checkboxes = document.querySelectorAll('#reasons-checklist input[type="checkbox"]:checked');
       const selected = Array.from(checkboxes).map(cb => cb.value);
       const joined = joinReasons(selected);
-      
+
       currentSession.items[currentReasonsIndex].error_reason = joined;
-      
+
       const btn = document.getElementById(`reason-btn-${currentReasonsIndex}`);
       if (btn) {
         btn.innerHTML = getReasonsPreview(joined);
         btn.classList.toggle('has-errors', selected.length > 0);
       }
+      updateRowState(currentReasonsIndex);
       closeModal('reasons-modal');
+      renderAuditHeader();
       scheduleSave();
       currentReasonsIndex = null;
     }
 
-    // МОДАЛКА КОММЕНТАРИЯ
     function openCommentModal(index) {
       if (!currentSession) return;
       if (currentSession.status !== 'draft') return;
@@ -1024,7 +1088,7 @@
       if (currentCommentIndex === null || !currentSession) return;
       const val = document.getElementById('comment-modal-textarea').value.trim();
       currentSession.items[currentCommentIndex].auditor_comment = val;
-      
+
       const tr = document.querySelector(`#audit-tbody tr[data-index="${currentCommentIndex}"]`);
       if (tr) {
         const previewInput = tr.querySelector('.comment-preview');
@@ -1033,8 +1097,10 @@
           previewInput.classList.toggle('empty', !val);
         }
       }
-      
+
+      updateRowState(currentCommentIndex);
       closeModal('comment-modal');
+      renderAuditHeader();
       scheduleSave();
       currentCommentIndex = null;
     }
@@ -1065,14 +1131,12 @@
       const currentActive = document.querySelector('#audit-tbody tr.active-row');
       const currentIdx = currentActive ? parseInt(currentActive.dataset.index) : -1;
       for (let i = currentIdx + 1; i < currentSession.items.length; i++) {
-        const it = currentSession.items[i];
-        if (!it.audit_result || it.audit_result === 'pending') { focusRow(i); return; }
+        if (getRowState(currentSession.items[i]) !== 'done') { focusRow(i); return; }
       }
       for (let i = 0; i <= currentIdx; i++) {
-        const it = currentSession.items[i];
-        if (!it.audit_result || it.audit_result === 'pending') { focusRow(i); return; }
+        if (getRowState(currentSession.items[i]) !== 'done') { focusRow(i); return; }
       }
-      showToast('info', 'Всё проверено', 'Нет непроверенных заявок в этом аудите.');
+      showToast('info', 'Всё проверено', 'Нет непроверенных или незавершённых заявок.');
     }
 
     document.addEventListener('keydown', (e) => {
@@ -1096,8 +1160,7 @@
       }
       const reasonBtn = document.getElementById(`reason-btn-${index}`);
       if (reasonBtn) {
-        const wasDisabled = val !== 'incorrect';
-        reasonBtn.disabled = wasDisabled;
+        reasonBtn.disabled = val !== 'incorrect';
         reasonBtn.innerHTML = getReasonsPreview(val === 'incorrect' ? item.error_reason : '');
         reasonBtn.classList.toggle('has-errors', val === 'incorrect' && splitReasons(item.error_reason).length > 0);
       }
@@ -1107,6 +1170,7 @@
           ? `<button class="btn-tg" onclick="openTgModal(${index})" title="Сформировать ТГ-шаблон"><svg class="icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>`
           : '';
       }
+      updateRowState(index);
       renderAuditHeader();
       scheduleSave();
     }
@@ -1127,6 +1191,7 @@
         if (val === 'other') { input.style.display = ''; input.disabled = false; }
         else { input.style.display = 'none'; input.disabled = true; input.value = ''; }
       }
+      updateRowState(index);
       renderAuditHeader();
       scheduleSave();
     }
@@ -1138,6 +1203,8 @@
       else if (field === 'error_reason') item.error_reason = value;
       else if (field === 'action_status') item.action_status = value;
       else if (field === 'line2_issue_comment') item.line2_issue_comment = value;
+      updateRowState(index);
+      renderAuditHeader();
       scheduleSave();
     }
 
@@ -1175,12 +1242,20 @@
 
     async function completeAudit() {
       if (!currentSession) return;
-      const unchecked = currentSession.items.filter(it => !it.audit_result || it.audit_result === 'pending');
-      if (unchecked.length > 0) { showToast('error', 'Нельзя завершить', `Не проверено: ${unchecked.length}.`); return; }
-      const incorrectNoLine1 = currentSession.items.filter(it => it.audit_result === 'incorrect' && !it.operator_line1_name?.trim());
-      if (incorrectNoLine1.length > 0) { showToast('error', 'Нельзя завершить', `У ${incorrectNoLine1.length} ошибочных не указан оператор 1Л.`); return; }
-      const incorrectNoReason = currentSession.items.filter(it => it.audit_result === 'incorrect' && !it.error_reason);
-      if (incorrectNoReason.length > 0) { showToast('error', 'Нельзя завершить', `У ${incorrectNoReason.length} ошибочных не указана причина.`); return; }
+      const notDone = currentSession.items.filter(it => getRowState(it) !== 'done');
+      if (notDone.length > 0) {
+        const notDoneDetails = currentSession.items
+          .map((it, i) => ({ it, i }))
+          .filter(x => getRowState(x.it) !== 'done')
+          .map(x => {
+            const state = getRowState(x.it);
+            return `  • ${x.it.request_number} — ${state === 'pending' ? 'не проверено' : 'не завершено'}`;
+          })
+          .slice(0, 5)
+          .join('\n');
+        showToast('error', 'Нельзя завершить', `Есть незавершённые заявки: ${notDone.length}.`);
+        return;
+      }
 
       showConfirm({
         title: 'Завершить аудит?',
@@ -1295,21 +1370,20 @@
       const err3 = document.getElementById('tg-err-3').checked;
       const err4 = document.getElementById('tg-err-4').checked;
 
-      // Синхронизируем с причиной ошибки в item
       const selectedReasons = [];
       if (err1) selectedReasons.push(ERROR_REASONS[0].value);
       if (err2) selectedReasons.push(ERROR_REASONS[1].value);
       if (err3) selectedReasons.push(ERROR_REASONS[2].value);
       if (err4) selectedReasons.push(ERROR_REASONS[3].value);
       item.error_reason = joinReasons(selectedReasons);
-      
-      // Обновляем кнопку в таблице
+
       const reasonBtn = document.getElementById(`reason-btn-${currentTgIndex}`);
       if (reasonBtn) {
         reasonBtn.innerHTML = getReasonsPreview(item.error_reason);
         reasonBtn.classList.toggle('has-errors', selectedReasons.length > 0);
       }
 
+      updateRowState(currentTgIndex);
       scheduleSave();
 
       const errors = [];
@@ -1489,11 +1563,8 @@
         else if (req.audit_result === 'pending_info') stats[name].pending++;
         else if (req.audit_result === 'incorrect') {
           stats[name].incorrect++;
-          // Разбиваем множественные причины на отдельные теги
           const reasons = splitReasons(req.error_reason || 'Не указана');
-          reasons.forEach(r => {
-            stats[name].errors[r] = (stats[name].errors[r] || 0) + 1;
-          });
+          reasons.forEach(r => { stats[name].errors[r] = (stats[name].errors[r] || 0) + 1; });
         }
       });
       let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0;
