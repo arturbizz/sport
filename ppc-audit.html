@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Аудит ППК — Платформа</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ================= ГЛОБАЛЬНЫЕ СТИЛИ ================= */
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+      cursor: default; 
+      caret-color: transparent; /* Убираем мигающий курсор везде */
+    }
+    /* Возвращаем курсор только в поля ввода */
+    input, textarea, select { 
+      cursor: text; 
+      caret-color: auto; 
+    }
+    button, a, select, .clickable { 
+      cursor: pointer; 
+    }
+
+    :root {
+      --bg: #F8FAFC;
+      --surface: #FFFFFF;
+      --surface-hover: #F1F5F9;
+      --ink: #0F172A;
+      --ink-2: #475569;
+      --ink-3: #94A3B8;
+      --accent: #6366F1;
+      --accent-light: #E0E7FF;
+      --success: #10B981;
+      --success-light: #D1FAE5;
+      --error: #EF4444;
+      --error-light: #FEE2E2;
+      --warning: #F59E0B;
+      --warning-light: #FEF3C7;
+      --border: #E2E8F0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+      --radius-md: 12px;
+      --radius-lg: 20px;
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Анимации */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes pulse-border { 0%, 100% { border-color: var(--border); } 50% { border-color: var(--accent); } }
+
+    /* ================= ВЕРХНЯЯ ПАНЕЛЬ ================= */
+    .topbar {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .logo-mark {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--accent), #8B5CF6);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-hover);
+      padding: 4px;
+      border-radius: var(--radius-md);
+    }
+    .nav-tab {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--ink-2);
+      transition: all 0.2s;
+    }
+    .nav-tab:hover { color: var(--ink); }
+    .nav-tab.active {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ================= ОСНОВНОЙ КОНТЕНТ ================= */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Боковая панель с правилами */
+    .sidebar {
+      width: 340px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      transition: transform 0.3s var(--spring);
+    }
+    .sidebar.collapsed { transform: translateX(-100%); margin-right: -340px; }
+    
+    .rules-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .rules-header h2 { font-size: 16px; font-weight: 700; }
+    .rules-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .rules-card h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-3);
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+    .rule-item {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: var(--ink-2);
+      line-height: 1.5;
+    }
+    .rule-item:last-child { margin-bottom: 0; }
+    .rule-icon {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--accent-light);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+    .rule-icon.red { background: var(--error-light); color: var(--error); }
+    .rule-icon.green { background: var(--success-light); color: var(--success); }
+
+    /* Центральная часть */
+    .main-content {
+      flex: 1;
+      padding: 24px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Фильтры */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: var(--surface);
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      align-items: center;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+    
+    .filter-select {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      background: var(--surface);
+      color: var(--ink);
+    }
+
+    /* Сетка карточек */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    /* Карточка заявки */
+    .audit-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s var(--spring);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeUp 0.4s ease-out both;
+    }
+    .audit-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: #CBD5E1;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .client-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+    .client-info p { font-size: 13px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; }
+    
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .status-pending { background: var(--warning-light); color: #B45309; }
+    .status-passed { background: var(--success-light); color: #047857; }
+    .status-failed { background: var(--error-light); color: #B91C1C; }
+
+    .card-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      background: var(--bg);
+      padding: 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+    }
+    .detail-item { display: flex; flex-direction: column; gap: 4px; }
+    .detail-label { color: var(--ink-3); font-size: 11px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+    .detail-value { font-weight: 600; color: var(--ink); }
+
+    .btn {
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+    .btn-primary:hover { background: #4F46E5; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); }
+    .btn-ghost { background: var(--surface-hover); color: var(--ink-2); }
+    .btn-ghost:hover { background: var(--border); color: var(--ink); }
+    .btn-danger { background: var(--error); color: white; }
+    .btn-danger:hover { background: #DC2626; }
+
+    /* ================= МОДАЛЬНЫЕ ОКНА ================= */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    
+    .modal-content {
+      background: var(--surface);
+      width: 100%;
+      max-width: 600px;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.15);
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.3s var(--spring);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      overflow: hidden;
+    }
+    .modal-overlay.open .modal-content { transform: translateY(0) scale(1); }
+
+    .modal-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 { font-size: 20px; font-weight: 700; }
+    .close-btn {
+      background: none; border: none; font-size: 24px; color: var(--ink-3); line-height: 1;
+      transition: color 0.2s;
+    }
+    .close-btn:hover { color: var(--error); }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    /* Чек-лист в модалке */
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      transition: all 0.2s;
+      background: var(--bg);
+    }
+    .checklist-item:hover { border-color: var(--ink-3); background: var(--surface); }
+    .checklist-item input[type="checkbox"] {
+      width: 20px; height: 20px;
+      accent-color: var(--accent);
+      margin-top: 2px;
+    }
+    .checklist-text { flex: 1; }
+    .checklist-text strong { display: block; font-size: 14px; color: var(--ink); margin-bottom: 2px; }
+    .checklist-text span { font-size: 12px; color: var(--ink-3); }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
+    .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      background: var(--surface);
+      color: var(--ink);
+    }
+    .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    .modal-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: var(--bg);
+    }
+
+    /* ================= КАСТОМНЫЕ УВЕДОМЛЕНИЯ (TOASTS) ================= */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: var(--surface);
+      border-left: 4px solid var(--accent);
+      box-shadow: var(--shadow-lg);
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 300px;
+      animation: slideIn 0.3s var(--spring);
+    }
+    .toast.success { border-color: var(--success); }
+    .toast.error { border-color: var(--error); }
+    .toast-icon { font-size: 20px; }
+    .toast-content { flex: 1; }
+    .toast-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+    .toast-msg { font-size: 13px; color: var(--ink-2); }
+
+    /* Заглушка, если нет данных */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--ink-3);
+    }
+    .empty-state h3 { font-size: 18px; color: var(--ink); margin-bottom: 8px; }
+
+    /* Кнопка мобильного меню */
+    .mobile-menu-btn { display: none; background: none; border: none; font-size: 24px; color: var(--ink); }
+
+    @media (max-width: 900px) {
+      .sidebar { position: fixed; height: 100vh; z-index: 999; box-shadow: var(--shadow-lg); }
+      .mobile-menu-btn { display: block; }
+      .nav-tabs { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Топбар -->
+  <header class="topbar">
+    <div class="logo">
+      <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+      <div class="logo-mark"></div>
+      Платформа
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-tab active">Аудит ППК</button>
+      <button class="nav-tab" onclick="showToast('info', 'В разработке', 'Этот раздел появится в будущих обновлениях.')">Аудит других задач</button>
+      <button class="nav-tab" onclick="showToast('info', 'В разработке', 'Настройки профиля.')">Настройки</button>
+    </div>
+    <div style="font-size: 14px; font-weight: 600; color: var(--ink-2);">Аудитор</div>
+  </header>
+
+  <div class="layout">
+    <!-- Шпаргалка с правилами -->
+    <aside class="sidebar" id="sidebar">
+      <div class="rules-header">
+        <h2>📋 Регламент проверки</h2>
+        <button class="close-btn" id="close-sidebar" style="display:none;">×</button>
+      </div>
+      
+      <div class="rules-card" style="border-left: 4px solid var(--warning);">
+        <h3 style="color: var(--warning);">⚠️ Важно!</h3>
+        <p style="font-size: 13.5px; color: var(--ink-2); line-height: 1.5;">Перед отправкой ППК оператор обязан уточнить у клиента 3 пункта:</p>
+      </div>
+
+      <div class="rules-card">
+        <h3>Чек-лист оператора</h3>
+        <div class="rule-item">
+          <div class="rule-icon">1</div>
+          <div><strong>Актуальность ремонта</strong> — уточнил ли оператор, что ремонт всё ещё нужен.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">2</div>
+          <div><strong>Время ожидания</strong> — предупредил ли, что специалист перезвонит в течение <b>10 минут</b>.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon">3</div>
+          <div><strong>Телефон</strong> — продиктовал ли клиент первые 6 цифр номера для сверки.</div>
+        </div>
+      </div>
+
+      <div class="rules-card">
+        <h3>Закрытие заявки</h3>
+        <div class="rule-item">
+          <div class="rule-icon red">!</div>
+          <div>Если <b>не дозвонились</b> или клиенту <b>не актуально</b> (консультации не было) → <i>«Клиенту не актуально (обращение после ППК)»</i>.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon green">✓</div>
+          <div>Если <b>проконсультировали</b> → закрываем соответствующим подтипом по итогу диалога.</div>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon red">!</div>
+          <div>Если консультация была, но клиент отказался → <i>«Не уговорил — Услуги не актуальны»</i>.</div>
+        </div>
+      </div>
+      
+      <div class="rules-card" style="background: var(--accent-light); border-color: transparent;">
+        <p style="font-size: 12px; color: var(--accent); font-weight: 600; text-align: center;">
+          Оператор должен обработать ППК сразу, так как клиент ждет звонка.
+        </p>
+      </div>
+    </aside>
+
+    <!-- Основная часть -->
+    <main class="main-content">
+      <!-- Фильтры -->
+      <div class="filters-bar">
+        <input type="search" class="search-input" id="search-input" placeholder="Поиск по клиенту, телефону или оператору...">
+        <select class="filter-select" id="filter-status">
+          <option value="all">Все статусы</option>
+          <option value="pending">Ожидают проверки</option>
+          <option value="passed">Пройдено</option>
+          <option value="failed">Ошибки</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadData()">Обновить</button>
+      </div>
+
+      <!-- Сетка карточек -->
+      <div class="cards-grid" id="cards-grid">
+        <!-- Сюда рендерятся карточки -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Модальное окно аудита -->
+  <div class="modal-overlay" id="audit-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Проверка заявки</h2>
+        <button class="close-btn" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 24px; background: var(--bg); padding: 16px; border-radius: var(--radius-md);">
+          <div style="font-size: 12px; color: var(--ink-3); text-transform: uppercase; font-weight: 700; margin-bottom: 4px;">Клиент</div>
+          <div style="font-size: 18px; font-weight: 800; color: var(--ink);" id="modal-client-name">—</div>
+          <div style="font-size: 14px; color: var(--accent); font-weight: 600; margin-top: 4px;" id="modal-client-phone">—</div>
+        </div>
+
+        <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">Чек-лист (отметьте, если оператор выполнил)</h3>
+        
+        <label class="checklist-item">
+          <input type="checkbox" id="check-relevance">
+          <div class="checklist-text">
+            <strong>Актуальность ремонта</strong>
+            <span>Оператор уточнил, актуален ли ремонт на данный момент</span>
+          </div>
+        </label>
+
+        <label class="checklist-item">
+          <input type="checkbox" id="check-10-min">
+          <div class="checklist-text">
+            <strong>Предупреждение о 10 минутах</strong>
+            <span>Оператор сообщил, что специалист перезвонит в течение 10 минут</span>
+          </div>
+        </label>
+
+        <label class="checklist-item">
+          <input type="checkbox" id="check-phone">
+          <div class="checklist-text">
+            <strong>Сверка телефона</strong>
+            <span>Оператор попросил продиктовать первые 6 цифр номера</span>
+          </div>
+        </label>
+
+        <label class="checklist-item">
+          <input type="checkbox" id="check-timely">
+          <div class="checklist-text">
+            <strong>Своевременность</strong>
+            <span>Заявка создана и обработана оперативно (без задержек)</span>
+          </div>
+        </label>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 24px 0;">
+
+        <div class="form-group">
+          <label>Итоговый статус закрытия ППК</label>
+          <select class="form-control" id="modal-closure-status">
+            <option value="">— Выберите статус —</option>
+            <option value="Клиенту не актуально (обращение после ППК)">Клиенту не актуально (обращение после ППК)</option>
+            <option value="Не уговорил — Услуги не актуальны">Не уговорил — Услуги не актуальны</option>
+            <option value="Проконсультирован (успешно)">Проконсультирован (успешно)</option>
+            <option value="Другое">Другое</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Комментарий аудитора</label>
+          <textarea class="form-control" id="modal-comment" placeholder="Опишите выявленные ошибки или оставьте комментарий..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Отмена</button>
+        <button class="btn btn-primary" id="save-audit-btn" onclick="saveAudit()">Сохранить результат</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Контейнер для уведомлений -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // --- НАСТРОЙКИ SUPABASE ---
+    // Вставь сюда свои URL и Anon Key из Supabase (они у тебя уже есть в других файлах)
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allRequests = [];
+    let currentRequestId = null;
+
+    // --- УВЕДОМЛЕНИЯ (Вместо системных алертов) ---
+    function showToast(type, title, message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      
+      const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+      
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || 'ℹ️'}</div>
+        <div class="toast-content">
+          <div class="toast-title">${title}</div>
+          <div class="toast-msg">${message}</div>
+        </div>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s reverse forwards';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // --- ЗАГРУЗКА ДАННЫХ ИЗ SUPABASE ---
+    async function loadData() {
+      const grid = document.getElementById('cards-grid');
+      grid.innerHTML = '<div style="text-align:center; padding: 20px; color: var(--ink-3);">Загрузка данных...</div>';
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from('audit_ppc')
+          .select('*')
+          .order('request_time', { ascending: false });
+
+        if (error) throw error;
+        
+        allRequests = data || [];
+        renderCards();
+      } catch (err) {
+        showToast('error', 'Ошибка загрузки', err.message);
+        grid.innerHTML = `<div class="empty-state"><h3>Не удалось загрузить данные</h3><p>Проверьте подключение к базе данных.</p></div>`;
+      }
+    }
+
+    // --- ОТРИСОВКА КАРТОЧЕК ---
+    function renderCards() {
+      const grid = document.getElementById('cards-grid');
+      const searchQuery = document.getElementById('search-input').value.toLowerCase();
+      const filterStatus = document.getElementById('filter-status').value;
+
+      // Фильтрация
+      const filtered = allRequests.filter(req => {
+        const matchesSearch = 
+          req.client_name.toLowerCase().includes(searchQuery) || 
+          req.client_phone.includes(searchQuery) || 
+          req.operator_name.toLowerCase().includes(searchQuery);
+        
+        const matchesStatus = filterStatus === 'all' || req.audit_status === filterStatus;
+
+        return matchesSearch && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>Заявок не найдено</h3><p>Попробуйте изменить параметры поиска или фильтры.</p></div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map((req, index) => {
+        // Форматирование времени
+        const reqDate = new Date(req.request_time);
+        const timeStr = reqDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        const dateStr = reqDate.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+
+        // Статус
+        let statusClass = 'status-pending';
+        let statusText = 'Ожидает';
+        if (req.audit_status === 'passed') { statusClass = 'status-passed'; statusText = 'Пройдено'; }
+        if (req.audit_status === 'failed') { statusClass = 'status-failed'; statusText = 'Ошибка'; }
+
+        // Если уже проверено, показываем комментарий
+        const isAudited = req.audit_status !== 'pending';
+        const btnText = isAudited ? 'Посмотреть' : 'Проверить';
+        const btnClass = isAudited ? 'btn-ghost' : 'btn-primary';
+
+        return `
+          <div class="audit-card" style="animation-delay: ${index * 0.05}s">
+            <div class="card-header">
+              <div class="client-info">
+                <h3>${req.client_name}</h3>
+                <p>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  ${req.client_phone}
+                </p>
+              </div>
+              <span class="status-badge ${statusClass}">${statusText}</span>
+            </div>
+
+            <div class="card-details">
+              <div class="detail-item">
+                <span class="detail-label">Оператор</span>
+                <span class="detail-value">${req.operator_name}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Время заявки</span>
+                <span class="detail-value">${dateStr} в ${timeStr}</span>
+              </div>
+              ${isAudited ? `
+              <div class="detail-item" style="grid-column: 1/-1;">
+                <span class="detail-label">Итог закрытия</span>
+                <span class="detail-value" style="color: ${req.audit_status === 'failed' ? 'var(--error)' : 'var(--success)'};">
+                  ${req.closure_status || 'Не указан'}
+                </span>
+              </div>
+              ` : ''}
+            </div>
+
+            <button class="btn ${btnClass}" onclick="openModal('${req.id}')" style="margin-top: auto;">
+              ${btnText}
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // --- ОТКРЫТИЕ МОДАЛКИ ---
+    function openModal(id) {
+      currentRequestId = id;
+      const req = allRequests.find(r => r.id === id);
+      if (!req) return;
+
+      // Заполняем данные
+      document.getElementById('modal-client-name').textContent = req.client_name;
+      document.getElementById('modal-client-phone').textContent = req.client_phone;
+
+      // Заполняем чек-лист
+      document.getElementById('check-relevance').checked = req.check_relevance || false;
+      document.getElementById('check-10-min').checked = req.check_10_min || false;
+      document.getElementById('check-phone').checked = req.check_phone || false;
+      document.getElementById('check-timely').checked = req.check_timely || false;
+
+      // Заполняем селект и коммент
+      document.getElementById('modal-closure-status').value = req.closure_status || '';
+      document.getElementById('modal-comment').value = req.auditor_comment || '';
+
+      // Если уже проверено, блокируем кнопку сохранения (или меняем на "Обновить")
+      const saveBtn = document.getElementById('save-audit-btn');
+      if (req.audit_status !== 'pending') {
+        saveBtn.textContent = 'Обновить результат';
+      } else {
+        saveBtn.textContent = 'Сохранить результат';
+      }
+
+      document.getElementById('audit-modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('audit-modal').classList.remove('open');
+      currentRequestId = null;
+    }
+
+    // --- СОХРАНЕНИЕ АУДИТА ---
+    async function saveAudit() {
+      if (!currentRequestId) return;
+
+      const btn = document.getElementById('save-audit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Сохранение...';
+
+      // Собираем данные из чек-листа
+      const checkRelevance = document.getElementById('check-relevance').checked;
+      const check10Min = document.getElementById('check-10-min').checked;
+      const checkPhone = document.getElementById('check-phone').checked;
+      const checkTimely = document.getElementById('check-timely').checked;
+      const closureStatus = document.getElementById('modal-closure-status').value;
+      const comment = document.getElementById('modal-comment').value;
+
+      // Логика: Если ВСЕ 4 галочки стоят -> "Пройдено", иначе -> "Ошибка"
+      const allPassed = checkRelevance && check10Min && checkPhone && checkTimely;
+      const newStatus = allPassed ? 'passed' : 'failed';
+
+      const payload = {
+        check_relevance: checkRelevance,
+        check_10_min: check10Min,
+        check_phone: checkPhone,
+        check_timely: checkTimely,
+        audit_status: newStatus,
+        closure_status: closureStatus,
+        auditor_comment: comment,
+        auditor_name: 'Текущий аудитор',
+        audited_at: new Date().toISOString()
+      };
+
+      try {
+        const { error } = await supabaseClient
+          .from('audit_ppc')
+          .update(payload)
+          .eq('id', currentRequestId);
+
+        if (error) throw error;
+
+        showToast('success', 'Успешно', 'Результат аудита сохранен.');
+        closeModal();
+        loadData(); // Перезагружаем список
+      } catch (err) {
+        showToast('error', 'Ошибка сохранения', err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Сохранить результат';
+      }
+    }
+
+    // --- ФИЛЬТРЫ И ПОИСК (Обработчики) ---
+    document.getElementById('search-input').addEventListener('input', renderCards);
+    document.getElementById('filter-status').addEventListener('change', renderCards);
+
+    // Мобильное меню (для телефонов)
+    const sidebar = document.getElementById('sidebar');
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Инициализация при загрузке
+    window.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      // Для мобилок, если экран маленький, прячем сайдбар по умолчанию
+      if (window.innerWidth < 900) {
+        sidebar.classList.add('collapsed');
+      }
+    });
+  </script>
+</body>
+</html>
