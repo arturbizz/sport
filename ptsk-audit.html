@@ -44,7 +44,6 @@
     .icon-sm { width: 13px; height: 13px; }
     .icon-lg { width: 18px; height: 18px; }
 
-    /* ТОПБАР */
     .topbar { background-color: var(--bg-surface); border-bottom: 1px solid var(--border-light); padding: 0 20px; height: 52px; display: flex; align-items: center; justify-content: space-between; z-index: 100; gap: 14px; flex-shrink: 0; }
     .logo { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; color: var(--ink-primary); }
     .logo-mark { width: 24px; height: 24px; background: linear-gradient(135deg, var(--brand-primary), #8B5CF6); border-radius: 7px; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2); }
@@ -59,7 +58,6 @@
     .sidebar-toggle-btn { background: none; border: none; color: var(--ink-secondary); padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth); }
     .sidebar-toggle-btn:hover { background: var(--bg-subtle); color: var(--brand-primary); }
 
-    /* КНОПКИ */
     .btn { padding: 7px 12px; border-radius: var(--radius-md); border: 1px solid transparent; font-family: inherit; font-weight: 500; font-size: 12.5px; transition: var(--transition-smooth); display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
     .btn-primary { background: var(--brand-primary); color: white; box-shadow: var(--shadow-sm); }
     .btn-primary:hover { background: var(--brand-hover); box-shadow: var(--shadow-md); transform: translateY(-1px); }
@@ -79,7 +77,6 @@
     .btn-tg { background: rgba(0, 136, 204, 0.1); color: #0088cc; border: 1px solid rgba(0, 136, 204, 0.2); padding: 4px 8px; border-radius: 5px; font-size: 10.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: var(--transition-smooth); }
     .btn-tg:hover { background: #0088cc; color: white; }
 
-    /* PREMIUM TOOLBAR КНОПКИ */
     .btn-premium { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 9px; background: var(--bg-surface); border: 1px solid var(--border-light); font-size: 11.5px; font-weight: 600; color: var(--ink-secondary); box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: var(--transition-smooth); font-family: inherit; }
     .btn-premium:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.06); border-color: var(--brand-primary); color: var(--brand-primary); }
     .btn-premium .badge-count { background: var(--brand-light); color: var(--brand-primary); padding: 1px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; min-width: 18px; text-align: center; }
@@ -90,7 +87,19 @@
     .btn-premium.info:hover { border-color: #3B82F6; box-shadow: 0 4px 10px rgba(59,130,246,0.15); }
     .btn-premium.info .badge-count { background: var(--status-info-bg); color: #1D4ED8; }
 
-    /* LAYOUT */
+    /* Кнопка-селектор ошибок */
+    .btn-reasons {
+      width: 100%; padding: 5px 8px; border: 1px solid var(--border-light);
+      border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: 500;
+      background: var(--bg-surface); color: var(--ink-tertiary);
+      text-align: left; transition: var(--transition-smooth);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .btn-reasons:hover:not(:disabled) { border-color: var(--brand-primary); color: var(--brand-primary); }
+    .btn-reasons:disabled { opacity: 0.5; background: var(--bg-body); cursor: not-allowed; border-color: transparent; }
+    .btn-reasons.has-errors { background: var(--status-error-bg); border-color: rgba(244,63,94,0.3); color: var(--status-error); font-weight: 600; }
+
     .layout { display: flex; flex: 1; min-height: 0; overflow: hidden; }
     .sidebar { width: 280px; background: var(--bg-surface); border-right: 1px solid var(--border-light); padding: 16px 14px; overflow-y: auto; flex-shrink: 0; transition: width 0.3s var(--transition-spring), padding 0.3s, opacity 0.2s; }
     .sidebar.collapsed { width: 0; padding: 0; opacity: 0; pointer-events: none; border-right: 0; }
@@ -106,12 +115,10 @@
 
     .main-content { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; padding: 14px; }
 
-    /* ВЬЮ */
     .view { display: none; flex-direction: column; min-height: 0; }
     .view.active { display: flex; flex: 1; min-height: 0; animation: fadeIn 0.2s ease-out; }
     #view-sessions.active, #view-create.active { display: block; overflow-y: auto; }
 
-    /* СПИСОК АУДИТОВ */
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
     .page-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; }
     .page-subtitle { font-size: 12px; color: var(--ink-secondary); margin-top: 2px; }
@@ -136,7 +143,6 @@
     .empty-sessions h3 { font-size: 15px; font-weight: 700; color: var(--ink-primary); margin-bottom: 6px; }
     .empty-sessions p { color: var(--ink-secondary); font-size: 12.5px; }
 
-    /* СОЗДАНИЕ */
     .create-form { max-width: 640px; margin: 0 auto; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 14px; padding: 24px; box-shadow: var(--shadow-sm); }
     .form-group { margin-bottom: 14px; }
     .form-label { display: block; font-size: 11px; font-weight: 700; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
@@ -147,7 +153,6 @@
     .parser-hint { font-size: 11px; color: var(--brand-primary); background: var(--brand-light); padding: 5px 9px; border-radius: 5px; display: inline-flex; align-items: center; gap: 4px; margin-top: 7px; font-weight: 600; }
     .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-light); }
 
-    /* КОМПАКТНЫЙ ХЕДЕР АУДИТА */
     #audit-header-container { flex-shrink: 0; margin-bottom: 10px; }
     .audit-header { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px; padding: 10px 14px; box-shadow: var(--shadow-sm); display: flex; align-items: center; gap: 14px; flex-wrap: wrap; position: relative; overflow: hidden; }
     .audit-title-block { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
@@ -158,7 +163,6 @@
     .audit-progress-line { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--bg-subtle); }
     .audit-progress-line .fill { height: 100%; background: linear-gradient(90deg, var(--brand-primary), #8B5CF6); transition: width 0.5s var(--transition-spring); }
 
-    /* ТАБЛИЦА */
     .audit-table-wrap { flex: 1; min-height: 0; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px; box-shadow: var(--shadow-md); display: flex; flex-direction: column; overflow: hidden; }
     .bulk-table-scroll { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; }
 
@@ -189,7 +193,6 @@
     .bulk-select:focus, .bulk-input-line1:focus { outline: none; border-color: var(--brand-primary); box-shadow: 0 0 0 2px var(--brand-light); }
     .bulk-select:disabled, .bulk-input-line1:disabled { opacity: 0.5; background: var(--bg-body); cursor: not-allowed; border-color: transparent; }
 
-    /* КОММЕНТАРИЙ (компактная строка) */
     .comment-cell { display: flex; align-items: center; gap: 4px; }
     .comment-preview { flex: 1; padding: 5px 8px; border: 1px solid var(--border-light); border-radius: 6px; font-family: inherit; font-size: 12px; background: var(--bg-surface); color: var(--ink-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: var(--transition-smooth); }
     .comment-preview:hover { border-color: var(--brand-primary); background: var(--brand-light); }
@@ -209,7 +212,6 @@
     .bulk-footer { padding: 8px 14px; background: var(--bg-body); border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
     .bulk-footer-left, .bulk-footer-right { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 
-    /* МОДАЛКИ */
     .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
     .modal-overlay.open { opacity: 1; pointer-events: auto; }
     .modal-content { background: var(--bg-surface); width: 100%; max-width: 600px; border-radius: 14px; box-shadow: var(--shadow-xl); transform: scale(0.95); opacity: 0; transition: var(--transition-spring); display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
@@ -222,7 +224,6 @@
     .modal-body { padding: 16px 20px; overflow-y: auto; }
     .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 10px; background: var(--bg-body); }
 
-    /* ТГ */
     .tg-checklist { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
     .tg-check-item { display: flex; align-items: flex-start; gap: 9px; padding: 9px; border: 1px solid var(--border-light); border-radius: 6px; cursor: pointer; transition: var(--transition-smooth); background: var(--bg-surface); }
     .tg-check-item:hover { border-color: var(--brand-primary); background: var(--brand-light); }
@@ -231,7 +232,6 @@
     .tg-check-title { font-size: 12.5px; font-weight: 600; color: var(--ink-primary); }
     .tg-check-desc { font-size: 11px; color: var(--ink-secondary); }
 
-    /* ОТЧЁТЫ */
     .report-tabs { display: flex; gap: 3px; background: var(--bg-subtle); padding: 3px; border-radius: 7px; margin-bottom: 12px; }
     .report-tab { flex: 1; padding: 7px; border: none; border-radius: 5px; background: transparent; font-family: inherit; font-weight: 600; font-size: 11.5px; color: var(--ink-secondary); transition: var(--transition-smooth); }
     .report-tab.active { background: var(--bg-surface); color: var(--brand-primary); box-shadow: var(--shadow-sm); }
@@ -246,7 +246,6 @@
     .tag { display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 4px; font-size: 10.5px; font-weight: 600; margin: 1px; background: var(--status-error-bg); color: var(--status-error); }
     .tag.line2 { background: var(--status-info-bg); color: #1D4ED8; }
 
-    /* ТОСТ */
     .toast-container { position: fixed; bottom: 16px; right: 16px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
     .toast { background: var(--bg-surface); border: 1px solid var(--border-light); box-shadow: var(--shadow-lg); padding: 12px; border-radius: 10px; display: flex; align-items: flex-start; gap: 10px; min-width: 280px; max-width: 380px; animation: slideInRight 0.3s var(--transition-spring); }
     .toast-icon-wrapper { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -484,6 +483,26 @@
     </div>
   </div>
 
+  <!-- МОДАЛКА ВЫБОРА ОШИБОК (МУЛЬТИСЕЛЕКТ) -->
+  <div class="modal-overlay" id="reasons-modal">
+    <div class="modal-content" style="max-width: 450px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="reasons-modal-title">Ошибки 1 линии</h2>
+        <button class="close-btn" onclick="closeModal('reasons-modal')">
+          <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="tg-checklist" id="reasons-checklist"></div>
+        <p style="font-size:11.5px; color: var(--ink-tertiary); margin-top: 8px;">Можно выбрать несколько пунктов.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('reasons-modal')">Отмена</button>
+        <button class="btn btn-primary" onclick="saveReasonsModal()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
   <!-- МОДАЛКА КОММЕНТАРИЯ -->
   <div class="modal-overlay" id="comment-modal">
     <div class="modal-content" style="max-width: 500px;">
@@ -538,12 +557,13 @@
     let hasUnsavedChanges = false;
     let currentTgIndex = null;
     let currentCommentIndex = null;
+    let currentReasonsIndex = null;
     let currentReportTab = 'line1';
     let reportsData = [];
     let sessionsMap = {};
     let confirmCallback = null;
 
-    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v5';
+    const SIDEBAR_KEY = 'audit_ptsk_sidebar_hidden_v6';
     function initSidebar() {
       if (localStorage.getItem(SIDEBAR_KEY) === null) localStorage.setItem(SIDEBAR_KEY, '1');
       const hidden = localStorage.getItem(SIDEBAR_KEY) === '1';
@@ -616,11 +636,33 @@
       el.innerHTML = `<div class="save-indicator show ${state}"><div class="dot"></div>${text}</div>`;
     }
 
-    // НОРМАЛИЗАЦИЯ СТАРЫХ СТАТУСОВ
+    // РАБОТА С ПРИЧИНАМИ ОШИБОК (МУЛЬТИСЕЛЕКТ)
+    function splitReasons(reasonStr) {
+      if (!reasonStr) return [];
+      // Разделяем по ", " но проверяем, чтобы это не было внутри одного value
+      return reasonStr.split(', ').filter(x => x.trim()).map(x => x.trim());
+    }
+
+    function joinReasons(reasonsArray) {
+      return reasonsArray.join(', ');
+    }
+
+    function getShortLabel(value) {
+      const r = ERROR_REASONS.find(x => x.value === value);
+      return r ? r.label : value.slice(0, 15);
+    }
+
+    function getReasonsPreview(reasonStr) {
+      const parts = splitReasons(reasonStr);
+      if (parts.length === 0) return '— не выбрана —';
+      if (parts.length === 1) return getShortLabel(parts[0]);
+      return `${parts.length} шт.`;
+    }
+
     function normalizeActionStatus(val) {
       if (val === 'done') return 'closed_2l';
       if (val === 'returned_operator') return 'returned_1l';
-      if (val === 'returned_chat') return 'returned_1l'; // возврат в чат логически = вернул 1Л
+      if (val === 'returned_chat') return 'returned_1l';
       if (['closed_2l', 'returned_1l', 'error_2l'].includes(val)) return val;
       return 'closed_2l';
     }
@@ -762,10 +804,7 @@
         const { data: itemsData, error: err2 } = await supabaseClient.from('audit_ptsk').select('*').eq('session_id', id).order('created_at', { ascending: true });
         if (err2) throw err2;
         currentSession = { ...sessData, items: itemsData || [] };
-        // Нормализуем старые статусы при загрузке
-        currentSession.items.forEach(it => {
-          it.action_status = normalizeActionStatus(it.action_status);
-        });
+        currentSession.items.forEach(it => { it.action_status = normalizeActionStatus(it.action_status); });
         renderAuditView();
         switchView('audit');
         updateSaveIndicator('saved', 'Загружено');
@@ -830,20 +869,19 @@
       renderAuditHeader();
 
       const tbody = document.getElementById('audit-tbody');
-      const reasonOptionsHtml = ERROR_REASONS.map(r => `<option value="${r.value}">${r.label}</option>`).join('');
 
       tbody.innerHTML = s.items.map((item, index) => {
         const isCorrect = item.audit_result === 'correct';
         const isPending = item.audit_result === 'pending_info';
         const isIncorrect = item.audit_result === 'incorrect';
-        const isReasonValid = ERROR_REASONS.some(r => r.value === item.error_reason);
-        const reasonValue = isReasonValid ? item.error_reason : '';
         const disabledAttr = isDraft ? '' : 'disabled';
-        const reasonDisabled = (!isIncorrect || !isDraft) ? 'disabled' : '';
+        const reasonDisabled = (!isIncorrect || !isDraft);
         const l2i = item.line2_issue || 'none';
         const l2c = item.line2_issue_comment || '';
         const l2Disabled = !isDraft;
         const comment = item.auditor_comment || '';
+        const reasonsPreview = getReasonsPreview(item.error_reason);
+        const hasErrors = isIncorrect && splitReasons(item.error_reason).length > 0;
         
         let verdictClass = '';
         if (isCorrect) verdictClass = 'verdict-correct';
@@ -863,10 +901,9 @@
               </select>
             </td>
             <td>
-              <select class="bulk-select" id="reason-${index}" onchange="updateItemField(${index}, 'error_reason', this.value)" ${reasonDisabled}>
-                <option value="">— не выбрана —</option>
-                ${reasonOptionsHtml.replace(`value="${reasonValue}"`, `value="${reasonValue}" selected`)}
-              </select>
+              <button class="btn-reasons ${hasErrors ? 'has-errors' : ''}" id="reason-btn-${index}" onclick="openReasonsModal(${index})" ${reasonDisabled ? 'disabled' : ''} title="Нажмите для выбора ошибок">
+                ${reasonsPreview}
+              </button>
             </td>
             <td>
               <div class="line2-cell">
@@ -934,10 +971,47 @@
       }, 150);
     }
 
+    // МОДАЛКА ВЫБОРА ОШИБОК (МУЛЬТИСЕЛЕКТ)
+    function openReasonsModal(index) {
+      if (!currentSession || currentSession.status !== 'draft') return;
+      currentReasonsIndex = index;
+      const item = currentSession.items[index];
+      if (item.audit_result !== 'incorrect') return; // Только для ошибочных
+
+      document.getElementById('reasons-modal-title').textContent = `Ошибки 1Л · Заявка ${item.request_number}`;
+      const existing = splitReasons(item.error_reason);
+      const container = document.getElementById('reasons-checklist');
+      container.innerHTML = ERROR_REASONS.map((r, i) => `
+        <label class="tg-check-item">
+          <input type="checkbox" data-reason-index="${i}" value="${r.value.replace(/"/g, '&quot;')}" ${existing.includes(r.value) ? 'checked' : ''}>
+          <div class="tg-check-text"><span class="tg-check-title">${escapeHtml(r.value)}</span></div>
+        </label>
+      `).join('');
+      openModal('reasons-modal');
+    }
+
+    function saveReasonsModal() {
+      if (currentReasonsIndex === null || !currentSession) return;
+      const checkboxes = document.querySelectorAll('#reasons-checklist input[type="checkbox"]:checked');
+      const selected = Array.from(checkboxes).map(cb => cb.value);
+      const joined = joinReasons(selected);
+      
+      currentSession.items[currentReasonsIndex].error_reason = joined;
+      
+      const btn = document.getElementById(`reason-btn-${currentReasonsIndex}`);
+      if (btn) {
+        btn.innerHTML = getReasonsPreview(joined);
+        btn.classList.toggle('has-errors', selected.length > 0);
+      }
+      closeModal('reasons-modal');
+      scheduleSave();
+      currentReasonsIndex = null;
+    }
+
     // МОДАЛКА КОММЕНТАРИЯ
     function openCommentModal(index) {
       if (!currentSession) return;
-      if (currentSession.status !== 'draft') return; // Только чтение, если завершен
+      if (currentSession.status !== 'draft') return;
       currentCommentIndex = index;
       const item = currentSession.items[index];
       document.getElementById('comment-modal-title').textContent = `Комментарий к заявке ${item.request_number}`;
@@ -951,9 +1025,6 @@
       const val = document.getElementById('comment-modal-textarea').value.trim();
       currentSession.items[currentCommentIndex].auditor_comment = val;
       
-      // Обновляем превью в таблице
-      const cell = document.getElementById(`comment-${currentCommentIndex}`);
-      // Мы использовали id="comment-..." для инпута, но в новой версии это readonly input с onclick
       const tr = document.querySelector(`#audit-tbody tr[data-index="${currentCommentIndex}"]`);
       if (tr) {
         const previewInput = tr.querySelector('.comment-preview');
@@ -1023,10 +1094,12 @@
         else if (val === 'pending_info') select.classList.add('verdict-pending');
         else if (val === 'incorrect') select.classList.add('verdict-incorrect');
       }
-      const reasonSelect = document.getElementById(`reason-${index}`);
-      if (reasonSelect) {
-        reasonSelect.disabled = val !== 'incorrect';
-        if (val !== 'incorrect') reasonSelect.value = '';
+      const reasonBtn = document.getElementById(`reason-btn-${index}`);
+      if (reasonBtn) {
+        const wasDisabled = val !== 'incorrect';
+        reasonBtn.disabled = wasDisabled;
+        reasonBtn.innerHTML = getReasonsPreview(val === 'incorrect' ? item.error_reason : '');
+        reasonBtn.classList.toggle('has-errors', val === 'incorrect' && splitReasons(item.error_reason).length > 0);
       }
       const tgCell = document.getElementById(`tg-cell-${index}`);
       if (tgCell) {
@@ -1064,7 +1137,6 @@
       if (field === 'operator_line1_name') item.operator_line1_name = value;
       else if (field === 'error_reason') item.error_reason = value;
       else if (field === 'action_status') item.action_status = value;
-      else if (field === 'comment') item.auditor_comment = value; // не используется напрямую, но оставим
       else if (field === 'line2_issue_comment') item.line2_issue_comment = value;
       scheduleSave();
     }
@@ -1201,16 +1273,11 @@
       currentTgIndex = index;
       const item = currentSession.items[index];
       document.getElementById('tg-operator-input').value = item.operator_line1_name || '';
-      document.getElementById('tg-err-1').checked = false;
-      document.getElementById('tg-err-2').checked = false;
-      document.getElementById('tg-err-3').checked = false;
-      document.getElementById('tg-err-4').checked = false;
-      if (item.error_reason) {
-        if (item.error_reason.startsWith('1.')) document.getElementById('tg-err-1').checked = true;
-        if (item.error_reason.startsWith('2а.')) document.getElementById('tg-err-2').checked = true;
-        if (item.error_reason.startsWith('2б.')) document.getElementById('tg-err-3').checked = true;
-        if (item.error_reason.startsWith('3.')) document.getElementById('tg-err-4').checked = true;
-      }
+      const existing = splitReasons(item.error_reason);
+      document.getElementById('tg-err-1').checked = existing.some(v => v.startsWith('1.'));
+      document.getElementById('tg-err-2').checked = existing.some(v => v.startsWith('2а.'));
+      document.getElementById('tg-err-3').checked = existing.some(v => v.startsWith('2б.'));
+      document.getElementById('tg-err-4').checked = existing.some(v => v.startsWith('3.'));
       updateTgPreview();
       openModal('tg-modal');
     }
@@ -1222,12 +1289,29 @@
       item.operator_line1_name = opName;
       const line1Input = document.getElementById(`line1-${currentTgIndex}`);
       if (line1Input) line1Input.value = opName;
-      scheduleSave();
 
       const err1 = document.getElementById('tg-err-1').checked;
       const err2 = document.getElementById('tg-err-2').checked;
       const err3 = document.getElementById('tg-err-3').checked;
       const err4 = document.getElementById('tg-err-4').checked;
+
+      // Синхронизируем с причиной ошибки в item
+      const selectedReasons = [];
+      if (err1) selectedReasons.push(ERROR_REASONS[0].value);
+      if (err2) selectedReasons.push(ERROR_REASONS[1].value);
+      if (err3) selectedReasons.push(ERROR_REASONS[2].value);
+      if (err4) selectedReasons.push(ERROR_REASONS[3].value);
+      item.error_reason = joinReasons(selectedReasons);
+      
+      // Обновляем кнопку в таблице
+      const reasonBtn = document.getElementById(`reason-btn-${currentTgIndex}`);
+      if (reasonBtn) {
+        reasonBtn.innerHTML = getReasonsPreview(item.error_reason);
+        reasonBtn.classList.toggle('has-errors', selectedReasons.length > 0);
+      }
+
+      scheduleSave();
+
       const errors = [];
       if (err1) errors.push('не уточнил актуальность ремонта');
       if (err2) errors.push('не предупредил что специалист свяжется в течении 10 минут');
@@ -1356,8 +1440,8 @@
 
       const errStats = {};
       items.filter(it => it.audit_result === 'incorrect').forEach(it => {
-        const r = it.error_reason || 'Не указана';
-        errStats[r] = (errStats[r] || 0) + 1;
+        const reasons = splitReasons(it.error_reason || 'Не указана');
+        reasons.forEach(r => { errStats[r] = (errStats[r] || 0) + 1; });
       });
       const slow = items.filter(it => it.line2_issue === 'slow_callback').length;
       const other = items.filter(it => it.line2_issue === 'other').length;
@@ -1405,15 +1489,18 @@
         else if (req.audit_result === 'pending_info') stats[name].pending++;
         else if (req.audit_result === 'incorrect') {
           stats[name].incorrect++;
-          const r = req.error_reason || 'Не указана';
-          stats[name].errors[r] = (stats[name].errors[r] || 0) + 1;
+          // Разбиваем множественные причины на отдельные теги
+          const reasons = splitReasons(req.error_reason || 'Не указана');
+          reasons.forEach(r => {
+            stats[name].errors[r] = (stats[name].errors[r] || 0) + 1;
+          });
         }
       });
       let totalAll = 0, correctAll = 0, incorrectAll = 0, pendingAll = 0;
       let html = `<div class="report-table-wrap"><table class="report-table"><thead><tr><th>Оператор 1 линии</th><th style="text-align:center;">Всего</th><th style="text-align:center;">Верно</th><th style="text-align:center;">Уточн.</th><th style="text-align:center;">Ошибки</th><th>Тематики</th><th style="width: 50px;"></th></tr></thead><tbody>`;
       for (const [name, data] of Object.entries(stats)) {
         totalAll += data.total; correctAll += data.correct; incorrectAll += data.incorrect; pendingAll += data.pending;
-        const errorTags = Object.entries(data.errors).map(([r, c]) => `<span class="tag">${escapeHtml(r)} (${c})</span>`).join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
+        const errorTags = Object.entries(data.errors).map(([r, c]) => `<span class="tag">${escapeHtml(getShortLabel(r))} (${c})</span>`).join(' ') || '<span style="color:var(--ink-tertiary)">—</span>';
         html += `<tr><td style="font-weight:600;">${escapeHtml(name)}</td><td style="text-align:center; font-weight:600;">${data.total}</td><td style="text-align:center; font-weight:600; color:var(--status-success);">${data.correct}</td><td style="text-align:center; font-weight:600; color:var(--status-warning);">${data.pending}</td><td style="text-align:center; font-weight:600; color:var(--status-error);">${data.incorrect}</td><td>${errorTags}</td><td>${data.incorrect > 0 ? `<button class="btn-icon" onclick="copyOperator1Errors('${escapeHtml(name)}')" title="Скопировать номера ошибок"><svg class="icon-sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>` : ''}</td></tr>`;
       }
       html += `<tr class="report-total"><td>ОБЩАЯ СВОДКА</td><td style="text-align:center;">${totalAll}</td><td style="text-align:center;">${correctAll}</td><td style="text-align:center;">${pendingAll}</td><td style="text-align:center;">${incorrectAll}</td><td>%: ${totalAll ? ((incorrectAll / totalAll) * 100).toFixed(1) : 0}%</td><td></td></tr></tbody></table></div>`;
