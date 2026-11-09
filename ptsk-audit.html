@@ -121,6 +121,13 @@
     }
     .btn-icon:hover { color: var(--status-error); background: var(--status-error-bg); }
 
+    .btn-tg {
+      background: rgba(0, 136, 204, 0.1); color: #0088cc; border: 1px solid rgba(0, 136, 204, 0.2);
+      padding: 6px 12px; border-radius: var(--radius-md); font-size: 12px; font-weight: 600;
+      display: inline-flex; align-items: center; gap: 6px; transition: var(--transition-smooth);
+    }
+    .btn-tg:hover { background: #0088cc; color: white; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3); }
+
     /* ================= ОСНОВНОЙ КОНТЕНТ ================= */
     .layout { display: flex; flex: 1; overflow: hidden; }
 
@@ -148,7 +155,7 @@
     /* Центральная часть */
     .main-content { flex: 1; padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
 
-    /* ================= РЕЖИМ: ИСТОРИЯ (КАРТОЧКИ) ================= */
+    /* ================= РЕЖИМ: ИСТОРИЯ ================= */
     .filters-bar {
       display: flex; gap: 12px; flex-wrap: wrap; background: var(--bg-surface); padding: 16px;
       border-radius: var(--radius-xl); border: 1px solid var(--border-light); box-shadow: var(--shadow-sm); align-items: center;
@@ -227,20 +234,10 @@
     .bulk-workspace.active { display: block; }
     
     .bulk-workspace-header {
-      padding: 16px 20px;
-      background: var(--bg-body);
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      color: var(--ink-secondary);
+      padding: 16px 20px; background: var(--bg-body); border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-secondary);
     }
-    .bulk-workspace-header strong {
-      color: var(--brand-primary);
-      font-weight: 700;
-      font-size: 15px;
-    }
+    .bulk-workspace-header strong { color: var(--brand-primary); font-weight: 700; font-size: 15px; }
 
     .bulk-table { width: 100%; border-collapse: collapse; text-align: left; }
     .bulk-table th {
@@ -303,13 +300,22 @@
     .modal-body { padding: 24px; overflow-y: auto; }
     .modal-footer { padding: 20px 24px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px; background: var(--bg-body); }
 
+    /* Чек-лист в модалке ТГ */
+    .tg-checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .tg-check-item {
+      display: flex; align-items: center; gap: 10px; padding: 12px; border: 1px solid var(--border-light);
+      border-radius: var(--radius-md); cursor: pointer; transition: var(--transition-smooth); background: var(--bg-surface);
+    }
+    .tg-check-item:hover { border-color: var(--brand-primary); background: var(--brand-light); }
+    .tg-check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--brand-primary); cursor: pointer; }
+    .tg-check-item span { font-size: 14px; font-weight: 500; color: var(--ink-primary); }
+
     /* ================= ОТЧЕТЫ ================= */
     .report-table { width: 100%; border-collapse: collapse; font-size: 14px; }
     .report-table th { padding: 12px 16px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--ink-tertiary); border-bottom: 1px solid var(--border-light); }
     .report-table td { padding: 16px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
     .report-table tr:hover td { background: var(--bg-body); }
     .report-total td { font-weight: 700; background: var(--brand-light) !important; color: var(--brand-primary); border-bottom: none; }
-    
     .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px; background: var(--status-error-bg); color: var(--status-error); }
 
     /* ================= УВЕДОМЛЕНИЯ ================= */
@@ -469,7 +475,8 @@
                 <th style="width: 240px;">Вердикт</th>
                 <th>Тематика ошибки (если ошибка)</th>
                 <th style="width: 220px;">Действие</th>
-                <th style="width: 200px;">Комментарий</th>
+                <th style="width: 180px;">Комментарий</th>
+                <th style="width: 100px;">ТГ-Шаблон</th>
               </tr>
             </thead>
             <tbody id="bulk-tbody"></tbody>
@@ -520,6 +527,54 @@
     </div>
   </div>
 
+  <!-- МОДАЛКА ШАБЛОНА ТГ -->
+  <div class="modal-overlay" id="tg-modal">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Шаблон для Telegram</h2>
+        <button class="close-btn" onclick="closeModal('tg-modal')">
+          <svg class="icon icon-lg" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 16px;">
+          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">ФИО Оператора</label>
+          <input type="text" class="bulk-op-input" id="tg-operator-input" style="width: 100%; padding: 12px;" placeholder="Введите имя...">
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">Выберите ошибки</label>
+          <div class="tg-checklist">
+            <label class="tg-check-item">
+              <input type="checkbox" id="tg-err-1" onchange="updateTgPreview()">
+              <span>номер не уточнила</span>
+            </label>
+            <label class="tg-check-item">
+              <input type="checkbox" id="tg-err-2" onchange="updateTgPreview()">
+              <span>согласие на ПЦК не получено</span>
+            </label>
+            <label class="tg-check-item">
+              <input type="checkbox" id="tg-err-3" onchange="updateTgPreview()">
+              <span>До кл не дозвонились</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:13px; font-weight:600; color:var(--ink-secondary); margin-bottom:8px;">Предпросмотр</label>
+          <textarea class="bulk-textarea" id="tg-preview" readonly style="min-height: 100px; background: var(--bg-body); cursor: text;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('tg-modal')">Отмена</button>
+        <button class="btn btn-primary" onclick="copyTgTemplate()">
+          <svg class="icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Скопировать текст
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container"></div>
 
   <script>
@@ -530,6 +585,8 @@
     let allRequests = [];
     let bulkItems = [];
     let itemToDeleteId = null;
+    let currentTgTicketNum = null;
+    let currentTgIndex = null;
 
     // --- УВЕДОМЛЕНИЯ ---
     function showToast(type, title, message) {
@@ -565,7 +622,7 @@
         textArea.select();
         try {
           document.execCommand('copy');
-          showToast('success', 'Скопировано', `Номер заявки ${text} скопирован.`);
+          showToast('success', 'Скопировано', `Текст скопирован в буфер обмена.`);
         } catch (err) {
           showToast('error', 'Ошибка', 'Не удалось скопировать.');
         }
@@ -573,7 +630,7 @@
         return;
       }
       navigator.clipboard.writeText(text).then(() => {
-        showToast('success', 'Скопировано', `Номер заявки ${text} скопирован в буфер.`);
+        showToast('success', 'Скопировано', `Текст успешно скопирован.`);
       }).catch(err => {
         showToast('error', 'Ошибка', 'Не удалось скопировать.');
       });
@@ -597,7 +654,7 @@
         if (error) throw error;
         showToast('success', 'Удалено', 'Карточка успешно удалена из базы.');
         closeModal('delete-modal');
-        loadData(); // Обновляем список
+        loadData();
       } catch (err) {
         showToast('error', 'Ошибка удаления', err.message);
       } finally {
@@ -792,6 +849,13 @@
           <td>
             <input type="text" class="bulk-input-comment" id="comment-${index}" placeholder="Комментарий..." value="${item.comment}" onchange="updateBulkField(${index}, 'comment', this.value)">
           </td>
+
+          <td>
+            <button class="btn-tg" onclick="openTgModal(${index})">
+              <svg class="icon icon-sm" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              ТГ
+            </button>
+          </td>
         </tr>
       `).join('');
     }
@@ -861,6 +925,51 @@
         btn.disabled = false;
         btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Сохранить всё';
       }
+    }
+
+    // --- ГЕНЕРАЦИЯ ТГ ШАБЛОНА ---
+    function openTgModal(index) {
+      currentTgIndex = index;
+      const item = bulkItems[index];
+      currentTgTicketNum = item.request_number;
+      
+      document.getElementById('tg-operator-input').value = item.operator_name;
+      
+      // Сбрасываем чекбоксы
+      document.getElementById('tg-err-1').checked = false;
+      document.getElementById('tg-err-2').checked = false;
+      document.getElementById('tg-err-3').checked = false;
+      
+      updateTgPreview();
+      document.getElementById('tg-modal').classList.add('open');
+    }
+
+    function updateTgPreview() {
+      const opName = document.getElementById('tg-operator-input').value.trim();
+      const err1 = document.getElementById('tg-err-1').checked;
+      const err2 = document.getElementById('tg-err-2').checked;
+      const err3 = document.getElementById('tg-err-3').checked;
+
+      const errors = [];
+      if (err1) errors.push('номер не уточнила');
+      if (err2) errors.push('согласие на ПЦК не получено');
+      if (err3) errors.push('До кл не дозвонились');
+
+      let text = `${currentTgTicketNum} ${opName}`;
+      
+      if (errors.length > 0) {
+        text += `, ${errors.join(', ')}. Заберите, пожалуйста`;
+      } else {
+        text += `. Заберите, пожалуйста`;
+      }
+
+      document.getElementById('tg-preview').value = text;
+    }
+
+    function copyTgTemplate() {
+      const text = document.getElementById('tg-preview').value;
+      copyToClipboard(text);
+      closeModal('tg-modal');
     }
 
     // --- ОТЧЕТЫ ---
