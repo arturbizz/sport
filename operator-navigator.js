@@ -17,7 +17,7 @@ const ICONS = {
   external: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3h7v7M21 3l-9 9"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>'
 };
 
-const routes = [
+let routes = [
   { id: 'new', label: 'Новое обращение', title: 'Новое обращение', description: 'Проведите клиента от приветствия до корректного оформления заявки.', icon: 'phone', tone: 'tone-green', tags: ['имя', 'город', 'ЛК'] },
   { id: 'printers', label: 'Принтеры и плоттеры', title: 'Принтеры и плоттеры', description: 'Лазерные, струйные устройства и плоттеры: ТО, выезд и обязательные вопросы.', icon: 'printer', tone: 'tone-blue', tags: ['ТО 7', 'ТО 12', 'ТО 522', 'ТО 761'] },
   { id: 'tv', label: 'Телевизоры', title: 'Телевизоры', description: 'Быстрые решения по пульту, настройке, матрице, модулям и сигналу.', icon: 'tv', tone: 'tone-dark', tags: ['ТО 934', 'матрица', 'стоп-факторы'] },
@@ -30,7 +30,7 @@ const routes = [
   { id: 'current', label: 'Текущий заказ', title: 'Текущий заказ', description: 'Не тратьте линию на текучку: перевод в сопровождение и правильная передача.', icon: 'phone', tone: 'tone-dark', tags: ['сопровождение', 'номер заказа'] }
 ];
 
-const steps = {
+let steps = {
   new: [
     { title: 'Начните с имени', question: 'Имя должно прозвучать в начале целевого разговора.', script: 'Как могу к вам обращаться?', checks: ['Не откладывайте вопрос об имени до конца разговора.', 'После имени обращайтесь к клиенту по имени.'], options: [{ label: 'Имя получено', next: 'city' }] },
     { id: 'city', title: 'Уточните город', question: 'Город нужен до условий, цен и обещаний по выезду.', script: 'Подскажите, пожалуйста, из какого вы города звоните?', checks: ['Для Москвы уточните МКАД.', 'Для Санкт-Петербурга уточните КАД.', 'Если города нет в карте, проверьте телефон линии.'], options: [{ label: 'Город рабочий', next: 'equipment' }, { label: 'Город вне зоны', result: { type: 'stop', title: 'Не оформляем из-за дальности', subtype: 'Стоп фактор', classifier: 'Дальность', action: 'Закрыть обращение с корректной причиной.' } }] },
@@ -88,6 +88,72 @@ const steps = {
     { title: 'Определите текущий заказ', question: 'Новые продажи и вопросы по уже оформленному заказу обрабатываются по-разному.', script: 'Понимаю. Сейчас передам вас в отдел сопровождения по текущему заказу.', checks: ['Не консультировать по текущему заказу самостоятельно.', 'Не тратить время на текучку.', 'Если перевод не состоялся — выбрать исход ниже.'], options: [{ label: 'Перевод в сопровождение успешен', result: { type: 'success', title: 'Перевод выполнен', subtype: 'Текущий заказ', classifier: 'Перевод в сопровождение', action: 'Передать звонок и завершить работу с картой.' } }, { label: 'Клиент ждёт обратный звонок', result: { type: 'warning', title: 'Передайте информацию менеджеру', subtype: 'Ждет обратный звонок', classifier: 'Текущий заказ', action: 'Указать номер заказа и суть запроса.' } }, { label: 'Ответил самостоятельно, обратный звонок не нужен', result: { type: 'warning', title: 'Закройте дубль текучки', subtype: 'Спам', classifier: 'Спам – дубль текучка', action: 'Обязательно указать номер заказа.' } }] }
   ]
 };
+
+const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrYl9ubXJwZHB3bW10anUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4MzI0NTA5MSwiZXhwIjoyMDk4ODIxMDkxfQ.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const REMOTE_RESULT_TYPES = new Set(['success', 'warning', 'stop']);
+
+function slugify(value) {
+  return safeText(value).toLowerCase().trim().replace(/[^a-zа-яё0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 48) || `script-${Date.now()}`;
+}
+
+function splitLines(value) {
+  return safeText(value).split(/\\n|\\r\\n|\n/).map((item) => item.trim()).filter(Boolean);
+}
+
+async function loadRemoteScripts() {
+  if (!supabaseClient) return;
+  try {
+    const { data: scriptRows, error: scriptError } = await supabaseClient.from('scripts').select('*').eq('is_active', true).order('title');
+    if (scriptError || !scriptRows?.length) return;
+    const scriptIds = scriptRows.map((script) => script.id);
+    const { data: stepRows, error: stepError } = await supabaseClient.from('script_steps').select('*').in('script_id', scriptIds).order('step_order');
+    if (stepError || !stepRows?.length) return;
+    const stepIds = stepRows.map((step) => step.id);
+    const { data: optionRows } = await supabaseClient.from('step_options').select('*').in('step_id', stepIds).order('id');
+    const optionMap = new Map();
+    (optionRows || []).forEach((option) => {
+      if (!optionMap.has(option.step_id)) optionMap.set(option.step_id, []);
+      optionMap.get(option.step_id).push(option);
+    });
+    const routeIds = new Set(routes.map((route) => route.id));
+    scriptRows.forEach((script) => {
+      const routeId = `db-${script.id}`;
+      const remoteSteps = stepRows.filter((step) => step.script_id === script.id).sort((a, b) => (a.step_order || 0) - (b.step_order || 0));
+      if (!remoteSteps.length) return;
+      const stepIdToLocalId = new Map(remoteSteps.map((step) => [String(step.id), `db-step-${step.id}`]));
+      const mappedSteps = remoteSteps.map((step) => ({
+        id: stepIdToLocalId.get(String(step.id)),
+        title: step.title || 'Следующий шаг',
+        question: step.coach_comment || 'Выберите, что произошло дальше.',
+        script: step.operator_speech || step.how_to_say || 'Используйте реплику из методички.',
+        checks: splitLines(step.warnings),
+        options: (optionMap.get(step.id) || []).map((option) => {
+          const nextId = option.next_step_id ? stepIdToLocalId.get(String(option.next_step_id)) : null;
+          const badge = safeText(option.badge_type);
+          if (nextId) return { label: option.client_reaction || 'Продолжить', next: nextId };
+          return { label: option.client_reaction || 'Завершить маршрут', result: {
+            type: REMOTE_RESULT_TYPES.has(step.result_type) ? step.result_type : (badge === 'stop' ? 'stop' : 'success'),
+            title: step.result_title || (badge === 'stop' ? 'Остановите оформление' : 'Маршрут завершён'),
+            subtype: step.result_subtype || script.title,
+            classifier: step.result_classifier || badge || 'По результату диалога',
+            action: step.result_action || step.how_to_say || 'Проверьте карту и сохраните результат.'
+          } };
+        })
+      }));
+      const startIndex = Math.max(0, mappedSteps.findIndex((step) => remoteSteps[mappedSteps.indexOf(step)]?.is_start));
+      steps[routeId] = mappedSteps;
+      if (!routeIds.has(routeId)) {
+        routes.push({ id: routeId, label: script.title, title: script.title, description: script.description || 'Сценарий из Supabase', icon: 'route', tone: 'tone-blue', tags: ['Supabase', 'активный сценарий'], startIndex });
+        routeIds.add(routeId);
+      }
+    });
+  } catch (error) {
+    console.warn('Не удалось загрузить сценарии из Supabase. Оставлены встроенные маршруты.', error);
+  }
+}
 
 const state = { routeId: null, stepIndex: 0, history: [], query: '', ribbonVisible: true };
 
@@ -356,7 +422,7 @@ function goBack() {
 
 function openRoute(id) {
   state.routeId = id;
-  state.stepIndex = 0;
+  state.stepIndex = getRoute(id)?.startIndex || 0;
   state.history = [];
   renderNav();
   renderStep();
@@ -398,5 +464,12 @@ $('rules-button').addEventListener('click', () => {
   showToast('Главные правила снова показаны');
 });
 
-renderNav();
-renderHome();
+async function initNavigator() {
+  renderNav();
+  renderHome();
+  await loadRemoteScripts();
+  renderNav();
+  if (!state.routeId) renderHome();
+}
+
+initNavigator();
