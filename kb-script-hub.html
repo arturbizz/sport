@@ -288,9 +288,33 @@
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; box-shadow: var(--shadow-lg); z-index: 1000; transform: translateY(20px); opacity: 0; transition: all 0.3s; }
     .toast.show { transform: translateY(0); opacity: 1; }
     .toast.error { background: var(--danger); }
+
+    /* Экран проверки доступа: содержимое страницы не показывается до проверки сессии */
+    .auth-gate {
+      position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center;
+      padding: 24px; background: var(--bg-body);
+    }
+    .auth-gate-card {
+      width: min(100%, 440px); padding: 32px; background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); text-align: center;
+    }
+    .auth-gate-title { margin-bottom: 10px; font-size: 22px; font-weight: 800; }
+    .auth-gate-text { color: var(--ink-3); line-height: 1.55; }
+    .auth-gate.error .auth-gate-title { color: var(--danger); }
+    .auth-gate-action {
+      margin-top: 20px; padding: 11px 18px; border: 0; border-radius: 8px; background: var(--primary);
+      color: #fff; font: inherit; font-weight: 700; cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <div class="auth-gate" id="auth-gate" aria-live="polite">
+    <div class="auth-gate-card">
+      <div class="auth-gate-title" id="auth-gate-title">Проверяем доступ</div>
+      <p class="auth-gate-text" id="auth-gate-text">Подождите, выполняется безопасная проверка сессии.</p>
+      <button class="auth-gate-action hidden" id="auth-gate-action" type="button">Повторить проверку</button>
+    </div>
+  </div>
 
   <header class="header">
     <div class="logo">
@@ -453,6 +477,95 @@
 
     const $ = (id) => document.getElementById(id);
 
+    // =====================================================================
+    // БЕЗОПАСНОСТЬ: XSS-защита и проверка ролей
+    // =====================================================================
+    // Таблица user_roles должна содержать: user_id uuid, role text, is_active boolean.
+    // Роль из localStorage, URL или user_metadata намеренно НЕ используется.
+    const ROLE_TABLE = 'user_roles';
+    const ROLE_LEVEL = { operator: 10, editor: 20, admin: 30 };
+
+    function escapeHTML(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function setSafeText(element, value) {
+      if (element) element.textContent = String(value ?? '');
+      return element;
+    }
+
+    function createSafeElement(tagName, className, text) {
+      const element = document.createElement(tagName);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = String(text ?? '');
+      return element;
+    }
+
+    function canAccess(requiredRole) {
+      const currentLevel = ROLE_LEVEL[state.auth.role] || 0;
+      return currentLevel >= (ROLE_LEVEL[requiredRole] || Number.MAX_SAFE_INTEGER);
+    }
+
+    function showAuthGate(title, message, isError = false) {
+      const gate = $('auth-gate');
+      gate.classList.toggle('error', isError);
+      setSafeText($('auth-gate-title'), title);
+      setSafeText($('auth-gate-text'), message);
+      $('auth-gate-action').classList.toggle('hidden', !isError);
+      gate.classList.remove('hidden');
+    }
+
+    function hideAuthGate() {
+      $('auth-gate').classList.add('hidden');
+    }
+
+    async function checkUserRole() {
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+      if (userError || !user) {
+        return { ok: false, message: 'Для доступа к скриптам необходимо войти в аккаунт.' };
+      }
+
+      const { data: roleRow, error: roleError } = await supabaseClient
+        .from(ROLE_TABLE)
+        .select('role, is_active')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Role lookup failed:', roleError);
+        return { ok: false, message: 'Не удалось проверить права доступа. Обратитесь к администратору.' };
+      }
+
+      const role = roleRow && roleRow.role;
+      if (!role || !Object.prototype.hasOwnProperty.call(ROLE_LEVEL, role)) {
+        return { ok: false, message: 'Для вашей учётной записи не назначена роль.' };
+      }
+
+      state.auth = { user, role };
+      return { ok: true, user, role };
+    }
+
+    async function requireRole(requiredRole) {
+      if (!state.auth.user) {
+        const result = await checkUserRole();
+        if (!result.ok) {
+          showAuthGate('Доступ запрещён', result.message, true);
+          return false;
+        }
+      }
+      if (!canAccess(requiredRole)) {
+        showToast('Недостаточно прав для этого действия.', true);
+        return false;
+      }
+      return true;
+    }
+
     // Состояние приложения
     let state = {
       mode: 'operator',
@@ -461,8 +574,7 @@
       steps: [],
       activeStepId: null,
       options: [],
-      
-      // Для оператора
+      auth: { user: null, role: null },
       opCurrentStepId: null,
       opHistory: []
     };
@@ -476,16 +588,15 @@
     }
 
     // Переключение режимов
-    window.switchMode = function(mode) {
+    window.switchMode = async function(mode) {
+      if (mode === 'editor' && !(await requireRole('editor'))) return;
       state.mode = mode;
       $('btn-mode-op').classList.toggle('active', mode === 'operator');
       $('btn-mode-ed').classList.toggle('active', mode === 'editor');
-      
       $('view-operator').style.display = mode === 'operator' ? 'flex' : 'none';
       $('view-editor').style.display = mode === 'editor' ? 'flex' : 'none';
-
-      if (mode === 'operator') loadOperatorData();
-      if (mode === 'editor') loadEditorData();
+      if (mode === 'operator') await loadOperatorData();
+      if (mode === 'editor') await loadEditorData();
     };
 
     // =====================================================================
@@ -563,33 +674,55 @@
       const step = state.steps.find(s => s.id === state.opCurrentStepId);
       if (!step) return;
 
-      $('op-step-badge').textContent = `Шаг ${state.steps.indexOf(step) + 1}`;
-      $('op-step-title').textContent = step.title;
-      $('op-speech').textContent = step.operator_speech;
-      
-      // Рендер методички
-      let detailsHtml = '';
-      if (step.coach_comment) detailsHtml += `<div class="detail-block"><h4>Комментарий тренера</h4><p>${step.coach_comment}</p></div>`;
-      if (step.how_to_say) detailsHtml += `<div class="detail-block"><h4>Как произнести</h4><p>${step.how_to_say}</p></div>`;
-      if (step.warnings) detailsHtml += `<div class="detail-block"><h4>Ошибки / Чего нельзя</h4><p>${step.warnings}</p></div>`;
-      if (!detailsHtml) detailsHtml = '<p style="color:var(--ink-3)">Дополнительной информации нет.</p>';
-      $('details-content').innerHTML = detailsHtml;
+      setSafeText($('op-step-badge'), `Шаг ${state.steps.indexOf(step) + 1}`);
+      setSafeText($('op-step-title'), step.title);
+      setSafeText($('op-speech'), step.operator_speech);
 
-      // Рендер веток
-      const { data: options } = await supabaseClient.from('step_options').select('*').eq('step_id', step.id);
-      
+      const details = $('details-content');
+      details.replaceChildren();
+      const detailBlocks = [
+        ['Комментарий тренера', step.coach_comment],
+        ['Как произнести', step.how_to_say],
+        ['Ошибки / Чего нельзя', step.warnings]
+      ];
+      detailBlocks.forEach(([heading, value]) => {
+        if (!value) return;
+        const block = createSafeElement('div', 'detail-block');
+        block.appendChild(createSafeElement('h4', '', heading));
+        block.appendChild(createSafeElement('p', '', value));
+        details.appendChild(block);
+      });
+      if (!details.children.length) {
+        const empty = createSafeElement('p', '', 'Дополнительной информации нет.');
+        empty.style.color = 'var(--ink-3)';
+        details.appendChild(empty);
+      }
+
+      const { data: options, error } = await supabaseClient
+        .from('step_options').select('*').eq('step_id', step.id);
+      if (error) {
+        console.error('Options load failed:', error);
+        showToast('Не удалось загрузить варианты ответа.', true);
+      }
+
       const branchesList = $('op-branches');
-      branchesList.innerHTML = '';
-      
+      branchesList.replaceChildren();
       if (!options || options.length === 0) {
-        branchesList.innerHTML = `<div class="branch-btn" style="justify-content:center; color:var(--ink-3); border-style:dashed;">Конец сценария. Дальнейших действий нет.</div>`;
+        const endState = createSafeElement('div', 'branch-btn', 'Конец сценария. Дальнейших действий нет.');
+        endState.style.justifyContent = 'center';
+        endState.style.color = 'var(--ink-3)';
+        endState.style.borderStyle = 'dashed';
+        branchesList.appendChild(endState);
       } else {
         options.forEach(opt => {
-          const btn = document.createElement('button');
-          btn.className = `branch-btn ${opt.badge_type || ''}`;
-          btn.innerHTML = `<span>${opt.client_reaction}</span> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>`;
-          
-          btn.onclick = () => {
+          const btn = createSafeElement('button', `branch-btn ${opt.badge_type || ''}`);
+          btn.type = 'button';
+          btn.appendChild(createSafeElement('span', '', opt.client_reaction));
+          const icon = document.createElement('span');
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = '→';
+          btn.appendChild(icon);
+          btn.addEventListener('click', () => {
             if (opt.next_step_id) {
               state.opHistory.push(state.opCurrentStepId);
               state.opCurrentStepId = opt.next_step_id;
@@ -598,11 +731,10 @@
             } else {
               showToast('Сценарий завершен.');
             }
-          };
+          });
           branchesList.appendChild(btn);
         });
       }
-      
       updateBackBtn();
     }
 
@@ -645,31 +777,31 @@
     // =====================================================================
     function renderEditorSidebar() {
       const list = $('ed-scripts-list');
-      list.innerHTML = '';
+      list.replaceChildren();
       state.scripts.forEach(script => {
-        const el = document.createElement('div');
-        el.className = `ed-item ${state.activeScriptId === script.id ? 'active' : ''}`;
-        el.innerHTML = `<div class="ed-item-title">${script.title}</div>`;
-        el.onclick = () => loadScriptIntoEditor(script.id);
+        const el = createSafeElement('div', `ed-item ${state.activeScriptId === script.id ? 'active' : ''}`);
+        el.tabIndex = 0;
+        el.appendChild(createSafeElement('div', 'ed-item-title', script.title));
+        el.addEventListener('click', () => loadScriptIntoEditor(script.id));
         list.appendChild(el);
       });
     }
 
     function renderEditorSteps() {
       const list = $('ed-steps-list');
-      list.innerHTML = '';
+      list.replaceChildren();
       if (state.steps.length === 0) {
-        list.innerHTML = '<div style="padding:16px; color:var(--ink-3); font-size:14px;">Нет шагов. Нажмите "+" чтобы добавить.</div>';
+        list.appendChild(createSafeElement('div', '', 'Нет шагов. Нажмите «+», чтобы добавить.'));
         return;
       }
       state.steps.forEach((step, idx) => {
-        const el = document.createElement('div');
-        el.className = `ed-item ${state.activeStepId === step.id ? 'active' : ''}`;
-        el.innerHTML = `
-          <div class="ed-item-title">${idx + 1}. ${step.title} ${step.is_start ? '(Старт)' : ''}</div>
-          <div class="ed-item-desc">${step.operator_speech.substring(0, 40)}...</div>
-        `;
-        el.onclick = () => loadStepIntoEditor(step.id);
+        const el = createSafeElement('div', `ed-item ${state.activeStepId === step.id ? 'active' : ''}`);
+        el.tabIndex = 0;
+        const title = `${idx + 1}. ${step.title}${step.is_start ? ' (Старт)' : ''}`;
+        el.appendChild(createSafeElement('div', 'ed-item-title', title));
+        const desc = String(step.operator_speech || '').substring(0, 40);
+        el.appendChild(createSafeElement('div', 'ed-item-desc', `${desc}${String(step.operator_speech || '').length > 40 ? '...' : ''}`));
+        el.addEventListener('click', () => loadStepIntoEditor(step.id));
         list.appendChild(el);
       });
     }
@@ -677,47 +809,46 @@
     async function loadStepIntoEditor(stepId) {
       state.activeStepId = stepId;
       renderEditorSteps();
-      
       const step = state.steps.find(s => s.id === stepId);
       if (!step) return;
-
       $('ed-step-form').classList.remove('hidden');
-      $('ed-step-title').value = step.title;
-      $('ed-step-speech').value = step.operator_speech;
+      $('ed-step-title').value = step.title || '';
+      $('ed-step-speech').value = step.operator_speech || '';
       $('ed-detail-coach').value = step.coach_comment || '';
       $('ed-detail-how').value = step.how_to_say || '';
       $('ed-detail-warn').value = step.warnings || '';
-
-      // Загружаем ветки
-      const { data: options } = await supabaseClient.from('step_options').select('*').eq('step_id', stepId);
+      const { data: options, error } = await supabaseClient.from('step_options').select('*').eq('step_id', stepId);
+      if (error) showToast('Не удалось загрузить ветки.', true);
       state.options = options || [];
-      
       renderOptionsEditor();
     }
 
     function renderOptionsEditor() {
       const list = $('ed-options-list');
-      list.innerHTML = '';
-      
+      list.replaceChildren();
       state.options.forEach((opt, index) => {
-        const row = document.createElement('div');
-        row.className = 'opt-row';
-        
-        // Выпадающий список всех шагов для привязки
-        let optionsHtml = '<option value="">-- Конец сценария --</option>';
+        const row = createSafeElement('div', 'opt-row');
+        const input = document.createElement('input');
+        input.type = 'text'; input.className = 'form-control';
+        input.placeholder = 'Текст реакции клиента'; input.value = opt.client_reaction || '';
+        input.addEventListener('input', () => updateOpt(index, 'client_reaction', input.value));
+        const select = document.createElement('select');
+        select.className = 'form-control';
+        const endOption = createSafeElement('option', '', '-- Конец сценария --');
+        endOption.value = '';
+        select.appendChild(endOption);
         state.steps.forEach(s => {
-          if (s.id !== state.activeStepId) { // Нельзя ссылаться на самого себя
-            optionsHtml += `<option value="${s.id}" ${opt.next_step_id === s.id ? 'selected' : ''}>Шаг: ${s.title}</option>`;
-          }
+          if (s.id === state.activeStepId) return;
+          const option = createSafeElement('option', '', `Шаг: ${s.title}`);
+          option.value = s.id;
+          option.selected = opt.next_step_id === s.id;
+          select.appendChild(option);
         });
-
-        row.innerHTML = `
-          <input type="text" class="form-control" value="${opt.client_reaction}" placeholder="Текст реакции клиента" oninput="updateOpt(${index}, 'client_reaction', this.value)">
-          <select class="form-control" onchange="updateOpt(${index}, 'next_step_id', this.value)">
-            ${optionsHtml}
-          </select>
-          <button class="btn-remove-opt" onclick="removeOpt(${index})">✕</button>
-        `;
+        select.addEventListener('change', () => updateOpt(index, 'next_step_id', select.value || null));
+        const removeButton = createSafeElement('button', 'btn-remove-opt', 'Удалить');
+        removeButton.type = 'button';
+        removeButton.addEventListener('click', () => removeOpt(index));
+        row.append(input, select, removeButton);
         list.appendChild(row);
       });
     }
@@ -739,7 +870,8 @@
     // --- СОХРАНЕНИЕ ---
 
     window.createNewScript = async function() {
-      const title = prompt('Название нового сценария:', 'Новый сценарий');
+      if (!(await requireRole('editor'))) return;
+      const title = window.prompt('Название нового сценария:', 'Новый сценарий');
       if (!title) return;
       
       const { data, error } = await supabaseClient.from('scripts').insert([{ title }]).select().single();
@@ -751,6 +883,7 @@
     };
 
     window.createNewStep = async function() {
+      if (!(await requireRole('editor'))) return;
       if (!state.activeScriptId) return;
       
       const nextOrder = state.steps.length > 0 ? Math.max(...state.steps.map(s => s.step_order)) + 1 : 1;
@@ -772,6 +905,7 @@
     };
 
     window.saveStep = async function() {
+      if (!(await requireRole('editor'))) return;
       if (!state.activeStepId) return;
 
       const stepData = {
@@ -804,6 +938,7 @@
     };
 
     window.deleteStep = async function() {
+      if (!(await requireRole('editor'))) return;
       if (!state.activeStepId) return;
       if (!confirm('Удалить этот шаг? Все ветки, ведущие сюда, будут удалены.')) return;
 
@@ -824,12 +959,20 @@
     });
 
     // Инициализация при загрузке
-    window.onload = () => {
-      // Скрываем лишнее
+    async function initializeApp() {
       $('view-editor').style.display = 'none';
       $('details-panel').classList.remove('open');
-      loadOperatorData();
-    };
+      const result = await checkUserRole();
+      if (!result.ok) {
+        showAuthGate('Доступ запрещён', result.message, true);
+        return;
+      }
+      hideAuthGate();
+      await loadOperatorData();
+    }
+
+    $('auth-gate-action').addEventListener('click', initializeApp);
+    window.addEventListener('load', initializeApp);
 
   </script>
 </body>

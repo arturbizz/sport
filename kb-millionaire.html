@@ -336,7 +336,7 @@
         <h2 style="font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 20px;">Вход в игру</h2>
         <div class="mm-setup-inputs">
             <input type="text" class="mm-input" id="player-nick" placeholder="Твой Ник" maxlength="20">
-            <input type="text" class="mm-input" id="player-pin" placeholder="PIN-код" maxlength="10" style="text-transform: uppercase;">
+            <input type="password" class="mm-input" id="player-pin" placeholder="PIN-код" maxlength="24" autocomplete="one-time-code" style="text-transform: uppercase;">
         </div>
 
         <h2 style="font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 20px;">Выбери направление</h2>
@@ -425,6 +425,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="pin-client.js"></script>
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
@@ -652,7 +653,7 @@
     function stopTimer() { if (state.timerId) { clearInterval(state.timerId); state.timerId = null; } }
     function updateTimerDisplay() { $('timer-text').textContent = Math.max(0, state.timeLeft); }
 
-    function saveGameState() { const save = { ...state }; delete save.timerId; localStorage.setItem('mm_active_game', JSON.stringify(save)); }
+    function saveGameState() { const save = { ...state }; delete save.timerId; delete save.playerPin; localStorage.setItem('mm_active_game', JSON.stringify(save)); }
     function clearGameState() { localStorage.removeItem('mm_active_game'); }
 
     function selectAnswer(letter) {
@@ -767,10 +768,10 @@
       if (!nick || !pin) { showCustomAlert('Внимание', 'Пожалуйста, введите ваш ник и PIN-код.', 'error'); return; }
 
       $('btn-start').disabled = true; $('btn-start').textContent = 'Проверка...';
-      const { data: isValid, error: pinError } = await supabaseClient.rpc('verify_mm_pin', { input_pin: pin });
-      
-      if (pinError || !isValid) {
-          showCustomAlert('Доступ запрещен', 'Неверный или неактивный PIN-код.', 'error');
+      const pinResult = await window.verifyProjectPin(supabaseClient, 'millionaire', pin);
+
+      if (!pinResult.ok) {
+          showCustomAlert('Доступ запрещен', pinResult.error || 'Неверный или неактивный PIN-код.', 'error');
           $('btn-start').disabled = false; $('btn-start').textContent = 'Начать игру'; return;
       }
 
@@ -815,6 +816,7 @@
         if (saved) {
             try {
                 const data = JSON.parse(saved);
+                if (!data.playerPin) { clearGameState(); return; }
                 showCustomConfirm('Незавершенная игра', `У вас есть незавершенная игра (Ник: ${data.playerName}). Продолжить?`, 
                   () => {
                     Object.assign(state, data); $('start-screen').classList.add('game-hide'); $('home-leaderboard').classList.add('game-hide'); $('game-screen').classList.remove('game-hide'); renderQuestion(); 

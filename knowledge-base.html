@@ -147,6 +147,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="pin-client.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.11/dist/purify.min.js"></script>
   <script>
@@ -172,28 +173,33 @@
     }
 
     document.getElementById('pin-submit').addEventListener('click', async () => {
-      const pin = document.getElementById('pin-input').value.trim();
+      const input = document.getElementById('pin-input');
       const errorEl = document.getElementById('pin-error');
+      const btn = document.getElementById('pin-submit');
+      const pin = input.value.trim().toUpperCase();
       if (!pin) return;
 
-      const btn = document.getElementById('pin-submit');
-      btn.textContent = 'Проверка...'; btn.disabled = true;
+      errorEl.style.display = 'none';
+      btn.textContent = 'Проверка...';
+      btn.disabled = true;
 
-      const { data: isValid, error } = await supabaseClient.rpc('verify_kb_pin', { input_pin: pin });
-      
-      btn.textContent = 'Войти'; btn.disabled = false;
+      const result = await window.verifyProjectPin(supabaseClient, 'kb', pin);
 
-      if (error) { errorEl.textContent = 'Ошибка сервера'; errorEl.style.display = 'block'; return; }
+      btn.textContent = 'Войти';
+      btn.disabled = false;
 
-      if (isValid) {
-        const expiresAt = Date.now() + (24 * 60 * 60 * 1000); 
+      if (result.ok) {
+        const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
         localStorage.setItem('kb_access_expires', expiresAt.toString());
         document.getElementById('pin-lock-screen').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
-        loadArticles(); 
+        input.value = '';
+        loadArticles();
       } else {
+        errorEl.textContent = result.error || 'Неверный PIN-код. Попробуйте ещё раз.';
         errorEl.style.display = 'block';
-        document.getElementById('pin-input').value = '';
+        input.value = '';
+        input.focus();
       }
     });
 
