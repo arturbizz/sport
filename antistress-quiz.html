@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Антистресс-Квиз — Проверка боевых знаний</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0614;
+      --ink: #F5F0FF;
+      --primary: #10E5A8;
+      --danger: #FF3B5C;
+      --bubble-bg: rgba(255, 255, 255, 0.05);
+      --bubble-border: rgba(255, 255, 255, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(168, 85, 247, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 80%, rgba(255, 59, 92, 0.1) 0%, transparent 45%);
+    }
+
+    /* ===== ШАПКА ===== */
+    .header {
+      padding: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+    .logo { font-size: 20px; font-weight: 900; letter-spacing: -0.03em; display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), #A855F7); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    
+    .score-box {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--bubble-border);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .score-val { color: var(--primary); font-size: 20px; }
+
+    /* ===== ИГРОВОЕ ПОЛЕ ===== */
+    .game-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Вопрос */
+    .question-container {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 40px;
+      z-index: 10;
+      animation: fadeInDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .question-text {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.3;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    /* Сетка для шаров */
+    .bubbles-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      width: 100%;
+      max-width: 800px;
+      z-index: 10;
+    }
+
+    /* Шарик */
+    .bubble-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 160px;
+    }
+
+    .bubble {
+      width: 260px;
+      height: 100px;
+      background: var(--bubble-bg);
+      border: 2px solid var(--bubble-border);
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3), inset 0 0 20px rgba(255,255,255,0.05);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      animation: float 4s ease-in-out infinite;
+    }
+    .bubble:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: scale(1.05);
+      box-shadow: 0 15px 40px -10px rgba(255,255,255,0.15), inset 0 0 30px rgba(255,255,255,0.1);
+    }
+
+    /* Задержка анимации парения для каждого шара */
+    .bubble-wrapper:nth-child(1) .bubble { animation-delay: 0s; }
+    .bubble-wrapper:nth-child(2) .bubble { animation-delay: 0.6s; }
+    .bubble-wrapper:nth-child(3) .bubble { animation-delay: 0.3s; }
+    .bubble-wrapper:nth-child(4) .bubble { animation-delay: 0.9s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-15px) rotate(1deg); }
+    }
+
+    /* ===== АНИМАЦИИ ОТВЕТОВ ===== */
+    
+    /* Взрыв (Правильно) */
+    .bubble.correct-pop {
+      animation: popExplosion 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      border-color: var(--primary);
+      background: rgba(16, 229, 168, 0.2);
+      box-shadow: 0 0 50px var(--primary);
+      pointer-events: none;
+    }
+    @keyframes popExplosion {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 1; filter: brightness(2); }
+      100% { transform: scale(0); opacity: 0; }
+    }
+
+    /* Падение и разбитие (Неправильно) */
+    .bubble.wrong-drop {
+      animation: dropShatter 0.8s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+      border-color: var(--danger);
+      background: rgba(255, 59, 92, 0.2);
+      box-shadow: 0 0 30px var(--danger);
+      pointer-events: none;
+    }
+    @keyframes dropShatter {
+      0% { transform: translateY(0) rotate(0); opacity: 1; }
+      30% { transform: translateY(10px) rotate(-5deg); opacity: 1; filter: brightness(1.5); }
+      100% { transform: translateY(300px) rotate(30deg) scale(0.8); opacity: 0; }
+    }
+
+    /* Эффект "осколков" для неправильного ответа */
+    .shatter-particle {
+      position: absolute;
+      width: 10px; height: 10px;
+      background: var(--danger);
+      border-radius: 2px;
+      pointer-events: none;
+      animation: shatter 0.6s ease-out forwards;
+    }
+    @keyframes shatter {
+      0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0; }
+    }
+
+    /* ===== ФИНАЛЬНЫЙ ЭКРАН ===== */
+    .final-screen {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+    .final-screen.active { display: flex; }
+    .final-title { font-size: 48px; font-weight: 900; margin-bottom: 16px; background: linear-gradient(135deg, var(--primary), #A855F7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .final-subtitle { font-size: 20px; color: rgba(255,255,255,0.6); margin-bottom: 40px; }
+    .final-score { font-size: 80px; font-weight: 900; color: var(--primary); text-shadow: 0 0 40px rgba(16, 229, 168, 0.5); margin-bottom: 40px; }
+    .btn-restart {
+      background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
+      color: white; padding: 16px 40px; border-radius: 30px; font-size: 18px; font-weight: 700;
+      cursor: pointer; transition: 0.2s; backdrop-filter: blur(10px);
+    }
+    .btn-restart:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Адаптив */
+    @media (max-width: 768px) {
+      .bubbles-grid { grid-template-columns: 1fr; gap: 16px; }
+      .bubble-wrapper { height: 80px; }
+      .bubble { width: 100%; height: 70px; border-radius: 16px; font-size: 14px; }
+      .question-text { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      Антистресс-Квиз
+    </div>
+    <div class="score-box">
+      Очки: <span class="score-val" id="score-display">0</span>
+    </div>
+  </div>
+
+  <div class="game-area" id="game-area">
+    <div class="question-container" id="question-container">
+      <h1 class="question-text" id="question-text">Загрузка вопроса...</h1>
+    </div>
+
+    <div class="bubbles-grid" id="bubbles-grid">
+      <!-- Шарики генерируются через JS -->
+    </div>
+  </div>
+
+  <div class="final-screen" id="final-screen">
+    <h1 class="final-title">Квиз пройден!</h1>
+    <p class="final-subtitle">Ты настоящий знаток продукта. Отдохнул? А теперь за работу!</p>
+    <div class="final-score" id="final-score">0</div>
+    <button class="btn-restart" onclick="restartQuiz()">Пройти еще раз</button>
+  </div>
+
+  <!-- Подключаем конфетти для взрывов -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    // =====================================================================
+    // БОЕВЫЕ ВОПРОСЫ ПО ПРОЕКТУ
+    // =====================================================================
+    const questions = [
+      {
+        q: "Клиент звонит по кинескопному телевизору. Что делает оператор?",
+        answers: [
+          { text: "Оформляет выезд мастера", correct: false },
+          { text: "Закрывает Стоп-фактором (Тип ТВ)", correct: true },
+          { text: "Ставит на перезвон", correct: false },
+          { text: "Переводит в ПЦК", correct: false }
+        ]
+      },
+      {
+        q: "Какую минимальную диагональ ТВ мы НЕ ремонтируем?",
+        answers: [
+          { text: "До 15 дюймов", correct: true },
+          { text: "До 20 дюймов", correct: false },
+          { text: "До 32 дюймов", correct: false },
+          { text: "До 10 дюймов", correct: false }
+        ]
+      },
+      {
+        q: "Клиент хочет привезти принтер в СЦ сам. Ваши действия?",
+        answers: [
+          { text: "Соглашаемся, диктуем адрес", correct: false },
+          { text: "Оформляем как стационар", correct: false },
+          { text: "Отрабатываем возражение (только выезд)", correct: true },
+          { text: "Переводим в другой КЦ", correct: false }
+        ]
+      },
+      {
+        q: "Что делать, если карточка в ERP «зависла» и не закрывается?",
+        answers: [
+          { text: "Выключить компьютер", correct: false },
+          { text: "Проверить альт-журнал (Alt+Tab)", correct: true },
+          { text: "Ждать 15 минут", correct: false },
+          { text: "Закрыть через диспетчер задач", correct: false }
+        ]
+      },
+      {
+        q: "Клиент из СПб просит заменить матрицу на ТВ. Ремонтируем?",
+        answers: [
+          { text: "Да, оформляем ТО 632", correct: false },
+          { text: "Нет, в СПб это Стоп-фактор", correct: true },
+          { text: "Только если диагональ от 43", correct: false },
+          { text: "Да, если согласен на 70% от цены", correct: false }
+        ]
+      },
+      {
+        q: "Принтер не видит ПК. Он новый или б/у. Как действуем?",
+        answers: [
+          { text: "Новый - Настройка (ТО 5), Б/у - Не ремонт (ТО 1)", correct: true },
+          { text: "В обоих случаях Не ремонт", correct: false },
+          { text: "В обоих случаях Настройка (ТО 5)", correct: false },
+          { text: "Оформляем выезд мастера", correct: false }
+        ]
+      },
+      {
+        q: "Какая метрика показывает, решил ли оператор проблему с первого раза?",
+        answers: [
+          { text: "AHT", correct: false },
+          { text: "FCR (First Call Resolution)", correct: true },
+          { text: "NPS", correct: false },
+          { text: "SLA", correct: false }
+        ]
+      },
+      {
+        q: "Клиент просит установить СНПЧ на струйный принтер. Что делаем?",
+        answers: [
+          { text: "Оформляем, это прибыльно", correct: false },
+          { text: "Стоп-фактор (не устанавливаем)", correct: true },
+          { text: "Предлагаем скидку 10%", correct: false },
+          { text: "Переводим в ПЦК", correct: false }
+        ]
+      }
+    ];
+
+    // =====================================================================
+    // ЛОГИКА ИГРЫ
+    // =====================================================================
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let score = 0;
+    let isAnimating = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    function initQuiz() {
+      // Перемешиваем вопросы и берем 5 случайных
+      currentQuestions = [...questions].sort(() => Math.random() - 0.5).slice(0, 5);
+      currentIndex = 0;
+      score = 0;
+      $('score-display').textContent = score;
+      $('final-screen').classList.remove('active');
+      $('game-area').style.display = 'flex';
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if (currentIndex >= currentQuestions.length) {
+        showFinal();
+        return;
+      }
+
+      isAnimating = false;
+      const q = currentQuestions[currentIndex];
+      
+      // Анимация появления вопроса
+      const qContainer = $('question-container');
+      qContainer.style.animation = 'none';
+      qContainer.offsetHeight; // trigger reflow
+      qContainer.style.animation = 'fadeInDown 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      
+      $('question-text').textContent = q.q;
+
+      // Очищаем и создаем шарики
+      const grid = $('bubbles-grid');
+      grid.innerHTML = '';
+      
+      // Перемешиваем ответы
+      const shuffledAnswers = [...q.answers].sort(() => Math.random() - 0.5);
+
+      shuffledAnswers.forEach((ans, i) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bubble-wrapper';
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = ans.text;
+        bubble.onclick = (e) => handleAnswer(ans.correct, bubble, e);
+        
+        wrapper.appendChild(bubble);
+        grid.appendChild(wrapper);
+      });
+    }
+
+    function handleAnswer(isCorrect, bubbleElement, event) {
+      if (isAnimating) return;
+      isAnimating = true;
+
+      if (isCorrect) {
+        // ПРАВИЛЬНО: Взрыв и салют
+        bubbleElement.classList.add('correct-pop');
+        
+        // Получаем координаты шарика для конфетти
+        const rect = bubbleElement.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+        // Мощный залп конфетти
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { x, y },
+          colors: ['#10E5A8', '#A855F7', '#FFC940', '#FFFFFF'],
+          startVelocity: 40,
+          gravity: 0.8,
+          scalar: 1.2
+        });
+
+        // Добавляем второй залп чуть позже
+        setTimeout(() => {
+          confetti({
+            particleCount: 80,
+            spread: 60,
+            origin: { x, y },
+            colors: ['#10E5A8', '#FFC940'],
+            startVelocity: 30,
+            gravity: 1
+          });
+        }, 150);
+
+        score += 10;
+        $('score-display').textContent = score;
+        
+        setTimeout(() => {
+          currentIndex++;
+          loadQuestion();
+        }, 1000);
+
+      } else {
+        // НЕПРАВИЛЬНО: Падение и разбитие
+        bubbleElement.classList.add('wrong-drop');
+        
+        // Создаем эффект осколков
+        const rect = bubbleElement.getBoundingClientRect();
+        createShatter(rect.left + rect.width / 2, rect.top + rect.height / 2);
+
+        // Легкая тряска экрана
+        document.body.style.animation = 'shake 0.4s ease';
+        setTimeout(() => { document.body.style.animation = ''; }, 400);
+
+        // Подсвечиваем правильный ответ
+        const grid = $('bubbles-grid');
+        const correctAns = currentQuestions[currentIndex].answers.find(a => a.correct);
+        Array.from(grid.querySelectorAll('.bubble')).forEach(b => {
+          if (b.textContent === correctAns.text) {
+            b.style.borderColor = '#10E5A8';
+            b.style.color = '#10E5A8';
+            b.style.boxShadow = '0 0 20px rgba(16, 229, 168, 0.4)';
+          }
+        });
+
+        setTimeout(() => {
+          currentIndex++;
+          loadQuestion();
+        }, 1800);
+      }
+    }
+
+    // Функция для создания осколков при разбитии
+    function createShatter(x, y) {
+      for (let i = 0; i < 15; i++) {
+        const p = document.createElement('div');
+        p.className = 'shatter-particle';
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        
+        // Случайное направление
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 50 + Math.random() * 100;
+        p.style.setProperty('--tx', Math.cos(angle) * velocity + 'px');
+        p.style.setProperty('--ty', Math.sin(angle) * velocity + 'px');
+        p.style.setProperty('--rot', Math.random() * 360 + 'deg');
+        
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 600);
+      }
+    }
+
+    function showFinal() {
+      $('game-area').style.display = 'none';
+      $('final-screen').classList.add('active');
+      $('final-score').textContent = score;
+      
+      // Финальный салют
+      const duration = 3000;
+      const end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#10E5A8', '#A855F7']
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#10E5A8', '#A855F7']
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+    }
+
+    function restartQuiz() {
+      initQuiz();
+    }
+
+    // Добавляем CSS анимацию тряски динамически
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-8px); }
+        50% { transform: translateX(8px); }
+        75% { transform: translateX(-8px); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Запуск
+    initQuiz();
+
+  </script>
+</body>
+</html>
