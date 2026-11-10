@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Скрипт-Тренажёр 2.0 — База Знаний</title>
+  <title>Схема-Тренажёр — База Знаний</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -13,22 +13,17 @@
       --bg-card: #ffffff;
       --ink: #1e293b;
       --ink-2: #475569;
-      
       --primary: #10b981;
       --primary-dark: #059669;
       --primary-soft: #d1fae5;
-      
       --accent: #f59e0b;
       --accent-soft: #fef3c7;
-      
       --danger: #ef4444;
       --danger-soft: #fee2e2;
-      
       --border: #e2e8f0;
       --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
       --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
       --shadow-lg: 0 10px 30px rgba(16, 185, 129, 0.15);
-      
       --font: 'Inter', sans-serif;
     }
 
@@ -54,26 +49,26 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 64px;
+      height: 60px;
       flex-shrink: 0;
       z-index: 10;
     }
     .logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 17px; }
-    .logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
-    .logo-icon svg { width: 18px; height: 18px; }
+    .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; }
+    .logo-icon svg { width: 16px; height: 16px; }
 
     /* ===== АНИМИРОВАННАЯ КНОПКА "?" ===== */
     .help-btn {
       position: fixed;
-      top: 84px;
+      top: 80px;
       right: 32px;
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: white;
       border: 2px solid var(--accent);
       color: var(--accent);
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 900;
       display: flex;
       align-items: center;
@@ -94,22 +89,21 @@
     .main-content {
       flex: 1;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
       padding: 24px;
       overflow-y: auto;
-      position: relative;
     }
 
     .screen { display: none; width: 100%; max-width: 1100px; height: 100%; animation: fadeUp 0.4s ease forwards; }
-    .screen.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .screen.active { display: flex; flex-direction: column; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ===== ЭКРАН ВЫБОРА ===== */
-    .hero { text-align: center; margin-bottom: 40px; }
+    .hero { text-align: center; margin-bottom: 40px; margin-top: 40px; }
     .hero h1 { font-size: 36px; font-weight: 900; margin-bottom: 12px; letter-spacing: -0.02em; }
     .hero p { font-size: 16px; color: var(--ink-2); }
-    .script-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; width: 100%; max-width: 700px; }
+    .script-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; width: 100%; max-width: 800px; margin: 0 auto; }
     .script-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 28px; transition: all 0.3s; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; cursor: pointer; }
     .script-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
     .script-card h3 { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
@@ -117,14 +111,60 @@
     .script-card-btn { background: var(--primary-soft); color: var(--primary-dark); padding: 14px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; transition: all 0.2s; text-align: center; }
     .script-card:hover .script-card-btn { background: var(--primary); color: white; }
 
+    /* ===== СХЕМА ПУТИ (ПАЙПЛАЙН) ===== */
+    .path-tracker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 12px 20px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+    }
+    .path-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ink-3);
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+    .path-step.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+      transform: scale(1.05);
+    }
+    .path-step.passed {
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+    }
+    .path-arrow { color: var(--border); font-weight: 900; font-size: 16px; }
+    .path-arrow.active { color: var(--primary); }
+
     /* ===== ЭКРАН ДИАЛОГА ===== */
+    .trainer-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 120px);
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
     .dialog-layout { 
-      display: flex; flex-direction: column; 
-      height: 100%; max-height: calc(100vh - 100px); 
+      display: flex; flex-direction: column; flex: 1;
       background: var(--bg-card); border: 1px solid var(--border); 
       border-radius: 20px; box-shadow: var(--shadow-md); 
       overflow: hidden; position: relative; 
-      margin: 0 auto; width: 100%; max-width: 900px;
     }
     
     .chat-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #f8fafc; flex-shrink: 0; }
@@ -132,49 +172,48 @@
     .progress-bar { width: 140px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
     .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.4s ease; }
 
-    .chat-area { flex: 1; padding: 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 24px; }
-    .msg { max-width: 80%; display: flex; flex-direction: column; animation: fadeUp 0.3s ease; }
+    .chat-area { flex: 1; padding: 24px 32px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; background: #ffffff; }
+    .msg { max-width: 85%; display: flex; flex-direction: column; animation: fadeUp 0.3s ease; }
     .msg.client { align-self: flex-start; }
     .msg.operator { align-self: flex-end; align-items: flex-end; }
     .msg.system { align-self: center; max-width: 100%; width: 100%; }
     
-    .msg-bubble { padding: 16px 20px; border-radius: 16px; font-size: 15px; line-height: 1.6; }
+    .msg-bubble { padding: 14px 18px; border-radius: 14px; font-size: 15px; line-height: 1.5; }
     .msg.client .msg-bubble { background: #f1f5f9; border-bottom-left-radius: 4px; }
     .msg.operator .msg-bubble { background: var(--primary-soft); color: var(--primary-dark); border-bottom-right-radius: 4px; font-weight: 500; }
-    .msg.system .msg-bubble { background: var(--accent-soft); color: #b45309; text-align: center; border-radius: 12px; font-size: 14px; font-weight: 600; border: 1px dashed #fcd34d; }
+    .msg.system .msg-bubble { background: var(--accent-soft); color: #b45309; text-align: center; border-radius: 10px; font-size: 14px; font-weight: 600; border: 1px dashed #fcd34d; }
 
-    .options-container { padding: 24px; border-top: 1px solid var(--border); background: #f8fafc; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0; }
-    .opt-btn { width: 100%; text-align: left; padding: 16px 20px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-weight: 500; color: var(--ink); transition: all 0.2s; display: flex; align-items: center; gap: 16px; }
+    .options-container { padding: 20px 24px; border-top: 1px solid var(--border); background: #f8fafc; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+    .opt-btn { width: 100%; text-align: left; padding: 14px 20px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 10px; font-size: 15px; font-weight: 500; color: var(--ink); transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
     .opt-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-soft); transform: translateX(4px); }
     .opt-btn.correct { border-color: var(--primary); background: var(--primary); color: white; }
     .opt-btn.wrong { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
-    .opt-icon { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: var(--ink-2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+    .opt-icon { width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; color: var(--ink-2); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
     .opt-btn:hover:not(:disabled) .opt-icon { background: var(--primary); color: white; }
     .opt-btn.correct .opt-icon { background: white; color: var(--primary); }
 
     /* ===== ERP СИМУЛЯТОР ===== */
     .erp-view-layout {
-      display: none; flex-direction: column; 
-      width: 100%; height: calc(100vh - 100px); max-width: 1200px;
-      margin: 0 auto;
+      display: none; flex-direction: column; flex: 1;
+      width: 100%; margin: 0 auto;
     }
     .erp-view-layout.active { display: flex; }
     
     .erp-task-banner {
       background: linear-gradient(135deg, #1e293b, #334155);
-      color: white; padding: 16px 24px; border-radius: 16px;
-      margin-bottom: 16px; display: flex; align-items: center; gap: 20px;
+      color: white; padding: 14px 20px; border-radius: 12px;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 16px;
       flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    .erp-task-banner h4 { font-size: 17px; color: #fcd34d; white-space: nowrap; }
-    .erp-task-banner p { font-size: 15px; color: #cbd5e1; margin: 0; border-left: 1px solid #475569; padding-left: 20px; }
+    .erp-task-banner h4 { font-size: 15px; color: #fcd34d; white-space: nowrap; }
+    .erp-task-banner p { font-size: 14px; color: #cbd5e1; margin: 0; border-left: 1px solid #475569; padding-left: 16px; }
 
     .erp-screen-container {
       position: relative; flex: 1;
-      background: #1e293b; border-radius: 16px; overflow: hidden;
+      background: #1e293b; border-radius: 12px; overflow: hidden;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       display: flex; justify-content: center; align-items: center;
-      padding: 10px;
+      padding: 8px;
     }
     .erp-image-wrapper {
       position: relative; width: 100%; height: 100%;
@@ -182,15 +221,14 @@
     }
     .erp-image { max-width: 100%; max-height: 100%; object-fit: contain; display: block; user-select: none; pointer-events: none; border-radius: 4px; }
     
-    /* Невидимые зоны кликов */
+    /* Хотспоты */
     .erp-hotspot {
       position: absolute; cursor: pointer; border-radius: 4px;
       border: 2px solid transparent; transition: all 0.2s;
-      background: rgba(16, 185, 129, 0.01);
       z-index: 5;
     }
     
-    /* Подсветка активной зоны (чтобы не застрять) */
+    /* Пульсация правильного ответа */
     .erp-hotspot.pulse {
       border: 2px dashed var(--primary);
       background: rgba(16, 185, 129, 0.2);
@@ -202,8 +240,8 @@
       100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); background: rgba(16, 185, 129, 0.1); }
     }
 
-    .erp-hotspot:hover { background: rgba(16, 185, 129, 0.4); border-color: var(--primary); box-shadow: 0 0 15px rgba(16,185,129,0.8); }
-    .erp-hotspot.correct { background: rgba(16, 185, 129, 0.6); border: 2px solid var(--primary); animation: flashGreen 0.5s; box-shadow: none; }
+    .erp-hotspot:hover { background: rgba(16, 185, 129, 0.4); border-color: var(--primary); }
+    .erp-hotspot.correct { background: rgba(16, 185, 129, 0.6); border: 2px solid var(--primary); animation: flashGreen 0.5s; }
     .erp-hotspot.wrong { background: rgba(239, 68, 68, 0.5); border: 2px solid var(--danger); animation: shake 0.4s; }
     
     @keyframes flashGreen { 0% { background: rgba(16, 185, 129, 1); } 100% { background: rgba(16, 185, 129, 0.6); } }
@@ -233,6 +271,12 @@
     .btn { padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; }
     .btn-ghost { background: var(--bg-card); color: var(--ink); border: 1px solid var(--border); }
     .btn-ghost:hover { background: #f1f5f9; }
+    
+    /* Финал */
+    .success-screen { text-align: center; max-width: 500px; margin: auto; padding: 40px 20px; }
+    .success-icon { width: 100px; height: 100px; border-radius: 50%; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+    .success-icon svg { width: 50px; height: 50px; stroke: var(--primary); }
+    .success-screen h2 { font-size: 32px; margin-bottom: 16px; }
   </style>
 </head>
 <body>
@@ -242,7 +286,7 @@
   <header class="header">
     <div class="logo">
       <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-      Скрипт-Тренажёр 2.0
+      Схема-Тренажёр
     </div>
     <button class="btn btn-ghost" onclick="goHome()">← В меню</button>
   </header>
@@ -251,66 +295,78 @@
 
   <div class="main-content">
     
+    <!-- ЭКРАН 1: ГЛАВНАЯ -->
     <div id="screen-home" class="screen active">
       <div class="hero">
         <h1>Выберите сценарий</h1>
-        <p>Изучайте скрипты, отрабатывайте диалоги и учитесь заполнять ERP-карточку.</p>
+        <p>Изучайте скрипты, отрабатывайте диалоги и учитесь заполнять ERP-карточку по схеме.</p>
       </div>
       <div class="script-grid">
         <div class="script-card" onclick="startDialog()">
           <h3>Прием звонка по ТВ</h3>
-          <p>Полный цикл: от приветствия до выбора ТО в ERP и проверки адреса.</p>
+          <p>Ветвление путей: от приветствия до выбора ТО в ERP, с отработкой стоп-фактора (кинескоп).</p>
           <button class="script-card-btn">Начать обучение</button>
         </div>
       </div>
     </div>
 
+    <!-- ЭКРАН 2: ТРЕНАЖЕР -->
     <div id="screen-dialog" class="screen" style="height: 100%;">
       
-      <div class="dialog-layout" id="chat-view">
-        <div class="chat-header">
-          <div class="chat-header-title" id="dialog-title">Диалог с клиентом</div>
-          <div class="progress-bar"><div class="progress-fill" id="dialog-progress"></div></div>
-        </div>
-        <div class="chat-area" id="chat-area"></div>
-        <div class="options-container" id="options-container"></div>
+      <!-- Схема пути -->
+      <div class="path-tracker" id="path-tracker">
+        <!-- Заполняется через JS -->
       </div>
 
-      <div class="erp-view-layout" id="erp-view">
-        <div class="erp-task-banner" id="erp-task-text">
-          <h4>Задание</h4>
-          <p>Кликните на нужное поле</p>
+      <div class="trainer-container">
+        <!-- ЧАТ -->
+        <div class="dialog-layout" id="chat-view">
+          <div class="chat-header">
+            <div class="chat-header-title" id="dialog-title">Диалог с клиентом</div>
+            <div class="progress-bar"><div class="progress-fill" id="dialog-progress"></div></div>
+          </div>
+          <div class="chat-area" id="chat-area"></div>
+          <div class="options-container" id="options-container"></div>
         </div>
-        
-        <div class="erp-screen-container">
-          <div class="erp-image-wrapper">
-            <img src="erp-screen.jpg" id="erp-image" class="erp-image" alt="ERP Карточка">
-            
-            <!-- Координаты скорректированы и увеличены для удобства клика -->
-            <div class="erp-hotspot" id="hotspot-name" style="left: 22%; top: 13%; width: 15%; height: 4%;" onclick="handleErpClick('name')" title="Имя клиента"></div>
-            <div class="erp-hotspot" id="hotspot-to" style="left: 53%; top: 13%; width: 25%; height: 4%;" onclick="handleErpClick('to')" title="Тип оборудования"></div>
-            
-            <!-- Поле Улица. Чуть больше по высоте и ширине -->
-            <div class="erp-hotspot" id="hotspot-address" style="left: 79%; top: 46%; width: 16%; height: 4.5%;" onclick="handleErpClick('address')" title="Улица"></div>
-            
-            <div class="erp-hotspot" id="hotspot-problem" style="left: 10%; top: 34%; width: 23%; height: 9%;" onclick="handleErpClick('problem')" title="Проблема со слов клиента"></div>
+
+        <!-- ERP СИМУЛЯТОР -->
+        <div class="erp-view-layout" id="erp-view">
+          <div class="erp-task-banner" id="erp-task-text">
+            <h4>Задание</h4>
+            <p>Кликните на нужное поле</p>
+          </div>
+          
+          <div class="erp-screen-container">
+            <div class="erp-image-wrapper">
+              <!-- Убедись, что файл лежит в корне проекта -->
+              <img src="erp-screen.jpg" id="erp-image" class="erp-image" alt="ERP Карточка">
+              
+              <div class="erp-hotspot" id="hotspot-name" style="left: 22%; top: 13%; width: 15%; height: 4%;" onclick="handleErpClick('name')" title="Имя клиента"></div>
+              <div class="erp-hotspot" id="hotspot-to" style="left: 53%; top: 13%; width: 25%; height: 4%;" onclick="handleErpClick('to')" title="Тип оборудования"></div>
+              <div class="erp-hotspot" id="hotspot-address" style="left: 79%; top: 46%; width: 16%; height: 4.5%;" onclick="handleErpClick('address')" title="Улица"></div>
+              <div class="erp-hotspot" id="hotspot-problem" style="left: 10%; top: 34%; width: 23%; height: 9%;" onclick="handleErpClick('problem')" title="Проблема со слов клиента"></div>
+            </div>
           </div>
         </div>
       </div>
 
     </div>
 
-    <div id="screen-success" class="screen" style="text-align: center; align-items: center; justify-content: center; height: 100%;">
-      <div style="background: var(--primary-soft); width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
-        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+    <!-- ЭКРАН 3: УСПЕХ -->
+    <div id="screen-success" class="screen" style="align-items: center; justify-content: center; height: 100%;">
+      <div class="success-screen">
+        <div class="success-icon" id="success-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h2 id="success-title">Сценарий пройден!</h2>
+        <p id="success-text" style="color: var(--ink-2); margin-bottom: 32px; font-size: 16px; line-height: 1.6;">Вы успешно справились с диалогом и заполнением ERP-карточки.</p>
+        <button class="btn btn-primary" style="background: var(--primary); color: white; padding: 16px 32px; font-size: 16px;" onclick="goHome()">Вернуться в меню</button>
       </div>
-      <h2 style="font-size: 32px; margin-bottom: 16px;">Сценарий пройден!</h2>
-      <p style="color: var(--ink-2); margin-bottom: 32px; max-width: 450px; font-size: 16px; line-height: 1.6;">Вы успешно справились с диалогом и заполнением ERP-карточки.</p>
-      <button class="btn btn-primary" style="background: var(--primary); color: white; padding: 16px 32px; font-size: 16px;" onclick="goHome()">Вернуться в меню</button>
     </div>
 
   </div>
 
+  <!-- МОДАЛКА ТЕОРИИ -->
   <div class="theory-modal" id="theory-modal">
     <div class="theory-content-box">
       <h3><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> Подсказка</h3>
@@ -322,70 +378,168 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <script>
-    const SCRIPT_DATA = [
-      {
+    // =====================================================================
+    // ГРАФ СЦЕНАРИЯ (ДЕРЕВО ПУТЕЙ)
+    // =====================================================================
+    const SCRIPT_GRAPH = {
+      start: {
+        stage: 'Приветствие',
         type: 'dialog',
         theory: '<strong>Приветствие и Имя.</strong><br>Жестких рамок нет. Главное — сразу захватить инициативу и узнать имя, чтобы обращаться к клиенту в течение диалога.',
         client: 'Здравствуйте, у меня не работает телевизор.',
         options: [
-          { text: 'Здравствуйте, что починить?', correct: false, feedback: 'Клиент уже сказал, что с телевизором проблема. Лучше сразу узнать имя.' },
-          { text: 'Здравствуйте! Как я могу к вам обращаться?', correct: true, feedback: 'Отлично! Захватили инициативу и узнали имя.' },
-          { text: 'Здравствуйте, вы в Москве?', correct: false, feedback: 'Слишком рано. Сначала имя, потом проблема и ТО.' }
+          { text: 'Здравствуйте, что починить?', next: 'fail1', correct: false, feedback: 'Клиент уже сказал, что с телевизором проблема. Лучше сразу узнать имя.' },
+          { text: 'Здравствуйте! Как я могу к вам обращаться?', next: 'ask_problem', correct: true, feedback: 'Отлично! Захватили инициативу и узнали имя.' }
         ]
       },
-      {
+      ask_problem: {
+        stage: 'Проблема',
         type: 'dialog',
-        theory: '<strong>Выявление проблемы.</strong><br>Если клиент уже точно обозначил проблему (нет изображения, не включается), не задаем лишних вопросов. Сразу переходим к делу.',
+        theory: '<strong>Выявление проблемы.</strong><br>Если клиент уже точно обозначил проблему, не задаем лишних вопросов. Сразу переходим к делу.',
         client: 'Иван. Телевизор включается, но нет изображения.',
         options: [
-          { text: 'Иван, ремонтируем такое. Назовите марку и модель телевизора.', correct: true, feedback: 'Супер! Не затягиваем диалог, сразу переходим к определению ТО.' },
-          { text: 'Иван, а какие именно полосы или пятна вы видите?', correct: false, feedback: 'Лишний вопрос. Клиент сказал "нет изображения". Этого достаточно.' }
+          { text: 'Иван, ремонтируем такое. Назовите марку и модель телевизора.', next: 'ask_type', correct: true, feedback: 'Супер! Не затягиваем диалог, сразу переходим к определению ТО.' },
+          { text: 'Иван, а какие именно полосы или пятна вы видите?', next: 'fail2', correct: false, feedback: 'Лишний вопрос. Клиент сказал "нет изображения". Этого достаточно.' }
         ]
       },
-      {
-        type: 'erp',
-        theory: '<strong>Определение ТО.</strong><br>Мы узнали, что это ЖК 43 дюйма. Это 25 ТО. В ERP его нужно вносить в поле <strong>"Тип оборуд."</strong> (справа вверху).',
-        client: 'Модель не знаю, но LG 43 дюйма.',
-        taskText: 'Отлично. Значит, это 25 ТО. Внесите ТО в ERP карточку.',
-        hotspot: 'to'
-      },
-      {
+      ask_type: {
+        stage: 'Тип ТВ',
         type: 'dialog',
-        theory: '<strong>Город и локация.</strong><br>Уточняем город и точку (в пределах МКАД/КАД) ДО озвучки цен. Это нужно для правильного ЛК.',
-        client: 'В Москве, в пределах МКАД.',
+        theory: '<strong>Тип оборудования (ТО).</strong><br>Для телевизора минимально нужна диагональ и тип (ЖК, плазма, кинескоп).',
+        client: 'Да вот, старый такой, с выпуклым экраном. Кинескопный.',
         options: [
-          { text: 'Супер, по вашему адресу выезжаем. Назовите полный адрес (улица, дом).', correct: true, feedback: 'Идеально! Подтвердили зону выезда и запрашиваем адрес.' },
-          { text: 'Тогда это будет стоить от 1000 рублей...', correct: false, feedback: 'Нарушение! Цены озвучиваем только после проверки стоп-факторов.' }
+          { text: 'Иван, к сожалению, кинескопные телевизоры мы не ремонтируем. Но можем предложить вам новый со скидкой!', next: 'stop_factor', correct: true, feedback: 'Верно! Это стоп-фактор. Отработали и предложили продажу.' },
+          { text: 'Иван, ремонтируем такое. Назовите диагональ.', next: 'fail3', correct: false, feedback: 'Это ошибка. Кинескопные (ЭЛТ) телевизоры мы не ремонтируем — это стоп-фактор.' }
         ]
       },
-      {
-        type: 'erp',
-        theory: '<strong>Адрес.</strong><br>Записываем адрес в ERP. Обрати внимание, куда именно вбивается улица.',
-        client: 'Улица Ленина, дом 5.',
-        taskText: 'Клиент назвал адрес: "Ленина 5". Куда внесем улицу?',
-        hotspot: 'address'
+      fail1: {
+        stage: 'Приветствие', type: 'dialog', theory: '', client: '', isFail: true,
+        options: [{ text: 'Вернуться назад', next: 'start', correct: true }]
       },
-      {
+      fail2: {
+        stage: 'Проблема', type: 'dialog', theory: '', client: '', isFail: true,
+        options: [{ text: 'Вернуться назад', next: 'ask_problem', correct: true }]
+      },
+      fail3: {
+        stage: 'Тип ТВ', type: 'dialog', theory: '', client: '', isFail: true,
+        options: [{ text: 'Вернуться назад', next: 'ask_type', correct: true }]
+      },
+      stop_factor: {
+        stage: 'Стоп-фактор',
         type: 'dialog',
+        theory: '<strong>Стоп-фактор (Кинескоп).</strong><br>Мы не ремонтируем ЭЛТ. Закрываем карточку подтипом «Стоп-фактор», классификатор «Тип телевизора».',
+        client: 'Ой, ну давайте посмотрим, что у вас есть.',
+        options: [
+          { text: 'Отлично, тогда я перевожу вас на отдел продаж. Ожидайте соединения.', next: 'finish_stop', correct: true, feedback: 'Правильно! Передали лида на продажу.' }
+        ]
+      },
+      finish_stop: {
+        stage: 'Финал (Стоп)',
+        type: 'success',
+        title: 'Вы закрыли обращение Стоп-фактором!',
+        text: 'Вы правильно определили кинескопный телевизор, отработали стоп-фактор и предложили клиенту покупку нового ТВ. ERP заполнять не нужно.',
+        isStop: true
+      },
+      // --- ВЕТКА ЖК ТЕЛЕВИЗОРА ---
+      ask_type_lcd: { // Эта ветка для демонстрации, переключим туда через "Начать с ЖК"
+        // ...
+      }
+    };
+
+    // Поскольку мы хотим охватить весь скрипт, я сделаю демо-ветку с ЖК телевизором, чтобы показать и стоп, и оформление.
+    // Для этого при старте мы дадим выбор, какой клиент попадется.
+    
+    // На самом деле, чтобы не усложнять код, я сделаю основной сценарий (с ЖК), а кинескоп будет как ветка.
+    // Перепишем граф для полного цикла:
+    
+    const FULL_GRAPH = {
+      start: {
+        stage: 'Приветствие', type: 'dialog',
+        theory: '<strong>Приветствие и Имя.</strong><br>Жестких рамок нет. Главное — сразу захватить инициативу и узнать имя.',
+        client: 'Здравствуйте, у меня не работает телевизор.',
+        options: [
+          { text: 'Здравствуйте, что починить?', next: 'start', correct: false, feedback: 'Клиент уже сказал, что с телевизором проблема.' },
+          { text: 'Здравствуйте! Как я могу к вам обращаться?', next: 'ask_problem', correct: true, feedback: 'Отлично! Захватили инициативу.' }
+        ]
+      },
+      ask_problem: {
+        stage: 'Проблема', type: 'dialog',
+        theory: '<strong>Выявление проблемы.</strong><br>Не задаем лишних вопросов, если проблема ясна.',
+        client: 'Иван. Телевизор включается, но нет изображения.',
+        options: [
+          { text: 'Иван, ремонтируем такое. Назовите марку и модель телевизора.', next: 'ask_type', correct: true, feedback: 'Супер! Переходим к ТО.' },
+          { text: 'Иван, а какие именно полосы или пятна вы видите?', next: 'ask_problem', correct: false, feedback: 'Лишний вопрос.' }
+        ]
+      },
+      ask_type: {
+        stage: 'Тип ТВ', type: 'dialog',
+        theory: '<strong>Тип оборудования (ТО).</strong><br>Уточняем тип ТВ. Если кинескоп — это стоп-фактор.',
+        client: 'LG 43 дюйма, плоский, жидкокристаллический.',
+        options: [
+          { text: 'Отлично, это 25 ТО. Иван, вы в Москве в пределах МКАД?', next: 'erp_to', correct: true, feedback: 'Верно! Определили ТО и перешли к городу.' },
+          { text: 'Иван, а какая у вас модель?', next: 'ask_type', correct: false, feedback: 'Если не знает модель, диагонали и типа достаточно.' }
+        ]
+      },
+      erp_to: {
+        stage: 'ERP (ТО)', type: 'erp',
+        theory: '<strong>Определение ТО.</strong><br>Мы узнали, что это ЖК 43 дюйма. Это 25 ТО. В ERP его нужно вносить в поле <strong>"Тип оборуд."</strong> (справа вверху).',
+        client: 'Да, в Москве, в пределах МКАД.',
+        taskText: 'Отлично. Это 25 ТО. Внесите ТО в ERP карточку.',
+        hotspot: 'to',
+        next: 'ask_address'
+      },
+      ask_address: {
+        stage: 'Адрес', type: 'dialog',
+        theory: '<strong>Адрес.</strong><br>Уточняем полный адрес, чтобы проверить зону выезда.',
+        client: 'Улица Ленина, дом 5.',
+        options: [
+          { text: 'Супер, по вашему адресу выезжаем. Записываю.', next: 'erp_address', correct: true, feedback: 'Идеально! Запрашиваем адрес.' },
+          { text: 'Тогда это будет стоить от 1000 рублей...', next: 'ask_address', correct: false, feedback: 'Нарушение! Цены озвучиваем только после проверки стоп-факторов.' }
+        ]
+      },
+      erp_address: {
+        stage: 'ERP (Адрес)', type: 'erp',
+        theory: '<strong>Адрес в ERP.</strong><br>Записываем адрес в карточку. Обрати внимание, куда именно вбивается улица.',
+        client: 'Ленина 5.',
+        taskText: 'Клиент назвал адрес: "Ленина 5". Куда внесем улицу?',
+        hotspot: 'address',
+        next: 'finish_call'
+      },
+      finish_call: {
+        stage: 'Финал', type: 'dialog',
         theory: '<strong>Завершение.</strong><br>Обязательно проговариваем про "не трогать технику" и прощаемся.',
         client: 'Хорошо, жду мастера.',
         options: [
-          { text: 'Иван, мастер будет у вас в 15:00. Убедительная просьба не трогать технику до приезда мастера. Хорошего дня!', correct: true, feedback: 'Идеальное завершение! Все обязательные фразы озвучены.' },
-          { text: 'Иван, ожидайте, до свидания!', correct: false, feedback: 'Забыли обязательную озвучку про "не трогать технику"!' }
+          { text: 'Иван, мастер будет у вас в 15:00. Убедительная просьба не трогать технику до приезда мастера. Хорошего дня!', next: 'success_lcd', correct: true, feedback: 'Идеальное завершение! Все обязательные фразы озвучены.' },
+          { text: 'Иван, ожидайте, до свидания!', next: 'finish_call', correct: false, feedback: 'Забыли обязательную озвучку про "не трогать технику"!' }
         ]
+      },
+      success_lcd: {
+        stage: 'Успех', type: 'success',
+        title: 'Сценарий пройден!',
+        text: 'Вы успешно оформили заказ на ремонт ЖК-телевизора и заполнили ERP.',
+        isStop: false
       }
-    ];
+    };
 
-    let state = { currentStepIndex: 0 };
+    // СТРУКТУРА ПУТИ (Для отрисовки схемы)
+    const PATH_STAGES = ['Приветствие', 'Проблема', 'Тип ТВ', 'ERP (ТО)', 'Адрес', 'ERP (Адрес)', 'Финал'];
+
+    let state = {
+      currentNodeId: 'start',
+      isStopFactor: false
+    };
     const $ = (id) => document.getElementById(id);
 
+    // Инициализация
     window.startDialog = function() {
-      state.currentStepIndex = 0;
+      state.currentNodeId = 'start';
+      state.isStopFactor = false;
       $('chat-area').innerHTML = '';
       $('dialog-progress').style.width = '0%';
       $('help-btn').classList.remove('hidden');
       showScreen('screen-dialog');
-      renderStep();
+      renderNode();
     };
 
     function showScreen(id) {
@@ -399,35 +553,76 @@
       $('theory-modal').classList.remove('open');
     };
 
-    function renderStep() {
-      const step = SCRIPT_DATA[state.currentStepIndex];
-      if (!step) return finishGame();
+    // Отрисовка пути (Схема)
+    function renderPathTracker(currentStage) {
+      const tracker = $('path-tracker');
+      tracker.innerHTML = '';
+      
+      let stageFound = false;
+      PATH_STAGES.forEach((stage, index) => {
+        const step = document.createElement('div');
+        step.className = 'path-step';
+        step.textContent = stage;
+        
+        if (stage === currentStage) {
+          step.classList.add('active');
+          stageFound = true;
+        } else if (!stageFound && (currentStage === 'Стоп-фактор' || PATH_STAGES.indexOf(currentStage) > index)) {
+           step.classList.add('passed');
+        }
+        
+        tracker.appendChild(step);
+        
+        if (index < PATH_STAGES.length - 1) {
+          const arrow = document.createElement('div');
+          arrow.className = 'path-arrow';
+          arrow.innerHTML = '→';
+          if (step.classList.contains('passed')) arrow.classList.add('active');
+          tracker.appendChild(arrow);
+        }
+      });
+    }
 
-      $('theory-text').innerHTML = step.theory;
+    function renderNode() {
+      const node = FULL_GRAPH[state.currentNodeId];
+      if (!node) return;
+
+      // Обновляем теорию
+      $('theory-text').innerHTML = node.theory || '';
       $('theory-modal').classList.remove('open');
 
-      const progress = (state.currentStepIndex / SCRIPT_DATA.length) * 100;
+      // Обновляем схему пути
+      renderPathTracker(node.stage);
+
+      // Обновляем прогресс-бар
+      const stageIndex = PATH_STAGES.indexOf(node.stage);
+      const progress = stageIndex >= 0 ? ((stageIndex + 1) / PATH_STAGES.length) * 100 : 0;
       $('dialog-progress').style.width = `${progress}%`;
 
-      if (step.type === 'dialog') {
+      if (node.type === 'dialog') {
         $('chat-view').classList.remove('hidden');
         $('erp-view').classList.remove('active');
-        renderDialogStep(step);
-      } else if (step.type === 'erp') {
+        renderDialogNode(node);
+      } else if (node.type === 'erp') {
         $('chat-view').classList.add('hidden');
         $('erp-view').classList.add('active');
-        renderErpStep(step);
+        renderErpNode(node);
+      } else if (node.type === 'success') {
+        finishGame(node);
       }
     }
 
-    function renderDialogStep(step) {
+    function renderDialogNode(node) {
       const chat = $('chat-area');
-      chat.innerHTML = `<div class="msg client"><div class="msg-bubble">${step.client}</div></div>`;
+      // Не дублируем сообщение клиента, если это возврат назад
+      if (chat.innerHTML === '' || chat.innerHTML.indexOf(node.client) === -1) {
+        chat.innerHTML += `<div class="msg client"><div class="msg-bubble">${node.client}</div></div>`;
+      }
       
       const optsContainer = $('options-container');
       optsContainer.innerHTML = '';
       
-      const shuffledOpts = [...step.options].sort(() => Math.random() - 0.5);
+      const shuffledOpts = [...node.options].sort(() => Math.random() - 0.5);
 
       shuffledOpts.forEach((opt, idx) => {
         const btn = document.createElement('button');
@@ -452,8 +647,12 @@
         chat.scrollTop = chat.scrollHeight;
 
         setTimeout(() => {
-          state.currentStepIndex++;
-          renderStep();
+          state.currentNodeId = opt.next;
+          // Если переходим в успех - очищаем чат перед финальным экраном
+          if (FULL_GRAPH[state.currentNodeId].type === 'success') {
+            $('chat-area').innerHTML = '';
+          }
+          renderNode();
         }, 1500);
       } else {
         btn.classList.add('wrong');
@@ -468,32 +667,27 @@
       }
     }
 
-    function renderErpStep(step) {
-      $('erp-task-text').innerHTML = `<h4>Клиент: "${step.client}"</h4><p>${step.taskText}</p>`;
+    // --- ЛОГИКА ERP ---
+    function renderErpNode(node) {
+      $('erp-task-text').innerHTML = `<h4>Клиент: "${node.client}"</h4><p>${node.taskText}</p>`;
       
-      // Сбрасываем классы со всех hotspot'ов
-      document.querySelectorAll('.erp-hotspot').forEach(el => {
-        el.className = 'erp-hotspot';
-      });
+      document.querySelectorAll('.erp-hotspot').forEach(el => el.className = 'erp-hotspot');
 
-      // Добавляем пульсацию правильному полю (чтобы пользователь точно не застрял)
-      const correctHotspot = $(`hotspot-${step.hotspot}`);
-      if (correctHotspot) {
-        correctHotspot.classList.add('pulse');
-      }
+      const correctHotspot = $(`hotspot-${node.hotspot}`);
+      if (correctHotspot) correctHotspot.classList.add('pulse');
     }
 
     window.handleErpClick = function(id) {
-      const currentStep = SCRIPT_DATA[state.currentStepIndex];
-      const correctId = currentStep.hotspot;
+      const node = FULL_GRAPH[state.currentNodeId];
+      const correctId = node.hotspot;
       const targetEl = $(`hotspot-${id}`);
 
       if (id === correctId) {
         targetEl.classList.remove('pulse');
         targetEl.classList.add('correct');
         setTimeout(() => {
-          state.currentStepIndex++;
-          renderStep();
+          state.currentNodeId = node.next;
+          renderNode();
         }, 800);
       } else {
         targetEl.classList.add('wrong');
@@ -506,10 +700,21 @@
       $('theory-modal').classList.toggle('open');
     }
 
-    function finishGame() {
+    function finishGame(node) {
       showScreen('screen-success');
       $('help-btn').classList.add('hidden');
-      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#f59e0b', '#34d399'] });
+      
+      $('success-title').textContent = node.title;
+      $('success-text').textContent = node.text;
+      
+      if (node.isStop) {
+        $('success-icon').style.background = 'var(--danger-soft)';
+        $('success-icon').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="3"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+      } else {
+        $('success-icon').style.background = 'var(--primary-soft)';
+        $('success-icon').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#10b981', '#f59e0b', '#34d399'] });
+      }
     }
 
     function showToast(message) {
