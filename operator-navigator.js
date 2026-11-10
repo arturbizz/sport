@@ -968,4 +968,293 @@ function renderHome() {
   headingCopy.appendChild(make('h2', '', 'С чего начнём звонок?'));
   headingCopy.appendChild(make('p', '', 'Выберите ситуацию — дальше останутся только нужные вопросы и действия.'));
   heading.appendChild(headingCopy);
-  heading.appendChild
+  heading.appendChild(make('span', 'section-count', `${routes.length} рабочих маршрутов`));
+  view.appendChild(heading);
+
+  const grid = make('div', 'route-grid');
+  routes.forEach((route) => {
+    const card = make('button', `route-card ${route.tone}`);
+    card.type = 'button';
+    const top = make('div', 'card-topline');
+    const cardIcon = make('div', 'card-icon');
+    cardIcon.innerHTML = icon(route.icon);
+    top.appendChild(cardIcon);
+    top.appendChild(make('span', 'card-kicker', 'Открыть маршрут'));
+    card.appendChild(top);
+    card.appendChild(make('h3', '', route.title));
+    card.appendChild(make('p', '', route.description));
+    const footer = make('div', 'card-footer', 'Начать маршрут');
+    footer.insertAdjacentHTML('beforeend', icon('arrow'));
+    card.appendChild(footer);
+    card.addEventListener('click', () => openRoute(route.id));
+    grid.appendChild(card);
+  });
+  view.appendChild(grid);
+}
+
+function renderContextCard() {
+  const card = make('div', 'side-card context-card');
+  card.appendChild(make('h4', '', 'Контекст обращения'));
+  const fields = [
+    { key: 'name', placeholder: 'Имя клиента' },
+    { key: 'equipment', placeholder: 'Тип техники' },
+    { key: 'model', placeholder: 'Бренд и модель' },
+    { key: 'malfunction', placeholder: 'Кратко неисправность' },
+    { key: 'city', placeholder: 'Город' },
+    { key: 'zone', placeholder: 'МКАД / КАД / вне' },
+    { key: 'address', placeholder: 'Улица, дом' }
+  ];
+  fields.forEach(({ key, placeholder }) => {
+    const input = make('input');
+    input.type = 'text';
+    input.placeholder = placeholder;
+    input.value = state.context[key] || '';
+    input.addEventListener('input', (e) => { state.context[key] = e.target.value; });
+    card.appendChild(input);
+  });
+  return card;
+}
+
+function renderSideCards(route) {
+  const stack = make('div', 'side-stack');
+  stack.appendChild(renderContextCard());
+  const rules = make('div', 'side-card');
+  rules.appendChild(make('h4', '', 'Постоянно держите в голове'));
+  [
+    'Сначала имя и город.',
+    'Цены и ТО только из ЛК.',
+    'Не фиксировать цену «от».',
+    'Перед выездом — не трогать технику.'
+  ].forEach((text) => {
+    const row = make('div', 'mini-rule');
+    row.insertAdjacentHTML('beforeend', icon('check'));
+    row.appendChild(make('span', '', text));
+    rules.appendChild(row);
+  });
+  stack.appendChild(rules);
+  const tags = make('div', 'side-card');
+  tags.appendChild(make('h4', '', 'В этом маршруте'));
+  const tagList = make('div', 'tag-list');
+  (route.tags || []).forEach((tag) => tagList.appendChild(make('span', 'tag', tag)));
+  tags.appendChild(tagList);
+  stack.appendChild(tags);
+  return stack;
+}
+
+function renderStep() {
+  const route = getRoute(state.routeId);
+  const current = getCurrentStep();
+  if (!route || !current) return renderHome();
+  renderCrumbs(route.label);
+  const view = $('app-view');
+  view.replaceChildren();
+  const header = make('div', 'route-head');
+  const copy = document.createElement('div');
+  copy.appendChild(make('div', 'eyebrow', 'Пошаговый маршрут'));
+  copy.appendChild(make('h2', '', route.title));
+  copy.appendChild(make('p', '', route.description));
+  header.appendChild(copy);
+  const actions = make('div', 'route-actions');
+  const reset = make('button', 'secondary-button');
+  reset.type = 'button'; reset.innerHTML = icon('reset'); reset.appendChild(document.createTextNode('Сбросить'));
+  reset.addEventListener('click', () => openRoute(state.routeId));
+  actions.appendChild(reset);
+  header.appendChild(actions);
+  view.appendChild(header);
+
+  const track = make('div', 'progress-track');
+  const fill = make('div', 'progress-fill');
+  fill.style.width = `${Math.max(8, ((state.stepIndex + 1) / getCurrentSteps().length) * 100)}%`;
+  track.appendChild(fill); view.appendChild(track);
+
+  const layout = make('div', 'step-layout');
+  const card = make('article', 'step-card');
+  const meta = make('div', 'step-meta');
+  meta.appendChild(make('span', 'step-number', String(state.stepIndex + 1).padStart(2, '0')));
+  meta.appendChild(make('span', '', `Шаг ${state.stepIndex + 1} из ${getCurrentSteps().length}`));
+  card.appendChild(meta);
+  card.appendChild(make('h3', '', current.title));
+  card.appendChild(make('p', 'step-question', current.question));
+  const script = make('div', 'script-box');
+  script.appendChild(make('div', 'script-label', 'Готовая реплика'));
+  script.appendChild(make('div', 'script-text', current.script));
+  card.appendChild(script);
+  if (current.checks?.length) {
+    const checks = make('div', 'check-list');
+    current.checks.forEach((check) => {
+      const row = make('div', 'check-row');
+      row.insertAdjacentHTML('beforeend', icon('check'));
+      row.appendChild(make('span', '', check));
+      checks.appendChild(row);
+    });
+    card.appendChild(checks);
+  }
+  card.appendChild(make('div', 'options-title', 'Что произошло дальше?'));
+  const optionList = make('div', 'option-list');
+  (current.options || []).forEach((option) => {
+    const button = make('button', 'option-button');
+    button.type = 'button';
+    button.appendChild(make('span', '', option.label));
+    button.insertAdjacentHTML('beforeend', icon('arrow'));
+    button.addEventListener('click', () => chooseOption(option));
+    optionList.appendChild(button);
+  });
+  card.appendChild(optionList);
+  const footer = make('div', 'step-footer');
+  const back = make('button', 'secondary-button', 'Назад');
+  back.type = 'button'; back.innerHTML = icon('back'); back.appendChild(document.createTextNode('Назад'));
+  back.disabled = state.history.length === 0;
+  back.style.opacity = back.disabled ? '.45' : '1';
+  back.addEventListener('click', goBack);
+  footer.appendChild(back);
+  footer.appendChild(make('span', 'step-footer-note', 'Выберите вариант — навигатор продолжит маршрут'));
+  card.appendChild(footer);
+  layout.appendChild(card);
+  layout.appendChild(renderSideCards(route));
+  view.appendChild(layout);
+}
+
+function renderResult(result) {
+  const route = getRoute(state.routeId);
+  renderCrumbs(route?.label || 'Итог');
+  const view = $('app-view');
+  view.replaceChildren();
+  const header = make('div', 'route-head');
+  const copy = document.createElement('div');
+  copy.appendChild(make('div', 'eyebrow', 'Маршрут завершён'));
+  copy.appendChild(make('h2', '', 'Итог по обращению'));
+  copy.appendChild(make('p', '', 'Используйте эту карточку как последний контроль перед закрытием карты.'));
+  header.appendChild(copy);
+  const actions = make('div', 'route-actions');
+  const reset = make('button', 'secondary-button');
+  reset.type = 'button'; reset.innerHTML = icon('reset'); reset.appendChild(document.createTextNode('Начать заново'));
+  reset.addEventListener('click', () => openRoute(state.routeId));
+  actions.appendChild(reset); header.appendChild(actions); view.appendChild(header);
+
+  const card = make('article', 'result-card');
+  const banner = make('div', `result-banner ${result.type === 'stop' ? 'stop' : result.type === 'warning' ? 'warning' : ''}`);
+  const bannerIcon = make('div', 'result-banner-icon');
+  bannerIcon.innerHTML = icon(result.type === 'stop' ? 'alert' : result.type === 'warning' ? 'info' : 'check');
+  banner.appendChild(bannerIcon);
+  const bannerCopy = document.createElement('div');
+  bannerCopy.appendChild(make('strong', '', result.title));
+  bannerCopy.appendChild(make('span', '', result.action));
+  banner.appendChild(bannerCopy); card.appendChild(banner);
+
+  const fields = make('div', 'result-grid');
+  [['Итоговый подтип', result.subtype], ['Классификатор', result.classifier], ['Что сделать с картой', result.action], ['Контроль', result.type === 'stop' ? 'Заказ не оформлять' : 'Сверить поля и сохранить результат']].forEach(([label, value]) => {
+    const field = make('div', 'result-field');
+    field.appendChild(make('label', '', label));
+    field.appendChild(make('strong', '', value));
+    fields.appendChild(field);
+  });
+  card.appendChild(fields);
+  const finalScript = make('div', 'result-script');
+  const scriptBox = make('div', 'script-box');
+  scriptBox.appendChild(make('div', 'script-label', 'Финальная реплика')); 
+  scriptBox.appendChild(make('div', 'script-text', result.type === 'stop' ? 'К сожалению, сейчас мы не сможем оформить выезд по этому обращению. Спасибо за понимание.' : 'Спасибо, информация зафиксирована. Мы готовы помочь в рамках согласованных условий.'));
+  finalScript.appendChild(scriptBox); card.appendChild(finalScript);
+  const resultActions = make('div', 'result-actions');
+  const back = make('button', 'secondary-button', 'Вернуться к шагу');
+  back.type = 'button'; back.innerHTML = icon('back'); back.appendChild(document.createTextNode('Вернуться к шагу'));
+  back.addEventListener('click', () => {
+    const previous = state.history.pop();
+    if (previous) {
+      state.routeId = previous.routeId;
+      state.stepIndex = previous.stepIndex;
+    }
+    renderStep();
+  });
+  resultActions.appendChild(back);
+  const home = make('button', 'primary-button', 'Выбрать новый маршрут');
+  home.type = 'button'; home.innerHTML = icon('route'); home.appendChild(document.createTextNode('Выбрать новый маршрут'));
+  home.addEventListener('click', renderHome); resultActions.appendChild(home);
+  card.appendChild(resultActions); view.appendChild(card);
+}
+
+function chooseOption(option) {
+  if (option.nextRoute) {
+    state.history.push({ routeId: state.routeId, stepIndex: state.stepIndex });
+    state.routeId = option.nextRoute;
+    state.stepIndex = getRoute(option.nextRoute)?.startIndex || 0;
+    renderNav();
+    renderStep();
+    $('sidebar').classList.remove('open');
+    return;
+  }
+  if (option.result) {
+    state.history.push({ routeId: state.routeId, stepIndex: state.stepIndex });
+    renderResult(option.result);
+    return;
+  }
+  if (option.next) {
+    state.history.push({ routeId: state.routeId, stepIndex: state.stepIndex });
+    const nextIndex = getCurrentSteps().findIndex((step) => step.id === option.next);
+    if (nextIndex >= 0) state.stepIndex = nextIndex;
+    else state.stepIndex += 1;
+    renderStep();
+  }
+}
+
+function goBack() {
+  const previous = state.history.pop();
+  if (!previous) return;
+  state.routeId = previous.routeId;
+  state.stepIndex = previous.stepIndex;
+  renderStep();
+}
+
+function openRoute(id, resetContext = true) {
+  state.routeId = id;
+  state.stepIndex = getRoute(id)?.startIndex || 0;
+  state.history = [];
+  if (resetContext) state.context = emptyContext();
+  renderNav();
+  renderStep();
+  $('sidebar').classList.remove('open');
+}
+
+function handleSearch(event) {
+  state.query = event.target.value.trim().toLowerCase();
+  if (!state.query) return renderHome();
+  renderCrumbs('Поиск');
+  const view = $('app-view'); view.replaceChildren();
+  const heading = make('div', 'section-heading');
+  const copy = document.createElement('div');
+  copy.appendChild(make('h2', '', 'Результаты поиска'));
+  copy.appendChild(make('p', '', 'Ищем по названию, описанию и тегам маршрута.'));
+  heading.appendChild(copy); view.appendChild(heading);
+  const matches = routes.filter((route) => `${route.title} ${route.description} ${route.tags.join(' ')}`.toLowerCase().includes(state.query));
+  if (!matches.length) { view.appendChild(make('div', 'search-empty', 'Ничего не найдено. Попробуйте «принтер», «ПЦК», «матрица» или «текущий заказ».')); return; }
+  const grid = make('div', 'route-grid');
+  matches.forEach((route) => {
+    const card = make('button', `route-card ${route.tone}`); card.type = 'button';
+    const top = make('div', 'card-topline'); const cardIcon = make('div', 'card-icon'); cardIcon.innerHTML = icon(route.icon); top.appendChild(cardIcon); top.appendChild(make('span', 'card-kicker', 'Открыть маршрут')); card.appendChild(top);
+    card.appendChild(make('h3', '', route.title)); card.appendChild(make('p', '', route.description));
+    const footer = make('div', 'card-footer', 'Начать маршрут'); footer.insertAdjacentHTML('beforeend', icon('arrow')); card.appendChild(footer);
+    card.addEventListener('click', () => openRoute(route.id)); grid.appendChild(card);
+  });
+  view.appendChild(grid);
+}
+
+$('route-search').addEventListener('input', handleSearch);
+document.addEventListener('keydown', (event) => {
+  if (event.key === '/' && document.activeElement !== $('route-search')) { event.preventDefault(); $('route-search').focus(); }
+  if (event.key === 'Escape') { $('route-search').value = ''; state.query = ''; renderHome(); }
+});
+$('mobile-menu').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+$('ribbon-close').addEventListener('click', () => { $('rule-ribbon').classList.add('hidden'); });
+$('rules-button').addEventListener('click', () => {
+  $('rule-ribbon').classList.remove('hidden');
+  showToast('Главные правила снова показаны');
+});
+
+async function initNavigator() {
+  renderNav();
+  renderHome();
+  await loadRemoteScripts();
+  renderNav();
+  if (!state.routeId) renderHome();
+}
+
+initNavigator();
