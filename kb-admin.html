@@ -115,23 +115,18 @@
     }
     .admin-action-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
     
-    /* Кнопка Редактировать */
     .admin-action-btn.edit { background: rgba(79, 142, 255, 0.08); color: #3b82f6; border-color: rgba(79, 142, 255, 0.2); }
     .admin-action-btn.edit:hover { background: #3b82f6; color: white; border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3); }
     
-    /* Кнопка Удалить */
     .admin-action-btn.delete { background: rgba(239, 68, 68, 0.08); color: #ef4444; border-color: rgba(239, 68, 68, 0.2); }
     .admin-action-btn.delete:hover { background: #ef4444; color: white; border-color: #ef4444; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3); }
     
-    /* Кнопка Закрыть (зеленая) */
     .admin-action-btn.close { background: rgba(16, 185, 129, 0.08); color: #10b981; border-color: rgba(16, 185, 129, 0.2); }
     .admin-action-btn.close:hover { background: #10b981; color: white; border-color: #10b981; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
 
-    /* Кнопки-иконки */
     .admin-action-btn.icon-only { padding: 8px; width: 36px; height: 36px; border-radius: 10px; }
     .admin-action-btn.icon-only svg { width: 18px; height: 18px; }
     
-    /* Кнопки в модалках */
     .modal-footer-btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       padding: 12px 20px; font-size: 14px; font-weight: 700; border-radius: 10px;
@@ -163,6 +158,11 @@
     .action-modal p { font-size: 14px; color: var(--ink-2); line-height: 1.55; margin: 0 0 24px; word-break: break-word; }
     .action-modal-actions { display: flex; gap: 10px; }
     .action-modal-actions .btn { flex: 1; padding: 12px 16px; font-size: 14px; font-weight: 600; border-radius: 10px; }
+
+    /* Стили для модалки экспорта */
+    #export-modal .reports-window { max-width: 800px; }
+    .export-textarea { width: 100%; height: 400px; font-family: var(--font-mono); font-size: 13px; padding: 16px; border: 1px solid var(--hairline-2); border-radius: 8px; background: var(--bg-subtle); color: var(--ink); resize: none; outline: none; }
+    .export-actions { display: flex; gap: 12px; margin-top: 16px; }
   </style>
 </head>
 <body>
@@ -299,6 +299,22 @@
     </div>
   </div>
 
+  <!-- Модалка Экспорта для ИИ -->
+  <div class="reports-modal" id="export-modal">
+    <div class="reports-window">
+      <h3>Экспорт статьи для ИИ</h3>
+      <p style="font-size: 13px; color: var(--ink-3); text-align: center; margin-top: -10px; margin-bottom: 16px;">
+        Скопируйте этот текст и отправьте его ИИ-ассистенту для доработки, анализа или переноса в другой проект.
+      </p>
+      <textarea id="export-text" class="export-textarea" readonly></textarea>
+      <div class="export-actions">
+        <button class="modal-footer-btn primary" id="btn-copy-export" style="flex:1;">Копировать текст</button>
+        <button class="modal-footer-btn ghost" id="btn-download-export" style="flex:1;">Скачать .md</button>
+        <button class="modal-footer-btn ghost" id="export-modal-close" style="flex:0.5;">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
   <button class="fab-upload" id="fab-upload" title="Загрузить фото в позицию курсора">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Загрузить фото
   </button>
@@ -339,6 +355,12 @@
         <button class="fullscreen-btn" id="fullscreen-btn" title="На весь экран (Esc — выйти)">
           <svg id="fullscreen-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
         </button>
+        
+        <!-- Кнопка экспорта для ИИ -->
+        <button class="fullscreen-btn" id="btn-export-ai" title="Экспорт для ИИ" style="color:#8b5cf6;">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+
         <button class="fullscreen-btn" id="btn-open-pins" title="Управление PIN-кодами" style="color:var(--accent);">
            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
         </button>
@@ -564,6 +586,57 @@
         $('alert-modal').onclick = (e) => { if (e.target === $('alert-modal')) cleanup(); };
       });
     }
+
+    // === ЭКСПОРТ ДЛЯ ИИ ===
+    $('btn-export-ai')?.addEventListener('click', () => {
+      if (!currentId && !$('f-title').value) {
+        toast('Нет данных для экспорта. Создайте или откройте статью.', 'error');
+        return;
+      }
+
+      let text = `# ${$('f-title').value || 'Без названия'}\n\n`;
+      text += `**Категория:** ${$('f-category').value || 'Не указана'}\n`;
+      text += `**Теги:** ${$('f-tags').value || 'Нет'}\n`;
+      text += `**Тип:** ${$('f-article-type').value === 'training' ? 'Обучение' : 'База Знаний (Шпаргалка)'}\n`;
+      text += `**Важное:** ${$('f-pinned').checked ? 'Да' : 'Нет'}\n`;
+      text += `**Опубликовано:** ${$('f-published').checked ? 'Да' : 'Нет'}\n\n`;
+      
+      text += `## Текст статьи (Markdown)\n\n${$('f-content').value || '*Текст отсутствует*'}\n\n`;
+      
+      if (currentSteps && currentSteps.steps && currentSteps.steps.length > 0) {
+        text += `## Пошаговый сценарий (JSONB)\n\n`;
+        text += `\`\`\`json\n${JSON.stringify(currentSteps, null, 2)}\n\`\`\`\n`;
+      }
+
+      $('export-text').value = text;
+      $('export-modal').classList.add('open');
+    });
+
+    $('export-modal-close')?.addEventListener('click', () => $('export-modal').classList.remove('open'));
+
+    $('btn-copy-export')?.addEventListener('click', () => {
+      const text = $('export-text').value;
+      navigator.clipboard.writeText(text).then(() => {
+        toast('Текст скопирован в буфер обмена', 'success');
+      }).catch(err => {
+        toast('Ошибка копирования: ' + err.message, 'error');
+      });
+    });
+
+    $('btn-download-export')?.addEventListener('click', () => {
+      const text = $('export-text').value;
+      const title = ($('f-title').value || 'article').replace(/[^a-zа-яё0-9]/gi, '_').toLowerCase();
+      const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${title}_ai_export.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
 
     document.querySelectorAll('.admin-list-tab').forEach(tab => {
       tab.addEventListener('click', () => {
