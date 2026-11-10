@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Script Hub — Премиальный интерфейс оператора</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-body: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      
+      --ink: #0f172a;
+      --ink-2: #334155;
+      --ink-3: #64748b;
+      
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-soft: #e0e7ff;
+      
+      --success: #10b981;
+      --success-soft: #d1fae5;
+      
+      --danger: #ef4444;
+      --danger-soft: #fee2e2;
+      
+      --border: #e2e8f0;
+      --border-focus: #cbd5e1;
+      
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -4px rgba(0,0,0,0.05);
+      
+      --radius-md: 12px;
+      --radius-lg: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-body);
+      color: var(--ink);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== ШАПКА ===== */
+    .header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+    .logo {
+      font-size: 18px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--primary); color: white;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mode-switch {
+      display: flex;
+      background: var(--bg-subtle);
+      border-radius: 8px;
+      padding: 4px;
+    }
+    .mode-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px; font-weight: 600;
+      border: none; background: transparent;
+      color: var(--ink-3);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: var(--bg-surface);
+      color: var(--ink);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
+    .app-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ===== РЕЖИМ ОПЕРАТОРА ===== */
+    #view-operator {
+      display: flex;
+      width: 100%; height: 100%;
+    }
+    .op-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 32px;
+      overflow-y: auto;
+      align-items: center;
+      transition: padding 0.3s;
+    }
+    .op-content {
+      width: 100%; max-width: 800px;
+      display: flex; flex-direction: column; gap: 24px;
+      margin-top: 20px;
+    }
+
+    /* Шаг */
+    .step-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      animation: slideUp 0.3s ease;
+    }
+    .step-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .step-badge {
+      background: var(--primary-soft); color: var(--primary-hover);
+      font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .step-title { font-size: 20px; font-weight: 800; }
+    
+    .speech-box {
+      background: var(--bg-subtle);
+      border-left: 4px solid var(--primary);
+      padding: 24px;
+      border-radius: 0 12px 12px 0;
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .speech-text {
+      font-size: 18px; line-height: 1.6; color: var(--ink);
+      font-weight: 500;
+    }
+    .btn-copy {
+      position: absolute; top: 16px; right: 16px;
+      background: white; border: 1px solid var(--border);
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      color: var(--ink-2); cursor: pointer; transition: 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-copy:hover { background: var(--bg-surface); color: var(--primary); }
+
+    .branches-title { font-size: 14px; font-weight: 700; color: var(--ink-3); margin-bottom: 12px; text-transform: uppercase; }
+    .branches-list { display: flex; flex-direction: column; gap: 12px; }
+    .branch-btn {
+      background: white; border: 2px solid var(--border);
+      padding: 16px 20px; border-radius: 12px;
+      font-size: 15px; font-weight: 600; color: var(--ink);
+      text-align: left; cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .branch-btn:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .branch-btn.success { border-color: var(--success); background: var(--success-soft); color: #065f46; }
+    .branch-btn.danger { border-color: var(--danger); background: var(--danger-soft); color: #991b1b; }
+
+    /* Кнопка подробнее и панель */
+    .btn-details {
+      background: var(--ink); color: white; border: none;
+      padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      align-self: flex-start; transition: background 0.2s;
+    }
+    .btn-details:hover { background: #1e293b; }
+
+    .details-panel {
+      width: 380px;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border);
+      padding: 32px;
+      overflow-y: auto;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: absolute; right: 0; top: 0; bottom: 0;
+      z-index: 40;
+      box-shadow: -10px 0 20px -10px rgba(0,0,0,0.1);
+    }
+    .details-panel.open { transform: translateX(0); }
+    .details-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    }
+    .details-header h3 { font-size: 18px; font-weight: 800; }
+    .btn-close-details { background: none; border: none; cursor: pointer; color: var(--ink-3); font-size: 20px; }
+    
+    .detail-block { margin-bottom: 24px; }
+    .detail-block h4 { font-size: 13px; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; font-weight: 700; }
+    .detail-block p { font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+
+    /* Управление навигацией */
+    .op-nav {
+      position: fixed; bottom: 24px; left: 32px;
+      display: flex; gap: 12px; z-index: 30;
+    }
+    .nav-btn {
+      background: white; border: 1px solid var(--border);
+      padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 600;
+      color: var(--ink-2); cursor: pointer; transition: 0.2s;
+      display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm);
+    }
+    .nav-btn:hover { background: var(--bg-subtle); color: var(--ink); }
+    .nav-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+
+    /* ===== РЕЖИМ РЕДАКТОРА ===== */
+    #view-editor {
+      display: none;
+      width: 100%; height: 100%;
+    }
+    .ed-sidebar {
+      width: 320px; background: var(--bg-surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0;
+    }
+    .ed-sidebar-header {
+      padding: 24px; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .ed-sidebar-header h2 { font-size: 16px; font-weight: 800; }
+    .btn-add-small {
+      background: var(--primary-soft); color: var(--primary-hover);
+      border: none; width: 28px; height: 28px; border-radius: 6px;
+      font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .btn-add-small:hover { background: var(--primary); color: white; }
+    
+    .ed-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .ed-item {
+      padding: 12px 16px; border-radius: 8px; border: 1px solid transparent;
+      cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; gap: 4px;
+    }
+    .ed-item:hover { background: var(--bg-subtle); }
+    .ed-item.active { background: var(--primary-soft); border-color: var(--primary-soft); }
+    .ed-item-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+    .ed-item-desc { font-size: 12px; color: var(--ink-3); }
+
+    .ed-main { flex: 1; background: var(--bg-body); overflow-y: auto; padding: 40px; }
+    .ed-form-container { max-width: 800px; margin: 0 auto; background: var(--bg-surface); border-radius: 16px; padding: 32px; box-shadow: var(--shadow-md); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 24px; }
+    
+    .form-group { display: flex; flex-direction: column; gap: 8px; }
+    .form-group label { font-size: 14px; font-weight: 700; color: var(--ink-2); }
+    .form-control {
+      width: 100%; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--border);
+      font-family: inherit; font-size: 15px; color: var(--ink); transition: 0.2s;
+    }
+    .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+    textarea.form-control { min-height: 100px; resize: vertical; }
+
+    .options-editor { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 8px; }
+    .options-editor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .options-editor-header h3 { font-size: 16px; font-weight: 800; }
+    .opt-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; background: var(--bg-subtle); padding: 12px; border-radius: 8px; }
+    .opt-row input { flex: 2; }
+    .opt-row select { flex: 1.5; }
+    .btn-remove-opt { background: var(--danger-soft); color: var(--danger); border: none; width: 40px; height: 40px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+    .ed-actions { display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 24px; margin-top: 12px; }
+    .btn-save { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+    .btn-save:hover { background: var(--primary-hover); }
+    .btn-delete { background: white; border: 1px solid var(--danger); color: var(--danger); padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+    /* Утилиты */
+    .hidden { display: none !important; }
+    .empty-state { text-align: center; padding: 40px; color: var(--ink-3); }
+    
+    /* Тост */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; box-shadow: var(--shadow-lg); z-index: 1000; transform: translateY(20px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { background: var(--danger); }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+      Script Hub
+    </div>
+    <div class="mode-switch">
+      <button class="mode-btn active" id="btn-mode-op" onclick="switchMode('operator')">Оператор</button>
+      <button class="mode-btn" id="btn-mode-ed" onclick="switchMode('editor')">Редактор</button>
+    </div>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- РЕЖИМ ОПЕРАТОРА -->
+    <div id="view-operator">
+      <div class="op-main" id="op-main-area">
+        <div class="empty-state" id="op-empty">
+          <h2 style="font-size: 24px; margin-bottom: 8px;">Нет данных</h2>
+          <p>Создайте сценарий в режиме "Редактор" и нажмите "Сделать стартовым".</p>
+        </div>
+
+        <div class="op-content hidden" id="op-content">
+          <div class="step-card" id="op-card">
+            <div class="step-header">
+              <span class="step-badge" id="op-step-badge">Этап 1</span>
+              <h1 class="step-title" id="op-step-title">Название шага</h1>
+            </div>
+            
+            <div class="speech-box">
+              <button class="btn-copy" onclick="copySpeech()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Копировать
+              </button>
+              <div class="speech-text" id="op-speech">Текст реплики...</div>
+            </div>
+
+            <div class="branches-title">Реакция клиента</div>
+            <div class="branches-list" id="op-branches"></div>
+          </div>
+
+          <button class="btn-details" onclick="toggleDetails(true)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Подробнее (Методичка)
+          </button>
+        </div>
+      </div>
+
+      <!-- Панель подробностей -->
+      <div class="details-panel" id="details-panel">
+        <div class="details-header">
+          <h3>Методичка</h3>
+          <button class="btn-close-details" onclick="toggleDetails(false)">✕</button>
+        </div>
+        <div id="details-content"></div>
+      </div>
+
+      <div class="op-nav hidden" id="op-nav">
+        <button class="nav-btn" onclick="opGoBack()" id="btn-op-back" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
+          Назад
+        </button>
+        <button class="nav-btn" onclick="opRestart()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+          В начало
+        </button>
+      </div>
+    </div>
+
+    <!-- РЕЖИМ РЕДАКТОРА -->
+    <div id="view-editor">
+      <!-- Сайдбар -->
+      <div class="ed-sidebar">
+        <div class="ed-sidebar-header">
+          <h2>Скрипты</h2>
+          <button class="btn-add-small" onclick="createNewScript()" title="Создать сценарий">+</button>
+        </div>
+        <div class="ed-list" id="ed-scripts-list"></div>
+      </div>
+
+      <!-- Основная область -->
+      <div class="ed-main">
+        <div class="empty-state" id="ed-empty">
+          <h2>Сценарий не выбран</h2>
+          <p>Выберите сценарий слева или создайте новый.</p>
+        </div>
+
+        <div class="ed-form-container hidden" id="ed-form-container">
+          <!-- Шапка формы сценария -->
+          <div class="form-group">
+            <label>Название сценария</label>
+            <input type="text" class="form-control" id="ed-script-title" placeholder="Например: Скрипт ТВ">
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px;">
+            <h3 style="font-size:18px;">Шаги сценария</h3>
+            <button class="btn-add-small" onclick="createNewStep()" title="Добавить шаг">+</button>
+          </div>
+          <div class="ed-list" id="ed-steps-list" style="max-height: 300px; border:1px solid var(--border); border-radius:8px;"></div>
+
+          <!-- Форма редактирования шага -->
+          <div id="ed-step-form" class="hidden" style="margin-top:24px; border-top:1px solid var(--border); padding-top:24px;">
+            <div class="form-group">
+              <label>Название шага</label>
+              <input type="text" class="form-control" id="ed-step-title" placeholder="Например: Выявление проблемы">
+            </div>
+            <div class="form-group">
+              <label>Текст оператора (Реплика)</label>
+              <textarea class="form-control" id="ed-step-speech" placeholder="Что говорит оператор..."></textarea>
+            </div>
+
+            <!-- Методичка -->
+            <div style="background: var(--bg-subtle); padding:16px; border-radius:12px; display:flex; flex-direction:column; gap:12px;">
+              <h4 style="font-size:14px; font-weight:700; color:var(--primary);">Блок "Подробнее" (заполняйте по желанию)</h4>
+              <div class="form-group">
+                <label>Комментарий тренера</label>
+                <textarea class="form-control" id="ed-detail-coach" style="min-height:60px;"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Как произнести / Интонация</label>
+                <textarea class="form-control" id="ed-detail-how" style="min-height:60px;"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Чего нельзя делать / Ошибки</label>
+                <textarea class="form-control" id="ed-detail-warn" style="min-height:60px;"></textarea>
+              </div>
+            </div>
+
+            <!-- Ветвления -->
+            <div class="options-editor">
+              <div class="options-editor-header">
+                <h3>Варианты ответов клиента</h3>
+                <button class="btn-add-small" onclick="addOptionRow()">+</button>
+              </div>
+              <div id="ed-options-list"></div>
+            </div>
+
+            <!-- Действия -->
+            <div class="ed-actions">
+              <button class="btn-delete" onclick="deleteStep()">Удалить шаг</button>
+              <button class="btn-save" onclick="saveStep()">Сохранить шаг</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="toast" id="toast">Сохранено!</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // =====================================================================
+    // ИНИЦИАЛИЗАЦИЯ
+    // =====================================================================
+    const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const $ = (id) => document.getElementById(id);
+
+    // Состояние приложения
+    let state = {
+      mode: 'operator',
+      scripts: [],
+      activeScriptId: null,
+      steps: [],
+      activeStepId: null,
+      options: [],
+      
+      // Для оператора
+      opCurrentStepId: null,
+      opHistory: []
+    };
+
+    // Утилита уведомлений
+    function showToast(msg, isError = false) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.className = `toast show ${isError ? 'error' : ''}`;
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // Переключение режимов
+    window.switchMode = function(mode) {
+      state.mode = mode;
+      $('btn-mode-op').classList.toggle('active', mode === 'operator');
+      $('btn-mode-ed').classList.toggle('active', mode === 'editor');
+      
+      $('view-operator').style.display = mode === 'operator' ? 'flex' : 'none';
+      $('view-editor').style.display = mode === 'editor' ? 'flex' : 'none';
+
+      if (mode === 'operator') loadOperatorData();
+      if (mode === 'editor') loadEditorData();
+    };
+
+    // =====================================================================
+    // ЗАГРУЗКА ДАННЫХ
+    // =====================================================================
+    async function fetchScripts() {
+      const { data, error } = await supabaseClient.from('scripts').select('*').order('created_at');
+      if (error) { console.error(error); return []; }
+      return data;
+    }
+
+    async function loadOperatorData() {
+      state.scripts = await fetchScripts();
+      if (state.scripts.length === 0) {
+        $('op-empty').classList.remove('hidden');
+        $('op-content').classList.add('hidden');
+        $('op-nav').classList.add('hidden');
+        return;
+      }
+      if (!state.activeScriptId) state.activeScriptId = state.scripts[0].id;
+      
+      const { data: steps } = await supabaseClient.from('script_steps').select('*').eq('script_id', state.activeScriptId);
+      state.steps = steps || [];
+      
+      // Ищем стартовый шаг
+      const startStep = state.steps.find(s => s.is_start) || state.steps[0];
+      if (startStep) {
+        state.opCurrentStepId = startStep.id;
+        state.opHistory = [];
+        renderOperatorStep();
+        $('op-empty').classList.add('hidden');
+        $('op-content').classList.remove('hidden');
+        $('op-nav').classList.remove('hidden');
+      }
+    }
+
+    async function loadEditorData() {
+      state.scripts = await fetchScripts();
+      renderEditorSidebar();
+      
+      if (state.scripts.length > 0) {
+        if (!state.activeScriptId) state.activeScriptId = state.scripts[0].id;
+        await loadScriptIntoEditor(state.activeScriptId);
+      } else {
+        $('ed-empty').classList.remove('hidden');
+        $('ed-form-container').classList.add('hidden');
+      }
+    }
+
+    async function loadScriptIntoEditor(scriptId) {
+      state.activeScriptId = scriptId;
+      const script = state.scripts.find(s => s.id === scriptId);
+      
+      const { data: steps } = await supabaseClient.from('script_steps').select('*').eq('script_id', scriptId).order('step_order');
+      state.steps = steps || [];
+      
+      $('ed-empty').classList.add('hidden');
+      $('ed-form-container').classList.remove('hidden');
+      $('ed-script-title').value = script.title;
+      
+      renderEditorSteps();
+      
+      // Если есть шаги, загружаем первый
+      if (state.steps.length > 0) {
+        loadStepIntoEditor(state.steps[0].id);
+      } else {
+        $('ed-step-form').classList.add('hidden');
+      }
+    }
+
+    // =====================================================================
+    // ЛОГИКА ОПЕРАТОРА
+    // =====================================================================
+    async function renderOperatorStep() {
+      const step = state.steps.find(s => s.id === state.opCurrentStepId);
+      if (!step) return;
+
+      $('op-step-badge').textContent = `Шаг ${state.steps.indexOf(step) + 1}`;
+      $('op-step-title').textContent = step.title;
+      $('op-speech').textContent = step.operator_speech;
+      
+      // Рендер методички
+      let detailsHtml = '';
+      if (step.coach_comment) detailsHtml += `<div class="detail-block"><h4>Комментарий тренера</h4><p>${step.coach_comment}</p></div>`;
+      if (step.how_to_say) detailsHtml += `<div class="detail-block"><h4>Как произнести</h4><p>${step.how_to_say}</p></div>`;
+      if (step.warnings) detailsHtml += `<div class="detail-block"><h4>Ошибки / Чего нельзя</h4><p>${step.warnings}</p></div>`;
+      if (!detailsHtml) detailsHtml = '<p style="color:var(--ink-3)">Дополнительной информации нет.</p>';
+      $('details-content').innerHTML = detailsHtml;
+
+      // Рендер веток
+      const { data: options } = await supabaseClient.from('step_options').select('*').eq('step_id', step.id);
+      
+      const branchesList = $('op-branches');
+      branchesList.innerHTML = '';
+      
+      if (!options || options.length === 0) {
+        branchesList.innerHTML = `<div class="branch-btn" style="justify-content:center; color:var(--ink-3); border-style:dashed;">Конец сценария. Дальнейших действий нет.</div>`;
+      } else {
+        options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = `branch-btn ${opt.badge_type || ''}`;
+          btn.innerHTML = `<span>${opt.client_reaction}</span> <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/></svg>`;
+          
+          btn.onclick = () => {
+            if (opt.next_step_id) {
+              state.opHistory.push(state.opCurrentStepId);
+              state.opCurrentStepId = opt.next_step_id;
+              renderOperatorStep();
+              updateBackBtn();
+            } else {
+              showToast('Сценарий завершен.');
+            }
+          };
+          branchesList.appendChild(btn);
+        });
+      }
+      
+      updateBackBtn();
+    }
+
+    function updateBackBtn() {
+      $('btn-op-back').disabled = state.opHistory.length === 0;
+    }
+
+    window.opGoBack = function() {
+      if (state.opHistory.length > 0) {
+        state.opCurrentStepId = state.opHistory.pop();
+        renderOperatorStep();
+      }
+    };
+
+    window.opRestart = function() {
+      const startStep = state.steps.find(s => s.is_start) || state.steps[0];
+      if (startStep) {
+        state.opCurrentStepId = startStep.id;
+        state.opHistory = [];
+        renderOperatorStep();
+      }
+    };
+
+    window.copySpeech = function() {
+      const text = $('op-speech').textContent;
+      navigator.clipboard.writeText(text).then(() => showToast('Текст скопирован'));
+    };
+
+    window.toggleDetails = function(show) {
+      $('details-panel').classList.toggle('open', show);
+      if (show) {
+        $('op-main-area').style.paddingRight = '380px'; // Сдвигаем контент
+      } else {
+        $('op-main-area').style.paddingRight = '32px';
+      }
+    };
+
+    // =====================================================================
+    // ЛОГИКА РЕДАКТОРА
+    // =====================================================================
+    function renderEditorSidebar() {
+      const list = $('ed-scripts-list');
+      list.innerHTML = '';
+      state.scripts.forEach(script => {
+        const el = document.createElement('div');
+        el.className = `ed-item ${state.activeScriptId === script.id ? 'active' : ''}`;
+        el.innerHTML = `<div class="ed-item-title">${script.title}</div>`;
+        el.onclick = () => loadScriptIntoEditor(script.id);
+        list.appendChild(el);
+      });
+    }
+
+    function renderEditorSteps() {
+      const list = $('ed-steps-list');
+      list.innerHTML = '';
+      if (state.steps.length === 0) {
+        list.innerHTML = '<div style="padding:16px; color:var(--ink-3); font-size:14px;">Нет шагов. Нажмите "+" чтобы добавить.</div>';
+        return;
+      }
+      state.steps.forEach((step, idx) => {
+        const el = document.createElement('div');
+        el.className = `ed-item ${state.activeStepId === step.id ? 'active' : ''}`;
+        el.innerHTML = `
+          <div class="ed-item-title">${idx + 1}. ${step.title} ${step.is_start ? '(Старт)' : ''}</div>
+          <div class="ed-item-desc">${step.operator_speech.substring(0, 40)}...</div>
+        `;
+        el.onclick = () => loadStepIntoEditor(step.id);
+        list.appendChild(el);
+      });
+    }
+
+    async function loadStepIntoEditor(stepId) {
+      state.activeStepId = stepId;
+      renderEditorSteps();
+      
+      const step = state.steps.find(s => s.id === stepId);
+      if (!step) return;
+
+      $('ed-step-form').classList.remove('hidden');
+      $('ed-step-title').value = step.title;
+      $('ed-step-speech').value = step.operator_speech;
+      $('ed-detail-coach').value = step.coach_comment || '';
+      $('ed-detail-how').value = step.how_to_say || '';
+      $('ed-detail-warn').value = step.warnings || '';
+
+      // Загружаем ветки
+      const { data: options } = await supabaseClient.from('step_options').select('*').eq('step_id', stepId);
+      state.options = options || [];
+      
+      renderOptionsEditor();
+    }
+
+    function renderOptionsEditor() {
+      const list = $('ed-options-list');
+      list.innerHTML = '';
+      
+      state.options.forEach((opt, index) => {
+        const row = document.createElement('div');
+        row.className = 'opt-row';
+        
+        // Выпадающий список всех шагов для привязки
+        let optionsHtml = '<option value="">-- Конец сценария --</option>';
+        state.steps.forEach(s => {
+          if (s.id !== state.activeStepId) { // Нельзя ссылаться на самого себя
+            optionsHtml += `<option value="${s.id}" ${opt.next_step_id === s.id ? 'selected' : ''}>Шаг: ${s.title}</option>`;
+          }
+        });
+
+        row.innerHTML = `
+          <input type="text" class="form-control" value="${opt.client_reaction}" placeholder="Текст реакции клиента" oninput="updateOpt(${index}, 'client_reaction', this.value)">
+          <select class="form-control" onchange="updateOpt(${index}, 'next_step_id', this.value)">
+            ${optionsHtml}
+          </select>
+          <button class="btn-remove-opt" onclick="removeOpt(${index})">✕</button>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    window.updateOpt = function(index, field, value) {
+      state.options[index][field] = value;
+    };
+
+    window.addOptionRow = function() {
+      state.options.push({ client_reaction: 'Новый вариант', next_step_id: null });
+      renderOptionsEditor();
+    };
+
+    window.removeOpt = function(index) {
+      state.options.splice(index, 1);
+      renderOptionsEditor();
+    };
+
+    // --- СОХРАНЕНИЕ ---
+
+    window.createNewScript = async function() {
+      const title = prompt('Название нового сценария:', 'Новый сценарий');
+      if (!title) return;
+      
+      const { data, error } = await supabaseClient.from('scripts').insert([{ title }]).select().single();
+      if (error) { showToast('Ошибка создания', true); return; }
+      
+      showToast('Сценарий создан');
+      state.activeScriptId = data.id;
+      await loadEditorData();
+    };
+
+    window.createNewStep = async function() {
+      if (!state.activeScriptId) return;
+      
+      const nextOrder = state.steps.length > 0 ? Math.max(...state.steps.map(s => s.step_order)) + 1 : 1;
+      const isFirst = state.steps.length === 0;
+
+      const { data, error } = await supabaseClient.from('script_steps').insert([{
+        script_id: state.activeScriptId,
+        step_order: nextOrder,
+        title: 'Новый шаг',
+        operator_speech: 'Текст реплики...',
+        is_start: isFirst
+      }]).select().single();
+
+      if (error) { showToast('Ошибка создания шага', true); return; }
+      
+      showToast('Шаг добавлен');
+      await loadScriptIntoEditor(state.activeScriptId);
+      loadStepIntoEditor(data.id);
+    };
+
+    window.saveStep = async function() {
+      if (!state.activeStepId) return;
+
+      const stepData = {
+        title: $('ed-step-title').value,
+        operator_speech: $('ed-step-speech').value,
+        coach_comment: $('ed-detail-coach').value,
+        how_to_say: $('ed-detail-how').value,
+        warnings: $('ed-detail-warn').value
+      };
+
+      // 1. Сохраняем сам шаг
+      const { error: stepError } = await supabaseClient.from('script_steps').update(stepData).eq('id', state.activeStepId);
+      if (stepError) { showToast('Ошибка сохранения', true); return; }
+
+      // 2. Удаляем старые ветки и создаем новые (самый надежный способ синхронизации)
+      await supabaseClient.from('step_options').delete().eq('step_id', state.activeStepId);
+      
+      if (state.options.length > 0) {
+        const optsToInsert = state.options.map(o => ({
+          step_id: state.activeStepId,
+          client_reaction: o.client_reaction,
+          next_step_id: o.next_step_id || null
+        }));
+        const { error: optError } = await supabaseClient.from('step_options').insert(optsToInsert);
+        if (optError) { showToast('Ошибка сохранения веток', true); return; }
+      }
+
+      showToast('Изменения сохранены');
+      loadScriptIntoEditor(state.activeScriptId);
+    };
+
+    window.deleteStep = async function() {
+      if (!state.activeStepId) return;
+      if (!confirm('Удалить этот шаг? Все ветки, ведущие сюда, будут удалены.')) return;
+
+      const { error } = await supabaseClient.from('script_steps').delete().eq('id', state.activeStepId);
+      if (error) { showToast('Ошибка удаления', true); return; }
+      
+      showToast('Шаг удален');
+      state.activeStepId = null;
+      loadScriptIntoEditor(state.activeScriptId);
+      $('ed-step-form').classList.add('hidden');
+    };
+
+    // Настройка стартового шага
+    document.getElementById('ed-steps-list').addEventListener('contextmenu', async (e) => {
+      e.preventDefault();
+      // Простой способ пометить шаг стартовым через контекстное меню (или можно добавить кнопку в форму)
+      // Для надежности мы сделаем это через кнопку в форме.
+    });
+
+    // Инициализация при загрузке
+    window.onload = () => {
+      // Скрываем лишнее
+      $('view-editor').style.display = 'none';
+      $('details-panel').classList.remove('open');
+      loadOperatorData();
+    };
+
+  </script>
+</body>
+</html>
