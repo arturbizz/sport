@@ -846,65 +846,41 @@ const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrYnFuaXJtcGR3bW10anUiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc4MzI0NTA5MSwiZXhwIjoyMDk4ODIxMDkxfQ.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
 const supabaseClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const REMOTE_RESULT_TYPES = new Set(['success', 'warning', 'stop']);
-
-function slugify(value) {
-  return safeText(value).toLowerCase().trim().replace(/[^a-zа-яё0-9]+/gi, '-').replace(/^-+|-+$/g, '').slice(0, 48) || `script-${Date.now()}`;
-}
-
-function splitLines(value) {
-  return safeText(value).split(/\\n|\\r\\n|\n/).map((item) => item.trim()).filter(Boolean);
-}
-
 async function loadRemoteScripts() {
   if (!supabaseClient) return;
   try {
-    const { data: scriptRows, error: scriptError } = await supabaseClient.from('scripts').select('*').eq('is_active', true).order('title');
-    if (scriptError || !scriptRows?.length) return;
-    const scriptIds = scriptRows.map((script) => script.id);
-    const { data: stepRows, error: stepError } = await supabaseClient.from('script_steps').select('*').in('script_id', scriptIds).order('step_order');
-    if (stepError || !stepRows?.length) return;
-    const stepIds = stepRows.map((step) => step.id);
-    const { data: optionRows } = await supabaseClient.from('step_options').select('*').in('step_id', stepIds).order('id');
-    const optionMap = new Map();
-    (optionRows || []).forEach((option) => {
-      if (!optionMap.has(option.step_id)) optionMap.set(option.step_id, []);
-      optionMap.get(option.step_id).push(option);
-    });
-    const routeIds = new Set(routes.map((route) => route.id));
-    scriptRows.forEach((script) => {
-      const routeId = `db-${script.id}`;
-      const remoteSteps = stepRows.filter((step) => step.script_id === script.id).sort((a, b) => (a.step_order || 0) - (b.step_order || 0));
-      if (!remoteSteps.length) return;
-      const stepIdToLocalId = new Map(remoteSteps.map((step) => [String(step.id), `db-step-${step.id}`]));
-      const mappedSteps = remoteSteps.map((step) => ({
-        id: stepIdToLocalId.get(String(step.id)),
-        title: step.title || 'Следующий шаг',
-        question: step.coach_comment || 'Выберите, что произошло дальше.',
-        script: step.operator_speech || step.how_to_say || 'Используйте реплику из методички.',
-        checks: splitLines(step.warnings),
-        options: (optionMap.get(step.id) || []).map((option) => {
-          const nextId = option.next_step_id ? stepIdToLocalId.get(String(option.next_step_id)) : null;
-          const badge = safeText(option.badge_type);
-          if (nextId) return { label: option.client_reaction || 'Продолжить', next: nextId };
-          return { label: option.client_reaction || 'Завершить маршрут', result: {
-            type: REMOTE_RESULT_TYPES.has(step.result_type) ? step.result_type : (badge === 'stop' ? 'stop' : 'success'),
-            title: step.result_title || (badge === 'stop' ? 'Остановите оформление' : 'Маршрут завершён'),
-            subtype: step.result_subtype || script.title,
-            classifier: step.result_classifier || badge || 'По результату диалога',
-            action: step.result_action || step.how_to_say || 'Проверьте карту и сохраните результат.'
-          } };
-        })
-      }));
-      const startIndex = Math.max(0, mappedSteps.findIndex((step, idx) => remoteSteps[idx]?.is_start));
-      steps[routeId] = mappedSteps;
-      if (!routeIds.has(routeId)) {
-        routes.push({ id: routeId, label: script.title, title: script.title, description: script.description || 'Сценарий из Supabase', icon: 'route', tone: 'tone-blue', tags: ['Supabase', 'активный сценарий'], startIndex });
-        routeIds.add(routeId);
+    const { data, error } = await supabaseClient
+      .from('script_definitions')
+      .select('id, title, description, definition, is_active')
+      .eq('is_active', true);
+    if (error || !data?.length) return;
+    data.forEach((row) => {
+      try {
+        const def = row.definition;
+        if (!def || !def.route || !Array.isArray(def.steps) || !def.steps.length) {
+          console.warn(`script_definitions[${row.id}]: пустое или некорректное definition`);
+          return;
+        }
+        const routeData = {
+          id: row.id,
+          label: def.route.label || def.route.title || row.title,
+          title: def.route.title || def.route.label || row.title,
+          description: def.route.description || row.description || '',
+          icon: def.route.icon || 'route',
+          tone: def.route.tone || 'tone-blue',
+          tags: Array.isArray(def.route.tags) ? def.route.tags : [],
+          startIndex: Number.isInteger(def.route.startIndex) ? def.route.startIndex : 0
+        };
+        const routeIndex = routes.findIndex((r) => r.id === row.id);
+        if (routeIndex >= 0) routes[routeIndex] = routeData;
+        else routes.push(routeData);
+        steps[row.id] = def.steps;
+      } catch (e) {
+        console.warn(`script_definitions[${row.id}]: ошибка разбора`, e);
       }
     });
-  } catch (error) {
-    console.warn('Не удалось загрузить сценарии из Supabase. Оставлены встроенные маршруты.', error);
+  } catch (e) {
+    console.warn('Не удалось загрузить script_definitions.', e);
   }
 }
 
