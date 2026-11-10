@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Внутренний навигатор операторских скриптов колл-центра">
+  <title>Навигатор оператора</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m8 5.25 8 4.5v6.5"/><path d="M4 7.5 12 12l8-4.5"/><path d="M12 12v9"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">Навигатор</div>
+          <div class="brand-caption">рабочее место оператора</div>
+        </div>
+      </div>
+
+      <div class="sidebar-label">Маршруты</div>
+      <nav class="route-nav" id="route-nav" aria-label="Маршруты сценариев"></nav>
+
+      <div class="sidebar-footer">
+        <div class="status-dot"><span></span> Справочник готов</div>
+        <div class="sidebar-note">Контент подготовлен по регламентам, рабочим чатам и скриптам МБТ.</div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobile-menu" type="button" aria-label="Открыть меню">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="topbar-actions">
+          <label class="search-box" for="route-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            <input id="route-search" type="search" placeholder="Найти сценарий" autocomplete="off">
+            <span class="shortcut">/</span>
+          </label>
+          <button class="icon-button" id="rules-button" type="button" title="Показать обязательные правила" aria-label="Показать обязательные правила">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="hero-strip" aria-label="Главные правила">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-dot"></span> Быстрый маршрут звонка</div>
+            <h1>От первого вопроса<br><em>до правильного подтипа</em></h1>
+            <p>Выберите ситуацию — навигатор покажет только нужные вопросы, реплику и финальное действие по карте.</p>
+          </div>
+          <div class="hero-metrics">
+            <div class="metric"><strong id="route-count">0</strong><span>маршрутов</span></div>
+            <div class="metric-divider"></div>
+            <div class="metric"><strong>4</strong><span>базовых правила</span></div>
+          </div>
+        </section>
+
+        <div class="rule-ribbon" id="rule-ribbon">
+          <div class="rule-ribbon-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 7v5c0 4.5 3.4 7.6 8 9 4.6-1.4 8-4.5 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <div><strong>Перед любым оформлением</strong><span>Имя → город → стоп-факторы → условия только из ЛК</span></div>
+          <button class="ribbon-close" id="ribbon-close" type="button" aria-label="Скрыть правила"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+        </div>
+
+        <section id="app-view" aria-live="polite"></section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
