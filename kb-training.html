@@ -13,8 +13,38 @@
     input, textarea, select { cursor: text; caret-color: auto; }
     button, a, select, .cursor-pointer, [role="button"], label, .category-btn, .article-head, .wizard-option { cursor: pointer; }
   </style>
+<style>
+    body.pin-locked > *:not(#pin-gate) { visibility: hidden; }
+    #pin-gate { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 24px; background: #0b1220; color: #fff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    #pin-gate[hidden] { display: none; }
+    .pin-gate-card { width: min(100%, 430px); padding: 34px; border: 1px solid rgba(255,255,255,.12); border-radius: 24px; background: linear-gradient(145deg, #152238, #0f1728); box-shadow: 0 24px 80px rgba(0,0,0,.35); text-align: center; }
+    .pin-gate-mark { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto 22px; border-radius: 16px; background: #c9f36b; color: #0b1220; }
+    .pin-gate-mark svg { width: 25px; height: 25px; }
+    .pin-gate-card h1 { margin: 0 0 10px; color: #fff; font-size: 25px; line-height: 1.15; }
+    .pin-gate-card p { margin: 0 0 24px; color: #aebbd0; font-size: 14px; line-height: 1.55; }
+    .pin-gate-form { display: flex; gap: 10px; }
+    .pin-gate-form input { min-width: 0; flex: 1; padding: 13px 14px; border: 1px solid rgba(255,255,255,.18); border-radius: 11px; outline: none; background: rgba(255,255,255,.08); color: #fff; font: inherit; letter-spacing: .12em; text-transform: uppercase; }
+    .pin-gate-form input:focus { border-color: #c9f36b; box-shadow: 0 0 0 3px rgba(201,243,107,.15); }
+    .pin-gate-form button { padding: 13px 17px; border: 0; border-radius: 11px; background: #c9f36b; color: #0b1220; font: inherit; font-weight: 800; cursor: pointer; }
+    .pin-gate-form button:disabled { opacity: .6; cursor: wait; }
+    .pin-gate-message { min-height: 22px; margin: 14px 0 0; color: #ffb4b4; font-size: 13px; }
+    @media (max-width: 520px) { .pin-gate-card { padding: 26px 20px; } .pin-gate-form { flex-direction: column; } }
+</style>
 </head>
-<body>
+<body class="pin-locked">
+  <section id="pin-gate" aria-labelledby="pin-gate-title">
+    <div class="pin-gate-card">
+      <div class="pin-gate-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div>
+      <h1 id="pin-gate-title">Закрытый раздел</h1>
+      <p>Введите PIN-код базы знаний, чтобы продолжить.</p>
+      <form class="pin-gate-form" id="pin-gate-form" autocomplete="off">
+        <input id="pin-gate-input" type="password" inputmode="text" autocomplete="one-time-code" maxlength="24" placeholder="PIN-код" aria-label="PIN-код" required>
+        <button id="pin-gate-submit" type="submit">Войти</button>
+      </form>
+      <div class="pin-gate-message" id="pin-gate-message" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
 
   <button class="sidebar-open-fab" id="sidebar-open-fab" title="Открыть меню">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -78,6 +108,37 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.11/dist/purify.min.js"></script>
+
+  <script>
+    (() => {
+      const PIN_GATE_KEY = 'project_kb_pin_verified_v1';
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const gate = document.getElementById('pin-gate');
+      const form = document.getElementById('pin-gate-form');
+      const input = document.getElementById('pin-gate-input');
+      const submit = document.getElementById('pin-gate-submit');
+      const message = document.getElementById('pin-gate-message');
+      const unlock = () => { document.body.classList.remove('pin-locked'); gate.hidden = true; };
+      if (sessionStorage.getItem(PIN_GATE_KEY) === '1') { unlock(); return; }
+      input.focus();
+      input.addEventListener('input', () => { input.value = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24); message.textContent = ''; });
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const pin = input.value.trim().toUpperCase();
+        if (!/^[A-Z0-9-]{4,24}$/.test(pin)) { message.textContent = 'Введите корректный PIN-код.'; return; }
+        submit.disabled = true; message.textContent = 'Проверяем код…';
+        try {
+          const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          const { data, error } = await client.functions.invoke('verify-pin', { body: { action: 'verify', kind: 'kb', pin } });
+          input.value = '';
+          if (error || data?.ok !== true) { message.textContent = error?.context?.status === 429 ? 'Слишком много попыток. Повторите позже.' : 'Неверный PIN-код.'; submit.disabled = false; return; }
+          sessionStorage.setItem(PIN_GATE_KEY, '1'); unlock();
+        } catch (error) { input.value = ''; message.textContent = 'Сервис проверки PIN временно недоступен.'; submit.disabled = false; }
+      });
+    })();
+  </script>
+
   <script>
     const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';

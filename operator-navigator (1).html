@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="Внутренний навигатор операторских скриптов колл-центра">
+  <title>Навигатор оператора</title>
+  <link rel="stylesheet" href="operator-navigator.css">
+<style>
+    body.pin-locked > *:not(#pin-gate) { visibility: hidden; }
+    #pin-gate { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; padding: 24px; background: #0b1220; color: #fff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    #pin-gate[hidden] { display: none; }
+    .pin-gate-card { width: min(100%, 430px); padding: 34px; border: 1px solid rgba(255,255,255,.12); border-radius: 24px; background: linear-gradient(145deg, #152238, #0f1728); box-shadow: 0 24px 80px rgba(0,0,0,.35); text-align: center; }
+    .pin-gate-mark { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto 22px; border-radius: 16px; background: #c9f36b; color: #0b1220; }
+    .pin-gate-mark svg { width: 25px; height: 25px; }
+    .pin-gate-card h1 { margin: 0 0 10px; color: #fff; font-size: 25px; line-height: 1.15; }
+    .pin-gate-card p { margin: 0 0 24px; color: #aebbd0; font-size: 14px; line-height: 1.55; }
+    .pin-gate-form { display: flex; gap: 10px; }
+    .pin-gate-form input { min-width: 0; flex: 1; padding: 13px 14px; border: 1px solid rgba(255,255,255,.18); border-radius: 11px; outline: none; background: rgba(255,255,255,.08); color: #fff; font: inherit; letter-spacing: .12em; text-transform: uppercase; }
+    .pin-gate-form input:focus { border-color: #c9f36b; box-shadow: 0 0 0 3px rgba(201,243,107,.15); }
+    .pin-gate-form button { padding: 13px 17px; border: 0; border-radius: 11px; background: #c9f36b; color: #0b1220; font: inherit; font-weight: 800; cursor: pointer; }
+    .pin-gate-form button:disabled { opacity: .6; cursor: wait; }
+    .pin-gate-message { min-height: 22px; margin: 14px 0 0; color: #ffb4b4; font-size: 13px; }
+    @media (max-width: 520px) { .pin-gate-card { padding: 26px 20px; } .pin-gate-form { flex-direction: column; } }
+</style>
+</head>
+<body class="pin-locked">
+  <section id="pin-gate" aria-labelledby="pin-gate-title">
+    <div class="pin-gate-card">
+      <div class="pin-gate-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div>
+      <h1 id="pin-gate-title">Закрытый раздел</h1>
+      <p>Введите PIN-код базы знаний, чтобы продолжить.</p>
+      <form class="pin-gate-form" id="pin-gate-form" autocomplete="off">
+        <input id="pin-gate-input" type="password" inputmode="text" autocomplete="one-time-code" maxlength="24" placeholder="PIN-код" aria-label="PIN-код" required>
+        <button id="pin-gate-submit" type="submit">Войти</button>
+      </form>
+      <div class="pin-gate-message" id="pin-gate-message" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="m8 5.25 8 4.5v6.5"/><path d="M4 7.5 12 12l8-4.5"/><path d="M12 12v9"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">Навигатор</div>
+          <div class="brand-caption">рабочее место оператора</div>
+        </div>
+      </div>
+
+      <div class="sidebar-label">Маршруты</div>
+      <nav class="route-nav" id="route-nav" aria-label="Маршруты сценариев"></nav>
+
+      <div class="sidebar-footer">
+        <div class="status-dot"><span></span> Справочник готов</div>
+        <div class="sidebar-note">Контент подготовлен по регламентам, рабочим чатам и скриптам МБТ.</div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobile-menu" type="button" aria-label="Открыть меню">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        </button>
+        <div class="crumbs" id="crumbs"></div>
+        <div class="topbar-actions">
+          <label class="search-box" for="route-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            <input id="route-search" type="search" placeholder="Найти сценарий" autocomplete="off">
+            <span class="shortcut">/</span>
+          </label>
+          <button class="icon-button" id="rules-button" type="button" title="Показать обязательные правила" aria-label="Показать обязательные правила">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 10v6M12 7h.01"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="hero-strip" aria-label="Главные правила">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="eyebrow-dot"></span> Быстрый маршрут звонка</div>
+            <h1>От первого вопроса<br><em>до правильного подтипа</em></h1>
+            <p>Выберите ситуацию — навигатор покажет только нужные вопросы, реплику и финальное действие по карте.</p>
+          </div>
+          <div class="hero-metrics">
+            <div class="metric"><strong id="route-count">0</strong><span>маршрутов</span></div>
+            <div class="metric-divider"></div>
+            <div class="metric"><strong>4</strong><span>базовых правила</span></div>
+          </div>
+        </section>
+
+        <div class="rule-ribbon" id="rule-ribbon">
+          <div class="rule-ribbon-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 7v5c0 4.5 3.4 7.6 8 9 4.6-1.4 8-4.5 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <div><strong>Перед любым оформлением</strong><span>Имя → город → стоп-факторы → условия только из ЛК</span></div>
+          <button class="ribbon-close" id="ribbon-close" type="button" aria-label="Скрыть правила"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+        </div>
+
+        <section id="app-view" aria-live="polite"></section>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    (() => {
+      const PIN_GATE_KEY = 'project_kb_pin_verified_v1';
+      const SUPABASE_URL = 'https://ujsakubqnirmpdwmmtju.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqc2FrdWJxbmlybXBkd21tdGp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNDUwOTEsImV4cCI6MjA5ODgyMTA5MX0.8YZCsCpjroirJvKuQie76qXtpOvpmpE7dQoz2G502p4';
+      const gate = document.getElementById('pin-gate');
+      const form = document.getElementById('pin-gate-form');
+      const input = document.getElementById('pin-gate-input');
+      const submit = document.getElementById('pin-gate-submit');
+      const message = document.getElementById('pin-gate-message');
+      const unlock = () => { document.body.classList.remove('pin-locked'); gate.hidden = true; };
+      if (sessionStorage.getItem(PIN_GATE_KEY) === '1') { unlock(); return; }
+      input.focus();
+      input.addEventListener('input', () => { input.value = input.value.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 24); message.textContent = ''; });
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const pin = input.value.trim().toUpperCase();
+        if (!/^[A-Z0-9-]{4,24}$/.test(pin)) { message.textContent = 'Введите корректный PIN-код.'; return; }
+        submit.disabled = true; message.textContent = 'Проверяем код…';
+        try {
+          const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          const { data, error } = await client.functions.invoke('verify-pin', { body: { action: 'verify', kind: 'kb', pin } });
+          input.value = '';
+          if (error || data?.ok !== true) { message.textContent = error?.context?.status === 429 ? 'Слишком много попыток. Повторите позже.' : 'Неверный PIN-код.'; submit.disabled = false; return; }
+          sessionStorage.setItem(PIN_GATE_KEY, '1'); unlock();
+        } catch (error) { input.value = ''; message.textContent = 'Сервис проверки PIN временно недоступен.'; submit.disabled = false; }
+      });
+    })();
+  </script>
+  <script src="operator-navigator.js"></script>
+</body>
+</html>
