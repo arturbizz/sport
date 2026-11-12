@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Викторина по базе знаний Sport</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #dff0ff 0%, #e8e4ff 40%, #ffe6f1 70%, #d8f5ee 100%);
+    min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px;
+  }
+  .quiz-container {
+    background: rgba(255,255,255,0.85); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.9); border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(80,60,150,0.2);
+    padding: 32px; max-width: 720px; width: 100%;
+  }
+  h1 { color: #3a2b68; font-size: 24px; margin-bottom: 8px; text-align: center; }
+  .subtitle { color: #6b6280; font-size: 13px; text-align: center; margin-bottom: 24px; }
+  .progress { background: #eef2ff; border-radius: 20px; height: 8px; margin-bottom: 24px; overflow: hidden; }
+  .progress-bar { background: linear-gradient(90deg, #8f6fff, #ff8fbf); height: 100%; transition: width 0.3s; }
+  .meta { display: flex; justify-content: space-between; font-size: 12px; color: #6b6280; margin-bottom: 16px; }
+  .difficulty { padding: 3px 10px; border-radius: 12px; font-weight: bold; }
+  .difficulty.easy { background: #c8f5dd; color: #1a6b3d; }
+  .difficulty.medium { background: #ffe9b8; color: #7a5b00; }
+  .difficulty.hard { background: #ffd0cf; color: #8a1a1a; }
+  .difficulty.super { background: #e0c8ff; color: #4a008a; }
+  .question { font-size: 18px; color: #2c2544; font-weight: 600; margin: 20px 0; line-height: 1.4; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    background: #f7fbff; border: 2px solid #c5ddf5; border-radius: 14px;
+    padding: 14px 18px; font-size: 15px; color: #2c2544; cursor: pointer;
+    text-align: left; transition: all 0.2s;
+  }
+  .option:hover { background: #e5f6ff; border-color: #55bde3; transform: translateX(4px); }
+  .option.correct { background: #c8f5dd; border-color: #3ecfa0; }
+  .option.wrong { background: #ffd0cf; border-color: #e74c3c; }
+  .option:disabled { cursor: not-allowed; }
+  .source { margin-top: 16px; font-size: 11px; color: #8a8396; font-style: italic; }
+  .next-btn {
+    background: linear-gradient(135deg, #8f6fff, #ff8fbf); color: white;
+    border: none; border-radius: 14px; padding: 14px 28px; font-size: 15px;
+    font-weight: bold; cursor: pointer; margin-top: 20px; width: 100%;
+    transition: opacity 0.2s;
+  }
+  .next-btn:hover { opacity: 0.9; }
+  .next-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .result { text-align: center; }
+  .result h2 { color: #3a2b68; margin-bottom: 16px; }
+  .score { font-size: 56px; font-weight: bold; background: linear-gradient(135deg, #8f6fff, #ff8fbf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .result-text { color: #6b6280; margin: 16px 0 24px; }
+  .restart-btn { background: #e5f6ff; color: #12638f; border: 2px solid #55bde3; border-radius: 14px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="quiz-container" id="app"></div>
+
+<script>
+const questions = [
+  {
+    "question": "Какой алгоритм перезвона установлен для клиентов, которые не берут трубку? Сначала одна попытка, затем через сколько минут вторая и через сколько часов третья?",
+    "options": [
+      "1 минута, 15 минут, 1 час",
+      "1 минута, 30 минут, 2 часа",
+      "1 минута, 15 минут, 1 час",
+      "5 минут, 30 минут, 2 часа"
+    ],
+    "correct": 2,
+    "difficulty": "easy",
+    "source_article_id": "d5bf126c-4a2d-4623-8e2f-ca9936fd7228",
+    "source_article_title": "Правила перезвона: Недозвон и ПЦК"
+  },
+  {
+    "question": "Что нельзя менять при переводе действующего клиента в другой центр обслуживания в системе ERP?",
+    "options": [
+      "Пол поля 'ТО'",
+      "Поле 'Город'",
+      "Поле 'Контрагент'",
+      "Поле 'Телефон'"
+    ],
+    "correct": 0,
+    "difficulty": "medium",
+    "source_article_id": "1f45265a-3d20-4d7d-853c-7a233305cdbb",
+    "source_article_title": "Перевод действующего клиента (Текучка)"
+  },
+  {
+    "question": "Какие действия нужно предпринять, если в карточке ERP не удается выбрать нужный город?",
+    "options": [
+      "Выбрать другой город вручную",
+      "Обновить страницу и попробовать снова",
+      "Написать руководителю по специальному шаблону",
+      "Позвонить клиенту и уточнить адрес"
+    ],
+    "correct": 2,
+    "difficulty": "easy",
+    "source_article_id": "07e509aa-1a5b-46d3-9b66-46cecbc3215f",
+    "source_article_title": "Ошибка: не выбирается нужный город в карточке"
+  },
+  {
+    "question": "Какую услугу нельзя предоставлять под видом перепрошивки телевизора, даже если клиент настаивает?",
+    "options": [
+      "Настройка каналов",
+      "Настройка VPN",
+      "Настройка YouTube",
+      "Откат на старую версию прошивки"
+    ],
+    "correct": 3,
+    "difficulty": "medium",
+    "source_article_id": "c3a32c52-e86b-4654-9f5c-b0ab8d667789",
+    "source_article_title": "Перепрошивка ТВ: как правильно оформить?"
+  },
+  {
+    "question": "Клиент требует точную стоимость до приезда мастера. Какой ответ является правильным?",
+    "options": [
+      "Мастер всегда называет точную цену перед визитом",
+      "Стоимость зависит от класса оборудования и выбранных запчастей, точную цену скажет мастер после диагностики",
+      "Цена фиксированная и одинаковая для всех клиентов",
+      "Назвать среднюю цену по региону"
+    ],
+    "correct": 1,
+    "difficulty": "medium",
+    "source_article_id": "cdd701ff-1565-4edc-bac5-7136525391c0",
+    "source_article_title": "Q&A: Клиент требует точную стоимость до выезда мастера"
+  }
+];
+
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+
+const difficultyLabels = {
+  easy: "Легко", medium: "Средне", hard: "Сложно", super: "Супер-вопрос"
+};
+
+function render() {
+  const app = document.getElementById('app');
+  if (currentIndex >= questions.length) {
+    const percent = Math.round((score / questions.length) * 100);
+    let verdict = "Попробуй ещё раз";
+    if (percent === 100) verdict = "Идеально! Ты знаешь проект наизусть";
+    else if (percent >= 70) verdict = "Отличный результат!";
+    else if (percent >= 40) verdict = "Неплохо, но есть что подтянуть";
+    app.innerHTML = `
+      <div class="result">
+        <h2>Викторина завершена</h2>
+        <div class="score">${score} / ${questions.length}</div>
+        <div class="result-text">${verdict} (${percent}%)</div>
+        <button class="restart-btn" onclick="restart()">Пройти заново</button>
+      </div>`;
+    return;
+  }
+
+  const q = questions[currentIndex];
+  const progress = ((currentIndex) / questions.length) * 100;
+  const diffClass = q.difficulty || 'easy';
+  const diffLabel = difficultyLabels[diffClass] || diffClass;
+
+  app.innerHTML = `
+    <h1>Викторина по базе знаний Sport</h1>
+    <div class="subtitle">Вопрос ${currentIndex + 1} из ${questions.length}</div>
+    <div class="progress"><div class="progress-bar" style="width: ${progress}%"></div></div>
+    <div class="meta">
+      <span>Вопрос ${currentIndex + 1}</span>
+      <span class="difficulty ${diffClass}">${diffLabel}</span>
+    </div>
+    <div class="question">${q.question}</div>
+    <div class="options">
+      ${q.options.map((opt, i) => `<button class="option" data-index="${i}" onclick="selectAnswer(${i})">${opt}</button>`).join('')}
+    </div>
+    <div class="source">Источник: ${q.source_article_title || 'статья базы знаний'}</div>
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()" disabled>Следующий вопрос →</button>
+  `;
+  answered = false;
+}
+
+function selectAnswer(index) {
+  if (answered) return;
+  answered = true;
+  const q = questions[currentIndex];
+  const buttons = document.querySelectorAll('.option');
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.correct) btn.classList.add('correct');
+    else if (i === index) btn.classList.add('wrong');
+  });
+  if (index === q.correct) score++;
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion() {
+  currentIndex++;
+  render();
+}
+
+function restart() {
+  currentIndex = 0;
+  score = 0;
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
