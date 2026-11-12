@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Пустая панель справа в Google Таблицах — как убрать</title>
+<meta name="description" content="Интерактивная справка: как закрыть пустую боковую панель в Google Таблицах и почему она открывается снова после перезагрузки.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='2' width='24' height='28' rx='4' fill='%230F9D58'/%3E%3Cpath d='M10 12h12M10 17h12M10 22h12M16 12v10' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============ ПАЛИТРА: выведена из Google Таблиц ============ */
+:root{
+  --green:#0F9D58; --green-deep:#0D652D; --green-ink:#0B3D21; --green-dark:#188038;
+  --blue:#1A73E8; --blue-deep:#174EA6; --blue-tint:#E8F0FE;
+  --red:#EA4335; --red-deep:#C5221F; --red-tint:#FCE8E6;
+  --amber:#F9AB00; --amber-ink:#7A4F00; --amber-tint:#FEF3D9; --yellow:#FBBC04;
+  --mint:#E6F4EA; --mint2:#D9EAD3; --orange:#FCE5CD;
+  --paper:#F6F8F6; --surface:#FFFFFF; --ink:#1C2B22; --muted:#54655B; --line:#DCE5DC;
+  --gl:#E2E8E2; --scrim:rgba(11,61,33,.45);
+  --ease:cubic-bezier(.22,.9,.3,1);
+  --nav-h:64px;
+  --shadow:0 10px 30px rgba(11,61,33,.10), 0 2px 6px rgba(11,61,33,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scrollbar-color:var(--green-dark) #E7F0E7;scrollbar-width:thin}
+body{
+  font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:var(--paper);color:var(--ink);line-height:1.55;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:#E7F0E7;border-radius:8px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--green),var(--green-dark));border-radius:8px;border:2px solid #E7F0E7}
+::-webkit-scrollbar-thumb:hover{background:var(--green-deep)}
+::selection{background:var(--mint2);color:var(--green-ink)}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+a{color:var(--blue-deep)}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:6px}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ic-fill{fill:currentColor;stroke:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ============ ФОН: аврора + зерно ============ */
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;
+  background:
+    radial-gradient(900px 520px at 8% -5%, rgba(15,157,88,.14), transparent 60%),
+    radial-gradient(800px 500px at 95% 12%, rgba(26,115,232,.10), transparent 60%),
+    radial-gradient(700px 600px at 50% 110%, rgba(249,171,0,.10), transparent 60%),
+    linear-gradient(180deg,#F2F8F2 0%, #F6F8F6 40%, #F6F8F6 100%);
+}
+.blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5}
+.blob.b1{width:480px;height:480px;left:-140px;top:-120px;background:radial-gradient(circle,#B7E4C7,transparent 70%);animation:drift1 26s ease-in-out infinite alternate}
+.blob.b2{width:420px;height:420px;right:-120px;top:220px;background:radial-gradient(circle,#C6DAFB,transparent 70%);animation:drift2 32s ease-in-out infinite alternate}
+.blob.b3{width:380px;height:380px;left:34%;top:640px;background:radial-gradient(circle,#FDE7B3,transparent 70%);animation:drift3 38s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(90px,60px) scale(1.12)}}
+@keyframes drift2{to{transform:translate(-70px,90px) scale(.92)}}
+@keyframes drift3{to{transform:translate(60px,-70px) scale(1.08)}}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============ НАВИГАЦИЯ ============ */
+.nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:100;
+  display:flex;align-items:center;gap:18px;padding:0 clamp(14px,4vw,36px);
+  background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;transition:border-color .3s, box-shadow .3s;
+}
+.nav.scrolled{border-bottom-color:var(--line);box-shadow:0 6px 24px rgba(11,61,33,.07)}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-weight:800;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+.logo-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--green),var(--green-deep));display:grid;place-items:center;color:#fff;box-shadow:0 4px 12px rgba(15,157,88,.35)}
+.logo-mark .ic{width:18px;height:18px}
+.logo small{display:block;font-weight:500;font-size:10.5px;color:var(--muted);letter-spacing:.02em}
+.nav-links{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.nav-links::-webkit-scrollbar{display:none}
+.nav-link{position:relative;text-decoration:none;color:var(--muted);font-weight:600;font-size:13.5px;padding:8px 12px;border-radius:9px;white-space:nowrap;transition:color .2s,background .2s}
+.nav-link:hover{color:var(--green-ink);background:var(--mint)}
+.nav-link.active{color:var(--green-deep)}
+.nav-link.active::after{content:'';position:absolute;left:12px;right:12px;bottom:2px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--blue))}
+.nav-cta{margin-left:6px}
+
+/* ============ КНОПКИ ============ */
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:11px;font-weight:700;font-size:14px;padding:11px 18px;text-decoration:none;transition:transform .18s var(--ease),box-shadow .18s,background .2s;white-space:nowrap}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:translateY(0)}
+.btn-green{background:linear-gradient(135deg,var(--green-dark),var(--green-deep));color:#fff;box-shadow:0 6px 18px rgba(13,101,45,.30)}
+.btn-green:hover{box-shadow:0 10px 26px rgba(13,101,45,.38)}
+.btn-blue{background:linear-gradient(135deg,var(--blue),var(--blue-deep));color:#fff;box-shadow:0 6px 18px rgba(26,115,232,.28)}
+.btn-ghost{background:var(--surface);color:var(--green-ink);border:1.5px solid var(--line)}
+.btn-ghost:hover{border-color:var(--green);background:var(--mint)}
+.btn-sm{padding:8px 13px;font-size:12.5px;border-radius:9px}
+.btn[disabled]{opacity:.55;pointer-events:none}
+
+/* ============ КОНТЕЙНЕР / СЕКЦИИ ============ */
+.wrap{max-width:1240px;margin:0 auto;padding:0 clamp(14px,4vw,36px)}
+section{scroll-margin-top:calc(var(--nav-h) + 20px);position:relative}
+.sec-head{max-width:760px;margin-bottom:26px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--green-deep);background:var(--mint);border:1px solid var(--mint2);padding:6px 12px;border-radius:99px}
+.eyebrow.blue{color:var(--blue-deep);background:var(--blue-tint);border-color:#CFE0FC}
+.eyebrow.amber{color:var(--amber-ink);background:var(--amber-tint);border-color:#F5DFA8}
+h1,h2,h3{letter-spacing:-.02em;line-height:1.15}
+h2{font-size:clamp(24px,3.4vw,34px);font-weight:800;margin:14px 0 10px}
+.sec-sub{color:var(--muted);font-size:15.5px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+
+/* ============ HERO ============ */
+.hero{padding:calc(var(--nav-h) + 52px) 0 64px;position:relative}
+.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:44px;align-items:center}
+.hero h1{font-size:clamp(30px,4.6vw,50px);font-weight:900;margin:18px 0 16px}
+.grad{background:linear-gradient(92deg,var(--green-deep) 10%,var(--green) 45%,var(--blue) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p.lead{font-size:clamp(15px,1.6vw,17.5px);color:var(--muted);max-width:560px}
+.hero-ctas{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+.hero-facts{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+.fact{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--green-ink);background:rgba(255,255,255,.75);border:1px solid var(--line);padding:7px 12px;border-radius:99px}
+.fact .dot{width:8px;height:8px;border-radius:50%}
+.quick-card{padding:22px;position:relative;overflow:hidden}
+.quick-card::before{content:'';position:absolute;inset:0 0 auto 0;height:5px;background:linear-gradient(90deg,var(--green),var(--blue),var(--amber))}
+.quick-card h3{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.quick-card h3 .ic{color:var(--green-dark)}
+.quick-card p{font-size:13.5px;color:var(--muted)}
+.quick-card p b{color:var(--ink)}
+.quick-svg{width:100%;height:auto;margin:14px 0 4px;display:block}
+.quick-note{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:12.5px;color:var(--green-ink);background:var(--mint);border:1px solid var(--mint2);border-radius:10px;padding:9px 12px}
+.quick-note .ic{width:15px;height:15px;margin-top:2px;color:var(--green-dark)}
+.chip-float{position:absolute;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 14px;font-size:12.5px;font-weight:700;box-shadow:var(--shadow);will-change:transform;z-index:1}
+.chip-float .ic{width:16px;height:16px}
+.chip-float.c1{top:110px;right:44%;color:var(--amber-ink)}
+.chip-float.c2{bottom:40px;right:6%;color:var(--blue-deep)}
+.chip-float.c3{top:70px;right:2%;color:var(--green-deep)}
+.cal-badge{width:20px;height:20px;border-radius:5px;background:var(--blue);color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center}
+
+/* staged entrance */
+.st{opacity:0;transform:translateY(20px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+body.loaded .st{opacity:1;transform:none}
+body.loaded .st.d1{transition-delay:.08s}body.loaded .st.d2{transition-delay:.18s}
+body.loaded .st.d3{transition-delay:.30s}body.loaded .st.d4{transition-delay:.42s}
+body.loaded .st.d5{transition-delay:.54s}
+
+/* reveal on scroll */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+
+/* ============ ДЕМО ============ */
+#demo{padding:56px 0 72px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.65) 18%,rgba(255,255,255,.65) 82%,transparent)}
+.demo-layout{display:grid;grid-template-columns:minmax(0,1fr) 302px;gap:18px;align-items:start}
+.demo-scroll{overflow-x:auto;border-radius:16px;padding-bottom:4px}
+.demo-scroll::-webkit-scrollbar{height:9px}
+.mock{position:relative;min-width:860px;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);font-size:12px;--panel-w:210px;--demo-h:430px}
+.mock-topbar{display:flex;align-items:center;gap:10px;padding:8px 12px 4px}
+.mock-logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--green),var(--green-deep));display:grid;place-items:center;color:#fff;flex:none}
+.mock-logo .ic{width:16px;height:16px}
+.mock-title{min-width:0}
+.mock-title b{font-size:13px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px}
+.mock-title .mini{display:flex;gap:9px;color:#8A948C;font-size:10.5px;font-weight:500}
+.mock-title .mini .ic{width:12px;height:12px}
+.mock-top-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.avatars{display:flex}
+.av{width:24px;height:24px;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:800;margin-left:-6px}
+.share-btn{display:flex;align-items:center;gap:6px;background:#C2E7FF;color:#001D35;border-radius:99px;padding:6px 12px;font-weight:600;font-size:11.5px}
+.share-btn .ic{width:13px;height:13px}
+.plan-btn{background:var(--blue-tint);color:var(--blue-deep);border-radius:99px;padding:6px 12px;font-weight:600;font-size:11.5px}
+.mock-menubar{display:flex;align-items:center;gap:2px;padding:2px 12px 4px;color:#3C463E;font-size:12px;position:relative}
+.mock-menubar span{padding:3px 8px;border-radius:6px}
+.ext-wrap{position:relative}
+.ext-btn{background:none;border:none;font-size:12px;color:#3C463E;padding:3px 8px;border-radius:6px;display:flex;align-items:center;gap:3px}
+.ext-btn:hover,.ext-btn[aria-expanded="true"]{background:var(--mint)}
+.ext-menu{position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 14px 34px rgba(11,61,33,.18);min-width:250px;padding:6px;display:none;z-index:60}
+.ext-menu.open{display:block;animation:pop .18s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}}
+.ext-menu button{display:flex;width:100%;text-align:left;background:none;border:none;padding:9px 10px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--ink);gap:8px;align-items:center}
+.ext-menu button:hover{background:var(--mint)}
+.ext-menu button small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+.ext-menu .ic{width:15px;height:15px;color:var(--green-dark)}
+.mock-toolbar{display:flex;align-items:center;gap:2px;margin:0 12px 6px;background:#EDF2FA;border-radius:99px;padding:4px 12px;color:#40494F;overflow:hidden}
+.tb{display:grid;place-items:center;min-width:24px;height:24px;border-radius:6px;font-size:11.5px;font-weight:600;padding:0 4px}
+.tb .ic{width:14px;height:14px}
+.tb-txt{font-size:11px}
+.tb-sep{width:1px;height:16px;background:#C9D3E4;margin:0 5px;flex:none}
+.mock-body{display:flex;height:var(--demo-h);border-top:1px solid var(--gl)}
+.sheet-area{flex:1;min-width:0;display:flex;flex-direction:column}
+.formula-bar{display:flex;align-items:center;height:30px;border-bottom:1px solid var(--gl);color:#5A655D;font-size:11.5px;flex:none}
+.name-box{width:74px;text-align:center;border-right:1px solid var(--gl);font-weight:600;color:var(--ink)}
+.fx{padding:0 10px;font-style:italic;font-family:Georgia,serif;color:#8A948C}
+.formula-input{flex:1;height:100%}
+.grid-scroll{flex:1;overflow:auto;overscroll-behavior:contain}
+.grid-scroll::-webkit-scrollbar{width:9px;height:9px}
+.grid-scroll::-webkit-scrollbar-track{background:#EFF4EF}
+.grid-scroll::-webkit-scrollbar-thumb{background:#B9CDBB;border-radius:8px;border:2px solid #EFF4EF}
+.grid-scroll::-webkit-scrollbar-thumb:hover{background:var(--green-dark)}
+table.grid{border-collapse:separate;border-spacing:0;table-layout:fixed;width:1370px;font-size:11px;color:#26332B}
+.grid th,.grid td{border-right:1px solid var(--gl);border-bottom:1px solid var(--gl);padding:4px 6px;vertical-align:top;overflow:hidden;background:#fff}
+.grid .rn{width:36px;min-width:36px;background:#F8FAF8;color:#8A948C;text-align:center;font-weight:500;font-size:10.5px;position:sticky;left:0;z-index:2;vertical-align:middle}
+.grid thead .letters th,.grid thead .letters td{height:24px;padding:0 6px;line-height:23px;background:#F8FAF8;color:#5A655D;text-align:center;font-weight:600;position:sticky;top:0;z-index:4;vertical-align:middle}
+.grid thead .letters .rn{z-index:6}
+.grid thead .title-row td,.grid thead .title-row .rn{height:26px;position:sticky;top:24px;z-index:3;vertical-align:middle}
+.grid thead .title-row td{color:var(--red-deep);font-weight:700;font-size:11.5px;white-space:nowrap}
+.grid thead .head-row th{height:46px;position:sticky;top:50px;z-index:3;background:var(--mint2);font-weight:700;font-size:10.5px;text-align:left;vertical-align:middle}
+.grid thead .head-row .rn{background:#CFE0C8;z-index:5}
+.fhead{display:flex;align-items:center;gap:4px;line-height:1.2}
+.fhead::after{content:'';width:10px;height:10px;flex:none;margin-left:auto;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1 1h8L6 4.5V8L4 9V4.5z' fill='%235f6b60'/%3E%3C/svg%3E") no-repeat center}
+.grid tbody td{height:64px}
+.grid tbody .rn{height:64px}
+.grid td.num{background:var(--orange);font-weight:600;vertical-align:middle}
+.grid td.date{vertical-align:middle;color:#3C463E}
+.grid td.op{vertical-align:middle}
+.grid td.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;white-space:normal;line-height:1.35}
+.grid td.nowrap{white-space:nowrap;text-overflow:ellipsis;vertical-align:middle}
+.grid td.verdict{vertical-align:middle;text-align:center}
+.vchip{display:inline-grid;place-items:center;min-width:24px;height:20px;border-radius:6px;font-weight:800;font-size:11px;padding:0 6px}
+.vchip.d{background:var(--mint2);color:var(--green-ink)}
+.vchip.n{background:#F4C7C3;color:var(--red-deep)}
+.vpill{display:inline-block;width:34px;height:13px;border-radius:7px;background:#E3E7E3}
+.grid td.sel{outline:2px solid var(--blue);outline-offset:-2px;position:relative}
+.grid td.sel::after{content:'';position:absolute;right:-1px;bottom:-1px;width:6px;height:6px;background:var(--blue);border:1px solid #fff}
+.tabs-bar{display:flex;align-items:center;gap:2px;height:34px;border-top:1px solid var(--gl);background:#F8FAF8;padding:0 10px;flex:none;color:#5A655D}
+.tabs-bar .tbi{display:grid;place-items:center;width:26px;height:26px;border-radius:6px}
+.tabs-bar .tbi .ic{width:14px;height:14px}
+.stab{padding:5px 12px;font-size:11.5px;font-weight:600;border-radius:8px 8px 0 0;color:#5A655D;display:flex;gap:5px;align-items:center}
+.stab.active{background:var(--blue-tint);color:var(--blue-deep);box-shadow:inset 0 -3px 0 var(--blue)}
+.stab .caret{font-size:8px;opacity:.7}
+
+/* боковая панель */
+.side-panel{width:0;overflow:hidden;background:#fff;border-left:1px solid transparent;transition:width .5s var(--ease),border-color .3s;flex:none}
+.side-panel.open{width:var(--panel-w);border-left-color:var(--line)}
+.panel-inner{width:var(--panel-w);height:100%;display:flex;flex-direction:column}
+.panel-blank{flex:1;position:relative}
+.mock.hints .panel-blank{outline:2px dashed #C9D6C9;outline-offset:-8px;border-radius:8px}
+.mock.hints .panel-blank::after{content:'пустая панель';position:absolute;inset:0;display:grid;place-items:center;color:#A9B6AC;font-size:11px;font-weight:600;letter-spacing:.04em}
+.panel-head{display:flex;align-items:center;gap:8px;padding:12px 12px 10px;border-bottom:1px solid var(--gl);font-weight:700;font-size:13px;flex:none}
+.panel-head .ic{width:17px;height:17px}
+.panel-x{margin-left:auto;width:26px;height:26px;border-radius:50%;border:none;background:none;display:grid;place-items:center;color:#5A655D}
+.panel-x:hover{background:#EFF4EF;color:var(--ink)}
+.panel-x .ic{width:14px;height:14px}
+.panel-body{flex:1;overflow-y:auto;padding:12px;font-size:11.5px}
+.panel-body::-webkit-scrollbar{width:7px}
+.panel-body::-webkit-scrollbar-thumb{background:#C9D6C9;border-radius:6px}
+.keep-note{border-radius:10px;padding:10px 11px;margin-bottom:9px;border:1px solid #F0E2B0;background:#FFF8E1;font-weight:600;line-height:1.4}
+.keep-note small{display:block;font-weight:500;color:#9A8A4E;margin-top:4px;font-size:10px}
+.keep-note.white{background:#fff;border-color:var(--line)}
+.task{display:flex;gap:9px;align-items:flex-start;padding:9px 6px;border-bottom:1px solid #EFF4EF;font-weight:600;line-height:1.35;cursor:pointer}
+.task input{margin-top:2px;accent-color:var(--blue);width:14px;height:14px;cursor:pointer}
+.task.done span{text-decoration:line-through;color:#9AA79D}
+.task small{display:block;font-weight:500;color:#9AA79D;font-size:10px}
+.cal-head{font-weight:800;font-size:12.5px;margin-bottom:8px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center;font-size:10px}
+.cal-grid .wd{color:#9AA79D;font-weight:700;padding:3px 0}
+.cal-grid .day{padding:4px 0;border-radius:6px;font-weight:600;color:#3C463E}
+.cal-grid .day.today{background:var(--blue);color:#fff}
+.cal-grid .day.ev{position:relative}
+.cal-grid .day.ev::after{content:'';position:absolute;left:50%;bottom:1px;width:4px;height:4px;border-radius:50%;background:var(--red);transform:translateX(-50%)}
+.cal-event{margin-top:10px;background:var(--blue-tint);border-left:3px solid var(--blue);border-radius:6px;padding:7px 9px;font-weight:600;color:var(--blue-deep)}
+.cal-event small{display:block;font-weight:500;font-size:10px}
+.addon-load{display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px 8px;text-align:center;color:#8A948C;font-weight:600}
+.spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--mint2);border-top-color:var(--green);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.addon-chip{font-size:10px;font-weight:700;background:var(--amber-tint);color:var(--amber-ink);border:1px solid #F0DFA8;border-radius:99px;padding:4px 10px}
+.contact{display:flex;gap:9px;align-items:center;padding:8px 4px;border-bottom:1px solid #EFF4EF;font-weight:600}
+.contact .av{margin:0;border:none;width:26px;height:26px}
+.contact small{display:block;font-weight:500;color:#9AA79D;font-size:10px}
+.map-box{border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.map-cap{padding:8px 4px;font-weight:700;display:flex;gap:6px;align-items:center;color:var(--red-deep)}
+.map-cap .ic{width:14px;height:14px}
+
+/* полоса иконок + стрелка */
+.right-col{width:42px;flex:none;border-left:1px solid var(--gl);display:flex;flex-direction:column;align-items:center;background:#fff;transition:width .45s var(--ease),opacity .3s;overflow:hidden}
+.mock.is-collapsed .right-col{width:0;opacity:0;border-left-color:transparent}
+.icon-strip{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0}
+.app-btn{width:32px;height:32px;border-radius:50%;border:none;background:none;display:grid;place-items:center;color:#5A655D;position:relative;transition:background .2s}
+.app-btn:hover{background:#EFF4EF}
+.app-btn.active{background:var(--blue-tint)}
+.app-btn.active::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid rgba(26,115,232,.35)}
+.app-btn .ic{width:18px;height:18px}
+.app-btn.a-cal{color:var(--blue)} .app-btn.a-keep{color:var(--amber)} .app-btn.a-tasks{color:var(--blue)}
+.app-btn.a-contacts{color:var(--blue)} .app-btn.a-maps{color:var(--green-dark)}
+.app-btn.a-plus{color:#5A655D;margin-top:6px;border-top:none}
+.chev-btn{width:32px;height:30px;margin:4px 0 6px;border:none;background:none;border-radius:8px;display:grid;place-items:center;color:#5A655D;flex:none}
+.chev-btn:hover{background:#EFF4EF;color:var(--ink)}
+.chev-btn .ic{width:16px;height:16px}
+.restore-tab{position:absolute;right:8px;bottom:8px;width:34px;height:30px;border-radius:9px;border:1px solid var(--line);background:#fff;box-shadow:0 6px 18px rgba(11,61,33,.18);display:none;place-items:center;color:var(--green-deep);z-index:40}
+.restore-tab.show{display:grid;animation:pop .25s var(--ease)}
+.restore-tab .ic{width:16px;height:16px;transform:rotate(180deg)}
+.mock.hints .chev-btn{animation:ring 1.6s ease-out infinite}
+.mock.hints .restore-tab{animation:ring 1.6s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(15,157,88,.45)}70%{box-shadow:0 0 0 12px rgba(15,157,88,0)}100%{box-shadow:0 0 0 0 rgba(15,157,88,0)}}
+.spot{animation:spotring 1s ease-out 3 !important}
+@keyframes spotring{0%{box-shadow:0 0 0 0 rgba(26,115,232,.55)}70%{box-shadow:0 0 0 14px rgba(26,115,232,0)}100%{box-shadow:0 0 0 0 rgba(26,115,232,0)}}
+.reload-overlay{position:absolute;inset:0;background:rgba(255,255,255,.8);backdrop-filter:blur(3px);display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;font-weight:700;color:var(--green-ink);opacity:0;pointer-events:none;transition:opacity .3s;z-index:50}
+.reload-overlay.show{opacity:1;pointer-events:auto}
+
+/* статус-строка */
+.status-bar{display:flex;gap:11px;align-items:flex-start;margin-top:14px;background:var(--mint);border:1px solid var(--mint2);border-radius:13px;padding:13px 16px;font-size:13.5px;font-weight:600;color:var(--green-ink)}
+.status-bar .ic{width:18px;height:18px;margin-top:1px;color:var(--green-dark)}
+.status-bar[data-tone="warn"]{background:var(--amber-tint);border-color:#F0DFA8;color:var(--amber-ink)}
+.status-bar[data-tone="warn"] .ic{color:var(--amber)}
+.status-bar.flash{animation:statusflash .5s var(--ease)}
+@keyframes statusflash{0%{transform:scale(.985);opacity:.6}100%{transform:scale(1);opacity:1}}
+
+/* пульт управления */
+.rail{padding:18px;position:sticky;top:calc(var(--nav-h) + 16px);max-height:calc(100vh - var(--nav-h) - 32px);overflow-y:auto}
+.rail::-webkit-scrollbar{width:7px}
+.rail::-webkit-scrollbar-thumb{background:#C9D6C9;border-radius:6px}
+.rail h3{font-size:15px;font-weight:800;display:flex;gap:8px;align-items:center;margin-bottom:14px}
+.rail h3 .ic{color:var(--green-dark)}
+.rail-group{border-top:1px solid var(--line);padding:13px 0}
+.rail-group:first-of-type{border-top:none;padding-top:0}
+.rail-label{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.field{display:block;margin-bottom:11px}
+.field>span{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.field select{width:100%;border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px;font-weight:600;background:#fff;color:var(--ink)}
+.field select:hover{border-color:var(--green)}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;cursor:pointer;font-size:12.5px;font-weight:600}
+.switch-row small{display:block;font-weight:500;color:var(--muted);font-size:10.5px;font-family:'JetBrains Mono',monospace}
+.switch{position:relative;width:40px;height:22px;flex:none}
+.switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:2}
+.switch i{display:block;width:40px;height:22px;border-radius:12px;background:#C7D4C7;transition:background .25s;position:relative}
+.switch i::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);transition:left .25s var(--ease)}
+.switch input:checked+i{background:var(--green)}
+.switch input:checked+i::after{left:21px}
+.switch input:focus-visible+i{outline:2px solid var(--blue);outline-offset:2px}
+.range-row{padding:6px 0}
+.range-row .rl{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;margin-bottom:4px}
+.range-row output{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--green-deep);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--green);height:22px;cursor:pointer;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:4px;background:linear-gradient(90deg,var(--mint2),#CFE0FC)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:var(--green-dark);border:3px solid #fff;box-shadow:0 1px 5px rgba(11,61,33,.35);margin-top:-5.5px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.btn-row .btn{flex:1;justify-content:center}
+.rail .btn{width:100%;justify-content:center;margin-top:8px}
+.rail .btn-row .btn{margin-top:0}
+
+/* ============ СПОСОБЫ ============ */
+#methods{padding:72px 0;background:linear-gradient(180deg,transparent,rgba(232,240,254,.5) 25%,rgba(232,240,254,.5) 75%,transparent)}
+.methods-layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:36px;align-items:start}
+.methods-intro{position:sticky;top:calc(var(--nav-h) + 24px)}
+.methods-intro .note{margin-top:18px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--green);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--muted)}
+.methods-intro .note b{color:var(--ink)}
+.method-card{display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px;padding:22px;margin-bottom:16px;align-items:center;transition:transform .25s var(--ease),box-shadow .25s}
+.method-card:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(11,61,33,.14)}
+.method-fig{border-radius:12px;background:linear-gradient(135deg,#F4FAF4,#EDF3FB);border:1px solid var(--line);display:grid;place-items:center;padding:10px}
+.method-fig svg{width:100%;height:auto}
+.method-num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;color:#fff;font-weight:800;font-size:13px;margin-right:9px;vertical-align:-7px}
+.m1 .method-num{background:linear-gradient(135deg,var(--green),var(--green-deep))}
+.m2 .method-num{background:linear-gradient(135deg,var(--blue),var(--blue-deep))}
+.m3 .method-num{background:linear-gradient(135deg,var(--amber),#D98E00)}
+.method-card h3{font-size:17px;font-weight:800;margin-bottom:7px}
+.method-card p{font-size:13.5px;color:var(--muted);margin-bottom:12px}
+.method-card p b{color:var(--ink)}
+.method-tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:99px;margin-left:8px;vertical-align:2px}
+.m1 .method-tag{background:var(--mint);color:var(--green-deep)}
+.m2 .method-tag{background:var(--blue-tint);color:var(--blue-deep)}
+.m3 .method-tag{background:var(--amber-tint);color:var(--amber-ink)}
+.show-demo{background:none;border:none;color:var(--blue-deep);font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:6px;padding:4px 0}
+.show-demo .ic{width:15px;height:15px;transition:transform .2s}
+.show-demo:hover .ic{transform:translateX(4px)}
+
+/* ============ ДИАГНОСТИКА ============ */
+#diagnostics{padding:72px 0;background:linear-gradient(180deg,transparent,rgba(254,243,217,.45) 25%,rgba(254,243,217,.45) 75%,transparent)}
+.diag-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.tree-card{padding:24px}
+.tree-top{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.tree-top h3{font-size:16px;font-weight:800}
+.tree-dots{display:flex;gap:5px;margin-left:auto}
+.tree-dots i{width:8px;height:8px;border-radius:50%;background:#E3D9BE}
+.tree-dots i.on{background:var(--amber)}
+.tree-q{font-size:15.5px;font-weight:700;line-height:1.4;margin-bottom:16px;min-height:66px}
+.tree-opts{display:flex;flex-direction:column;gap:9px}
+.tree-opt{display:flex;align-items:center;gap:10px;text-align:left;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:13px 15px;font-size:13.5px;font-weight:700;color:var(--ink);transition:border-color .2s,background .2s,transform .15s}
+.tree-opt:hover{border-color:var(--amber);background:var(--amber-tint);transform:translateX(3px)}
+.tree-opt .ic{width:16px;height:16px;color:var(--amber)}
+.tree-back{background:none;border:none;color:var(--muted);font-weight:600;font-size:12.5px;margin-top:14px;display:inline-flex;gap:6px;align-items:center}
+.tree-back:hover{color:var(--ink)}
+.tree-result{border-radius:13px;padding:16px;margin-top:4px}
+.tree-result.warn{background:var(--amber-tint);border:1px solid #F0DFA8}
+.tree-result.info{background:var(--blue-tint);border:1px solid #CFE0FC}
+.tree-result.ok{background:var(--mint);border:1px solid var(--mint2)}
+.tree-result h4{font-size:15px;font-weight:800;display:flex;gap:9px;align-items:center;margin-bottom:7px}
+.tree-result h4 .ic{width:18px;height:18px}
+.tree-result p{font-size:13px;color:var(--ink);opacity:.85;margin-bottom:12px}
+.tree-result .btn-row{margin-top:0}
+.causes{position:sticky;top:calc(var(--nav-h) + 24px);display:flex;flex-direction:column;gap:18px}
+.cause{padding:22px;transition:box-shadow .3s}
+.cause.flash{animation:causeflash 1s ease-out 3}
+@keyframes causeflash{0%{box-shadow:0 0 0 0 rgba(249,171,0,.5)}70%{box-shadow:0 0 0 14px rgba(249,171,0,0)}100%{box-shadow:0 0 0 0 rgba(249,171,0,0)}}
+.cause-badge{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:99px;margin-bottom:11px}
+.cause.c-a .cause-badge{background:var(--amber-tint);color:var(--amber-ink)}
+.cause.c-b .cause-badge{background:var(--red-tint);color:var(--red-deep)}
+.cause h3{font-size:16.5px;font-weight:800;margin-bottom:10px}
+.cause ol{margin:0 0 4px 18px;font-size:13px;color:var(--muted)}
+.cause ol li{margin-bottom:7px}
+.cause ol b{color:var(--ink)}
+.cause .path{font-weight:700;color:var(--green-deep);white-space:nowrap}
+kbd{font-family:'JetBrains Mono',monospace;font-size:11px;background:#EFF4EF;border:1px solid var(--line);border-bottom-width:2.5px;border-radius:6px;padding:1.5px 6px;font-weight:600;color:var(--ink)}
+.code-wrap{position:relative;margin-top:13px}
+.code-wrap pre{background:#0E2417;color:#D7E8DC;border-radius:12px;padding:15px 16px;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.65;overflow-x:auto}
+.code-wrap pre::-webkit-scrollbar{height:7px}
+.code-wrap pre::-webkit-scrollbar-thumb{background:#2C5238;border-radius:6px}
+.code-wrap .cm{color:#8FBF9F}
+.code-wrap .hl{color:#FFD666;font-weight:600}
+.copy-btn{position:absolute;top:8px;right:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#D7E8DC;border-radius:8px;padding:5px 9px;font-size:11px;font-weight:700;display:flex;gap:6px;align-items:center}
+.copy-btn:hover{background:rgba(255,255,255,.2)}
+.copy-btn .ic{width:13px;height:13px}
+
+/* ============ FAQ ============ */
+#faq{padding:72px 0 84px;background:linear-gradient(180deg,transparent,rgba(230,244,234,.55) 30%,rgba(230,244,234,.55))}
+.faq-list{max-width:820px}
+.faq-item{margin-bottom:12px;overflow:hidden}
+.faq-q{width:100%;display:flex;align-items:center;gap:12px;background:none;border:none;text-align:left;padding:18px 20px;font-size:15px;font-weight:700;color:var(--ink)}
+.faq-q .pm{margin-left:auto;width:26px;height:26px;border-radius:50%;background:var(--mint);display:grid;place-items:center;color:var(--green-deep);transition:transform .35s var(--ease),background .25s;flex:none}
+.faq-q .pm .ic{width:14px;height:14px}
+.faq-item.open .pm{transform:rotate(45deg);background:var(--mint2)}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .4s var(--ease)}
+.faq-item.open .faq-a{grid-template-rows:1fr}
+.faq-a>div{overflow:hidden}
+.faq-a p{padding:0 20px 18px;font-size:13.5px;color:var(--muted);max-width:700px}
+.faq-a b{color:var(--ink)}
+
+/* ============ ФУТЕР ============ */
+footer{border-top:1px solid var(--line);background:#fff;padding:30px 0}
+.foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.foot p{font-size:12px;color:var(--muted);max-width:520px}
+.foot .btn{margin-left:auto}
+.to-top{background:none;border:none;color:var(--green-deep);font-weight:700;font-size:13px;display:inline-flex;gap:6px;align-items:center}
+.to-top .ic{width:15px;height:15px;transform:rotate(-90deg)}
+
+/* ============ ТОСТЫ ============ */
+#toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:9px;align-items:center;width:min(560px,calc(100vw - 32px));pointer-events:none}
+.toast{background:var(--green-ink);color:#EAF6EE;border-radius:12px;padding:12px 18px;font-size:13px;font-weight:600;box-shadow:0 14px 40px rgba(11,61,33,.4);display:flex;gap:10px;align-items:flex-start;animation:toastin .35s var(--ease);max-width:100%}
+.toast .ic{width:16px;height:16px;margin-top:1px;color:#7ED9A5;flex:none}
+.toast.out{animation:toastout .3s forwards}
+@keyframes toastin{from{opacity:0;transform:translateY(16px) scale(.96)}}
+@keyframes toastout{to{opacity:0;transform:translateY(10px) scale(.96)}}
+
+/* ============ АДАПТИВ ============ */
+@media (max-width:1080px){
+  .demo-layout{grid-template-columns:1fr}
+  .rail{position:static;max-height:none}
+  .methods-layout{grid-template-columns:1fr}
+  .methods-intro{position:static}
+  .diag-layout{grid-template-columns:1fr}
+  .causes{position:static}
+}
+@media (max-width:900px){
+  .hero-grid{grid-template-columns:1fr}
+  .chip-float{display:none}
+  .nav-cta{display:none}
+  .method-card{grid-template-columns:1fr}
+  .method-fig{max-width:240px}
+}
+@media (max-width:640px){
+  .hero{padding-top:calc(var(--nav-h) + 32px)}
+  .logo small{display:none}
+  .nav{gap:10px}
+  .btn{padding:10px 14px;font-size:13px}
+  .tree-q{min-height:0}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s !important;transition-duration:.001s !important;scroll-behavior:auto !important}
+}
+</style>
+</head>
+<body>
+
+<!-- SVG-спрайт -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M12 9v12"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></symbol>
+    <symbol id="i-paint" viewBox="0 0 24 24"><rect x="3" y="3" width="14" height="5" rx="1"/><path d="M17 5h3v6l-8 2v3"/><rect x="10" y="16" width="4" height="6" rx="1"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+    <symbol id="i-comment" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M6 20v-8M12 20V4M18 20v-5M3 20h18"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-keep" viewBox="0 0 24 24"><path d="M9 21h6M10 18h4M12 3a6 6 0 0 1 4 10.5c-.8.7-1 1.5-1 2.5h-6c0-1-.2-1.8-1-2.5A6 6 0 0 1 12 3z"/></symbol>
+    <symbol id="i-tasks" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.5 2.5L16 9.5"/></symbol>
+    <symbol id="i-contacts" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-5.5 8-5.5s6.5 1.5 8 5.5"/></symbol>
+    <symbol id="i-maps" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 21h16"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12.5 5 5L20 6.5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20zM12 10v4M12 17.5h.01"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.8 6.3.8-4.6 4.3 1.2 6.1L12 17l-5.6 3 1.2-6.1L3 9.6l6.3-.8z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="2" y="6" width="13" height="12" rx="2"/><path d="m15 10 7-3v10l-7-3"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h13M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18.5" cy="18" r="2"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13 4l-2 16"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 3h4v3a2 2 0 1 0 4 0h3v4h-3a2 2 0 1 0 0 4h3v4h-4v-3a2 2 0 1 0-4 0v3H9v-4H6a2 2 0 1 1 0-4h3V6h1z"/></symbol>
+  </defs>
+</svg>
+
+<div class="bg" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- НАВИГАЦИЯ -->
+<nav class="nav" id="nav" aria-label="Основная навигация">
+  <a class="logo" href="#top">
+    <span class="logo-mark"><svg class="ic"><use href="#i-grid"/></svg></span>
+    <span>Таблицы · Справка<small>пустая панель справа</small></span>
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="#demo" data-sec="demo">Демо</a>
+    <a class="nav-link" href="#methods" data-sec="methods">3 способа</a>
+    <a class="nav-link" href="#diagnostics" data-sec="diagnostics">Диагностика</a>
+    <a class="nav-link" href="#faq" data-sec="faq">FAQ</a>
+  </div>
+  <a class="btn btn-green btn-sm nav-cta" href="#demo">Открыть демо</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="chip-float c1" data-speed="0.10" aria-hidden="true"><svg class="ic"><use href="#i-keep"/></svg>Keep</div>
+  <div class="chip-float c2" data-speed="-0.07" aria-hidden="true"><svg class="ic"><use href="#i-tasks"/></svg>Задачи</div>
+  <div class="chip-float c3" data-speed="0.16" aria-hidden="true"><span class="cal-badge">31</span>Календарь</div>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow st d1"><svg class="ic" style="width:13px;height:13px"><use href="#i-grid"/></svg>Google Таблицы · боковая панель</span>
+      <h1 class="st d2">Пустое окно справа — это боковая панель. <span class="grad">Убираем за секунду.</span></h1>
+      <p class="lead st d3">Справа в Таблицах живёт служебная панель: Keep, Задачи, Календарь или дополнение. Иногда она открывается <b>пустой</b> и возвращается после каждой перезагрузки. Ниже — живая копия вашего интерфейса, где можно потренироваться, и разбор двух причин, почему панель не уходит.</p>
+      <div class="hero-ctas st d4">
+        <a class="btn btn-green" href="#demo">Потренироваться в демо <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost" href="#diagnostics">Почему возвращается?</a>
+      </div>
+      <div class="hero-facts st d5">
+        <span class="fact"><span class="dot" style="background:var(--green)"></span>3 способа закрыть</span>
+        <span class="fact"><span class="dot" style="background:var(--amber)"></span>2 причины возврата</span>
+        <span class="fact"><span class="dot" style="background:var(--blue)"></span>данные не затрагиваются</span>
+      </div>
+    </div>
+    <div class="card quick-card st d3">
+      <h3><svg class="ic"><use href="#i-spark"/></svg>Быстрый ответ</h3>
+      <p>Нажмите <b>стрелку «›» в самом низу справа</b> — под иконками Календаря, Keep и Задач. Она сворачивает всю боковую область: и пустую панель, и полосу иконок.</p>
+      <svg class="quick-svg" viewBox="0 0 260 150" role="img" aria-label="Схема: стрелка скрытия панели в правом нижнем углу Таблиц">
+        <rect x="1" y="1" width="258" height="148" rx="10" fill="#fff" stroke="#DCE5DC"/>
+        <g stroke="#E2E8E2"><path d="M20 20h180M20 44h180M20 68h180M20 92h180M20 116h180"/><path d="M60 12v112M110 12v112M160 12v112"/></g>
+        <rect x="20" y="12" width="180" height="14" fill="#D9EAD3"/>
+        <rect x="200" y="12" width="34" height="112" fill="#FDFEFD" stroke="#E2E8E2" stroke-dasharray="3 3"/>
+        <text x="217" y="70" font-size="7.5" fill="#A9B6AC" text-anchor="middle" font-family="Golos Text">пусто</text>
+        <rect x="234" y="1" width="25" height="148" rx="0" fill="#F8FAF8" stroke="#E2E8E2"/>
+        <rect x="240" y="14" width="13" height="13" rx="3" fill="#1A73E8"/><text x="246.5" y="23.5" font-size="7" fill="#fff" text-anchor="middle" font-weight="700" font-family="Golos Text">31</text>
+        <circle cx="246.5" cy="42" r="6.5" fill="#FBBC00"/><circle cx="246.5" cy="62" r="6.5" fill="#1A73E8"/><circle cx="246.5" cy="82" r="6.5" fill="#1A73E8"/>
+        <circle cx="246.5" cy="132" r="10" fill="#0F9D58"/>
+        <path d="m244 128 4.5 4-4.5 4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="246.5" cy="132" r="13.5" fill="none" stroke="#0F9D58" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <path d="M150 138 C 190 146, 215 142, 231 136" stroke="#C5221F" stroke-width="1.8" fill="none" marker-end="url(#arr)"/>
+        <defs><marker id="arr" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7z" fill="#C5221F"/></marker></defs>
+        <text x="80" y="141" font-size="9.5" fill="#C5221F" font-weight="700" font-family="Golos Text">вот эта стрелка ↓</text>
+      </svg>
+      <div class="quick-note"><svg class="ic"><use href="#i-info"/></svg><span>Закрыли один раз — состояние <b>запомнится</b> для этого файла и аккаунта. Если панель всё равно возвращается — виновато дополнение или сбой, см. диагностику ниже.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ДЕМО -->
+<section id="demo">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow"><svg class="ic" style="width:13px;height:13px"><use href="#i-sliders"/></svg>Тренажёр</span>
+      <h2>Живая копия интерфейса</h2>
+      <p class="sec-sub">Это интерактивная копия вашей таблицы. Закрывайте панель стрелкой, иконками или крестиком, включите сценарий «дополнение открывает само» и нажмите «Переоткрыть страницу» — увидите, почему панель возвращается.</p>
+    </div>
+    <div class="demo-layout">
+      <div>
+        <div class="demo-scroll reveal">
+          <div class="mock hints" id="mock">
+            <!-- верхняя панель -->
+            <div class="mock-topbar" aria-hidden="true">
+              <span class="mock-logo"><svg class="ic"><use href="#i-grid"/></svg></span>
+              <div class="mock-title">
+                <b>ОС --- Массовая проверка ИИ</b>
+                <span class="mini"><svg class="ic"><use href="#i-star"/></svg><svg class="ic"><use href="#i-clock"/></svg><svg class="ic"><use href="#i-comment"/></svg><svg class="ic"><use href="#i-video"/></svg></span>
+              </div>
+              <div class="mock-top-right">
+                <span class="avatars">
+                  <span class="av" style="background:#7B1FA2">А</span>
+                  <span class="av" style="background:#E91E63">А</span>
+                  <span class="av" style="background:#1A73E8">И</span>
+                </span>
+                <span class="share-btn"><svg class="ic"><use href="#i-lock"/></svg>Настройки доступа ▾</span>
+                <span class="plan-btn">Сменить план</span>
+                <span class="av" style="background:#6A1B9A;margin:0">E</span>
+              </div>
+            </div>
+            <!-- меню -->
+            <div class="mock-menubar">
+              <span>Файл</span><span>Правка</span><span>Вид</span><span>Вставка</span><span>Формат</span><span>Данные</span><span>Инструменты</span>
+              <span class="ext-wrap">
+                <button class="ext-btn" id="extMenuBtn" aria-expanded="false" aria-haspopup="true">Расширения ▾</button>
+                <span class="ext-menu" id="extMenu" role="menu">
+                  <button data-ext="script" role="menuitem"><svg class="ic"><use href="#i-code"/></svg><span>Apps Script<small>здесь живёт onOpen → showSidebar()</small></span></button>
+                  <button data-ext="manage" role="menuitem"><svg class="ic"><use href="#i-puzzle"/></svg><span>Дополнения → Управление<small>отключить или удалить дополнение</small></span></button>
+                </span>
+              </span>
+              <span>Справка</span>
+            </div>
+            <!-- тулбар (декоративная копия) -->
+            <div class="mock-toolbar" id="toolbar" aria-hidden="true"></div>
+            <!-- тело -->
+            <div class="mock-body">
+              <div class="sheet-area">
+                <div class="formula-bar" aria-hidden="true"><span class="name-box">I14</span><span class="fx">fx</span><span class="formula-input"></span></div>
+                <div class="grid-scroll" id="gridScroll">
+                  <table class="grid">
+                    <caption class="sr">Копия таблицы «Массовая проверка ИИ» из примера</caption>
+                    <colgroup><col style="width:36px"><col style="width:92px"><col style="width:64px"><col style="width:150px"><col style="width:190px"><col style="width:96px"><col style="width:122px"><col style="width:330px"><col style="width:210px"><col style="width:80px"></colgroup>
+                    <thead>
+                      <tr class="letters"><th class="rn"></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th></tr>
+                      <tr class="title-row"><th class="rn">1</th><td colspan="9">Этикет и запрещённые фразы (все нарушения за период 06–09 ноя)</td></tr>
+                      <tr class="head-row">
+                        <th class="rn">2</th>
+                        <th><span class="fhead">Обращение</span></th>
+                        <th><span class="fhead">Дата обращения</span></th>
+                        <th><span class="fhead">Оператор (автор изменений)</span></th>
+                        <th><span class="fhead">Группа КЦ</span></th>
+                        <th><span class="fhead">Подтип</span></th>
+                        <th><span class="fhead">Тип нарушения</span></th>
+                        <th><span class="fhead">Обоснование ИИ</span></th>
+                        <th><span class="fhead">Цитата оператора</span></th>
+                        <th><span class="fhead">Вердикт ИИ</span></th>
+                      </tr>
+                    </thead>
+                    <tbody id="gridBody"></tbody>
+                  </table>
+                </div>
+                <div class="tabs-bar" aria-hidden="true">
+                  <span class="tbi"><svg class="ic"><use href="#i-plus"/></svg></span>
+                  <span class="tbi"><svg class="ic"><use href="#i-filter"/></svg></span>
+                  <span class="stab">Основная <span class="caret">▾</span></span>
+                  <span class="stab">364-01 <span class="caret">▾</span></span>
+                  <span class="stab active">392-01 <span class="caret">▾</span></span>
+                  <span class="stab">364-02 <span class="caret">▾</span></span>
+                </div>
+              </div>
+              <!-- боковая панель -->
+              <div class="side-panel open" id="sidePanel"><div class="panel-inner" id="panelInner"></div></div>
+              <!-- полоса иконок -->
+              <div class="right-col">
+                <div class="icon-strip" id="iconStrip">
+                  <button class="app-btn a-cal" data-app="calendar" title="Календарь" aria-label="Открыть Календарь"><span class="cal-badge">31</span></button>
+                  <button class="app-btn a-keep" data-app="keep" title="Keep" aria-label="Открыть Keep"><svg class="ic"><use href="#i-keep"/></svg></button>
+                  <button class="app-btn a-tasks" data-app="tasks" title="Задачи" aria-label="Открыть Задачи"><svg class="ic"><use href="#i-tasks"/></svg></button>
+                  <button class="app-btn a-contacts" data-app="contacts" title="Контакты" aria-label="Открыть Контакты"><svg class="ic"><use href="#i-contacts"/></svg></button>
+                  <button class="app-btn a-maps" data-app="maps" title="Карты" aria-label="Открыть Карты"><svg class="ic"><use href="#i-maps"/></svg></button>
+                  <button class="app-btn a-plus" data-app="plus" title="Ещё дополнения" aria-label="Ещё дополнения"><svg class="ic"><use href="#i-plus"/></svg></button>
+                </div>
+                <button class="chev-btn" id="chevronBtn" title="Скрыть боковую панель" aria-label="Скрыть боковую панель — способ №1"><svg class="ic"><use href="#i-chev"/></svg></button>
+              </div>
+            </div>
+            <button class="restore-tab" id="restoreTab" title="Показать боковую панель" aria-label="Показать боковую панель"><svg class="ic"><use href="#i-chev"/></svg></button>
+            <div class="reload-overlay" id="reloadOverlay" aria-hidden="true"><span class="spinner"></span>Страница переоткрывается…</div>
+          </div>
+        </div>
+        <div class="status-bar reveal" id="statusBar" data-tone="ok" role="status" aria-live="polite">
+          <svg class="ic"><use href="#i-info"/></svg><span id="statusText"></span>
+        </div>
+      </div>
+
+      <!-- ПУЛЬТ -->
+      <aside class="rail card reveal" aria-label="Сценарий и настройки демо">
+        <h3><svg class="ic"><use href="#i-sliders"/></svg>Сценарий и настройки</h3>
+        <div class="rail-group">
+          <div class="rail-label">Сценарий</div>
+          <label class="field"><span>Содержимое панели</span>
+            <select id="ctlContent">
+              <option value="blank">Пустая (сбой загрузки)</option>
+              <option value="keep">Keep — заметки</option>
+              <option value="tasks">Задачи</option>
+              <option value="calendar">Календарь</option>
+              <option value="addon">Дополнение «ИИ-проверка»</option>
+              <option value="contacts">Контакты</option>
+              <option value="maps">Карты</option>
+            </select>
+          </label>
+          <label class="switch-row"><span>Дополнение открывает само<small>onOpen → showSidebar()</small></span><span class="switch"><input type="checkbox" id="ctlAddon"><i></i></span></label>
+          <div class="btn-row">
+            <button class="btn btn-blue btn-sm" id="btnReload"><svg class="ic" style="width:15px;height:15px"><use href="#i-refresh"/></svg>Переоткрыть страницу</button>
+            <button class="btn btn-ghost btn-sm" id="btnRandom" title="Случайный сценарий"><svg class="ic" style="width:15px;height:15px"><use href="#i-shuffle"/></svg>Случайный</button>
+          </div>
+        </div>
+        <div class="rail-group">
+          <div class="rail-label">Вид</div>
+          <label class="switch-row"><span>Панель открыта</span><span class="switch"><input type="checkbox" id="ctlOpen" checked><i></i></span></label>
+          <label class="switch-row"><span>Подсказки<small>пульс на нужной кнопке</small></span><span class="switch"><input type="checkbox" id="ctlHints" checked><i></i></span></label>
+          <div class="range-row"><div class="rl"><span>Ширина панели</span><output id="widthVal">210px</output></div><input type="range" id="ctlWidth" min="150" max="320" value="210" aria-label="Ширина панели"></div>
+          <div class="range-row"><div class="rl"><span>Высота окна</span><output id="heightVal">430px</output></div><input type="range" id="ctlHeight" min="340" max="560" value="430" aria-label="Высота окна демо"></div>
+        </div>
+        <div class="rail-group">
+          <div class="rail-label">Действия</div>
+          <button class="btn btn-ghost btn-sm" id="btnReset"><svg class="ic" style="width:15px;height:15px"><use href="#i-refresh"/></svg>Сбросить демо</button>
+          <button class="btn btn-green btn-sm" id="btnExport"><svg class="ic" style="width:15px;height:15px"><use href="#i-download"/></svg>Скачать памятку .md</button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- СПОСОБЫ -->
+<section id="methods">
+  <div class="wrap methods-layout">
+    <div class="methods-intro reveal">
+      <span class="eyebrow blue">Инструкция</span>
+      <h2>Три способа закрыть панель</h2>
+      <p class="sec-sub">Все три работают в настоящих Таблицах. Начните с первого — он самый надёжный и убирает сразу всю боковую область.</p>
+      <div class="note"><b>Важно:</b> состояние панели запоминается для связки «файл + аккаунт». Закрыли стрелкой или крестиком — после перезагрузки страницы панель останется закрытой. Если возвращается — это уже не «настройка», а дополнение или сбой (следующий раздел).</div>
+    </div>
+    <div>
+      <article class="card method-card m1 reveal">
+        <div class="method-fig" aria-hidden="true">
+          <svg viewBox="0 0 130 90"><rect x="2" y="2" width="126" height="86" rx="8" fill="#fff" stroke="#DCE5DC"/><g stroke="#E2E8E2"><path d="M10 16h88M10 34h88M10 52h88M10 70h88"/><path d="M38 8v70M66 8v70"/></g><rect x="98" y="8" width="16" height="70" fill="#FDFEFD" stroke="#E2E8E2" stroke-dasharray="2 2"/><rect x="114" y="2" width="14" height="86" fill="#F8FAF8" stroke="#E2E8E2"/><circle cx="121" cy="14" r="4" fill="#1A73E8"/><circle cx="121" cy="28" r="4" fill="#FBBC00"/><circle cx="121" cy="42" r="4" fill="#1A73E8"/><circle cx="121" cy="76" r="8" fill="#0F9D58"/><path d="m119 73 3.5 3-3.5 3" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="121" cy="76" r="11" fill="none" stroke="#0F9D58" stroke-dasharray="2 2"/></svg>
+        </div>
+        <div>
+          <h3><span class="method-num">1</span>Стрелка в правом нижнем углу<span class="method-tag">всегда работает</span></h3>
+          <p>Под полосой иконок (Календарь, Keep, Задачи…) есть маленькая <b>стрелка «›»</b>. Нажмите — свернётся вся боковая область: и пустая панель, и сами иконки. Стрелка «‹» вернёт всё обратно. Это единственный способ, который работает даже когда панель пустая и без заголовка.</p>
+          <button class="show-demo" data-method="1">Показать в демо <svg class="ic"><use href="#i-arrow"/></svg></button>
+        </div>
+      </article>
+      <article class="card method-card m2 reveal">
+        <div class="method-fig" aria-hidden="true">
+          <svg viewBox="0 0 130 90"><rect x="2" y="2" width="126" height="86" rx="8" fill="#fff" stroke="#DCE5DC"/><rect x="86" y="2" width="42" height="86" fill="#F8FAF8" stroke="#E2E8E2"/><circle cx="107" cy="16" r="8" fill="#1A73E8"/><text x="107" y="19.5" font-size="7" fill="#fff" text-anchor="middle" font-weight="700" font-family="Golos Text">31</text><circle cx="107" cy="40" r="10" fill="#E8F0FE" stroke="#1A73E8" stroke-width="1.5"/><path d="M104 40a3.5 3.5 0 1 1 5 3c-.7.6-.8 1-.8 1.6h-2.4c0-.6-.1-1-.8-1.6a3.5 3.5 0 0 1 1-6z" fill="#F9AB00"/><circle cx="107" cy="64" r="8" fill="#1A73E8"/><path d="m103.5 64 2.5 2.5 4.5-5" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M70 52 92 42" stroke="#C5221F" stroke-width="1.8" marker-end="url(#arr2)"/><defs><marker id="arr2" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto"><path d="M0 0L7 3.5L0 7z" fill="#C5221F"/></marker></defs><text x="14" y="60" font-size="8" fill="#C5221F" font-weight="700" font-family="Golos Text">клик ещё раз</text></svg>
+        </div>
+        <div>
+          <h3><span class="method-num">2</span>Повторный клик по активной иконке<span class="method-tag">если есть содержимое</span></h3>
+          <p>Если панель открыта через иконку, иконка <b>подсвечена синим кружком</b>. Нажмите её ещё раз — панель закроется, полоса иконок останется. Работает для Keep, Задач, Календаря, Контактов, Карт и дополнений.</p>
+          <button class="show-demo" data-method="2">Показать в демо <svg class="ic"><use href="#i-arrow"/></svg></button>
+        </div>
+      </article>
+      <article class="card method-card m3 reveal">
+        <div class="method-fig" aria-hidden="true">
+          <svg viewBox="0 0 130 90"><rect x="2" y="2" width="126" height="86" rx="8" fill="#fff" stroke="#DCE5DC"/><rect x="34" y="2" width="94" height="86" fill="#FDFEFD" stroke="#E2E8E2"/><rect x="34" y="2" width="94" height="20" fill="#fff" stroke="#E2E8E2"/><circle cx="46" cy="12" r="5" fill="#1A73E8"/><rect x="56" y="9" width="34" height="6" rx="3" fill="#DCE5DC"/><circle cx="116" cy="12" r="8" fill="#FCE8E6" stroke="#EA4335" stroke-width="1.5"/><path d="m113 9 6 6M119 9l-6 6" stroke="#C5221F" stroke-width="1.8" stroke-linecap="round"/><rect x="42" y="32" width="78" height="14" rx="4" fill="#FFF8E1" stroke="#F0E2B0"/><rect x="42" y="52" width="78" height="14" rx="4" fill="#fff" stroke="#E2E8E2"/></svg>
+        </div>
+        <div>
+          <h3><span class="method-num">3</span>Крестик в заголовке панели<span class="method-tag">Keep · Задачи · дополнения</span></h3>
+          <p>У панелей с содержимым есть <b>«×» в правом верхнем углу самой панели</b>. Нажмите его — панель закроется. У пустой панели-сбоя заголовка может не быть вовсе: тогда поможет только способ №1 — стрелка внизу.</p>
+          <button class="show-demo" data-method="3">Показать в демо <svg class="ic"><use href="#i-arrow"/></svg></button>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ДИАГНОСТИКА -->
+<section id="diagnostics">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow amber"><svg class="ic" style="width:13px;height:13px"><use href="#i-warn"/></svg>Если возвращается</span>
+      <h2>Панель открывается снова после перезагрузки?</h2>
+      <p class="sec-sub">В норме закрытая панель не возвращается. Если возвращается — есть ровно две типичные причины. Ответьте на пару вопросов, чтобы понять, какая ваша.</p>
+    </div>
+    <div class="diag-layout">
+      <div class="card tree-card reveal">
+        <div class="tree-top">
+          <svg class="ic" style="color:var(--amber)"><use href="#i-search"/></svg>
+          <h3>Мини-диагностика</h3>
+          <span class="tree-dots" id="treeDots"><i class="on"></i><i></i><i></i></span>
+        </div>
+        <div id="treeBox"></div>
+      </div>
+      <div class="causes">
+        <article class="card cause c-a reveal" id="causeAddon">
+          <span class="cause-badge">Причина 1 · Дополнение</span>
+          <h3>Скрипт открывает панель сам при каждом запуске</h3>
+          <ol>
+            <li>Откройте <b class="path">Расширения → Apps Script</b>.</li>
+            <li>Найдите функцию <b>onOpen(e)</b> и строку <b>showSidebar(...)</b> — именно она принудительно открывает панель при каждом открытии файла.</li>
+            <li>Удалите или закомментируйте эту строку, сохраните проект (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
+            <li>Не хотите править код: <b class="path">Расширения → Дополнения → Управление дополнениями</b> → отключите или удалите дополнение.</li>
+            <li>Файл чужой (как ваш «ОС --- Массовая проверка ИИ»)? Триггер живёт в скрипте владельца — <b>попросите его убрать вызов</b>, либо перенесите данные в новую таблицу без скриптов.</li>
+          </ol>
+          <div class="code-wrap">
+            <button class="copy-btn" id="copyCode"><svg class="ic"><use href="#i-copy"/></svg>Копировать</button>
+<pre id="codePre"><span class="cm">// Расширения → Apps Script — ищите это:</span>
+function onOpen(e) {
+  var html = HtmlService.createHtmlOutputFromFile('Sidebar');
+  <span class="hl">SpreadsheetApp.getUi().showSidebar(html); // ← удалите строку</span>
+  <span class="cm">// Если панель пустая — скрипт не отрисовал HTML,</span>
+  <span class="cm">// но окно всё равно открывается при каждом запуске.</span>
+}</pre>
+          </div>
+        </article>
+        <article class="card cause c-b reveal" id="causeGlitch">
+          <span class="cause-badge">Причина 2 · Сбой загрузки</span>
+          <h3>Панель не загрузилась и осталась пустой</h3>
+          <ol>
+            <li>Обновите страницу: <kbd>Ctrl</kbd>+<kbd>R</kbd> (или <kbd>F5</kbd>).</li>
+            <li>Откройте файл в <b>инкогнито</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>). Если там панели нет — виновато расширение браузера.</li>
+            <li>Отключите <b>блокировщики рекламы и скрипт-менеджеры</b> для <b>docs.google.com</b> — они чаще всего ломают загрузку боковой панели.</li>
+            <li>Очистите <b>кэш и cookie</b> для google.com за «Всё время», войдите заново.</li>
+            <li>Проверьте в другом браузере и обновите текущий до последней версии.</li>
+          </ol>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Вопросы</span>
+      <h2>Коротко о главном</h2>
+    </div>
+    <div class="faq-list">
+      <div class="card faq-item reveal">
+        <button class="faq-q" aria-expanded="false">Это окно влияет на данные таблицы?<span class="pm"><svg class="ic"><use href="#i-plus"/></svg></span></button>
+        <div class="faq-a"><div><p><b>Нет.</b> Это служебная боковая панель Google Workspace (Keep, Задачи, Календарь, Контакты) или панель дополнения. Она только занимает место на экране — ячейки, формулы и фильтры не затрагиваются. Закрывать её абсолютно безопасно.</p></div></div>
+      </div>
+      <div class="card faq-item reveal">
+        <button class="faq-q" aria-expanded="false">Почему панель пустая, без заголовка и кнопок?<span class="pm"><svg class="ic"><use href="#i-plus"/></svg></span></button>
+        <div class="faq-a"><div><p>Два варианта: <b>сбой загрузки</b> (часто из-за расширений браузера — блокировщиков рекламы) или <b>дополнение</b>, которое открыло панель через скрипт, но не отрисовало содержимое. В обоих случаях панель закрывается стрелкой «›» в правом нижнем углу, а причины разбираются в разделе «Диагностика» выше.</p></div></div>
+      </div>
+      <div class="card faq-item reveal">
+        <button class="faq-q" aria-expanded="false">Закрытая панель точно не вернётся после перезагрузки?<span class="pm"><svg class="ic"><use href="#i-plus"/></svg></span></button>
+        <div class="faq-a"><div><p>В норме — <b>да</b>: Таблицы запоминают состояние панели для конкретного файла и аккаунта. Исключение — дополнение с триггером <b>onOpen → showSidebar()</b>: оно открывает панель принудительно при каждом открытии файла, игнорируя сохранённое состояние. Поэтому, если панель возвращается, сначала проверьте <b class="path" style="color:var(--green-deep)">Расширения → Apps Script</b>.</p></div></div>
+      </div>
+      <div class="card faq-item reveal">
+        <button class="faq-q" aria-expanded="false">Можно ли убрать и саму полосу иконок справа?<span class="pm"><svg class="ic"><use href="#i-plus"/></svg></span></button>
+        <div class="faq-a"><div><p>Да — та же <b>стрелка «›» в самом низу справа</b> сворачивает всю боковую область целиком, включая полосу иконок. Останется только маленькая стрелка «‹» для возврата. Отдельной настройки «навсегда удалить иконки» в Таблицах нет.</p></div></div>
+      </div>
+      <div class="card faq-item reveal">
+        <button class="faq-q" aria-expanded="false">Есть ли горячая клавиша для закрытия панели?<span class="pm"><svg class="ic"><use href="#i-plus"/></svg></span></button>
+        <div class="faq-a"><div><p>Специальной горячей клавиши для боковой панели в Таблицах <b>нет</b>. Самый быстрый путь — стрелка «›» в правом нижнем углу: она всегда на одном и том же месте, под иконками Календаря, Keep и Задач.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <p>Интерактивная справка по интерфейсу Google Таблиц. Неофициальный материал; интерфейс Google Таблиц принадлежит Google. Обновлено: ноябрь 2026.</p>
+    <button class="to-top" id="toTop">Наверх <svg class="ic"><use href="#i-arrow"/></svg></button>
+    <button class="btn btn-green btn-sm" id="btnExportFooter"><svg class="ic" style="width:15px;height:15px"><use href="#i-download"/></svg>Скачать памятку</button>
+  </div>
+</footer>
+
+<div id="toasts" aria-live="polite"></div>
+<noscript><div style="position:fixed;bottom:0;left:0;right:0;background:#C5221F;color:#fff;padding:12px;text-align:center;font-weight:700;z-index:300">Для тренажёра нужен JavaScript. Кратко: закройте панель стрелкой «›» в правом нижнем углу; если возвращается — проверьте Расширения → Apps Script → onOpen → showSidebar.</div></noscript>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,c){return (c||document).querySelector(s)};
+var $$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
+var icon=function(n,st){return '<svg class="ic"'+(st?' style="'+st+'"':'')+'><use href="#i-'+n+'"/></svg>'};
+
+/* ---------- ТУЛБАР (декоративная копия) ---------- */
+var TB=[
+  ['i-search','Поиск'],['i-undo','Отменить'],['i-redo','Повторить'],['i-print','Печать'],['i-paint','Копировать формат'],'|',
+  ['t','100% ▾'],'|',['t','р.'],['t','%'],['t','.0'],['t','.00'],['t','123 ▾'],'|',
+  ['t','Monts… ▾'],'|',['t','−'],['t','10'],['t','+'],'|',
+  ['t','<b>B</b>'],['t','<i>I</i>'],['t','<s>S</s>'],['t','A ▾'],['t','⬒ ▾'],'|',
+  ['t','⊞'],['t','⊟'],['t','≡ ▾'],['t','⇳ ▾'],'|',
+  ['i-link','Ссылка'],['i-comment','Комментарий'],['i-chart','Диаграмма'],['i-filter','Фильтр'],'|',
+  ['t','Σ ▾'],['t','Pv']
+];
+$('#toolbar').innerHTML=TB.map(function(it){
+  if(it==='|')return '<span class="tb-sep"></span>';
+  if(it[0]==='t')return '<span class="tb tb-txt">'+it[1]+'</span>';
+  return '<span class="tb" title="'+it[2]+'">'+icon(it[0])+'</span>';
+}).join('');
+
+/* ---------- ДАННЫЕ СЕТКИ (из примера, очищены) ---------- */
+var ROWS=[
+ ['271362144','4 ноя','Андрейчук Юлия','ТВ+МБТ, КЦ Воронеж, Городецкая Елена Игоревна','Новый заказ','Грубость и нецензурная лексика','«обоснование»: "В начале звонка оператор произносит нецензурное слово ещё до начала разговора с клиентом — это реплика в сторону, слово целое и однозначное, поэтому находка классифицирована как явное нарушение."','«цитата»: "[нецензурная лексика]"',''],
+ ['271374527','5 ноя','Ковальчук удалёнка','ТВ+МБТ, КЦ Воронеж, Городецкая Елена Игоревна','Новый заказ','Грубость и нецензурная лексика','«обоснование»: "Во втором звонке единственная реплика оператора содержит целое и однозначное нецензурное слово, произнесённое без клиента в разговоре — это личный разговор/реплика в сторону."','«цитата»: "[нецензурная лексика]"',''],
+ ['271429871','5 ноя','Ковальчук удалёнка','Группа Сопровождение, КЦ сопровождения, Шипилова Лия Дмитриевна','Не уговорил','Грубость и нецензурная лексика','«обоснование»: "Оператор произносит однозначное нецензурное слово после неудачного дозвона до клиента (номер занят, автоответчик), то есть в сторону/про себя, находясь в раздражении."','«цитата»: "[нецензурная лексика]"',''],
+ ['271464961','5 ноя','Кулагина Василиса','Группа БТ + СЗС (ЧМ), КЦ Воронеж, Жукова Виктория','Не ремонтируем','Грубость и нецензурная лексика','«обоснование»: "В звонке оператор произносит нецензурные слова вне контекста разговора с клиентом (реплик клиента в этот момент нет), что указывает на личный разговор или реплику в сторону."','«цитата»: "[нецензурная лексика]"','d'],
+ ['271465350','5 ноя','Уханов Данила','Группа БТ + СЗС (ЧМ), КЦ Воронеж, Жукова Виктория','Не уговорил','Грубость и нецензурная лексика','«обоснование»: "Оператор в разговоре с мастером (не с текущим клиентом звонка) употребил нецензурное слово и оскорбление в адрес третьего лица-заказчика. Слово звучит целиком и однозначно."','«цитата»: "[нецензурная лексика]"','n'],
+ ['271732290','6 ноя','Евгений Кочетков','Группа БТ + СЗС (ЧМ), КЦ Воронеж, Жукова Виктория','Не ремонтируем','Грубость и нецензурная лексика','«обоснование»: "Оператор произносит нецензурные слова в личном разговоре (не адресованы клиенту), что является нарушением независимо от адресата. Контекст подтверждает раздражение."','«цитата»: "[нецензурная лексика]"',''],
+ ['271745012','6 ноя','Смирнова Анна','КЦ Казань, Петрова Ольга Сергеевна','Новый заказ','Грубость','«обоснование»: "Оператор повышает тон и перебивает клиента, использует пренебрежительные формулировки в адрес заказчика при обсуждении условий выезда мастера."','«цитата»: "[грубая реплика]"','d'],
+ ['271758330','7 ноя','Орлов Дмитрий','ТВ+МБТ, КЦ Воронеж, Городецкая Елена Игоревна','Не уговорил','Нецензурная лексика','«обоснование»: "После завершения звонка оператор произносит нецензурное слово в сторону, не обращаясь к клиенту. Слово целое и однозначное, нарушение зафиксировано как явное."','«цитата»: "[нецензурная лексика]"','']
+];
+$('#gridBody').innerHTML=ROWS.map(function(r,i){
+  var v=r[8]==='d'?'<span class="vchip d">Д</span>':r[8]==='n'?'<span class="vchip n">Н</span>':'<span class="vpill"></span>';
+  return '<tr><th class="rn">'+(14+i)+'</th>'+
+    '<td class="num">'+r[0]+'</td><td class="date">'+r[1]+'</td><td class="op">'+r[2]+'</td>'+
+    '<td class="clamp">'+r[3]+'</td><td class="nowrap">'+r[4]+'</td><td class="clamp">'+r[5]+'</td>'+
+    '<td class="clamp">'+r[6]+'</td><td class="clamp">'+r[7]+'</td>'+
+    '<td class="verdict'+(i===0?' sel':'')+'">'+v+'</td></tr>';
+}).join('');
+
+/* ---------- СОСТОЯНИЕ ДЕМО ---------- */
+var NAMES={blank:'Пустая (сбой)',keep:'Keep',tasks:'Задачи',calendar:'Календарь',addon:'Дополнение',contacts:'Контакты',maps:'Карты'};
+var DEFAULTS={content:'blank',panelOpen:true,collapsed:false,addon:false,hints:true,width:210,height:430};
+var S={content:'blank',panelOpen:true,collapsed:false,addon:false,hints:true,width:210,height:430,tasks:[false,false,true]};
+var mock=$('#mock'),sidePanel=$('#sidePanel'),panelInner=$('#panelInner'),
+    statusBar=$('#statusBar'),statusText=$('#statusText'),
+    chevronBtn=$('#chevronBtn'),restoreTab=$('#restoreTab'),overlay=$('#reloadOverlay');
+var reloading=false;
+
+function head(ic,color,title){
+  return '<div class="panel-head"><span style="color:'+color+';display:flex">'+icon(ic)+'</span>'+title+
+    '<button class="panel-x" data-close title="Закрыть панель" aria-label="Закрыть панель — способ №3">'+icon('close')+'</button></div>';
+}
+var TPL={
+  blank:function(){return '<div class="panel-blank" aria-label="Пустая боковая панель"></div>'},
+  keep:function(){return head('keep','#F9AB00','Keep')+'<div class="panel-body">'+
+    '<div class="keep-note">Проверить звонки 392-01<small>сегодня · 14:00</small></div>'+
+    '<div class="keep-note white">Шаблон обоснования ИИ<small>изменено 5 ноя</small></div>'+
+    '<div class="keep-note white">Вердикты: Д — да, Н — нет<small>памятка оператору</small></div></div>'},
+  tasks:function(){
+    var t=['Свести вердикты Д/Н','Проверить лист 364-02','Отчёт руководителю КЦ'];
+    var d=['срок: сегодня','срок: завтра','срок: пятница'];
+    return head('tasks','#1A73E8','Задачи')+'<div class="panel-body">'+t.map(function(x,i){
+      return '<label class="task'+(S.tasks[i]?' done':'')+'"><input type="checkbox" data-task="'+i+'"'+(S.tasks[i]?' checked':'')+'><span>'+x+'<small>'+d[i]+'</small></span></label>';
+    }).join('')+'</div>'},
+  calendar:function(){
+    var cells='';var wd=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+    wd.forEach(function(w){cells+='<span class="wd">'+w+'</span>'});
+    for(var b=0;b<6;b++)cells+='<span></span>';
+    for(var d=1;d<=30;d++)cells+='<span class="day'+(d===12?' today':'')+(d===13?' ev':'')+'">'+d+'</span>';
+    return head('cal','#1A73E8','Календарь')+'<div class="panel-body"><div class="cal-head">Ноябрь 2026</div><div class="cal-grid">'+cells+'</div>'+
+      '<div class="cal-event">Созвон по качеству<small>пт, 13 ноя · 14:00–14:30</small></div></div>'},
+  addon:function(){return head('spark','#0F9D58','ИИ-проверка')+'<div class="panel-body"><div class="addon-load"><span class="spinner"></span>Дополнение загружается…'+
+    '<span style="font-weight:500;font-size:10.5px">Если окно так и остаётся пустым — скрипт открыл панель, но не отрисовал содержимое.</span>'+
+    (S.addon?'<span class="addon-chip">onOpen → showSidebar()</span>':'')+'</div></div>'},
+  contacts:function(){return head('contacts','#1A73E8','Контакты')+'<div class="panel-body">'+
+    [['А','#7B1FA2','Андрейчук Юлия','оператор КЦ'],['К','#E91E63','Ковальчук удалёнка','оператор КЦ'],['Ж','#0F9D58','Жукова Виктория','супервайзер']]
+    .map(function(c){return '<div class="contact"><span class="av" style="background:'+c[1]+'">'+c[0]+'</span><span>'+c[2]+'<small>'+c[3]+'</small></span></div>'}).join('')+'</div>'},
+  maps:function(){return head('maps','#188038','Карты')+'<div class="panel-body"><div class="map-box">'+
+    '<svg viewBox="0 0 180 110" style="display:block;width:100%"><rect width="180" height="110" fill="#E8F0E4"/><path d="M0 30 C40 26 80 44 180 34" stroke="#fff" stroke-width="7" fill="none"/><path d="M30 0 C36 40 24 80 40 110" stroke="#fff" stroke-width="5" fill="none"/><path d="M0 80 C60 74 120 92 180 82" stroke="#F9D66B" stroke-width="6" fill="none"/><path d="M120 0 C116 30 130 70 122 110" stroke="#fff" stroke-width="4" fill="none"/><circle cx="96" cy="52" r="14" fill="rgba(234,67,53,.15)"/><path d="M96 62s-8-7-8-12.5a8 8 0 0 1 16 0C104 55 96 62 96 62z" fill="#EA4335"/><circle cx="96" cy="49.5" r="3" fill="#fff"/></svg></div>'+
+    '<div class="map-cap">'+icon('maps')+'КЦ Воронеж · ул. Плехановская</div></div>'}
+};
+
+function render(){
+  mock.classList.toggle('is-collapsed',S.collapsed);
+  mock.classList.toggle('hints',S.hints);
+  mock.style.setProperty('--panel-w',S.width+'px');
+  mock.style.setProperty('--demo-h',S.height+'px');
+  var show=S.panelOpen&&!S.collapsed;
+  sidePanel.classList.toggle('open',show);
+  panelInner.innerHTML=show?TPL[S.content]():'';
+  $$('#iconStrip .app-btn').forEach(function(b){b.classList.toggle('active',show&&b.dataset.app===S.content)});
+  restoreTab.classList.toggle('show',S.collapsed);
+  $('#ctlOpen').checked=show;
+  $('#ctlContent').value=S.content;
+  $('#ctlAddon').checked=S.addon;
+  $('#ctlHints').checked=S.hints;
+  $('#ctlWidth').value=S.width;$('#widthVal').textContent=S.width+'px';
+  $('#ctlHeight').value=S.height;$('#heightVal').textContent=S.height+'px';
+}
+function narrate(msg,tone){
+  statusText.textContent=msg;
+  statusBar.dataset.tone=tone||'ok';
+  statusBar.classList.remove('flash');void statusBar.offsetWidth;statusBar.classList.add('flash');
+}
+function spot(el){
+  if(!el)return;
+  el.classList.remove('spot');void el.offsetWidth;el.classList.add('spot');
+  setTimeout(function(){el.classList.remove('spot')},3200);
+}
+function scrollDemo(){ $('#demo').scrollIntoView({behavior:'smooth',block:'start'}) }
+
+/* ---------- ИНТЕРАКЦИИ ДЕМО ---------- */
+chevronBtn.addEventListener('click',function(){
+  S.collapsed=true;render();
+  narrate('Способ №1 сработал: боковая область свёрнута целиком — и панель, и иконки. В настоящих Таблицах это состояние сохранится и после перезагрузки.','ok');
+});
+restoreTab.addEventListener('click',function(){
+  S.collapsed=false;render();
+  narrate('Боковая область возвращена. Панель '+(S.panelOpen?'снова открыта — закройте её крестиком или активной иконкой.':'осталась закрытой.'),'ok');
+});
+$('#iconStrip').addEventListener('click',function(e){
+  var b=e.target.closest('.app-btn');if(!b)return;
+  var app=b.dataset.app;
+  if(app==='plus'){
+    toast('«+» открывает каталог дополнений Workspace. Именно дополнения чаще всего открывают панель сами — через onOpen → showSidebar().');
+    narrate('Кнопка «+» — каталог дополнений. Если панель возвращается после перезагрузки, проверьте установленные дополнения.','warn');
+    return;
+  }
+  S.collapsed=false;
+  if(S.panelOpen&&S.content===app){
+    S.panelOpen=false;render();
+    narrate('Способ №2 сработал: повторный клик по подсвеченной иконке «'+NAMES[app]+'» закрыл панель. Полоса иконок осталась.','ok');
+  }else{
+    S.content=app;S.panelOpen=true;render();
+    narrate('Открыта панель «'+NAMES[app]+'». Иконка подсвечена — нажмите её ещё раз, и панель закроется (способ №2).','ok');
+  }
+});
+sidePanel.addEventListener('click',function(e){
+  if(e.target.closest('[data-close]')){
+    S.panelOpen=false;render();
+    narrate('Способ №3 сработал: крестик в заголовке закрыл панель. У пустой панели-сбоя заголовка нет — там помогает только стрелка внизу (способ №1).','ok');
+  }
+});
+sidePanel.addEventListener('change',function(e){
+  var t=e.target.closest('[data-task]');if(!t)return;
+  var i=+t.dataset.task;S.tasks[i]=t.checked;
+  t.closest('.task').classList.toggle('done',t.checked);
+});
+
+/* пульт */
+$('#ctlOpen').addEventListener('change',function(){
+  if(this.checked){S.collapsed=false;S.panelOpen=true;render();narrate('Панель открыта. Закройте её стрелкой «›» внизу справа, активной иконкой или крестиком.','ok')}
+  else{S.panelOpen=false;render();narrate('Панель закрыта. Иконки справа остались — их можно свернуть той же стрелкой внизу.','ok')}
+});
+$('#ctlContent').addEventListener('change',function(){
+  S.content=this.value;S.panelOpen=true;S.collapsed=false;render();
+  narrate('Сценарий: панель «'+NAMES[S.content]+'» открыта.'+(S.content==='blank'?' Заголовка и крестика нет — закрывайте стрелкой «›» внизу справа.':' Попробуйте закрыть её активной иконкой или крестиком.'),'ok');
+});
+$('#ctlAddon').addEventListener('change',function(){
+  S.addon=this.checked;render();
+  narrate(this.checked?'Сценарий включён: дополнение вызывает showSidebar() в onOpen. Нажмите «Переоткрыть страницу» — панель вернётся принудительно, даже если вы её закрыли.':'Сценарий выключен: теперь состояние панели сохраняется как в норме — закрытая панель не вернётся после перезагрузки.',this.checked?'warn':'ok');
+});
+$('#ctlHints').addEventListener('change',function(){
+  S.hints=this.checked;render();
+  narrate(this.checked?'Подсказки включены: нужная кнопка пульсирует зелёным кольцом.':'Подсказки выключены — интерфейс выглядит как настоящие Таблицы.','ok');
+});
+$('#ctlWidth').addEventListener('input',function(){S.width=+this.value;render()});
+$('#ctlHeight').addEventListener('input',function(){S.height=+this.value;render()});
+$('#btnReload').addEventListener('click',function(){
+  if(reloading)return;reloading=true;this.disabled=true;
+  overlay.classList.add('show');
+  var btn=this;
+  setTimeout(function(){
+    if(S.addon){
+      S.collapsed=false;S.panelOpen=true;S.content='addon';render();
+      narrate('Страница переоткрыта. Дополнение вызвало showSidebar() в onOpen — панель открылась принудительно, хотя вы её закрывали. Это причина №1: уберите вызов в Расширения → Apps Script.','warn');
+    }else{
+      render();
+      narrate('Страница переоткрыта. Состояние сохранилось: панель '+(S.panelOpen&&!S.collapsed?'осталась открытой — вы её не закрывали. Закройте стрелкой, и она не вернётся.':'осталась закрытой. Так и должно быть в норме.','ok'),'ok');
+    }
+    overlay.classList.remove('show');reloading=false;btn.disabled=false;
+  },850);
+});
+$('#btnRandom').addEventListener('click',function(){
+  var keys=['blank','keep','tasks','calendar','addon','contacts','maps'];
+  S.content(keys[Math.floor(Math.random()*keys.length)]);
+  S.addon=Math.random()<0.5;S.panelOpen=Math.random()<0.7;S.collapsed=false;render();
+  narrate('Случайный сценарий: «'+NAMES[S.content]+'», дополнение с onOpen '+(S.addon?'включено':'выключено')+'. '+(S.addon?'Переоткройте страницу и посмотрите, что будет.':'Проверьте, сохраняется ли состояние после перезагрузки.'),S.addon?'warn':'ok');
+});
+$('#btnReset').addEventListener('click',function(){
+  Object.keys(DEFAULTS).forEach(function(k){S[k]=DEFAULTS[k]});
+  S.tasks=[false,false,true];render();
+  narrate('Демо сброшено: пустая панель открыта — как на вашем скриншоте. Нажмите стрелку «›» в правом нижнем углу (под иконками), чтобы свернуть её.','ok');
+});
+
+/* «Показать в демо» из карточек способов */
+$$('.show-demo').forEach(function(b){
+  b.addEventListener('click',function(){
+    var m=b.dataset.method;S.hints=true;S.collapsed=false;S.panelOpen=true;
+    if(m==='1'){S.content='blank';render();scrollDemo();setTimeout(function(){spot(chevronBtn)},450);
+      narrate('Способ №1: нажмите стрелку «›» в самом низу справа — она пульсирует. Свернётся вся боковая область.','ok')}
+    if(m==='2'){S.content='keep';render();scrollDemo();setTimeout(function(){spot($('#iconStrip [data-app="keep"]'))},450);
+      narrate('Способ №2: иконка Keep подсвечена синим — нажмите её ещё раз, и панель закроется.','ok')}
+    if(m==='3'){S.content='tasks';render();scrollDemo();setTimeout(function(){spot(panelInner.querySelector('[data-close]'))},450);
+      narrate('Способ №3: нажмите «×» в правом верхнем углу самой панели — он пульсирует.','ok')}
+  });
+});
+
+/* меню «Расширения» в демо */
+var extBtn=$('#extMenuBtn'),extMenu=$('#extMenu');
+extBtn.addEventListener('click',function(e){
+  e.stopPropagation();
+  var open=extMenu.classList.toggle('open');
+  extBtn.setAttribute('aria-expanded',open);
+});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.ext-wrap')){extMenu.classList.remove('open');extBtn.setAttribute('aria-expanded','false')}
+});
+extMenu.addEventListener('click',function(e){
+  var b=e.target.closest('[data-ext]');if(!b)return;
+  extMenu.classList.remove('open');extBtn.setAttribute('aria-expanded','false');
+  if(b.dataset.ext==='script'){
+    toast('В настоящих Таблицах здесь откроется редактор скриптов. Ищите функцию onOpen и строку showSidebar — именно они открывают панель при каждом запуске.');
+    narrate('Расширения → Apps Script: найдите onOpen(e) и удалите строку showSidebar(...). Панель перестанет открываться сама.','warn');
+  }else{
+    toast('Расширения → Дополнения → Управление дополнениями: отключите или удалите дополнение, которое открывает панель.');
+    narrate('Расширения → Дополнения → Управление: отключите лишнее дополнение — и панель перестанет возвращаться.','warn');
+  }
+});
+
+/* ---------- ДИАГНОСТИКА (дерево) ---------- */
+var TREE={
+  q1:{q:'Панель появляется сразу при открытии файла — даже если в прошлый раз вы её закрыли?',opts:[{l:'Да, возвращается каждый раз',n:'q2'},{l:'Нет, просто осталась открытой',n:'q3'}]},
+  q2:{q:'У панели есть заголовок (например, название дополнения) — или она полностью пустая?',opts:[{l:'Есть заголовок / название',n:'rAddon'},{l:'Полностью пустая, без заголовка',n:'rAddonBlank'}]},
+  q3:{q:'Панель пустая и не реагирует на клики по иконкам справа?',opts:[{l:'Да, пустая и «мертвая»',n:'rGlitch'},{l:'Нет, содержимое есть',n:'rSimple'}]},
+  rAddon:{r:1,tone:'warn',ic:'warn',t:'Ваш случай: дополнение открывает панель само',d:'Триггер onOpen вызывает showSidebar() при каждом открытии файла. Уберите вызов в Расширения → Apps Script или отключите дополнение. Решение — в карточке «Причина 1».',cause:'causeAddon',demo:'addon'},
+  rAddonBlank:{r:1,tone:'warn',ic:'warn',t:'Дополнение открыло панель, но не отрисовало её',d:'Пустая панель без заголовка, которая возвращается при каждом открытии, — почти всегда скрипт владельца файла: showSidebar() есть, а HTML не загрузился. Попросите владельца убрать вызов или отключите дополнение.',cause:'causeAddon',demo:'addon'},
+  rGlitch:{r:1,tone:'info',ic:'info',t:'Ваш случай: сбой загрузки панели',d:'Обновите страницу, проверьте в инкогнито и отключите блокировщики для docs.google.com. Пошагово — в карточке «Причина 2». А прямо сейчас панель закроется стрелкой «›» внизу справа.',cause:'causeGlitch',demo:'glitch'},
+  rSimple:{r:1,tone:'ok',ic:'check',t:'Панель просто осталась открытой',d:'Закройте её стрелкой «›» в правом нижнем углу (или крестиком в заголовке). Состояние сохранится для этого файла и аккаунта — после перезагрузки панель не вернётся.',cause:null,demo:'simple'}
+};
+var node='q1',hist=[];
+var treeBox=$('#treeBox'),treeDots=$('#treeDots');
+function renderTree(){
+  var n=TREE[node],depth=n.r?3:hist.length+1;
+  treeDots.innerHTML=[1,2,3].map(function(i){return '<i class="'+(i<=depth?'on':'')+'"></i>'}).join('');
+  var html='';
+  if(n.r){
+    html='<div class="tree-result '+n.tone+'"><h4>'+icon(n.ic)+n.t+'</h4><p>'+n.d+'</p><div class="btn-row">'+
+      '<button class="btn btn-blue btn-sm" data-act="demo">'+icon('sliders','width:14px;height:14px')+'Показать в демо</button>'+
+      (n.cause?'<button class="btn btn-ghost btn-sm" data-act="cause">К решению '+icon('arrow','width:14px;height:14px')+'</button>':'')+
+      '</div></div><button class="tree-back" data-act="restart">'+icon('refresh','width:13px;height:13px')+'Начать заново</button>';
+  }else{
+    html='<div class="tree-q">'+n.q+'</div><div class="tree-opts">'+
+      n.opts.map(function(o){return '<button class="tree-opt" data-next="'+o.n+'">'+icon('chev')+o.l+'</button>'}).join('')+
+      '</div>'+(hist.length?'<button class="tree-back" data-act="back">'+icon('chev','width:13px;height:13px;transform:rotate(180deg)')+'Назад</button>':'');
+  }
+  treeBox.innerHTML=html;
+}
+treeBox.addEventListener('click',function(e){
+  var nx=e.target.closest('[data-next]');
+  if(nx){hist.push(node);node=nx.dataset.next;renderTree();return}
+  var act=e.target.closest('[data-act]');if(!act)return;
+  var a=act.dataset.act,n=TREE[node];
+  if(a==='back'){node=hist.pop()||'q1';renderTree()}
+  if(a==='restart'){node='q1';hist=[];renderTree()}
+  if(a==='cause'&&n.cause){
+    var c=$('#'+n.cause);c.scrollIntoView({behavior:'smooth',block:'center'});
+    c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash');
+  }
+  if(a==='demo'){
+    S.hints=true;S.collapsed=false;S.panelOpen=true;
+    if(n.demo==='addon'){
+      S.addon=true;S.content='addon';render();scrollDemo();
+      narrate('Сценарий причины №1: дополнение с onOpen включено. Смотрите — страница «переоткрывается», и панель возвращается принудительно.','warn');
+      setTimeout(function(){$('#btnReload').click()},600);
+    }else if(n.demo==='glitch'){
+      S.addon=false;S.content='blank';render();scrollDemo();
+      setTimeout(function(){spot(chevronBtn)},450);
+      narrate('Сценарий причины №2: панель пустая и без заголовка. Закройте её стрелкой «›» внизу, а затем устраните сбой по карточке «Причина 2».','ok');
+    }else{
+      S.addon=false;S.content='blank';render();scrollDemo();
+      setTimeout(function(){spot(chevronBtn)},450);
+      narrate('Всё просто: закройте панель стрелкой «›» внизу справа — и она не вернётся после перезагрузки.','ok');
+    }
+  }
+});
+renderTree();
+
+/* ---------- FAQ ---------- */
+$$('.faq-q').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var item=btn.parentElement,open=item.classList.toggle('open');
+    btn.setAttribute('aria-expanded',open);
+  });
+});
+
+/* ---------- КОПИРОВАНИЕ КОДА ---------- */
+function copyText(t){
+  if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t);
+  return new Promise(function(res,rej){
+    var ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy')?res():rej(new Error('copy'))}catch(err){rej(err)}
+    ta.remove();
+  });
+}
+$('#copyCode').addEventListener('click',function(){
+  copyText($('#codePre').textContent).then(function(){toast('Фрагмент скопирован — вставьте в поиск по проекту Apps Script (Ctrl+F).')},
+  function(){toast('Не удалось скопировать автоматически — выделите код вручную.')});
+});
+
+/* ---------- ПАМЯТКА (.md) ---------- */
+var MD='# Как убрать пустую панель справа в Google Таблицах\n\n## Быстро закрыть\n1. Стрелка «›» в самом низу справа (под иконками Календаря, Keep, Задач) — сворачивает всю боковую область: и панель, и иконки. Повторное нажатие («‹») вернёт её.\n2. Повторный клик по подсвеченной иконке справа — закрывает открытую панель.\n3. «×» в правом верхнем углу самой панели (Keep, Задачи, Календарь, дополнения).\n\nСостояние панели запоминается для файла и аккаунта: закрыли — после перезагрузки её не будет.\n\n## Если панель возвращается после перезагрузки\n### Причина 1 — дополнение открывает само\n- Расширения → Apps Script → найдите onOpen(e) → удалите/закомментируйте строку SpreadsheetApp.getUi().showSidebar(...).\n- Или: Расширения → Дополнения → Управление дополнениями → отключить/удалить.\n- Файл чужой — попросите владельца убрать вызов, либо перенесите данные в новую таблицу без скриптов.\n\n### Причина 2 — сбой загрузки (панель пустая)\n- Обновите страницу: Ctrl+R.\n- Проверьте в инкогнито: Ctrl+Shift+N. Если там нормально — виновато расширение браузера.\n- Отключите блокировщики рекламы/скрипт-менеджеры для docs.google.com.\n- Очистите кэш и cookie для google.com, войдите заново.\n- Проверьте в другом браузере.\n';
+function exportMd(){
+  try{
+    var blob=new Blob([MD],{type:'text/markdown;charset=utf-8'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pamyatka-panel-google-sheets.md';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},2000);
+    toast('Памятка скачана — шпаргалка в формате Markdown.');
+  }catch(err){toast('Скачивание недоступно в этом браузере — скопируйте шаги со страницы.')}
+}
+$('#btnExport').addEventListener('click',exportMd);
+$('#btnExportFooter').addEventListener('click',exportMd);
+
+/* ---------- ТОСТЫ ---------- */
+function toast(msg){
+  var box=$('#toasts'),t=document.createElement('div');
+  t.className='toast';t.innerHTML=icon('check')+'<span>'+msg+'</span>';
+  box.appendChild(t);
+  setTimeout(function(){t.classList.add('out');setTimeout(function(){t.remove()},320)},3600);
+}
+
+/* ---------- НАВИГАЦИЯ: scrollspy + тень + параллакс ---------- */
+var nav=$('#nav'),links=$$('.nav-link'),secs=['demo','methods','diagnostics','faq'].map(function(id){return $('#'+id)});
+var chips=$$('.chip-float'),ticking=false;
+function onScroll(){
+  if(ticking)return;ticking=true;
+  requestAnimationFrame(function(){
+    var y=window.scrollY||window.pageYOffset;
+    nav.classList.toggle('scrolled',y>10);
+    var cur=null;
+    secs.forEach(function(s){if(s&&s.getBoundingClientRect().top+y-140<=y)cur=s.id});
+    links.forEach(function(l){l.classList.toggle('active',l.dataset.sec===cur)});
+    if(y<900)chips.forEach(function(c){c.style.transform='translateY('+(y*parseFloat(c.dataset.speed))+'px)'});
+    ticking=false;
+  });
+}
+window.addEventListener('scroll',onScroll,{passive:true});
+onScroll();
+$('#toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'})});
+
+/* ---------- REVEAL ---------- */
+if('IntersectionObserver' in window){
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(en){if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target)}});
+  },{threshold:.12});
+  $$('.reveal').forEach(function(el){io.observe(el)});
+}else{$$('.reveal').forEach(function(el){el.classList.add('in')})}
+
+/* ---------- СТАРТ ---------- */
+render();
+narrate('Панель открыта и пуста — как на вашем скриншоте. Нажмите стрелку «›» в правом нижнем углу (под иконками), чтобы свернуть её. Она пульсирует зелёным.','ok');
+requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.add('loaded')})});
+})();
+</script>
+</body>
+</html>
